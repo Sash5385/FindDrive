@@ -187,7 +187,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.15</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.16</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#">Інструктори</a>
@@ -454,7 +454,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <div id="instr-success" class="instr-success" style="display:none">
     <div class="success-icon"><i class="ti ti-check"></i></div>
     <div class="success-title">Анкету надіслано!</div>
-    <div class="success-sub">Ми перевіримо дані та зв'яжемося з вами<br>протягом 1 робочого дня.</div>
+    <div class="success-sub">Ми перевіримо дані та опублікуємо ваш профіль<br>протягом 1 робочого дня.</div>
   </div>
   <div id="instr-foot" class="cab-foot">
     <button id="btn-submit-instr" class="btn-submit-instr"><i class="ti ti-send"></i> Надіслати анкету</button>
@@ -623,7 +623,7 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
       about:      instrForm.querySelector('[name="about"]').value.trim(),
       photo:      instrPhotoData || null,
       lat, lng,
-      status:     "approved",
+      status:     "pending",
       rating:     null,
       reviews:    0,
       createdAt:  serverTimestamp(),
@@ -631,8 +631,6 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
     document.getElementById("instr-form-wrap").style.display = "none";
     document.getElementById("instr-foot").style.display = "none";
     document.getElementById("instr-success").style.display = "flex";
-    appendInstructorCard({ name, area, gearbox, price, car, photo: instrPhotoData, rating: null, reviews: 0 });
-    if (lat && lng) window._addInstrMarker?.({ lat, lng, name, price, rating: null, color: "#1a7a4a" });
   } catch(err) {
     console.error(err);
     btn.disabled = false;

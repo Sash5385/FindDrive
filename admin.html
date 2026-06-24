@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FindDrive — Адмін</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#1a7a4a;--green-dark:#0d4a2a;--green-light:#e8f4ee;
+  --bg:#f0f2f0;--white:#fff;--text:#0d2a1a;--text-muted:#5a7a6a;--text-hint:#7a9a8a;
+  --border:#dde8dd;--pink:#993556;--pink-light:#fbeaf0;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
+
+/* NAV */
+.nav{background:var(--white);border-bottom:.5px solid var(--border);padding:0 40px;height:56px;display:flex;align-items:center;justify-content:space-between}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-logo img{width:32px;height:32px;border-radius:50%;object-fit:cover}
+.nav-title{font-size:14px;font-weight:600;color:var(--text)}
+.nav-badge{font-size:11px;background:#fff3cd;color:#856404;border-radius:5px;padding:2px 8px;font-weight:500}
+.btn-signout{font-size:13px;color:var(--text-muted);background:none;border:.5px solid var(--border);border-radius:8px;padding:7px 14px;cursor:pointer;font-family:inherit;transition:border-color .2s,color .2s}
+.btn-signout:hover{border-color:#cc3333;color:#cc3333}
+
+/* AUTH GATE */
+.gate{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;gap:16px;text-align:center;padding:24px}
+.gate-logo{width:80px;height:80px;border-radius:50%;object-fit:cover;margin-bottom:8px}
+.gate h2{font-size:20px;font-weight:600}
+.gate p{font-size:14px;color:var(--text-muted)}
+.btn-google{display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:12px 24px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:box-shadow .2s}
+.btn-google:hover{box-shadow:0 2px 12px rgba(0,0,0,.1)}
+.btn-google svg{width:20px;height:20px;flex-shrink:0}
+
+/* ADMIN PANEL */
+.wrap{max-width:860px;margin:0 auto;padding:32px 24px}
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.page-title{font-size:20px;font-weight:600}
+.count-badge{background:var(--pink-light);color:var(--pink);border-radius:20px;padding:4px 12px;font-size:13px;font-weight:500}
+
+/* CARDS */
+.card{background:var(--white);border-radius:16px;border:.5px solid var(--border);padding:20px;display:flex;gap:16px;margin-bottom:12px}
+.card-photo{flex-shrink:0}
+.card-photo img,.card-photo .initials{width:60px;height:60px;border-radius:50%;object-fit:cover}
+.card-photo .initials{background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600}
+.card-info{flex:1;min-width:0}
+.card-name{font-size:15px;font-weight:600;margin-bottom:4px}
+.card-meta{font-size:12px;color:var(--text-muted);margin-bottom:3px;display:flex;flex-wrap:wrap;gap:4px}
+.card-about{font-size:12px;color:var(--text-hint);margin-top:6px;line-height:1.5;font-style:italic}
+.card-date{font-size:11px;color:var(--text-hint);margin-top:6px}
+.chip{background:var(--bg);border-radius:6px;padding:2px 8px;font-size:11px;color:var(--text-muted)}
+.card-actions{display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.btn-approve{background:var(--green);color:#fff;border:none;border-radius:9px;padding:9px 16px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .2s;white-space:nowrap}
+.btn-approve:hover{background:var(--green-dark)}
+.btn-reject{background:none;border:.5px solid var(--border);border-radius:9px;padding:9px 16px;font-size:13px;color:var(--text-muted);cursor:pointer;font-family:inherit;transition:border-color .2s,color .2s;white-space:nowrap}
+.btn-reject:hover{border-color:#cc3333;color:#cc3333}
+.empty{text-align:center;padding:60px 24px;color:var(--text-hint);font-size:14px}
+.denied{text-align:center;padding:60px 24px}
+.denied h3{font-size:16px;font-weight:600;margin-bottom:8px}
+.denied p{font-size:13px;color:var(--text-muted);margin-bottom:16px}
+@media(max-width:600px){.card{flex-direction:column}.card-actions{flex-direction:row}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-logo" href="index.html">
+    <img src="logo192.png" alt="FindDrive">
+    <span class="nav-title">FindDrive</span>
+  </a>
+  <span class="nav-badge">Адмін-панель</span>
+  <button id="btn-signout" class="btn-signout" style="display:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Вийти</button>
+</nav>
+
+<div id="auth-gate" class="gate">
+  <img class="gate-logo" src="logo192.png" alt="">
+  <h2>Вхід для адміністратора</h2>
+  <p>Доступ тільки для авторизованого власника</p>
+  <button id="btn-google-login" class="btn-google">
+    <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.6 33 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 2.9l5.7-5.7C34.1 6.9 29.3 5 24 5 12.4 5 3 14.4 3 26s9.4 21 21 21c11 0 20-8 20-21 0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 15.1l6.6 4.8C14.6 16.1 19 13 24 13c3.1 0 5.8 1.1 7.9 2.9l5.7-5.7C34.1 6.9 29.3 5 24 5c-7.7 0-14.4 4.4-17.7 10.1z"/><path fill="#4CAF50" d="M24 47c5.2 0 9.9-1.9 13.5-5l-6.2-5.2C29.4 38.5 26.8 39.5 24 39.5c-5.2 0-9.6-3.6-11.2-8.5l-6.5 5C9.7 43 16.4 47 24 47z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.7l.1-.1 6.2 5.2c-.4.4 6.6-4.8 6.6-14.8 0-1.3-.1-2.6-.4-3.9z"/></svg>
+    Увійти через Google
+  </button>
+</div>
+
+<div id="admin-panel" style="display:none">
+  <div class="wrap">
+    <div class="page-head">
+      <div class="page-title">Нові заявки інструкторів</div>
+      <span id="count-badge" class="count-badge" style="display:none"></span>
+    </div>
+    <div id="pending-list"></div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, query, where, onSnapshot, updateDoc, deleteDoc, doc }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+const ADMIN_EMAIL = 'sash5385@gmail.com';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAr-Q8ojscCoMLXNAKNjqbGrqw0JN6_mbo",
+  authDomain: "finddrive-b009d.firebaseapp.com",
+  projectId: "finddrive-b009d",
+  storageBucket: "finddrive-b009d.firebasestorage.app",
+  messagingSenderId: "8431552805",
+  appId: "1:8431552805:web:6708f74b843ff5b94332cc"
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+const provider = new GoogleAuthProvider();
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function initials(name) {
+  return (name||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';
+}
+
+onAuthStateChanged(auth, user => {
+  if (user && user.email === ADMIN_EMAIL) {
+    document.getElementById('auth-gate').style.display   = 'none';
+    document.getElementById('admin-panel').style.display = '';
+    document.getElementById('btn-signout').style.display = '';
+    listenPending();
+  } else if (user) {
+    document.getElementById('auth-gate').innerHTML = `
+      <img class="gate-logo" src="logo192.png" alt="">
+      <div class="denied">
+        <h3>Доступ заборонено</h3>
+        <p>Ви увійшли як <b>${esc(user.email)}</b>.<br>Ця сторінка тільки для власника сайту.</p>
+        <button class="btn-signout" onclick="window._signOut()">Вийти</button>
+      </div>`;
+  } else {
+    document.getElementById('auth-gate').style.display   = '';
+    document.getElementById('admin-panel').style.display = 'none';
+    document.getElementById('btn-signout').style.display = 'none';
+  }
+});
+
+window._signOut = () => signOut(auth);
+document.getElementById('btn-signout').addEventListener('click', () => signOut(auth));
+document.getElementById('btn-google-login').addEventListener('click', () => {
+  signInWithPopup(auth, provider).catch(console.error);
+});
+
+function listenPending() {
+  onSnapshot(
+    query(collection(db, 'instructors'), where('status', '==', 'pending')),
+    snap => {
+      const list  = document.getElementById('pending-list');
+      const badge = document.getElementById('count-badge');
+      if (snap.empty) {
+        list.innerHTML = '<div class="empty">🎉 Нових заявок немає</div>';
+        badge.style.display = 'none';
+        return;
+      }
+      badge.textContent = snap.size + ' нових';
+      badge.style.display = '';
+      list.innerHTML = snap.docs.map(renderCard).join('');
+    }
+  );
+}
+
+function renderCard(d) {
+  const p = d.data();
+  const dateStr = p.createdAt?.toDate?.().toLocaleString('uk-UA', { day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' }) || '—';
+  const chips = [p.gearbox, p.car, p.experience ? p.experience+' р. стажу' : null].filter(Boolean);
+  return `<div class="card" id="c-${d.id}">
+    <div class="card-photo">
+      ${p.photo
+        ? `<img src="${esc(p.photo)}" alt="">`
+        : `<div class="initials">${esc(initials(p.name))}</div>`}
+    </div>
+    <div class="card-info">
+      <div class="card-name">${esc(p.name)}</div>
+      <div class="card-meta">
+        <span>${esc(p.phone)}</span>
+        ${p.email ? `<span>·</span><span>${esc(p.email)}</span>` : ''}
+        ${p.area  ? `<span>·</span><span>📍 ${esc(p.area)}</span>` : ''}
+      </div>
+      <div class="card-meta">
+        ${chips.map(c=>`<span class="chip">${esc(c)}</span>`).join('')}
+        ${p.price ? `<span class="chip">${p.price} грн/год</span>` : ''}
+        ${(p.days||[]).length ? `<span class="chip">${p.days.join(' ')}</span>` : ''}
+        ${p.time_from ? `<span class="chip">${p.time_from}–${p.time_to}</span>` : ''}
+      </div>
+      ${p.about ? `<div class="card-about">"${esc(p.about)}"</div>` : ''}
+      <div class="card-date">Надіслано: ${dateStr}</div>
+    </div>
+    <div class="card-actions">
+      <button class="btn-approve" onclick="window._approve('${d.id}')">✓ Підтвердити</button>
+      <button class="btn-reject"  onclick="window._reject('${d.id}', '${esc(p.name)}')">✗ Відхилити</button>
+    </div>
+  </div>`;
+}
+
+window._approve = async id => {
+  await updateDoc(doc(db, 'instructors', id), { status: 'approved' });
+};
+window._reject = async (id, name) => {
+  if (confirm(`Відхилити заявку від "${name}" та видалити?`))
+    await deleteDoc(doc(db, 'instructors', id));
+};
+</script>
+</body>
+</html>
