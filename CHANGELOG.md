@@ -2,11 +2,11 @@
 
 All notable changes to FindDrive will be documented in this file.
 
-Format: `[MAJOR.MINOR.PATCH] — YYYY-MM-DD`
+Format: `[YY.MM.NN]` — рік.місяць.порядковий_номер_релізу_за_день
 
 ---
 
-## [0.4.0] — 2026-06-24
+## [24.06.04] — 2026-06-24
 
 ### Added
 - Google Places Autocomplete на рядку пошуку (підказки адрес/районів/вулиць України)
@@ -18,7 +18,7 @@ Format: `[MAJOR.MINOR.PATCH] — YYYY-MM-DD`
 
 ---
 
-## [0.3.0] — 2026-06-24
+## [24.06.03] — 2026-06-24
 
 ### Added
 - Google Maps JavaScript API замість placeholder SVG-карти
@@ -33,7 +33,7 @@ Format: `[MAJOR.MINOR.PATCH] — YYYY-MM-DD`
 
 ---
 
-## [0.2.0] — 2026-06-24
+## [24.06.02] — 2026-06-24
 
 ### Added
 - `CLAUDE.md` — документація проекту: стек, дизайн-система, бізнес-модель, наступні кроки
@@ -41,7 +41,7 @@ Format: `[MAJOR.MINOR.PATCH] — YYYY-MM-DD`
 
 ---
 
-## [0.1.0] — 2026-06-24
+## [24.06.01] — 2026-06-24
 
 ### Added
 - Початковий статичний лендінг `index.html`
