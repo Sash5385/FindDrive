@@ -141,6 +141,25 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .nav-user{display:flex;align-items:center;gap:8px;cursor:pointer}
 .nav-avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;border:1.5px solid var(--border)}
 .nav-name{font-size:13px;color:var(--text);font-weight:500}
+
+/* INSTRUCTOR FORM PANEL */
+.instr-intro{font-size:13px;color:var(--text-muted);line-height:1.6;padding:16px 20px 4px}
+.instr-form{padding:4px 20px 0}
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;font-weight:500;color:var(--text-muted);margin-bottom:5px;display:block}
+.form-input{width:100%;border:.5px solid var(--border);border-radius:9px;padding:10px 12px;font-size:13px;font-family:inherit;color:var(--text);background:var(--white);outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--green)}
+.form-textarea{resize:vertical;min-height:72px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.radio-group{display:flex;gap:14px;flex-wrap:wrap}
+.radio-opt{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-muted);cursor:pointer}
+.radio-opt input{accent-color:var(--green);cursor:pointer;width:14px;height:14px}
+.btn-submit-instr{width:100%;background:var(--green);color:#fff;border:none;border-radius:9px;padding:11px 18px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;font-family:inherit;transition:background .2s}
+.btn-submit-instr:hover{background:var(--green-dark)}
+.instr-success{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center}
+.success-icon{width:64px;height:64px;background:var(--green-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--green);margin-bottom:20px}
+.success-title{font-size:17px;font-weight:600;color:var(--text);margin-bottom:8px}
+.success-sub{font-size:13px;color:var(--text-muted);line-height:1.65}
 </style>
 </head>
 <body>
@@ -149,7 +168,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <div class="logo-box"><i class="ti ti-steering-wheel"></i></div>
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.09</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.10</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#">Інструктори</a>
@@ -162,7 +181,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
       <img id="nav-avatar" class="nav-avatar" src="" alt="">
       <span id="nav-name" class="nav-name"></span>
     </div>
-    <button class="btn-cta">Стати інструктором</button>
+    <button id="btn-instr" class="btn-cta">Стати інструктором</button>
   </div>
 </nav>
 
@@ -314,6 +333,61 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 </footer>
 
 <div id="cab-overlay" class="cab-overlay"></div>
+
+<aside id="instr-panel" class="cabinet">
+  <div class="cab-header">
+    <span class="cab-title">Стати інструктором</span>
+    <button id="instr-close" class="cab-close"><i class="ti ti-x"></i></button>
+  </div>
+  <div id="instr-form-wrap" class="cab-body">
+    <p class="instr-intro">Залиште заявку — ми зв'яжемося з вами та допоможемо налаштувати профіль.</p>
+    <form id="instr-form" class="instr-form" novalidate>
+      <div class="form-group">
+        <label class="form-label">ПІБ *</label>
+        <input class="form-input" name="name" type="text" placeholder="Іваненко Іван Іванович">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Телефон *</label>
+        <input class="form-input" name="phone" type="tel" placeholder="+380 XX XXX XX XX">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Район роботи</label>
+        <input class="form-input" name="area" type="text" placeholder="Шевченківський, Оболонь…">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Тип КПП</label>
+        <div class="radio-group">
+          <label class="radio-opt"><input type="radio" name="gearbox" value="Автомат" checked> Автомат</label>
+          <label class="radio-opt"><input type="radio" name="gearbox" value="Механіка"> Механіка</label>
+          <label class="radio-opt"><input type="radio" name="gearbox" value="Обидва"> Обидва</label>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Ціна / год (грн)</label>
+          <input class="form-input" name="price" type="number" placeholder="600" min="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Досвід (років)</label>
+          <input class="form-input" name="experience" type="number" placeholder="5" min="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Про себе (необов'язково)</label>
+        <textarea class="form-input form-textarea" name="about" placeholder="Коротко про ваш підхід до навчання…"></textarea>
+      </div>
+    </form>
+  </div>
+  <div id="instr-success" class="instr-success" style="display:none">
+    <div class="success-icon"><i class="ti ti-check"></i></div>
+    <div class="success-title">Заявку надіслано!</div>
+    <div class="success-sub">Ми зв'яжемося з вами<br>протягом 1 робочого дня.</div>
+  </div>
+  <div id="instr-foot" class="cab-foot">
+    <button id="btn-submit-instr" class="btn-submit-instr"><i class="ti ti-send"></i> Надіслати заявку</button>
+  </div>
+</aside>
+
 <aside id="cabinet" class="cabinet">
   <div class="cab-header">
     <span class="cab-title">Особистий кабінет</span>
@@ -360,26 +434,48 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-function openCabinet() {
-  document.getElementById("cabinet").classList.add("open");
+function openPanel(id) {
+  document.getElementById(id).classList.add("open");
   document.getElementById("cab-overlay").classList.add("open");
 }
-function closeCabinet() {
-  document.getElementById("cabinet").classList.remove("open");
+function closeAll() {
+  document.querySelectorAll(".cabinet.open").forEach(el => el.classList.remove("open"));
   document.getElementById("cab-overlay").classList.remove("open");
 }
 
+// Student cabinet
 document.getElementById("btn-login").addEventListener("click", () => {
   signInWithPopup(auth, provider).catch(console.error);
 });
-document.getElementById("nav-user").addEventListener("click", openCabinet);
-document.getElementById("cab-close").addEventListener("click", closeCabinet);
-document.getElementById("cab-overlay").addEventListener("click", closeCabinet);
-document.getElementById("btn-signout").addEventListener("click", () => {
-  signOut(auth);
-  closeCabinet();
-});
+document.getElementById("nav-user").addEventListener("click", () => openPanel("cabinet"));
+document.getElementById("cab-close").addEventListener("click", closeAll);
+document.getElementById("btn-signout").addEventListener("click", () => { signOut(auth); closeAll(); });
 
+// Instructor panel
+document.getElementById("btn-instr").addEventListener("click", () => openPanel("instr-panel"));
+document.getElementById("instr-close").addEventListener("click", closeAll);
+
+const instrForm = document.getElementById("instr-form");
+document.getElementById("btn-submit-instr").addEventListener("click", () => {
+  const name  = instrForm.querySelector('[name="name"]').value.trim();
+  const phone = instrForm.querySelector('[name="phone"]').value.trim();
+  let valid = true;
+  [["name", name], ["phone", phone]].forEach(([field, val]) => {
+    const el = instrForm.querySelector(`[name="${field}"]`);
+    el.style.borderColor = val ? "" : "#cc3333";
+    if (!val) valid = false;
+  });
+  if (!valid) return;
+  document.getElementById("instr-form-wrap").style.display = "none";
+  document.getElementById("instr-foot").style.display = "none";
+  document.getElementById("instr-success").style.display = "flex";
+});
+instrForm.addEventListener("input", e => { e.target.style.borderColor = ""; });
+
+// Shared overlay
+document.getElementById("cab-overlay").addEventListener("click", closeAll);
+
+// Auth state
 onAuthStateChanged(auth, user => {
   const btnLogin = document.getElementById("btn-login");
   const navUser  = document.getElementById("nav-user");
