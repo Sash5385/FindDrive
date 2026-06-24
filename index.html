@@ -179,6 +179,24 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .success-icon{width:64px;height:64px;background:var(--green-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--green);margin-bottom:20px}
 .success-title{font-size:17px;font-weight:600;color:var(--text);margin-bottom:8px}
 .success-sub{font-size:13px;color:var(--text-muted);line-height:1.65}
+
+/* INSTRUCTOR PROFILE PANEL */
+.instr-profile-panel{width:400px}
+.prof-avatar-lg{width:58px;height:58px;border-radius:50%;flex-shrink:0;object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600}
+.prof-name-lg{font-size:15px;font-weight:600;line-height:1.3}
+.prof-rating-row{font-size:12px;color:var(--text-hint);margin-top:3px}
+.prof-price-row{display:flex;align-items:baseline;gap:12px;margin:16px 0 12px}
+.prof-price-big{font-size:24px;font-weight:700;color:var(--green)}
+.prof-price-per{font-size:13px;font-weight:400;color:var(--text-muted)}
+.prof-exp-chip{background:var(--green-light);color:var(--green);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:500}
+.prof-row{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-muted);margin-bottom:10px}
+.prof-tags-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.prof-about-box{background:var(--bg);border-radius:12px;padding:14px;font-size:13px;color:var(--text-hint);font-style:italic;line-height:1.55;margin-bottom:16px}
+.prof-divider{height:.5px;background:var(--border);margin:16px 0}
+.btn-show-phone{width:100%;background:var(--green-light);color:var(--green);border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s}
+.btn-show-phone:hover{background:#c8e8d4}
+.btn-call{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--green);color:#fff;border-radius:10px;padding:13px;font-size:15px;font-weight:600;text-decoration:none;transition:background .2s}
+.btn-call:hover{background:var(--green-dark)}
 </style>
 </head>
 <body>
@@ -187,7 +205,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.17</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.18</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -253,7 +271,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
       </div>
       <div class="instr-footer">
         <div class="price">650 грн <span>/ год</span></div>
-        <button class="btn-book">Записатись</button>
+        <button class="btn-book" onclick="openInstrProfile('demo-0')">Записатись</button>
       </div>
     </div>
 
@@ -272,7 +290,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
       </div>
       <div class="instr-footer">
         <div class="price">580 грн <span>/ год</span></div>
-        <button class="btn-book">Записатись</button>
+        <button class="btn-book" onclick="openInstrProfile('demo-1')">Записатись</button>
       </div>
     </div>
 
@@ -291,7 +309,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
       </div>
       <div class="instr-footer">
         <div class="price">700 грн <span>/ год</span></div>
-        <button class="btn-book">Записатись</button>
+        <button class="btn-book" onclick="openInstrProfile('demo-2')">Записатись</button>
       </div>
     </div>
 
@@ -351,6 +369,14 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   </div>
   <div class="footer-copy">© 2025 FindDrive</div>
 </footer>
+
+<aside id="instr-profile" class="cabinet instr-profile-panel">
+  <div class="cab-header">
+    <div id="prof-head" style="display:flex;align-items:center;gap:14px;flex:1;min-width:0;overflow:hidden"></div>
+    <button class="cab-close" onclick="window.closeAll()"><i class="ti ti-x"></i></button>
+  </div>
+  <div id="prof-body" class="cab-body" style="padding:0 20px 24px"></div>
+</aside>
 
 <div id="cab-overlay" class="cab-overlay"></div>
 
@@ -520,6 +546,8 @@ function closeAll() {
   document.getElementById("cab-overlay").classList.remove("open");
 }
 document.getElementById("cab-overlay").addEventListener("click", closeAll);
+window.openPanel = openPanel;
+window.closeAll  = closeAll;
 
 // --- Auth ---
 document.getElementById("btn-login").addEventListener("click", () => {
@@ -652,7 +680,7 @@ const THEMES = [
 function initials(name) {
   return (name||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';
 }
-function buildCard(d, i) {
+function buildCard(d, i, id) {
   const th = THEMES[i % THEMES.length];
   const tags = [d.gearbox, (d.area||'').split(',')[0].trim(), (d.car||'').split(' ')[0]].filter(Boolean);
   return `<div class="instr-card">
@@ -670,7 +698,7 @@ function buildCard(d, i) {
     <div class="instr-tags">${tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>
     <div class="instr-footer">
       <div class="price">${d.price?d.price+' грн':'—'} <span>/ год</span></div>
-      <button class="btn-book" onclick="alert('Запис поки недоступний')">Записатись</button>
+      <button class="btn-book" onclick="openInstrProfile('${esc(id||'')}')">Записатись</button>
     </div>
   </div>`;
 }
@@ -685,15 +713,22 @@ async function loadInstructors() {
   try {
     const snap = await getDocs(query(collection(db, "instructors"), where("status","==","approved")));
     if (snap.empty) return;
-    const docs  = snap.docs.map(d => d.data());
-    const grid  = document.getElementById("instr-grid");
+    const grid   = document.getElementById("instr-grid");
     const offset = grid.children.length;
-    docs.forEach((d, i) => grid.insertAdjacentHTML("afterbegin", buildCard(d, offset + i)));
+    window._instrProfiles = window._instrProfiles || {};
+    snap.docs.forEach((docSnap, i) => {
+      const d  = docSnap.data();
+      const id = docSnap.id;
+      const th = THEMES[i % THEMES.length];
+      window._instrProfiles[id] = { ...d, color: th.color, avbg: th.bg };
+      grid.insertAdjacentHTML("afterbegin", buildCard(d, offset + i, id));
+    });
 
     function addMarkers() {
-      docs.forEach((d, i) => {
+      snap.docs.forEach((docSnap, i) => {
+        const d = docSnap.data();
         if (d.lat && d.lng)
-          window._addInstrMarker?.({ lat: d.lat, lng: d.lng, name: d.name, price: d.price, rating: d.rating, color: THEMES[i % THEMES.length].color });
+          window._addInstrMarker?.({ lat: d.lat, lng: d.lng, name: d.name, price: d.price, rating: d.rating, color: THEMES[i % THEMES.length].color }, docSnap.id);
       });
     }
     if (window._mapReady) addMarkers();
@@ -707,10 +742,60 @@ loadInstructors();
 </script>
 
 <script>
+window._instrProfiles = window._instrProfiles || {};
+Object.assign(window._instrProfiles, {
+  'demo-0': { name:'Олександр Савченко', phone:'+38 (067) 123-45-67', area:'Шевченківський р-н', gearbox:'Автомат', car:'VW ID.4', price:650, rating:4.9, reviews:87, experience:7, days:['Пн','Вт','Ср','Чт','Пт'], time_from:'09:00', time_to:'19:00', about:'Навчаю новачків з нуля. Спокійний підхід, без тиску. Підготовка до іспиту ДАІ.', photo:null, color:'#1a7a4a', avbg:'#e0f4ea' },
+  'demo-1': { name:'Марина Коваленко',   phone:'+38 (050) 234-56-78', area:'Оболонь', gearbox:'Механіка', car:'Renault Clio', price:580, rating:5.0, reviews:124, experience:10, days:['Пн','Вт','Ср','Чт','Пт','Сб'], time_from:'08:00', time_to:'20:00', about:"Спеціалізуюся на навчанні жінок. М'який підхід, без стресу. 10 років досвіду.", photo:null, color:'#993556', avbg:'#fbeaf0' },
+  'demo-2': { name:'Дмитро Петренко',    phone:'+38 (063) 345-67-89', area:'Позняки', gearbox:'Автомат', car:'Toyota Camry', price:700, rating:4.8, reviews:61, experience:5, days:['Сб','Нд'], time_from:'10:00', time_to:'18:00', about:'Підготовка до іспиту ДАІ. Навчання у вихідні. Практика у складних ситуаціях на дорозі.', photo:null, color:'#185fa5', avbg:'#e6f1fb' },
+});
+
+function _esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function openInstrProfile(id) {
+  const d = (window._instrProfiles||{})[id];
+  if (!d) return;
+  const ini = (d.name||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';
+  const col = d.color||'#1a7a4a';
+  document.getElementById('prof-head').innerHTML = `
+    ${d.photo
+      ? `<img class="prof-avatar-lg" src="${_esc(d.photo)}" alt="">`
+      : `<div class="prof-avatar-lg" style="background:${d.avbg||'#e0f4ea'};color:${col}">${_esc(ini)}</div>`}
+    <div style="min-width:0">
+      <div class="prof-name-lg">${_esc(d.name)}</div>
+      <div class="prof-rating-row">${d.rating ? '⭐ '+d.rating+' · '+d.reviews+' відгуків' : 'Новий інструктор'}</div>
+    </div>`;
+  const tags = [d.gearbox, d.car].filter(Boolean);
+  const days = (d.days||[]).join(' ');
+  const sched = [days, d.time_from ? d.time_from+'–'+d.time_to : ''].filter(Boolean).join(' · ');
+  document.getElementById('prof-body').innerHTML = `
+    <div class="prof-price-row">
+      ${d.price ? `<span class="prof-price-big">${_esc(String(d.price))} грн<span class="prof-price-per"> / год</span></span>` : ''}
+      ${d.experience ? `<span class="prof-exp-chip">${_esc(String(d.experience))} р. стажу</span>` : ''}
+    </div>
+    ${d.area ? `<div class="prof-row"><i class="ti ti-map-pin" style="color:${col}"></i> ${_esc(d.area)}</div>` : ''}
+    ${tags.length ? `<div class="prof-tags-row">${tags.map(t=>`<span class="tag">${_esc(t)}</span>`).join('')}</div>` : ''}
+    ${sched ? `<div class="prof-row"><i class="ti ti-calendar" style="color:${col}"></i> ${_esc(sched)}</div>` : ''}
+    ${d.about ? `<div class="prof-about-box">"${_esc(d.about)}"</div>` : ''}
+    <div class="prof-divider"></div>
+    <div id="prof-phone-wrap">
+      <button class="btn-show-phone" onclick="showPhone('${_esc(d.phone||'')}','${col}')">
+        <i class="ti ti-phone"></i> Показати телефон
+      </button>
+    </div>`;
+  if (window.openPanel) window.openPanel('instr-profile');
+}
+
+function showPhone(phone, col) {
+  const w = document.getElementById('prof-phone-wrap');
+  if (!w) return;
+  if (!phone) { w.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-size:13px">Телефон не вказано</p>'; return; }
+  w.innerHTML = `<a href="tel:${_esc(phone)}" class="btn-call" style="background:${col||'var(--green)'}"><i class="ti ti-phone-call"></i> ${_esc(phone)}</a>`;
+}
+
 const INSTRUCTORS = [
-  { lat:50.4560, lng:30.5100, name:"Олександр Савченко", price:"650 грн/год", rating:"4.9", color:"#1a7a4a" },
-  { lat:50.5010, lng:30.4960, name:"Марина Коваленко",   price:"580 грн/год", rating:"5.0", color:"#993556" },
-  { lat:50.4100, lng:30.6210, name:"Дмитро Петренко",    price:"700 грн/год", rating:"4.8", color:"#185fa5" },
+  { id:'demo-0', lat:50.4560, lng:30.5100, name:"Олександр Савченко", price:"650 грн/год", rating:"4.9", color:"#1a7a4a" },
+  { id:'demo-1', lat:50.5010, lng:30.4960, name:"Марина Коваленко",   price:"580 грн/год", rating:"5.0", color:"#993556" },
+  { id:'demo-2', lat:50.4100, lng:30.6210, name:"Дмитро Петренко",    price:"700 грн/год", rating:"4.8", color:"#185fa5" },
 ];
 
 let gmap, userMarker, placesService, instrPickMap, instrPickMarker;
@@ -792,7 +877,7 @@ function initMap() {
       content: `<div style="font-family:Inter,sans-serif;min-width:140px;padding:2px 0">
         <div style="font-weight:600;color:#0d2a1a;font-size:13px">${inst.name}</div>
         <div style="color:#5a7a6a;font-size:12px;margin-top:3px">⭐ ${inst.rating} · ${inst.price}</div>
-        <button onclick="alert('Запис поки недоступний')" style="margin-top:8px;background:${inst.color};color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit">Записатись</button>
+        <button onclick="openInstrProfile('${inst.id}')" style="margin-top:8px;background:${inst.color};color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit">Записатись</button>
       </div>`,
     });
 
@@ -824,7 +909,7 @@ const MAP_STYLES = [
   { featureType:"road",    elementType:"geometry.stroke", stylers:[{color:"#dde8dd"}] },
 ];
 
-window._addInstrMarker = function(inst) {
+window._addInstrMarker = function(inst, id) {
   if (!gmap) return;
   const marker = new google.maps.Marker({
     position: { lat: inst.lat, lng: inst.lng },
@@ -836,7 +921,7 @@ window._addInstrMarker = function(inst) {
     content: `<div style="font-family:Inter,sans-serif;min-width:140px;padding:2px 0">
       <div style="font-weight:600;color:#0d2a1a;font-size:13px">${inst.name}</div>
       <div style="color:#5a7a6a;font-size:12px;margin-top:3px">⭐ ${inst.rating||'—'} · ${inst.price ? inst.price+' грн/год' : '—'}</div>
-      <button onclick="alert('Запис поки недоступний')" style="margin-top:8px;background:${inst.color||'#1a7a4a'};color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit">Записатись</button>
+      <button onclick="openInstrProfile('${id||''}')" style="margin-top:8px;background:${inst.color||'#1a7a4a'};color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit">Записатись</button>
     </div>`,
   });
   marker.addListener("click", () => info.open(gmap, marker));
