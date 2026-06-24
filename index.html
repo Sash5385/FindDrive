@@ -22,7 +22,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
 .logo-box{width:34px;height:34px;background:var(--green);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px}
 .logo-text{font-size:15px;font-weight:600;color:var(--text)}
-.logo-version{font-size:10px;font-weight:500;color:var(--text-hint);background:var(--bg);border:.5px solid var(--border);border-radius:6px;padding:2px 7px;letter-spacing:.3px}
+.logo-version{font-size:10px;font-weight:500;color:var(--text-hint);background:var(--bg);border:.5px solid var(--border);border-radius:6px;padding:2px 7px;letter-spacing:.3px;cursor:pointer;transition:background .15s,color .15s,border-color .15s;user-select:none}
+.logo-version:hover{background:var(--green-light);color:var(--green);border-color:#b8ddc8}
+.logo-version.reloading{background:var(--green);color:#fff;border-color:var(--green)}
 .nav-links{display:flex;gap:28px}
 .nav-link{font-size:14px;color:var(--text-muted);text-decoration:none;transition:color .2s}
 .nav-link:hover{color:var(--green)}
@@ -147,7 +149,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <div class="logo-box"><i class="ti ti-steering-wheel"></i></div>
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version">v24.06.08</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.09</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#">Інструктори</a>
@@ -526,6 +528,14 @@ function locateMe(fromSearch = false) {
     });
   }, () => alert("Не вдалося визначити місцезнаходження"));
 }
+
+document.getElementById("version-badge").addEventListener("click", function() {
+  this.classList.add("reloading");
+  this.textContent = "↻ Оновлення…";
+  const url = new URL(location.href);
+  url.searchParams.set("_r", Date.now());
+  setTimeout(() => location.replace(url.toString()), 300);
+});
 </script>
 <!-- Замініть YOUR_API_KEY на ключ з Google Cloud Console (Maps JavaScript API) -->
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDcpDLj_F9Qp6RNZuuzoqeWovEo_sNp1L4&libraries=places&callback=initMap&language=uk&region=UA"></script>
