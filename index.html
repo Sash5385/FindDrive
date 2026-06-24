@@ -95,16 +95,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 
 /* MAP */
 .map-section{padding:0 48px 48px}
-.map-box{background:var(--white);border-radius:18px;border:.5px solid var(--border);overflow:hidden;height:200px;position:relative;display:flex;align-items:center;justify-content:center}
-.map-bg{position:absolute;inset:0;background:#e8f2e8}
-.map-pin{position:absolute;display:flex;flex-direction:column;align-items:center}
-.pin-dot{width:13px;height:13px;border-radius:50%;border:2.5px solid #fff}
-.pin-label{font-size:10px;font-weight:500;margin-top:3px;padding:2px 7px;border-radius:5px;color:#fff;white-space:nowrap}
-.map-cta{position:relative;z-index:2;text-align:center}
-.map-cta-h{font-size:16px;font-weight:500;color:var(--text);margin-bottom:6px}
-.map-cta-s{font-size:13px;color:var(--text-muted);margin-bottom:16px}
-.btn-map{background:var(--green);color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:background .2s;font-family:inherit}
-.btn-map:hover{background:var(--green-dark)}
+#map{height:420px;border-radius:18px;border:.5px solid var(--border);overflow:hidden}
+.btn-locate{background:var(--green);color:#fff;border:none;border-radius:9px;padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;font-family:inherit}
+.btn-locate:hover{background:var(--green-dark)}
+@media(max-width:600px){#map{height:320px}.map-section{padding-left:20px;padding-right:20px}}
 
 /* FOOTER */
 footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
@@ -261,40 +255,9 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 <section class="map-section">
   <div class="section-top">
     <span class="section-label">Інструктори на карті</span>
+    <button class="btn-locate" onclick="locateMe()"><i class="ti ti-current-location"></i> Моє місце</button>
   </div>
-  <div class="map-box">
-    <div class="map-bg">
-      <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:.15">
-        <defs>
-          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1a7a4a" stroke-width="0.5"/>
-          </pattern>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#grid)"/>
-      </svg>
-      <div class="map-pin" style="top:28%;left:36%">
-        <div class="pin-dot" style="background:#1a7a4a"></div>
-        <div class="pin-label" style="background:#1a7a4a">ОС · 650 грн</div>
-      </div>
-      <div class="map-pin" style="top:48%;left:54%">
-        <div class="pin-dot" style="background:#993556"></div>
-        <div class="pin-label" style="background:#993556">МК · 580 грн</div>
-      </div>
-      <div class="map-pin" style="top:62%;left:26%">
-        <div class="pin-dot" style="background:#185fa5"></div>
-        <div class="pin-label" style="background:#185fa5">ДП · 700 грн</div>
-      </div>
-      <div class="map-pin" style="top:22%;left:64%">
-        <div class="pin-dot" style="background:#854f0b"></div>
-        <div class="pin-label" style="background:#854f0b">+5 інших</div>
-      </div>
-    </div>
-    <div class="map-cta">
-      <div class="map-cta-h">Знайдіть інструктора поряд</div>
-      <div class="map-cta-s">8 інструкторів доступні у вашому районі сьогодні</div>
-      <button class="btn-map"><i class="ti ti-current-location"></i> Визначити моє місце</button>
-    </div>
-  </div>
+  <div id="map"></div>
 </section>
 
 <footer>
@@ -311,5 +274,85 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <div class="footer-copy">© 2025 FindDrive</div>
 </footer>
 
+<script>
+const INSTRUCTORS = [
+  { lat:50.4560, lng:30.5100, name:"Олександр Савченко", price:"650 грн/год", rating:"4.9", color:"#1a7a4a" },
+  { lat:50.5010, lng:30.4960, name:"Марина Коваленко",   price:"580 грн/год", rating:"5.0", color:"#993556" },
+  { lat:50.4100, lng:30.6210, name:"Дмитро Петренко",    price:"700 грн/год", rating:"4.8", color:"#185fa5" },
+];
+
+let gmap, userMarker;
+
+function initMap() {
+  gmap = new google.maps.Map(document.getElementById("map"), {
+    center: { lat:50.4501, lng:30.5234 },
+    zoom: 12,
+    mapTypeControl: false,
+    streetViewControl: false,
+    fullscreenControl: false,
+    styles: [
+      { featureType:"poi",     elementType:"labels", stylers:[{visibility:"off"}] },
+      { featureType:"transit", elementType:"labels", stylers:[{visibility:"off"}] },
+      { featureType:"water",   elementType:"geometry", stylers:[{color:"#c8dff0"}] },
+      { featureType:"landscape",elementType:"geometry",stylers:[{color:"#f0f2f0"}] },
+      { featureType:"road",    elementType:"geometry", stylers:[{color:"#ffffff"}] },
+      { featureType:"road",    elementType:"geometry.stroke", stylers:[{color:"#dde8dd"}] },
+      { featureType:"administrative.locality", elementType:"labels.text.fill", stylers:[{color:"#5a7a6a"}] },
+    ],
+  });
+
+  INSTRUCTORS.forEach(inst => {
+    const marker = new google.maps.Marker({
+      position: { lat:inst.lat, lng:inst.lng },
+      map: gmap,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 11,
+        fillColor: inst.color,
+        fillOpacity: 1,
+        strokeColor: "#fff",
+        strokeWeight: 2.5,
+      },
+      title: inst.name,
+    });
+
+    const info = new google.maps.InfoWindow({
+      content: `<div style="font-family:Inter,sans-serif;min-width:140px;padding:2px 0">
+        <div style="font-weight:600;color:#0d2a1a;font-size:13px">${inst.name}</div>
+        <div style="color:#5a7a6a;font-size:12px;margin-top:3px">⭐ ${inst.rating} · ${inst.price}</div>
+        <button onclick="alert('Запис поки недоступний')" style="margin-top:8px;background:${inst.color};color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit">Записатись</button>
+      </div>`,
+    });
+
+    marker.addListener("click", () => info.open(gmap, marker));
+  });
+}
+
+function locateMe() {
+  if (!navigator.geolocation) { alert("Геолокація не підтримується"); return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+    gmap.setCenter(latlng);
+    gmap.setZoom(13);
+    if (userMarker) userMarker.setMap(null);
+    userMarker = new google.maps.Marker({
+      position: latlng,
+      map: gmap,
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 9,
+        fillColor: "#1a7a4a",
+        fillOpacity: 0.9,
+        strokeColor: "#fff",
+        strokeWeight: 3,
+      },
+      title: "Ваше місце",
+      zIndex: 99,
+    });
+  }, () => alert("Не вдалося визначити місцезнаходження"));
+}
+</script>
+<!-- Замініть YOUR_API_KEY на ключ з Google Cloud Console (Maps JavaScript API) -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDcpDLj_F9Qp6RNZuuzoqeWovEo_sNp1L4&callback=initMap&language=uk&region=UA"></script>
 </body>
 </html>
