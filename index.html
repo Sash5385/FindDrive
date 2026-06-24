@@ -213,7 +213,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.20</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.21</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1060,11 +1060,15 @@ window.initInstrMap = function() {
 };
 
 function locateMe(fromSearch = false) {
-  if (!navigator.geolocation) { alert("Геолокація не підтримується"); return; }
+  if (!navigator.geolocation) { alert("Геолокація не підтримується вашим браузером"); return; }
+  const btns = document.querySelectorAll('.btn-locate, .search-loc');
+  btns.forEach(b => { b._orig = b.innerHTML; b.innerHTML = '<i class="ti ti-loader"></i> …'; b.style.opacity = '.7'; b.style.pointerEvents = 'none'; });
+  const restore = () => btns.forEach(b => { b.innerHTML = b._orig; b.style.opacity = ''; b.style.pointerEvents = ''; });
   navigator.geolocation.getCurrentPosition(pos => {
+    restore();
     const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
     gmap.setCenter(latlng);
-    gmap.setZoom(13);
+    gmap.setZoom(14);
     if (fromSearch) scrollToMap();
     if (userMarker) userMarker.setMap(null);
     userMarker = new google.maps.Marker({
@@ -1081,7 +1085,15 @@ function locateMe(fromSearch = false) {
       title: "Ваше місце",
       zIndex: 99,
     });
-  }, () => alert("Не вдалося визначити місцезнаходження"));
+  }, err => {
+    restore();
+    const msgs = {
+      1: "Доступ до геолокації заборонено.\nДозвольте доступ у налаштуваннях браузера.",
+      2: "Не вдалося визначити місцезнаходження.\nПеревірте GPS або підключення.",
+      3: "Час очікування вичерпано. Спробуйте ще раз.",
+    };
+    alert(msgs[err.code] || "Помилка геолокації");
+  }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
 }
 
 document.getElementById("version-badge").addEventListener("click", function() {
