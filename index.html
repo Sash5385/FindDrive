@@ -143,6 +143,14 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .cab-foot{padding:16px 20px 24px;border-top:.5px solid var(--border);flex-shrink:0}
 .btn-signout{width:100%;background:none;border:.5px solid var(--border);border-radius:9px;padding:10px 18px;font-size:13px;color:var(--text-muted);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;font-family:inherit;transition:border-color .2s,color .2s}
 .btn-signout:hover{border-color:#cc3333;color:#cc3333}
+.btn-google-cab{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--white);border:1px solid var(--border);border-radius:10px;padding:11px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:box-shadow .2s;margin-bottom:16px}
+.btn-google-cab:hover{box-shadow:0 2px 12px rgba(0,0,0,.1)}
+.cab-or{display:flex;align-items:center;gap:10px;color:var(--text-hint);font-size:12px;margin-bottom:16px}
+.cab-or::before,.cab-or::after{content:'';flex:1;height:.5px;background:var(--border)}
+.auth-toggle{text-align:center;font-size:12px;color:var(--text-hint);margin-top:12px}
+.auth-toggle a{color:var(--green);text-decoration:none;font-weight:500}
+.cab-err{background:#fbeaf0;color:#cc3333;border-radius:8px;padding:10px 12px;font-size:12px;margin-bottom:12px;line-height:1.4}
+.cab-phone-row{padding:0 20px 12px;font-size:13px;color:var(--text-muted);display:flex;align-items:center;gap:6px}
 .nav-user{display:flex;align-items:center;gap:8px;cursor:pointer}
 .nav-avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;border:1.5px solid var(--border)}
 .nav-name{font-size:13px;color:var(--text);font-weight:500}
@@ -205,7 +213,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.19</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.20</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -492,33 +500,19 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
     <span class="cab-title">Особистий кабінет</span>
     <button id="cab-close" class="cab-close"><i class="ti ti-x"></i></button>
   </div>
-  <div class="cab-body">
-    <div class="cab-profile">
-      <img id="cab-photo" class="cab-photo" src="" alt="">
-      <div>
-        <div id="cab-fullname" class="cab-fullname"></div>
-        <div id="cab-email" class="cab-email"></div>
-      </div>
-    </div>
-    <div class="cab-section">
-      <div class="cab-section-title">Мої записи</div>
-      <div class="cab-empty"><i class="ti ti-calendar-off"></i><br>Записів ще немає</div>
-    </div>
-    <div class="cab-section">
-      <div class="cab-section-title">Обрані інструктори</div>
-      <div class="cab-empty"><i class="ti ti-heart-off"></i><br>Поки немає обраних</div>
-    </div>
-  </div>
-  <div class="cab-foot">
+  <div id="cab-body" class="cab-body" style="padding:20px"></div>
+  <div id="cab-foot" class="cab-foot" style="display:none">
     <button id="btn-signout" class="btn-signout"><i class="ti ti-logout"></i> Вийти з акаунту</button>
   </div>
 </aside>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
+         createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp }
+import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp,
+         setDoc, getDoc, doc }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -550,27 +544,141 @@ window.openPanel = openPanel;
 window.closeAll  = closeAll;
 
 // --- Auth ---
-document.getElementById("btn-login").addEventListener("click", () => {
-  signInWithPopup(auth, provider).catch(console.error);
+let authMode = 'login';
+const GICON = `<svg viewBox="0 0 48 48" width="18" height="18" style="flex-shrink:0"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.6 33 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 2.9l5.7-5.7C34.1 6.9 29.3 5 24 5 12.4 5 3 14.4 3 26s9.4 21 21 21c11 0 20-8 20-21 0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 15.1l6.6 4.8C14.6 16.1 19 13 24 13c3.1 0 5.8 1.1 7.9 2.9l5.7-5.7C34.1 6.9 29.3 5 24 5c-7.7 0-14.4 4.4-17.7 10.1z"/><path fill="#4CAF50" d="M24 47c5.2 0 9.9-1.9 13.5-5l-6.2-5.2C29.4 38.5 26.8 39.5 24 39.5c-5.2 0-9.6-3.6-11.2-8.5l-6.5 5C9.7 43 16.4 47 24 47z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.7l.1-.1 6.2 5.2c-.4.4 6.6-4.8 6.6-14.8 0-1.3-.1-2.6-.4-3.9z"/></svg>`;
+
+function renderAuthScreen() {
+  document.getElementById('cab-foot').style.display = 'none';
+  document.getElementById('cab-body').innerHTML = `
+    <button id="btn-google-cab" class="btn-google-cab">${GICON} Увійти через Google</button>
+    <div class="cab-or"><span>або</span></div>
+    <div id="cab-err" class="cab-err" style="display:none"></div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input id="auth-email" class="form-input" type="email" placeholder="your@email.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Пароль</label>
+      <input id="auth-pass" class="form-input" type="password" placeholder="Мінімум 6 символів">
+    </div>
+    ${authMode === 'register' ? `
+    <div class="form-group">
+      <label class="form-label">Ім'я та прізвище</label>
+      <input id="auth-name" class="form-input" type="text" placeholder="Іван Іваненко" autocomplete="name">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Телефон</label>
+      <input id="auth-phone" class="form-input" type="tel" placeholder="+38 (0__) ___-__-__">
+    </div>` : ''}
+    <button id="btn-auth-submit" class="btn-submit-instr" style="margin-top:4px">
+      <i class="ti ti-login"></i> ${authMode === 'register' ? 'Зареєструватись' : 'Увійти'}
+    </button>
+    <p class="auth-toggle">
+      ${authMode === 'register'
+        ? 'Вже є акаунт? <a href="#" id="auth-switch">Увійти</a>'
+        : 'Немає акаунту? <a href="#" id="auth-switch">Зареєструватись</a>'}
+    </p>`;
+  document.getElementById('btn-google-cab').addEventListener('click', () =>
+    signInWithPopup(auth, provider).catch(e => showAuthErr(e.message)));
+  document.getElementById('auth-switch').addEventListener('click', e => {
+    e.preventDefault();
+    authMode = authMode === 'login' ? 'register' : 'login';
+    renderAuthScreen();
+  });
+  document.getElementById('btn-auth-submit').addEventListener('click', handleAuthSubmit);
+  document.getElementById('auth-pass').addEventListener('keydown', e => { if (e.key === 'Enter') handleAuthSubmit(); });
+}
+
+function showAuthErr(msg) {
+  const el = document.getElementById('cab-err');
+  if (!el) return;
+  const map = {
+    'auth/wrong-password':       'Неправильний пароль',
+    'auth/user-not-found':       'Користувача з таким email не знайдено',
+    'auth/email-already-in-use': 'Цей email вже зареєстровано',
+    'auth/weak-password':        'Пароль занадто простий (мінімум 6 символів)',
+    'auth/invalid-email':        'Невірний формат email',
+    'auth/invalid-credential':   'Неправильний email або пароль',
+  };
+  el.textContent = map[msg.match(/auth\/[\w-]+/)?.[0]] || 'Помилка входу. Спробуйте ще раз.';
+  el.style.display = '';
+}
+
+async function handleAuthSubmit() {
+  const email = document.getElementById('auth-email')?.value.trim();
+  const pass  = document.getElementById('auth-pass')?.value;
+  if (!email || !pass) { showAuthErr('Заповніть email і пароль'); return; }
+  const btn = document.getElementById('btn-auth-submit');
+  btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> …';
+  try {
+    if (authMode === 'register') {
+      const name  = document.getElementById('auth-name')?.value.trim() || '';
+      const phone = document.getElementById('auth-phone')?.value.trim() || '';
+      const cred  = await createUserWithEmailAndPassword(auth, email, pass);
+      if (name) await updateProfile(cred.user, { displayName: name });
+      await setDoc(doc(db, 'users', cred.user.uid), { name, phone, email, createdAt: serverTimestamp() });
+    } else {
+      await signInWithEmailAndPassword(auth, email, pass);
+    }
+  } catch(e) {
+    showAuthErr(e.message);
+    btn.disabled = false;
+    btn.innerHTML = `<i class="ti ti-login"></i> ${authMode === 'register' ? 'Зареєструватись' : 'Увійти'}`;
+  }
+}
+
+async function renderProfileScreen(user) {
+  let ud = {};
+  try { const s = await getDoc(doc(db, 'users', user.uid)); if (s.exists()) ud = s.data(); } catch(e) {}
+  const name = ud.name || user.displayName || '';
+  const phone = ud.phone || '';
+  const ini  = name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || (user.email||'?')[0].toUpperCase();
+  document.getElementById('cab-foot').style.display = '';
+  document.getElementById('cab-body').innerHTML = `
+    <div class="cab-profile">
+      ${user.photoURL
+        ? `<img class="cab-photo" src="${esc(user.photoURL)}" alt="">`
+        : `<div class="cab-photo" style="background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;flex-shrink:0">${esc(ini)}</div>`}
+      <div>
+        <div class="cab-fullname">${esc(name || 'Користувач')}</div>
+        <div class="cab-email">${esc(user.email || '')}</div>
+      </div>
+    </div>
+    ${phone ? `<div class="cab-phone-row"><i class="ti ti-phone" style="color:var(--green)"></i> ${esc(phone)}</div>` : ''}
+    <div class="cab-section">
+      <div class="cab-section-title">Мої записи</div>
+      <div class="cab-empty"><i class="ti ti-calendar-off"></i><br>Записів ще немає</div>
+    </div>
+    <div class="cab-section">
+      <div class="cab-section-title">Обрані інструктори</div>
+      <div class="cab-empty"><i class="ti ti-heart-off"></i><br>Поки немає обраних</div>
+    </div>`;
+}
+
+document.getElementById("btn-login").addEventListener("click", () => { renderAuthScreen(); openPanel("cabinet"); });
+document.getElementById("nav-user").addEventListener("click", async () => {
+  if (auth.currentUser) await renderProfileScreen(auth.currentUser);
+  openPanel("cabinet");
 });
-document.getElementById("nav-user").addEventListener("click", () => openPanel("cabinet"));
 document.getElementById("cab-close").addEventListener("click", closeAll);
 document.getElementById("btn-signout").addEventListener("click", () => { signOut(auth); closeAll(); });
 
-onAuthStateChanged(auth, user => {
+onAuthStateChanged(auth, async user => {
   const btnLogin = document.getElementById("btn-login");
   const navUser  = document.getElementById("nav-user");
   if (user) {
     btnLogin.style.display = "none";
     navUser.style.display  = "flex";
-    document.getElementById("nav-avatar").src            = user.photoURL    || "";
-    document.getElementById("nav-name").textContent      = (user.displayName || "").split(" ")[0];
-    document.getElementById("cab-photo").src             = user.photoURL    || "";
-    document.getElementById("cab-fullname").textContent  = user.displayName || "";
-    document.getElementById("cab-email").textContent     = user.email       || "";
+    document.getElementById("nav-avatar").src       = user.photoURL || "";
+    document.getElementById("nav-name").textContent = (user.displayName || user.email || "").split(" ")[0];
+    if (user.providerData[0]?.providerId === 'google.com') {
+      setDoc(doc(db, 'users', user.uid), { name: user.displayName||'', email: user.email||'', photo: user.photoURL||'' }, { merge: true }).catch(()=>{});
+    }
+    if (document.getElementById("cabinet").classList.contains("open")) await renderProfileScreen(user);
   } else {
     btnLogin.style.display = "";
     navUser.style.display  = "none";
+    authMode = 'login';
   }
 });
 
