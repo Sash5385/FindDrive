@@ -87,16 +87,18 @@ Blob-и (розмиті кола): зелений `#a8f0c0`, жовтий `#f0e0
    - `PATCH` — правки тексту, дрібні стилі, баг-фікси
    - `MINOR` — нова секція, новий компонент, нова функція
    - `MAJOR` — зміна стека, повний редизайн, breaking change
-3. Після змін — **деплой на продакшн**: змерджити в `main`, GitHub Pages оновиться автоматично.
+3. **Версія оновлюється в `index.html`** — бейдж `<span class="logo-version">vX.Y.Z</span>` у навбарі.
+4. Після змін — **деплой на продакшн**: змерджити в `main`, GitHub Pages оновиться автоматично.
 
 ### Воркфлоу кожного оновлення
 
 ```
 1. Внести зміни в код
 2. Оновити CHANGELOG.md — додати новий запис зверху
-3. git add . && git commit
-4. git push origin claude/<branch>
-5. Змерджити в main → деплой на finddrive.id4drive.pro
+3. Оновити версію в index.html (logo-version у навбарі)
+4. git add . && git commit
+5. git push origin claude/<branch>
+6. Змерджити в main → деплой на finddrive.id4drive.pro
 ```
 
 ### Формат запису в CHANGELOG.md
