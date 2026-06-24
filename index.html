@@ -56,6 +56,13 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .hints{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap}
 .hint-tag{font-size:12px;color:var(--text-hint);display:flex;align-items:center;gap:4px;cursor:pointer;transition:color .2s}
 .hint-tag:hover{color:var(--green)}
+.pac-container{font-family:'Inter',sans-serif;border-radius:12px;border:.5px solid #dde8dd;box-shadow:0 4px 20px rgba(26,122,74,.1);margin-top:6px;padding:4px 0}
+.pac-item{padding:8px 14px;font-size:13px;color:#0d2a1a;cursor:pointer;border:none}
+.pac-item:hover,.pac-item-selected{background:#e8f4ee}
+.pac-item-query{font-size:13px;color:#0d2a1a}
+.pac-matched{color:#1a7a4a;font-weight:500}
+.pac-icon{display:none}
+.hdpi .pac-icon{display:none}
 
 /* SECTIONS */
 .section{padding:0 48px 44px}
@@ -139,16 +146,16 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
     <p class="hero-sub">Порівнюйте інструкторів за районом, ціною та рейтингом. Записуйтесь онлайн за 2 хвилини.</p>
     <div class="search-box">
       <i class="ti ti-search"></i>
-      <input class="search-input" type="text" placeholder="Район, метро або адреса...">
+      <input id="search-input" class="search-input" type="text" placeholder="Район, метро або адреса..." onkeydown="if(event.key==='Enter') doSearch()">
       <div class="search-divider"></div>
-      <div class="search-loc"><i class="ti ti-current-location"></i> Моє місце</div>
-      <button class="btn-search"><i class="ti ti-search"></i> Знайти</button>
+      <div class="search-loc" onclick="locateMe(true)"><i class="ti ti-current-location"></i> Моє місце</div>
+      <button class="btn-search" onclick="doSearch()"><i class="ti ti-search"></i> Знайти</button>
     </div>
     <div class="hints">
-      <span class="hint-tag"><i class="ti ti-trending-up"></i> Шевченківський</span>
-      <span class="hint-tag"><i class="ti ti-trending-up"></i> Оболонь</span>
-      <span class="hint-tag"><i class="ti ti-trending-up"></i> Позняки</span>
-      <span class="hint-tag"><i class="ti ti-trending-up"></i> Відрадний</span>
+      <span class="hint-tag" onclick="searchQuery('Шевченківський район, Київ')"><i class="ti ti-trending-up"></i> Шевченківський</span>
+      <span class="hint-tag" onclick="searchQuery('Оболонь, Київ')"><i class="ti ti-trending-up"></i> Оболонь</span>
+      <span class="hint-tag" onclick="searchQuery('Позняки, Київ')"><i class="ti ti-trending-up"></i> Позняки</span>
+      <span class="hint-tag" onclick="searchQuery('Відрадний, Київ')"><i class="ti ti-trending-up"></i> Відрадний</span>
     </div>
   </div>
 </section>
@@ -281,9 +288,31 @@ const INSTRUCTORS = [
   { lat:50.4100, lng:30.6210, name:"Дмитро Петренко",    price:"700 грн/год", rating:"4.8", color:"#185fa5" },
 ];
 
-let gmap, userMarker;
+let gmap, userMarker, geocoder;
+
+function scrollToMap() {
+  document.getElementById("map").scrollIntoView({ behavior:"smooth", block:"center" });
+}
+
+function doSearch() {
+  const query = document.getElementById("search-input").value.trim();
+  if (!query) return;
+  geocoder.geocode({ address: query + ", Україна" }, (results, status) => {
+    if (status === "OK" && results[0]) {
+      gmap.setCenter(results[0].geometry.location);
+      gmap.setZoom(13);
+      scrollToMap();
+    }
+  });
+}
+
+function searchQuery(query) {
+  document.getElementById("search-input").value = query;
+  doSearch();
+}
 
 function initMap() {
+  geocoder = new google.maps.Geocoder();
   gmap = new google.maps.Map(document.getElementById("map"), {
     center: { lat:50.4501, lng:30.5234 },
     zoom: 12,
@@ -326,14 +355,27 @@ function initMap() {
 
     marker.addListener("click", () => info.open(gmap, marker));
   });
+
+  const autocomplete = new google.maps.places.Autocomplete(
+    document.getElementById("search-input"),
+    { componentRestrictions:{ country:"ua" }, types:["geocode"], fields:["geometry","name"] }
+  );
+  autocomplete.addListener("place_changed", () => {
+    const place = autocomplete.getPlace();
+    if (!place.geometry) return;
+    gmap.setCenter(place.geometry.location);
+    gmap.setZoom(13);
+    scrollToMap();
+  });
 }
 
-function locateMe() {
+function locateMe(fromSearch = false) {
   if (!navigator.geolocation) { alert("Геолокація не підтримується"); return; }
   navigator.geolocation.getCurrentPosition(pos => {
     const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
     gmap.setCenter(latlng);
     gmap.setZoom(13);
+    if (fromSearch) scrollToMap();
     if (userMarker) userMarker.setMap(null);
     userMarker = new google.maps.Marker({
       position: latlng,
@@ -353,6 +395,6 @@ function locateMe() {
 }
 </script>
 <!-- Замініть YOUR_API_KEY на ключ з Google Cloud Console (Maps JavaScript API) -->
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDcpDLj_F9Qp6RNZuuzoqeWovEo_sNp1L4&callback=initMap&language=uk&region=UA"></script>
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDcpDLj_F9Qp6RNZuuzoqeWovEo_sNp1L4&libraries=places&callback=initMap&language=uk&region=UA"></script>
 </body>
 </html>
