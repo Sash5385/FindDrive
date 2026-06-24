@@ -182,7 +182,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <div class="logo-box"><i class="ti ti-steering-wheel"></i></div>
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.11</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.12</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#">Інструктори</a>
@@ -230,7 +230,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
     <span class="section-label">Інструктори поруч</span>
     <a class="section-link" href="#">Усі інструктори <i class="ti ti-arrow-right"></i></a>
   </div>
-  <div class="instr-grid">
+  <div id="instr-grid" class="instr-grid">
 
     <div class="instr-card">
       <div class="card-blob" style="background:#a8f0c0"></div>
@@ -479,6 +479,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAr-Q8ojscCoMLXNAKNjqbGrqw0JN6_mbo",
@@ -492,8 +494,10 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db   = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
+// --- Panels ---
 function openPanel(id) {
   document.getElementById(id).classList.add("open");
   document.getElementById("cab-overlay").classList.add("open");
@@ -502,8 +506,9 @@ function closeAll() {
   document.querySelectorAll(".cabinet.open").forEach(el => el.classList.remove("open"));
   document.getElementById("cab-overlay").classList.remove("open");
 }
+document.getElementById("cab-overlay").addEventListener("click", closeAll);
 
-// Student cabinet
+// --- Auth ---
 document.getElementById("btn-login").addEventListener("click", () => {
   signInWithPopup(auth, provider).catch(console.error);
 });
@@ -511,44 +516,6 @@ document.getElementById("nav-user").addEventListener("click", () => openPanel("c
 document.getElementById("cab-close").addEventListener("click", closeAll);
 document.getElementById("btn-signout").addEventListener("click", () => { signOut(auth); closeAll(); });
 
-// Instructor panel
-document.getElementById("btn-instr").addEventListener("click", () => openPanel("instr-panel"));
-document.getElementById("instr-close").addEventListener("click", closeAll);
-
-const instrForm = document.getElementById("instr-form");
-document.getElementById("btn-submit-instr").addEventListener("click", () => {
-  const name  = instrForm.querySelector('[name="name"]').value.trim();
-  const phone = instrForm.querySelector('[name="phone"]').value.trim();
-  let valid = true;
-  [["name", name], ["phone", phone]].forEach(([field, val]) => {
-    const el = instrForm.querySelector(`[name="${field}"]`);
-    el.style.borderColor = val ? "" : "#cc3333";
-    if (!val) valid = false;
-  });
-  if (!valid) return;
-  document.getElementById("instr-form-wrap").style.display = "none";
-  document.getElementById("instr-foot").style.display = "none";
-  document.getElementById("instr-success").style.display = "flex";
-});
-instrForm.addEventListener("input", e => { e.target.style.borderColor = ""; });
-
-const photoInput = document.getElementById("photo-input");
-document.getElementById("photo-upload-area").addEventListener("click", () => photoInput.click());
-photoInput.addEventListener("change", e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    const prev = document.getElementById("photo-preview");
-    prev.innerHTML = `<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover">`;
-  };
-  reader.readAsDataURL(file);
-});
-
-// Shared overlay
-document.getElementById("cab-overlay").addEventListener("click", closeAll);
-
-// Auth state
 onAuthStateChanged(auth, user => {
   const btnLogin = document.getElementById("btn-login");
   const navUser  = document.getElementById("nav-user");
@@ -565,6 +532,156 @@ onAuthStateChanged(auth, user => {
     navUser.style.display  = "none";
   }
 });
+
+// --- Instructor panel ---
+document.getElementById("btn-instr").addEventListener("click", () => openPanel("instr-panel"));
+document.getElementById("instr-close").addEventListener("click", closeAll);
+
+// Photo: resize to ≤200px before storing
+let instrPhotoData = null;
+
+function resizePhoto(file, maxPx = 200) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const img = new Image();
+      img.onload = () => {
+        const s = Math.min(maxPx / img.width, maxPx / img.height, 1);
+        const c = document.createElement('canvas');
+        c.width  = Math.round(img.width  * s);
+        c.height = Math.round(img.height * s);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        resolve(c.toDataURL('image/jpeg', 0.8));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+const photoInput = document.getElementById("photo-input");
+document.getElementById("photo-upload-area").addEventListener("click", () => photoInput.click());
+photoInput.addEventListener("change", async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  instrPhotoData = await resizePhoto(file);
+  document.getElementById("photo-preview").innerHTML =
+    `<img src="${instrPhotoData}" style="width:100%;height:100%;object-fit:cover">`;
+});
+
+// Form submit → Firestore
+const instrForm = document.getElementById("instr-form");
+instrForm.addEventListener("input", e => { e.target.style.borderColor = ""; });
+
+document.getElementById("btn-submit-instr").addEventListener("click", async () => {
+  const name  = instrForm.querySelector('[name="name"]').value.trim();
+  const phone = instrForm.querySelector('[name="phone"]').value.trim();
+  let valid = true;
+  [["name", name], ["phone", phone]].forEach(([field, val]) => {
+    instrForm.querySelector(`[name="${field}"]`).style.borderColor = val ? "" : "#cc3333";
+    if (!val) valid = false;
+  });
+  if (!valid) return;
+
+  const btn = document.getElementById("btn-submit-instr");
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader"></i> Збереження…';
+
+  const days = [...instrForm.querySelectorAll('[name="days"]:checked')].map(c => c.value);
+
+  try {
+    const ref = await addDoc(collection(db, "instructors"), {
+      name,
+      phone,
+      email:      instrForm.querySelector('[name="email"]').value.trim(),
+      area:       instrForm.querySelector('[name="area"]').value.trim(),
+      gearbox:    instrForm.querySelector('[name="gearbox"]:checked')?.value || 'Автомат',
+      price:      Number(instrForm.querySelector('[name="price"]').value)      || 0,
+      experience: Number(instrForm.querySelector('[name="experience"]').value) || 0,
+      car:        instrForm.querySelector('[name="car"]').value.trim(),
+      days,
+      time_from:  instrForm.querySelector('[name="time_from"]').value,
+      time_to:    instrForm.querySelector('[name="time_to"]').value,
+      about:      instrForm.querySelector('[name="about"]').value.trim(),
+      photo:      instrPhotoData || null,
+      status:     "approved",
+      rating:     null,
+      reviews:    0,
+      createdAt:  serverTimestamp(),
+    });
+    document.getElementById("instr-form-wrap").style.display = "none";
+    document.getElementById("instr-foot").style.display = "none";
+    document.getElementById("instr-success").style.display = "flex";
+    appendInstructorCard({ name, phone, area: instrForm.querySelector('[name="area"]').value.trim(),
+      gearbox: instrForm.querySelector('[name="gearbox"]:checked')?.value,
+      price: Number(instrForm.querySelector('[name="price"]').value) || 0,
+      car: instrForm.querySelector('[name="car"]').value.trim(),
+      photo: instrPhotoData, rating: null, reviews: 0 });
+  } catch(err) {
+    console.error(err);
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-send"></i> Надіслати анкету';
+    alert("Помилка збереження. Перевірте підключення та спробуйте ще раз.");
+  }
+});
+
+// --- Render instructor cards ---
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+const THEMES = [
+  { blob:'#a8f0c0', bg:'#e0f4ea', color:'#1a6a3a' },
+  { blob:'#f0a8d0', bg:'#fbeaf0', color:'#993556' },
+  { blob:'#a0d8f8', bg:'#e6f1fb', color:'#185fa5' },
+  { blob:'#c0b8f8', bg:'#f0eeff', color:'#5a3a9a' },
+];
+function initials(name) {
+  return (name||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';
+}
+function buildCard(d, i) {
+  const th = THEMES[i % THEMES.length];
+  const tags = [d.gearbox, (d.area||'').split(',')[0].trim(), (d.car||'').split(' ')[0]].filter(Boolean);
+  return `<div class="instr-card">
+    <div class="card-blob" style="background:${th.blob}"></div>
+    <div class="instr-top">
+      ${d.photo
+        ? `<img class="avatar" src="${esc(d.photo)}" style="object-fit:cover" alt="">`
+        : `<div class="avatar" style="background:${th.bg};color:${th.color}">${esc(initials(d.name))}</div>`}
+      <div>
+        <div class="instr-name">${esc(d.name)}</div>
+        <div class="instr-meta"><i class="ti ti-star"></i>${d.rating ? ' '+d.rating+' · '+d.reviews+' відгуків' : ' Новий інструктор'}</div>
+      </div>
+    </div>
+    <div class="badge-dist"><i class="ti ti-map-pin"></i> ${esc(d.area||'Київ')}</div>
+    <div class="instr-tags">${tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>
+    <div class="instr-footer">
+      <div class="price">${d.price?d.price+' грн':'—'} <span>/ год</span></div>
+      <button class="btn-book" onclick="alert('Запис поки недоступний')">Записатись</button>
+    </div>
+  </div>`;
+}
+
+function appendInstructorCard(d) {
+  const grid = document.getElementById("instr-grid");
+  const idx  = grid.children.length;
+  grid.insertAdjacentHTML("afterbegin", buildCard(d, idx));
+}
+
+async function loadInstructors() {
+  try {
+    const snap = await getDocs(query(collection(db, "instructors"), where("status","==","approved")));
+    if (snap.empty) return;
+    const grid = document.getElementById("instr-grid");
+    const offset = grid.children.length;
+    snap.docs.forEach((doc, i) => {
+      grid.insertAdjacentHTML("afterbegin", buildCard(doc.data(), offset + i));
+    });
+  } catch(e) {
+    console.warn("Firestore load:", e.message);
+  }
+}
+
+loadInstructors();
 </script>
 
 <script>
