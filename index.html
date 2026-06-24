@@ -143,17 +143,31 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .nav-name{font-size:13px;color:var(--text);font-weight:500}
 
 /* INSTRUCTOR FORM PANEL */
-.instr-intro{font-size:13px;color:var(--text-muted);line-height:1.6;padding:16px 20px 4px}
-.instr-form{padding:4px 20px 0}
-.form-group{margin-bottom:14px}
+.instr-wide{width:380px}
+.instr-intro{font-size:13px;color:var(--text-muted);line-height:1.6;padding:14px 20px 0}
+.photo-upload-wrap{display:flex;justify-content:center;padding:16px 20px 6px}
+.photo-upload{display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer}
+.photo-preview{width:84px;height:84px;border-radius:50%;background:var(--bg);border:1.5px dashed #b8d8c8;display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--text-hint);overflow:hidden;transition:border-color .2s,color .2s}
+.photo-preview img{width:100%;height:100%;object-fit:cover}
+.photo-upload:hover .photo-preview{border-color:var(--green);color:var(--green)}
+.photo-label{font-size:12px;color:var(--green);font-weight:500}
+.instr-form{padding:0 20px}
+.form-divider{font-size:10px;letter-spacing:2px;color:var(--text-hint);text-transform:uppercase;padding:12px 0 10px;border-top:.5px solid var(--border);margin-top:2px}
+.instr-form .form-divider:first-child{border-top:none;padding-top:2px}
+.form-group{margin-bottom:12px}
 .form-label{font-size:12px;font-weight:500;color:var(--text-muted);margin-bottom:5px;display:block}
 .form-input{width:100%;border:.5px solid var(--border);border-radius:9px;padding:10px 12px;font-size:13px;font-family:inherit;color:var(--text);background:var(--white);outline:none;transition:border-color .2s}
 .form-input:focus{border-color:var(--green)}
 .form-textarea{resize:vertical;min-height:72px}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .radio-group{display:flex;gap:14px;flex-wrap:wrap}
 .radio-opt{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-muted);cursor:pointer}
 .radio-opt input{accent-color:var(--green);cursor:pointer;width:14px;height:14px}
+.days-grid{display:flex;gap:6px;flex-wrap:wrap}
+.day-opt{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;border:.5px solid var(--border);font-size:12px;font-weight:500;color:var(--text-muted);cursor:pointer;transition:background .15s,border-color .15s,color .15s;position:relative;user-select:none}
+.day-opt input{position:absolute;opacity:0;width:0;height:0}
+.day-opt:has(input:checked){background:var(--green);border-color:var(--green);color:#fff}
+.day-opt:hover:not(:has(input:checked)){background:var(--green-light);border-color:#b8d8c8;color:var(--green)}
 .btn-submit-instr{width:100%;background:var(--green);color:#fff;border:none;border-radius:9px;padding:11px 18px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;font-family:inherit;transition:background .2s}
 .btn-submit-instr:hover{background:var(--green-dark)}
 .instr-success{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center}
@@ -168,7 +182,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <div class="logo-box"><i class="ti ti-steering-wheel"></i></div>
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.10</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.11</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#">Інструктори</a>
@@ -334,24 +348,40 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 
 <div id="cab-overlay" class="cab-overlay"></div>
 
-<aside id="instr-panel" class="cabinet">
+<aside id="instr-panel" class="cabinet instr-wide">
   <div class="cab-header">
-    <span class="cab-title">Стати інструктором</span>
+    <span class="cab-title">Анкета інструктора</span>
     <button id="instr-close" class="cab-close"><i class="ti ti-x"></i></button>
   </div>
   <div id="instr-form-wrap" class="cab-body">
-    <p class="instr-intro">Залиште заявку — ми зв'яжемося з вами та допоможемо налаштувати профіль.</p>
+    <p class="instr-intro">Заповніть анкету — після перевірки профіль з'явиться на карті.</p>
+    <div class="photo-upload-wrap">
+      <div class="photo-upload" id="photo-upload-area" title="Завантажити фото">
+        <div id="photo-preview" class="photo-preview"><i class="ti ti-camera"></i></div>
+        <input type="file" id="photo-input" name="photo" accept="image/*" hidden>
+        <span class="photo-label">Додати фото</span>
+      </div>
+    </div>
     <form id="instr-form" class="instr-form" novalidate>
+      <div class="form-divider">Основна інформація</div>
       <div class="form-group">
         <label class="form-label">ПІБ *</label>
         <input class="form-input" name="name" type="text" placeholder="Іваненко Іван Іванович">
       </div>
-      <div class="form-group">
-        <label class="form-label">Телефон *</label>
-        <input class="form-input" name="phone" type="tel" placeholder="+380 XX XXX XX XX">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Телефон *</label>
+          <input class="form-input" name="phone" type="tel" placeholder="+380 XX XXX XX XX">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input class="form-input" name="email" type="email" placeholder="you@gmail.com">
+        </div>
       </div>
+
+      <div class="form-divider">Умови роботи</div>
       <div class="form-group">
-        <label class="form-label">Район роботи</label>
+        <label class="form-label">Район(и) роботи</label>
         <input class="form-input" name="area" type="text" placeholder="Шевченківський, Оболонь…">
       </div>
       <div class="form-group">
@@ -368,23 +398,53 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
           <input class="form-input" name="price" type="number" placeholder="600" min="0">
         </div>
         <div class="form-group">
-          <label class="form-label">Досвід (років)</label>
+          <label class="form-label">Стаж (років)</label>
           <input class="form-input" name="experience" type="number" placeholder="5" min="0">
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Про себе (необов'язково)</label>
-        <textarea class="form-input form-textarea" name="about" placeholder="Коротко про ваш підхід до навчання…"></textarea>
+        <label class="form-label">Авто (марка, модель)</label>
+        <input class="form-input" name="car" type="text" placeholder="Toyota Corolla 2020, автомат">
+      </div>
+
+      <div class="form-divider">Графік</div>
+      <div class="form-group">
+        <label class="form-label">Робочі дні</label>
+        <div class="days-grid">
+          <label class="day-opt"><input type="checkbox" name="days" value="Пн"> Пн</label>
+          <label class="day-opt"><input type="checkbox" name="days" value="Вт"> Вт</label>
+          <label class="day-opt"><input type="checkbox" name="days" value="Ср"> Ср</label>
+          <label class="day-opt"><input type="checkbox" name="days" value="Чт"> Чт</label>
+          <label class="day-opt"><input type="checkbox" name="days" value="Пт"> Пт</label>
+          <label class="day-opt"><input type="checkbox" name="days" value="Сб"> Сб</label>
+          <label class="day-opt"><input type="checkbox" name="days" value="Нд"> Нд</label>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Час від</label>
+          <input class="form-input" name="time_from" type="time" value="08:00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Час до</label>
+          <input class="form-input" name="time_to" type="time" value="20:00">
+        </div>
+      </div>
+
+      <div class="form-divider">Про себе</div>
+      <div class="form-group">
+        <label class="form-label">Розкажіть про себе</label>
+        <textarea class="form-input form-textarea" name="about" placeholder="Підхід до навчання, спеціалізація, особливості…"></textarea>
       </div>
     </form>
   </div>
   <div id="instr-success" class="instr-success" style="display:none">
     <div class="success-icon"><i class="ti ti-check"></i></div>
-    <div class="success-title">Заявку надіслано!</div>
-    <div class="success-sub">Ми зв'яжемося з вами<br>протягом 1 робочого дня.</div>
+    <div class="success-title">Анкету надіслано!</div>
+    <div class="success-sub">Ми перевіримо дані та зв'яжемося з вами<br>протягом 1 робочого дня.</div>
   </div>
   <div id="instr-foot" class="cab-foot">
-    <button id="btn-submit-instr" class="btn-submit-instr"><i class="ti ti-send"></i> Надіслати заявку</button>
+    <button id="btn-submit-instr" class="btn-submit-instr"><i class="ti ti-send"></i> Надіслати анкету</button>
   </div>
 </aside>
 
@@ -471,6 +531,19 @@ document.getElementById("btn-submit-instr").addEventListener("click", () => {
   document.getElementById("instr-success").style.display = "flex";
 });
 instrForm.addEventListener("input", e => { e.target.style.borderColor = ""; });
+
+const photoInput = document.getElementById("photo-input");
+document.getElementById("photo-upload-area").addEventListener("click", () => photoInput.click());
+photoInput.addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const prev = document.getElementById("photo-preview");
+    prev.innerHTML = `<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover">`;
+  };
+  reader.readAsDataURL(file);
+});
 
 // Shared overlay
 document.getElementById("cab-overlay").addEventListener("click", closeAll);
