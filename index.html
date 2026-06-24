@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FindDrive — Знайди інструктора з водіння</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#1a7a4a;--green-dark:#0d4a2a;--green-light:#e8f4ee;--green-mid:#e0f4ea;
+  --bg:#f0f2f0;--white:#ffffff;--text:#0d2a1a;--text-muted:#5a7a6a;--text-hint:#7a9a8a;
+  --border:#dde8dd;--pink:#993556;--pink-light:#fbeaf0;--blue:#185fa5;--blue-light:#e6f1fb;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
+
+/* NAV */
+.nav{background:var(--white);border-bottom:.5px solid var(--border);padding:0 48px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.logo-box{width:34px;height:34px;background:var(--green);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px}
+.logo-text{font-size:15px;font-weight:600;color:var(--text)}
+.nav-links{display:flex;gap:28px}
+.nav-link{font-size:14px;color:var(--text-muted);text-decoration:none;transition:color .2s}
+.nav-link:hover{color:var(--green)}
+.nav-right{display:flex;align-items:center;gap:14px}
+.btn-login{font-size:14px;color:var(--green);background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:inherit}
+.btn-cta{background:var(--green);color:#fff;border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:500;cursor:pointer;transition:background .2s;font-family:inherit}
+.btn-cta:hover{background:var(--green-dark)}
+
+/* HERO */
+.hero{position:relative;padding:64px 48px 56px;overflow:hidden;min-height:340px}
+.blob{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none}
+.b1{width:320px;height:260px;background:#a8f0c0;opacity:.5;top:-60px;right:40px}
+.b2{width:220px;height:200px;background:#f0e060;opacity:.32;top:10px;right:240px}
+.b3{width:180px;height:160px;background:#f0a8d0;opacity:.28;top:-20px;right:420px}
+.b4{width:200px;height:170px;background:#a0d8f8;opacity:.32;bottom:-10px;right:100px}
+.b5{width:150px;height:130px;background:#c0b8f8;opacity:.28;bottom:20px;left:220px}
+.hero-content{position:relative;z-index:2;max-width:680px}
+.hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--green-mid);border-radius:20px;padding:5px 14px;font-size:12px;color:#1a6a3a;margin-bottom:22px}
+.hero-h1{font-size:42px;font-weight:600;color:var(--text);line-height:1.12;margin-bottom:16px}
+.hero-h1 span{color:var(--green)}
+.hero-sub{font-size:15px;color:var(--text-muted);line-height:1.65;max-width:400px;margin-bottom:36px}
+
+/* SEARCH */
+.search-box{background:var(--white);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;max-width:560px;border:.5px solid #cce0cc;box-shadow:0 2px 16px rgba(26,122,74,.06)}
+.search-box>.ti{font-size:18px;color:#9ab0a0;flex-shrink:0}
+.search-input{border:none;outline:none;font-size:14px;color:var(--text);flex:1;background:transparent;font-family:inherit}
+.search-input::placeholder{color:#9ab0a0}
+.search-divider{width:.5px;height:28px;background:var(--border);flex-shrink:0}
+.search-loc{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--green);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.btn-search{background:var(--green);color:#fff;border:none;border-radius:9px;padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0;transition:background .2s;font-family:inherit}
+.btn-search:hover{background:var(--green-dark)}
+.hints{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap}
+.hint-tag{font-size:12px;color:var(--text-hint);display:flex;align-items:center;gap:4px;cursor:pointer;transition:color .2s}
+.hint-tag:hover{color:var(--green)}
+
+/* SECTIONS */
+.section{padding:0 48px 44px}
+.section-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.section-label{font-size:11px;letter-spacing:2.5px;color:var(--text-hint);text-transform:uppercase}
+.section-link{font-size:13px;color:var(--green);display:flex;align-items:center;gap:4px;text-decoration:none}
+
+/* INSTRUCTOR CARDS */
+.instr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:900px){.instr-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.instr-grid{grid-template-columns:1fr}.nav-links{display:none}.hero{padding:40px 20px 36px}.section,.how,.map-section{padding-left:20px;padding-right:20px}.nav{padding:0 20px}.hero-h1{font-size:28px}}
+.instr-card{background:var(--white);border-radius:18px;padding:20px 18px;border:.5px solid var(--border);position:relative;overflow:hidden;transition:border-color .2s,transform .2s}
+.instr-card:hover{border-color:#aad0aa;transform:translateY(-2px)}
+.card-blob{position:absolute;width:110px;height:90px;border-radius:50%;filter:blur(35px);opacity:.4;top:-20px;right:-10px;pointer-events:none}
+.instr-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;position:relative;z-index:1}
+.avatar{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;flex-shrink:0}
+.instr-name{font-size:14px;font-weight:500;color:var(--text)}
+.instr-meta{font-size:12px;color:var(--text-hint);margin-top:2px;display:flex;align-items:center;gap:4px}
+.badge-dist{display:inline-flex;align-items:center;gap:5px;background:var(--green-light);border-radius:20px;padding:4px 10px;font-size:11px;color:#1a6a3a;margin-bottom:12px}
+.instr-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.tag{font-size:11px;padding:3px 10px;border-radius:20px;background:#f0f5f0;color:#4a6a5a}
+.instr-footer{display:flex;align-items:center;justify-content:space-between;border-top:.5px solid #eef3ee;padding-top:12px}
+.price{font-size:15px;font-weight:500;color:var(--text)}
+.price span{font-size:12px;color:var(--text-hint);font-weight:400}
+.btn-book{background:var(--green);color:#fff;border:none;border-radius:9px;padding:7px 16px;font-size:12px;font-weight:500;cursor:pointer;transition:background .2s;font-family:inherit}
+.btn-book:hover{background:var(--green-dark)}
+
+/* HOW */
+.how{padding:0 48px 44px}
+.how-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:800px){.how-grid{grid-template-columns:1fr 1fr}}
+.how-step{border-radius:16px;padding:20px 16px}
+.step-num{width:30px;height:30px;border-radius:50%;color:#fff;font-size:13px;font-weight:500;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.step-icon{font-size:26px;margin-bottom:10px;display:block}
+.step-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:5px}
+.step-sub{font-size:12px;color:var(--text-muted);line-height:1.55}
+
+/* MAP */
+.map-section{padding:0 48px 48px}
+.map-box{background:var(--white);border-radius:18px;border:.5px solid var(--border);overflow:hidden;height:200px;position:relative;display:flex;align-items:center;justify-content:center}
+.map-bg{position:absolute;inset:0;background:#e8f2e8}
+.map-pin{position:absolute;display:flex;flex-direction:column;align-items:center}
+.pin-dot{width:13px;height:13px;border-radius:50%;border:2.5px solid #fff}
+.pin-label{font-size:10px;font-weight:500;margin-top:3px;padding:2px 7px;border-radius:5px;color:#fff;white-space:nowrap}
+.map-cta{position:relative;z-index:2;text-align:center}
+.map-cta-h{font-size:16px;font-weight:500;color:var(--text);margin-bottom:6px}
+.map-cta-s{font-size:13px;color:var(--text-muted);margin-bottom:16px}
+.btn-map{background:var(--green);color:#fff;border:none;border-radius:10px;padding:11px 22px;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:background .2s;font-family:inherit}
+.btn-map:hover{background:var(--green-dark)}
+
+/* FOOTER */
+footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.footer-logo{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+.footer-links{display:flex;gap:24px}
+.footer-link{font-size:12px;color:var(--text-hint);text-decoration:none}
+.footer-link:hover{color:var(--green)}
+.footer-copy{font-size:12px;color:var(--text-hint)}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a class="nav-logo" href="#">
+    <div class="logo-box"><i class="ti ti-steering-wheel"></i></div>
+    <span class="logo-text">FindDrive</span>
+  </a>
+  <div class="nav-links">
+    <a class="nav-link" href="#">Інструктори</a>
+    <a class="nav-link" href="#">Як це працює</a>
+    <a class="nav-link" href="#">Відгуки</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn-login"><i class="ti ti-user-circle"></i> Увійти</button>
+    <button class="btn-cta">Стати інструктором</button>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+  <div class="blob b4"></div>
+  <div class="blob b5"></div>
+  <div class="hero-content">
+    <div class="hero-badge"><i class="ti ti-map-pin"></i> Знайдемо інструктора поряд з вами</div>
+    <h1 class="hero-h1">Знайдіть свого<br><span>інструктора</span> з водіння</h1>
+    <p class="hero-sub">Порівнюйте інструкторів за районом, ціною та рейтингом. Записуйтесь онлайн за 2 хвилини.</p>
+    <div class="search-box">
+      <i class="ti ti-search"></i>
+      <input class="search-input" type="text" placeholder="Район, метро або адреса...">
+      <div class="search-divider"></div>
+      <div class="search-loc"><i class="ti ti-current-location"></i> Моє місце</div>
+      <button class="btn-search"><i class="ti ti-search"></i> Знайти</button>
+    </div>
+    <div class="hints">
+      <span class="hint-tag"><i class="ti ti-trending-up"></i> Шевченківський</span>
+      <span class="hint-tag"><i class="ti ti-trending-up"></i> Оболонь</span>
+      <span class="hint-tag"><i class="ti ti-trending-up"></i> Позняки</span>
+      <span class="hint-tag"><i class="ti ti-trending-up"></i> Відрадний</span>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-top">
+    <span class="section-label">Інструктори поруч</span>
+    <a class="section-link" href="#">Усі інструктори <i class="ti ti-arrow-right"></i></a>
+  </div>
+  <div class="instr-grid">
+
+    <div class="instr-card">
+      <div class="card-blob" style="background:#a8f0c0"></div>
+      <div class="instr-top">
+        <div class="avatar" style="background:#e0f4ea;color:#1a6a3a">ОС</div>
+        <div>
+          <div class="instr-name">Олександр Савченко</div>
+          <div class="instr-meta"><i class="ti ti-star"></i> 4.9 · 87 відгуків</div>
+        </div>
+      </div>
+      <div class="badge-dist"><i class="ti ti-map-pin"></i> 1.2 км від вас</div>
+      <div class="instr-tags">
+        <span class="tag">Автомат</span><span class="tag">Новачки</span><span class="tag">VW ID.4</span>
+      </div>
+      <div class="instr-footer">
+        <div class="price">650 грн <span>/ год</span></div>
+        <button class="btn-book">Записатись</button>
+      </div>
+    </div>
+
+    <div class="instr-card">
+      <div class="card-blob" style="background:#f0a8d0"></div>
+      <div class="instr-top">
+        <div class="avatar" style="background:#fbeaf0;color:#993556">МК</div>
+        <div>
+          <div class="instr-name">Марина Коваленко</div>
+          <div class="instr-meta"><i class="ti ti-star"></i> 5.0 · 124 відгуки</div>
+        </div>
+      </div>
+      <div class="badge-dist"><i class="ti ti-map-pin"></i> 0.8 км від вас</div>
+      <div class="instr-tags">
+        <span class="tag">Механіка</span><span class="tag">Жінкам</span><span class="tag">Вечір</span>
+      </div>
+      <div class="instr-footer">
+        <div class="price">580 грн <span>/ год</span></div>
+        <button class="btn-book">Записатись</button>
+      </div>
+    </div>
+
+    <div class="instr-card">
+      <div class="card-blob" style="background:#a0d8f8"></div>
+      <div class="instr-top">
+        <div class="avatar" style="background:#e6f1fb;color:#185fa5">ДП</div>
+        <div>
+          <div class="instr-name">Дмитро Петренко</div>
+          <div class="instr-meta"><i class="ti ti-star"></i> 4.8 · 61 відгук</div>
+        </div>
+      </div>
+      <div class="badge-dist"><i class="ti ti-map-pin"></i> 2.1 км від вас</div>
+      <div class="instr-tags">
+        <span class="tag">Автомат</span><span class="tag">Іспит ДАІ</span><span class="tag">Вихідні</span>
+      </div>
+      <div class="instr-footer">
+        <div class="price">700 грн <span>/ год</span></div>
+        <button class="btn-book">Записатись</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<section class="how">
+  <div class="section-top">
+    <span class="section-label">Як це працює</span>
+  </div>
+  <div class="how-grid">
+    <div class="how-step" style="background:#e8f4ee">
+      <div class="step-num" style="background:#1a7a4a">1</div>
+      <i class="ti ti-map-pin step-icon" style="color:#1a7a4a"></i>
+      <div class="step-title">Вкажіть район</div>
+      <div class="step-sub">Введіть адресу або дозвольте доступ до геолокації</div>
+    </div>
+    <div class="how-step" style="background:#fbeaf0">
+      <div class="step-num" style="background:#993556">2</div>
+      <i class="ti ti-adjustments step-icon" style="color:#993556"></i>
+      <div class="step-title">Оберіть інструктора</div>
+      <div class="step-sub">Фільтруйте за ціною, рейтингом і типом КПП</div>
+    </div>
+    <div class="how-step" style="background:#e6f1fb">
+      <div class="step-num" style="background:#185fa5">3</div>
+      <i class="ti ti-calendar step-icon" style="color:#185fa5"></i>
+      <div class="step-title">Забронюйте час</div>
+      <div class="step-sub">Виберіть слот у календарі інструктора онлайн</div>
+    </div>
+    <div class="how-step" style="background:#eaf3de">
+      <div class="step-num" style="background:#3b6d11">4</div>
+      <i class="ti ti-car step-icon" style="color:#3b6d11"></i>
+      <div class="step-title">Їдьте на урок</div>
+      <div class="step-sub">Отримайте підтвердження і нагадування в додатку</div>
+    </div>
+  </div>
+</section>
+
+<section class="map-section">
+  <div class="section-top">
+    <span class="section-label">Інструктори на карті</span>
+  </div>
+  <div class="map-box">
+    <div class="map-bg">
+      <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:.15">
+        <defs>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1a7a4a" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)"/>
+      </svg>
+      <div class="map-pin" style="top:28%;left:36%">
+        <div class="pin-dot" style="background:#1a7a4a"></div>
+        <div class="pin-label" style="background:#1a7a4a">ОС · 650 грн</div>
+      </div>
+      <div class="map-pin" style="top:48%;left:54%">
+        <div class="pin-dot" style="background:#993556"></div>
+        <div class="pin-label" style="background:#993556">МК · 580 грн</div>
+      </div>
+      <div class="map-pin" style="top:62%;left:26%">
+        <div class="pin-dot" style="background:#185fa5"></div>
+        <div class="pin-label" style="background:#185fa5">ДП · 700 грн</div>
+      </div>
+      <div class="map-pin" style="top:22%;left:64%">
+        <div class="pin-dot" style="background:#854f0b"></div>
+        <div class="pin-label" style="background:#854f0b">+5 інших</div>
+      </div>
+    </div>
+    <div class="map-cta">
+      <div class="map-cta-h">Знайдіть інструктора поряд</div>
+      <div class="map-cta-s">8 інструкторів доступні у вашому районі сьогодні</div>
+      <button class="btn-map"><i class="ti ti-current-location"></i> Визначити моє місце</button>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">
+    <div class="logo-box" style="width:28px;height:28px;font-size:13px"><i class="ti ti-steering-wheel"></i></div>
+    FindDrive
+  </div>
+  <div class="footer-links">
+    <a class="footer-link" href="#">Про нас</a>
+    <a class="footer-link" href="#">Умови</a>
+    <a class="footer-link" href="#">Конфіденційність</a>
+    <a class="footer-link" href="#">Контакти</a>
+  </div>
+  <div class="footer-copy">© 2025 FindDrive</div>
+</footer>
+
+</body>
+</html>
