@@ -182,7 +182,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <div class="logo-box"><i class="ti ti-steering-wheel"></i></div>
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.12</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.13</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#">Інструктори</a>
@@ -385,6 +385,13 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
         <input class="form-input" name="area" type="text" placeholder="Шевченківський, Оболонь…">
       </div>
       <div class="form-group">
+        <label class="form-label">Місце роботи на карті</label>
+        <div id="instr-map-pick" style="height:180px;border-radius:9px;overflow:hidden;border:.5px solid var(--border)"></div>
+        <p style="font-size:11px;color:var(--text-hint);margin-top:5px;display:flex;align-items:center;gap:4px"><i class="ti ti-info-circle"></i> Перетягніть маркер на ваше місце роботи</p>
+      </div>
+      <input type="hidden" name="lat">
+      <input type="hidden" name="lng">
+      <div class="form-group">
         <label class="form-label">Тип КПП</label>
         <div class="radio-group">
           <label class="radio-opt"><input type="radio" name="gearbox" value="Автомат" checked> Автомат</label>
@@ -534,7 +541,10 @@ onAuthStateChanged(auth, user => {
 });
 
 // --- Instructor panel ---
-document.getElementById("btn-instr").addEventListener("click", () => openPanel("instr-panel"));
+document.getElementById("btn-instr").addEventListener("click", () => {
+  openPanel("instr-panel");
+  setTimeout(() => window.initInstrMap?.(), 150);
+});
 document.getElementById("instr-close").addEventListener("click", closeAll);
 
 // Photo: resize to ≤200px before storing
@@ -588,22 +598,25 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
   btn.innerHTML = '<i class="ti ti-loader"></i> Збереження…';
 
   const days = [...instrForm.querySelectorAll('[name="days"]:checked')].map(c => c.value);
+  const lat  = parseFloat(instrForm.querySelector('[name="lat"]').value)  || null;
+  const lng  = parseFloat(instrForm.querySelector('[name="lng"]').value)  || null;
+  const area    = instrForm.querySelector('[name="area"]').value.trim();
+  const gearbox = instrForm.querySelector('[name="gearbox"]:checked')?.value || 'Автомат';
+  const price   = Number(instrForm.querySelector('[name="price"]').value) || 0;
+  const car     = instrForm.querySelector('[name="car"]').value.trim();
 
   try {
-    const ref = await addDoc(collection(db, "instructors"), {
-      name,
-      phone,
+    await addDoc(collection(db, "instructors"), {
+      name, phone,
       email:      instrForm.querySelector('[name="email"]').value.trim(),
-      area:       instrForm.querySelector('[name="area"]').value.trim(),
-      gearbox:    instrForm.querySelector('[name="gearbox"]:checked')?.value || 'Автомат',
-      price:      Number(instrForm.querySelector('[name="price"]').value)      || 0,
+      area, gearbox, price, car,
       experience: Number(instrForm.querySelector('[name="experience"]').value) || 0,
-      car:        instrForm.querySelector('[name="car"]').value.trim(),
       days,
       time_from:  instrForm.querySelector('[name="time_from"]').value,
       time_to:    instrForm.querySelector('[name="time_to"]').value,
       about:      instrForm.querySelector('[name="about"]').value.trim(),
       photo:      instrPhotoData || null,
+      lat, lng,
       status:     "approved",
       rating:     null,
       reviews:    0,
@@ -612,11 +625,8 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
     document.getElementById("instr-form-wrap").style.display = "none";
     document.getElementById("instr-foot").style.display = "none";
     document.getElementById("instr-success").style.display = "flex";
-    appendInstructorCard({ name, phone, area: instrForm.querySelector('[name="area"]').value.trim(),
-      gearbox: instrForm.querySelector('[name="gearbox"]:checked')?.value,
-      price: Number(instrForm.querySelector('[name="price"]').value) || 0,
-      car: instrForm.querySelector('[name="car"]').value.trim(),
-      photo: instrPhotoData, rating: null, reviews: 0 });
+    appendInstructorCard({ name, area, gearbox, price, car, photo: instrPhotoData, rating: null, reviews: 0 });
+    if (lat && lng) window._addInstrMarker?.({ lat, lng, name, price, rating: null, color: "#1a7a4a" });
   } catch(err) {
     console.error(err);
     btn.disabled = false;
@@ -671,11 +681,19 @@ async function loadInstructors() {
   try {
     const snap = await getDocs(query(collection(db, "instructors"), where("status","==","approved")));
     if (snap.empty) return;
-    const grid = document.getElementById("instr-grid");
+    const docs  = snap.docs.map(d => d.data());
+    const grid  = document.getElementById("instr-grid");
     const offset = grid.children.length;
-    snap.docs.forEach((doc, i) => {
-      grid.insertAdjacentHTML("afterbegin", buildCard(doc.data(), offset + i));
-    });
+    docs.forEach((d, i) => grid.insertAdjacentHTML("afterbegin", buildCard(d, offset + i)));
+
+    function addMarkers() {
+      docs.forEach((d, i) => {
+        if (d.lat && d.lng)
+          window._addInstrMarker?.({ lat: d.lat, lng: d.lng, name: d.name, price: d.price, rating: d.rating, color: THEMES[i % THEMES.length].color });
+      });
+    }
+    if (window._mapReady) addMarkers();
+    else window._onMapReady = addMarkers;
   } catch(e) {
     console.warn("Firestore load:", e.message);
   }
@@ -691,7 +709,7 @@ const INSTRUCTORS = [
   { lat:50.4100, lng:30.6210, name:"Дмитро Петренко",    price:"700 грн/год", rating:"4.8", color:"#185fa5" },
 ];
 
-let gmap, userMarker, placesService;
+let gmap, userMarker, placesService, instrPickMap, instrPickMarker;
 
 const DISTRICT_COORDS = {
   'Шевченківський район, Київ': { lat:50.4564, lng:30.5131 },
@@ -788,7 +806,61 @@ function initMap() {
     gmap.setZoom(13);
     scrollToMap();
   });
+
+  window._mapReady = true;
+  window._onMapReady?.();
 }
+
+const MAP_STYLES = [
+  { featureType:"poi",     elementType:"labels", stylers:[{visibility:"off"}] },
+  { featureType:"transit", elementType:"labels", stylers:[{visibility:"off"}] },
+  { featureType:"water",   elementType:"geometry", stylers:[{color:"#c8dff0"}] },
+  { featureType:"landscape",elementType:"geometry",stylers:[{color:"#f0f2f0"}] },
+  { featureType:"road",    elementType:"geometry", stylers:[{color:"#ffffff"}] },
+  { featureType:"road",    elementType:"geometry.stroke", stylers:[{color:"#dde8dd"}] },
+];
+
+window._addInstrMarker = function(inst) {
+  if (!gmap) return;
+  const marker = new google.maps.Marker({
+    position: { lat: inst.lat, lng: inst.lng },
+    map: gmap,
+    icon: { path: google.maps.SymbolPath.CIRCLE, scale:11, fillColor: inst.color||"#1a7a4a", fillOpacity:1, strokeColor:"#fff", strokeWeight:2.5 },
+    title: inst.name,
+  });
+  const info = new google.maps.InfoWindow({
+    content: `<div style="font-family:Inter,sans-serif;min-width:140px;padding:2px 0">
+      <div style="font-weight:600;color:#0d2a1a;font-size:13px">${inst.name}</div>
+      <div style="color:#5a7a6a;font-size:12px;margin-top:3px">⭐ ${inst.rating||'—'} · ${inst.price ? inst.price+' грн/год' : '—'}</div>
+      <button onclick="alert('Запис поки недоступний')" style="margin-top:8px;background:${inst.color||'#1a7a4a'};color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit">Записатись</button>
+    </div>`,
+  });
+  marker.addListener("click", () => info.open(gmap, marker));
+};
+
+window.initInstrMap = function() {
+  if (instrPickMap) { google.maps.event.trigger(instrPickMap, 'resize'); return; }
+  const el = document.getElementById("instr-map-pick");
+  if (!el) return;
+  instrPickMap = new google.maps.Map(el, {
+    center: { lat:50.4501, lng:30.5234 }, zoom:12,
+    mapTypeControl:false, streetViewControl:false, fullscreenControl:false,
+    styles: MAP_STYLES,
+  });
+  instrPickMarker = new google.maps.Marker({
+    position: { lat:50.4501, lng:30.5234 },
+    map: instrPickMap, draggable: true,
+    icon: { path: google.maps.SymbolPath.CIRCLE, scale:11, fillColor:"#1a7a4a", fillOpacity:1, strokeColor:"#fff", strokeWeight:2.5 },
+    title: "Перетягніть сюди",
+  });
+  function syncLatLng() {
+    const pos = instrPickMarker.getPosition();
+    document.querySelector('#instr-form [name="lat"]').value = pos.lat().toFixed(6);
+    document.querySelector('#instr-form [name="lng"]').value = pos.lng().toFixed(6);
+  }
+  instrPickMarker.addListener("dragend", syncLatLng);
+  syncLatLng();
+};
 
 function locateMe(fromSearch = false) {
   if (!navigator.geolocation) { alert("Геолокація не підтримується"); return; }
