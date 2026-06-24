@@ -123,7 +123,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <div class="logo-box"><i class="ti ti-steering-wheel"></i></div>
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version">v24.06.06</span>
+    <span class="logo-version">v24.06.07</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#">Інструктори</a>
@@ -292,32 +292,42 @@ const INSTRUCTORS = [
 
 let gmap, userMarker, placesService;
 
+const DISTRICT_COORDS = {
+  'Шевченківський район, Київ': { lat:50.4564, lng:30.5131 },
+  'Оболонь, Київ':              { lat:50.5019, lng:30.4989 },
+  'Позняки, Київ':              { lat:50.3958, lng:30.6322 },
+  'Відрадний, Київ':            { lat:50.4341, lng:30.4108 },
+};
+
 function scrollToMap() {
   document.getElementById("map").scrollIntoView({ behavior:"smooth", block:"center" });
+}
+
+function focusMap(latlng) {
+  gmap.setCenter(latlng);
+  gmap.setZoom(13);
 }
 
 function doSearch() {
   const query = document.getElementById("search-input").value.trim();
   if (!query) return;
   scrollToMap();
+  if (DISTRICT_COORDS[query]) { focusMap(DISTRICT_COORDS[query]); return; }
   if (!placesService) return;
-  placesService.textSearch({ query: query + " Київ", region: "ua" }, (results, status) => {
-    if (status === google.maps.places.PlacesServiceStatus.OK && results[0]) {
-      gmap.setCenter(results[0].geometry.location);
-      gmap.setZoom(13);
-    }
+  placesService.textSearch({ query: query + " Київ", region:"ua" }, (results, status) => {
+    if (status === google.maps.places.PlacesServiceStatus.OK && results[0])
+      focusMap(results[0].geometry.location);
   });
 }
 
 function searchQuery(query) {
   document.getElementById("search-input").value = query;
   scrollToMap();
+  if (DISTRICT_COORDS[query]) { focusMap(DISTRICT_COORDS[query]); return; }
   if (!placesService) return;
-  placesService.textSearch({ query: query + " Київ", region: "ua" }, (results, status) => {
-    if (status === google.maps.places.PlacesServiceStatus.OK && results[0]) {
-      gmap.setCenter(results[0].geometry.location);
-      gmap.setZoom(13);
-    }
+  placesService.textSearch({ query: query + " Київ", region:"ua" }, (results, status) => {
+    if (status === google.maps.places.PlacesServiceStatus.OK && results[0])
+      focusMap(results[0].geometry.location);
   });
 }
 
