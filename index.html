@@ -17,6 +17,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLEg=" crossorigin=""></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -99,6 +101,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .badge-dist{display:inline-flex;align-items:center;gap:5px;background:var(--green-light);border-radius:20px;padding:4px 10px;font-size:11px;color:#1a6a3a;margin-bottom:12px}
 .instr-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
 .tag{font-size:11px;padding:3px 10px;border-radius:20px;background:#f0f5f0;color:#4a6a5a}
+.tag-filter-bar{display:flex;gap:8px;overflow-x:auto;padding:0 0 14px;scrollbar-width:none;margin:0 0 8px}
+.tag-filter-bar::-webkit-scrollbar{display:none}
+.tag-filter-chip{flex-shrink:0;padding:7px 18px;border-radius:20px;border:.5px solid var(--border);background:var(--white);font-size:12px;color:var(--text-muted);cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s}
+.tag-filter-chip.active{background:var(--green);color:#fff;border-color:var(--green)}
+.tag-filter-chip:hover:not(.active){border-color:var(--green);color:var(--green);background:var(--green-light)}
+.tag-sel-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag-sel-btn{padding:5px 12px;border-radius:20px;border:.5px solid var(--border);background:var(--bg);font-size:11px;color:var(--text-muted);cursor:pointer;font-family:inherit;transition:all .15s}
+.tag-sel-btn.active{background:var(--green-light);border-color:var(--green);color:var(--green)}
 .instr-footer{display:flex;align-items:center;justify-content:space-between;border-top:.5px solid #eef3ee;padding-top:12px}
 .price{font-size:15px;font-weight:500;color:var(--text)}
 .price span{font-size:12px;color:var(--text-hint);font-weight:400}
@@ -181,6 +191,15 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .mp-chip-del{background:none;border:none;cursor:pointer;color:var(--text-hint);padding:0;font-size:12px;line-height:1;display:flex;align-items:center;transition:color .15s}
 .mp-chip-del:hover{color:#cc3333}
 .mp-add-row{display:flex;gap:6px}
+.mp-map-wrap{border-radius:12px;overflow:hidden;margin:8px 0;border:.5px solid var(--border);display:none}
+.mp-map-wrap.open{display:block}
+.mp-map-el{height:200px;width:100%}
+.mp-map-search{display:flex;gap:6px;margin-bottom:6px}
+.mp-map-search input{flex:1;border:.5px solid var(--border);border-radius:7px;padding:6px 10px;font-size:12px;font-family:inherit;background:var(--white);outline:none}
+.mp-map-search input:focus{border-color:var(--green)}
+.mp-map-coords{font-size:10px;color:var(--text-hint);margin-top:4px;text-align:center}
+.book-loc-link{display:inline-flex;align-items:center;gap:5px;color:var(--green);font-size:12px;text-decoration:none;font-weight:500}
+.book-loc-link:hover{text-decoration:underline}
 .mp-add-row input{flex:1;border:.5px solid var(--border);border-radius:7px;padding:6px 10px;font-size:12px;font-family:inherit;background:var(--white);outline:none;transition:border-color .2s}
 .mp-add-row input:focus{border-color:var(--green)}
 .mp-sel-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
@@ -298,8 +317,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .slot-crm-badge{font-size:10px;font-weight:500}
 .slot-crm-free-label{font-size:11px;color:var(--text-hint)}
 .slot-crm-actions{display:flex;gap:4px;margin-left:auto}
-.slot-hr-grid{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
-.slot-hr-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;width:68px;height:50px;border-radius:9px;border:.5px solid var(--border);background:var(--bg);cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s;padding:0}
+.slot-hr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
+.slot-hr-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:54px;border-radius:9px;border:.5px solid var(--border);background:var(--bg);cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s;padding:0}
 .slot-hr-btn:disabled{cursor:default;opacity:.7}
 .slot-hr-time{font-size:14px;font-weight:600;color:var(--text-muted)}
 .slot-hr-lbl{font-size:9px;color:var(--text-hint);margin-top:1px}
@@ -316,8 +335,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .slot-hr-booked.selected{background:var(--green);border-color:var(--green-dark)}
 .slot-hr-booked.selected .slot-hr-time,.slot-hr-booked.selected .slot-hr-nm{color:#fff}
 .slot-hr-detail{background:var(--bg);border:.5px solid var(--border);border-radius:10px;padding:12px;margin-top:8px;font-size:12px}
-.slot-break-row{display:flex;align-items:center;gap:6px;margin:6px 0 8px;flex-wrap:wrap}
-.slot-break-sel{border:.5px solid var(--border);border-radius:7px;padding:4px 6px;font-size:12px;font-family:inherit;background:var(--white);color:var(--text)}
+.slot-break-row{display:flex;align-items:center;gap:4px;margin:6px 0 8px;overflow-x:auto;scrollbar-width:none}
+.slot-break-sel{border:.5px solid var(--border);border-radius:7px;padding:4px 4px;font-size:11px;font-family:inherit;background:var(--white);color:var(--text);min-width:0;max-width:80px}
 .slot-dayoff-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;border:.5px solid var(--border);background:var(--bg);font-size:11px;color:var(--text-muted);cursor:pointer;font-family:inherit;transition:background .15s}
 .slot-dayoff-btn.active{background:#fff0f0;border-color:#cc3333;color:#cc3333}
 .btn-bk-reject:hover{border-color:#cc3333;color:#cc3333}
@@ -401,7 +420,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.48</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.51</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -449,6 +468,9 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <div class="section-top">
     <span class="section-label">Інструктори поруч</span>
     <a class="section-link" href="#">Усі інструктори <i class="ti ti-arrow-right"></i></a>
+  </div>
+  <div id="tag-filter-bar" class="tag-filter-bar">
+    <button class="tag-filter-chip active" data-tag="" onclick="window._filterByTag(this)">Всі</button>
   </div>
   <div id="instr-grid" class="instr-grid">
     <div id="instr-empty" style="grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--text-hint);font-size:14px;line-height:1.9">
@@ -1066,49 +1088,111 @@ async function renderProfileScreen(user) {
 
 async function loadInstrSettings(instr, container) {
   if (!container) return;
-  let lessonDur    = [60,120].includes(instr.lessonDuration) ? instr.lessonDuration : 60;
-  let meetingPts   = [...(instr.meetingPoints || [])];
+  let lessonDur  = [60,120].includes(instr.lessonDuration) ? instr.lessonDuration : 60;
+  let meetingPts = [...(instr.meetingPoints || [])];
+  let instrTags  = [...(Array.isArray(instr.tags) ? instr.tags : [])];
 
   function renderAll() {
     container.innerHTML = `
       <div class="instr-set-group">
         <span class="instr-set-label">Тривалість уроку</span>
         <div class="toggle-row">
-          ${[60,120].map(d => `<button class="toggle-btn${lessonDur===d?' active':''}" onclick="window._setLessonDur(${d})">${d} хв</button>`).join('')}
+          ${[60,120].map(v => `<button class="toggle-btn${lessonDur===v?' active':''}" onclick="window._setLessonDur(${v})">${v} хв</button>`).join('')}
+        </div>
+      </div>
+      <div class="instr-set-group">
+        <span class="instr-set-label">Спеціалізація</span>
+        <div class="tag-sel-grid">
+          ${INSTR_TAGS.map(tag => `<button class="tag-sel-btn${instrTags.includes(tag)?' active':''}" onclick="window._toggleTag('${tag}')">${tag}</button>`).join('')}
         </div>
       </div>
       <div class="instr-set-group">
         <span class="instr-set-label">Точки зустрічі</span>
         ${meetingPts.length
-          ? `<div class="mp-list">${meetingPts.map((pt,i) => `<span class="mp-chip">${esc(pt)}<button class="mp-chip-del" onclick="window._removeMp(${i})" title="Видалити"><i class="ti ti-x"></i></button></span>`).join('')}</div>`
+          ? `<div class="mp-list">${meetingPts.map((pt,idx) => { const lbl=typeof pt==='string'?pt:pt.label; const hasCoords=typeof pt==='object'&&pt.lat; return `<span class="mp-chip">${hasCoords?'<i class="ti ti-map-pin" style="font-size:10px;color:var(--green);margin-right:3px"></i>':''}${esc(lbl)}<button class="mp-chip-del" onclick="window._removeMp(${idx})" title="Видалити"><i class="ti ti-x"></i></button></span>`; }).join('')}</div>`
           : '<div style="font-size:11px;color:var(--text-hint);margin-bottom:8px">Немає збережених точок</div>'}
-        <div class="mp-add-row">
-          <input type="text" id="mp-new-input" placeholder="Адреса або орієнтир…" maxlength="80" onkeydown="if(event.key==='Enter')window._addMp()">
-          <button class="btn-bk-action" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="window._addMp()"><i class="ti ti-plus"></i></button>
+        <div class="mp-map-search">
+          <input type="text" id="mp-new-input" placeholder="Адреса або орієнтир…" maxlength="100" onkeydown="if(event.key==='Enter')window._addMp()">
+          <button class="btn-bk-action" style="font-size:11px;padding:6px 10px;flex-shrink:0" title="Знайти на карті" onclick="window._openMpMap()"><i class="ti ti-map-pin"></i></button>
+          <button class="btn-bk-action" style="font-size:11px;padding:6px 10px;flex-shrink:0" onclick="window._addMp()"><i class="ti ti-plus"></i></button>
+        </div>
+        <div class="mp-map-wrap" id="mp-map-wrap">
+          <div id="mp-map-el" class="mp-map-el"></div>
+          <div class="mp-map-coords" id="mp-map-coords">Натисніть на карту, щоб вибрати точку</div>
         </div>
       </div>
       <button class="btn-bk-action" style="width:100%;font-size:12px;padding:9px" onclick="window._saveInstrSettings('${instr.id}')"><i class="ti ti-device-floppy"></i> Зберегти налаштування</button>`;
   }
 
   window._setLessonDur = (d) => { lessonDur = d; renderAll(); };
+  let _mpMapObj = null, _mpMarker = null, _mpLatLng = null;
+  window._openMpMap = () => {
+    const wrap = document.getElementById('mp-map-wrap');
+    if (!wrap) return;
+    const isOpen = wrap.classList.toggle('open');
+    if (!isOpen) return;
+    if (_mpMapObj) { _mpMapObj.invalidateSize(); return; }
+    const inp = document.getElementById('mp-new-input');
+    _mpMapObj = L.map('mp-map-el', {zoomControl:true}).setView([50.4501,30.5234],12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(_mpMapObj);
+    _mpMapObj.on('click', e => {
+      const {lat,lng} = e.latlng;
+      _mpLatLng = {lat:+lat.toFixed(6), lng:+lng.toFixed(6)};
+      if (_mpMarker) _mpMarker.setLatLng(e.latlng); else _mpMarker = L.marker(e.latlng).addTo(_mpMapObj);
+      const coordEl = document.getElementById('mp-map-coords');
+      if (coordEl) coordEl.textContent = `${_mpLatLng.lat}, ${_mpLatLng.lng}`;
+      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
+        .then(r=>r.json()).then(d=>{ if (inp && d.display_name) inp.value = d.display_name.split(',').slice(0,3).join(', '); }).catch(()=>{});
+    });
+    const q = inp?.value.trim();
+    if (q) window._mpGeoSearch(q);
+  };
+  window._mpGeoSearch = (q) => {
+    if (!_mpMapObj || !q) return;
+    fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=ua`)
+      .then(r=>r.json()).then(results=>{
+        if (!results.length) return;
+        const {lat,lon,display_name} = results[0];
+        const ll = L.latLng(+lat,+lon);
+        _mpMapObj.setView(ll,16);
+        _mpLatLng = {lat:+parseFloat(lat).toFixed(6), lng:+parseFloat(lon).toFixed(6)};
+        if (_mpMarker) _mpMarker.setLatLng(ll); else _mpMarker = L.marker(ll).addTo(_mpMapObj);
+        const inp2 = document.getElementById('mp-new-input');
+        if (inp2 && !inp2.value.trim()) inp2.value = display_name.split(',').slice(0,3).join(', ');
+        const coordEl = document.getElementById('mp-map-coords');
+        if (coordEl) coordEl.textContent = `${_mpLatLng.lat}, ${_mpLatLng.lng}`;
+      }).catch(()=>{});
+  };
   window._addMp = () => {
     const inp = document.getElementById('mp-new-input');
     const val = inp?.value.trim();
     if (!val) return;
-    meetingPts.push(val);
+    const pt = _mpLatLng ? {label:val, lat:_mpLatLng.lat, lng:_mpLatLng.lng} : {label:val};
+    meetingPts.push(pt);
+    _mpLatLng = null;
+    if (_mpMarker) { _mpMarker.remove(); _mpMarker = null; }
+    const wrap = document.getElementById('mp-map-wrap');
+    if (wrap) wrap.classList.remove('open');
     renderAll();
   };
   window._removeMp = (i) => { meetingPts.splice(i, 1); renderAll(); };
+  window._toggleTag = (tag) => {
+    const idx = instrTags.indexOf(tag);
+    if (idx >= 0) instrTags.splice(idx, 1); else instrTags.push(tag);
+    renderAll();
+  };
   window._saveInstrSettings = async (instrId) => {
     try {
       await updateDoc(doc(db,'instructors',instrId), {
         lessonDuration: lessonDur,
         meetingPoints:  meetingPts,
+        tags:           instrTags,
       });
       instr.lessonDuration = lessonDur;
       instr.meetingPoints  = meetingPts;
+      instr.tags           = instrTags;
       if (window._instrProfiles?.[instrId]) {
-        Object.assign(window._instrProfiles[instrId], { lessonDuration:lessonDur, meetingPoints:meetingPts });
+        Object.assign(window._instrProfiles[instrId], { lessonDuration:lessonDur, meetingPoints:meetingPts, tags:instrTags });
       }
       showToast('Налаштування збережено!', '', 'success');
     } catch(e) { alert('Помилка збереження.'); }
@@ -1401,10 +1485,13 @@ const THEMES = [
 function initials(name) {
   return (name||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';
 }
+const INSTR_TAGS = ['Автомат','Механіка','Мото','Вантажний','ТСЦ','Для новачків','Тільки жінки','Бізнес-клас'];
+
 function buildCard(d, i, id) {
   const th = THEMES[i % THEMES.length];
-  const tags = [d.gearbox, (d.area||'').split(',')[0].trim(), (d.car||'').split(' ')[0]].filter(Boolean);
-  return `<div class="instr-card">
+  const instrTags = Array.isArray(d.tags) ? d.tags : [];
+  const tags = instrTags.length ? instrTags : [d.gearbox, (d.car||'').split(' ')[0]].filter(Boolean);
+  return `<div class="instr-card" data-tags='${JSON.stringify(instrTags)}'>
     <div class="card-blob" style="background:${th.blob}"></div>
     <div class="instr-top">
       ${d.photo
@@ -1430,6 +1517,29 @@ function appendInstructorCard(d) {
   grid.insertAdjacentHTML("afterbegin", buildCard(d, idx));
 }
 
+function populateTagFilterBar() {
+  const bar = document.getElementById('tag-filter-bar');
+  if (!bar || bar.dataset.populated) return;
+  bar.dataset.populated = '1';
+  INSTR_TAGS.forEach(tag => {
+    const btn = document.createElement('button');
+    btn.className = 'tag-filter-chip';
+    btn.dataset.tag = tag;
+    btn.textContent = tag;
+    btn.onclick = () => window._filterByTag(btn);
+    bar.appendChild(btn);
+  });
+}
+
+window._filterByTag = function(btn) {
+  const tag = btn.dataset.tag || '';
+  document.querySelectorAll('.tag-filter-chip').forEach(b => b.classList.toggle('active', b === btn));
+  document.querySelectorAll('#instr-grid .instr-card').forEach(card => {
+    const cardTags = JSON.parse(card.dataset.tags || '[]');
+    card.style.display = (!tag || cardTags.includes(tag)) ? '' : 'none';
+  });
+};
+
 async function loadInstructors() {
   try {
     const snap = await getDocs(query(collection(db, "instructors"), where("status","==","approved")));
@@ -1445,6 +1555,7 @@ async function loadInstructors() {
       window._instrProfiles[id] = { ...d, color: th.color, avbg: th.bg };
       grid.insertAdjacentHTML("afterbegin", buildCard(d, offset + i, id));
     });
+    populateTagFilterBar();
 
     function addMarkers() {
       snap.docs.forEach((docSnap, i) => {
@@ -1521,7 +1632,7 @@ function getDateAvail(instr, dateStr) {
     if (!ov || ov.open === false) return null;
     if (ov.openSlots) {
       if (!ov.openSlots.length) return null;
-      return { openSlots: ov.openSlots, breakFrom: ov.breakFrom||'', breakTo: ov.breakTo||'', location: ov.location||'' };
+      return { openSlots: ov.openSlots, breakFrom: ov.breakFrom||'', breakTo: ov.breakTo||'', location: ov.location||'', locationLat: ov.locationLat||null, locationLng: ov.locationLng||null };
     }
     if (ov.from || ov.to) {
       return { from: ov.from||instr.time_from, to: ov.to||instr.time_to, location: ov.location||'' };
@@ -1575,11 +1686,33 @@ window._pickDate = async function(instrId, dateStr) {
   }
   const lessonMin = d.lessonDuration || LESSON_MIN;
   const busy = await getBusySlots(instrId, dateStr);
+  const slotsPerLesson = Math.max(1, Math.floor(lessonMin / 60));
+  const busyExpanded = new Set(busy);
+  if (slotsPerLesson > 1) {
+    busy.forEach(t => {
+      const [h,m] = t.split(':').map(Number);
+      for (let i = 1; i < slotsPerLesson; i++)
+        busyExpanded.add(`${String(h+i).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
+    });
+  }
   let slots;
   if (avail.openSlots) {
-    let av = avail.openSlots.slice();
+    const avSet = new Set(avail.openSlots);
+    let av = avail.openSlots.slice().sort();
     if (avail.breakFrom && avail.breakTo) av = av.filter(s => s < avail.breakFrom || s >= avail.breakTo);
-    slots = av.filter(s => !busy.includes(s));
+    if (slotsPerLesson > 1) {
+      av = av.filter(s => {
+        const [h,m] = s.split(':').map(Number);
+        for (let i = 0; i < slotsPerLesson; i++) {
+          const si = `${String(h+i).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+          if (busyExpanded.has(si) || !avSet.has(si)) return false;
+        }
+        return true;
+      });
+    } else {
+      av = av.filter(s => !busyExpanded.has(s));
+    }
+    slots = av;
   } else {
     const dayBreak = avail.breakMin != null ? avail.breakMin : (d.breakMin || 0);
     const stepMin = lessonMin + dayBreak;
@@ -1590,7 +1723,7 @@ window._pickDate = async function(instrId, dateStr) {
     return;
   }
   slotBox.innerHTML = `
-    ${avail.location ? `<div class="book-loc"><i class="ti ti-map-pin"></i>${esc(avail.location)}</div>` : ''}
+    ${avail.location ? `<div class="book-loc"><i class="ti ti-map-pin"></i>${avail.locationLat ? `<a class="book-loc-link" href="https://www.google.com/maps?q=${avail.locationLat},${avail.locationLng}" target="_blank" rel="noopener">${esc(avail.location)} <i class="ti ti-external-link" style="font-size:10px"></i></a>` : esc(avail.location)}</div>` : ''}
     <div class="booking-label" style="margin-top:${avail.location ? 8 : 16}px">Оберіть час</div>
     <div class="slot-grid">
       ${slots.map(t => {
@@ -1949,6 +2082,18 @@ async function loadInstrCombined(instr, container) {
       const dayBks = bkByDate[editDate]||[];
       const bkMap = {};
       dayBks.forEach(b => { if (b.time) bkMap[b.time] = b; });
+      const lessonMin = instr.lessonDuration || LESSON_MIN;
+      const slotsPerLesson = Math.max(1, Math.floor(lessonMin / 60));
+      if (slotsPerLesson > 1) {
+        dayBks.forEach(b => {
+          if (!b.time) return;
+          const [bh,bm] = b.time.split(':').map(Number);
+          for (let i = 1; i < slotsPerLesson; i++) {
+            const cont = `${String(bh+i).padStart(2,'0')}:${String(bm).padStart(2,'0')}`;
+            if (!bkMap[cont]) bkMap[cont] = {...b, _cont: true};
+          }
+        });
+      }
 
       const [fh] = (instr.time_from||'09:00').split(':').map(Number);
       const [th] = (instr.time_to||'18:00').split(':').map(Number);
@@ -1960,6 +2105,9 @@ async function loadInstrCombined(instr, container) {
         const inBreak = breakFrom && breakTo && hr >= breakFrom && hr < breakTo;
         const isOpen = openSlots.includes(hr);
         if (bk) {
+          if (bk._cont) {
+            return `<button class="slot-hr-btn slot-hr-booked" style="opacity:.6" onclick="window._combSlotDetail('${bk.id}')"><span class="slot-hr-time">${hr}</span><span class="slot-hr-lbl">↑${bk.time}</span></button>`;
+          }
           const nm = esc(bk.clientName||bk.clientEmail||'Учень');
           const dotClr = bk.status==='pending'?'#c07000':bk.status==='confirmed'?'var(--green)':'#993556';
           return `<button class="slot-hr-btn slot-hr-booked${selectedBkId===bk.id?' selected':''}" onclick="window._combSlotDetail('${bk.id}')"><span class="slot-hr-time">${hr}</span><span class="slot-hr-nm">${nm}</span><span class="slot-hr-dot" style="background:${dotClr}"></span></button>`;
@@ -1998,7 +2146,7 @@ async function loadInstrCombined(instr, container) {
         ${detPanel}
         <div class="avail-loc-row" style="margin-top:10px">
           <label>Місце зустрічі</label>
-          ${pts.length?`<div class="mp-sel-list">${pts.map(pt=>`<button class="mp-sel-chip" onclick="document.getElementById('comb-loc').value='${esc(pt)}';document.querySelectorAll('.mp-sel-chip').forEach(b=>b.style.background='');this.style.background='var(--green-light)'">${esc(pt)}</button>`).join('')}</div>`:''}
+          ${pts.length?`<div class="mp-sel-list">${pts.map((pt,pi)=>{ const lbl=typeof pt==='string'?pt:pt.label; const hasCoords=typeof pt==='object'&&pt.lat; return `<button class="mp-sel-chip" onclick="window._selectMpChip(this,'${pi}')">${hasCoords?'<i class=\'ti ti-map-pin\' style=\'font-size:9px;margin-right:2px\'></i>':''}${esc(lbl)}</button>`; }).join('')}</div>`:''}
           <input type="text" id="comb-loc" placeholder="Або введіть адресу вручну…" value="${esc(location)}">
         </div>
         <div class="avail-save-row" style="margin-top:8px">
@@ -2100,10 +2248,28 @@ async function loadInstrCombined(instr, container) {
         renderAll();
       } catch(e) { alert('Помилка.'); }
     };
+    window._selectMpChip = (btn, ptIdx) => {
+      const pts2 = (window._instrProfiles?.[instr.id]?.meetingPoints)||instr.meetingPoints||[];
+      const pt = pts2[parseInt(ptIdx)];
+      if (!pt) return;
+      const lbl = typeof pt==='string' ? pt : pt.label;
+      const inp = document.getElementById('comb-loc');
+      if (inp) {
+        inp.value = lbl;
+        inp.dataset.lat = (typeof pt==='object' && pt.lat) ? pt.lat : '';
+        inp.dataset.lng = (typeof pt==='object' && pt.lng) ? pt.lng : '';
+      }
+      document.querySelectorAll('.mp-sel-chip').forEach(b => b.style.background='');
+      btn.style.background = 'var(--green-light)';
+    };
     window._combSaveLoc = async (instrId, date) => {
-      const loc = document.getElementById('comb-loc')?.value||'';
+      const inp = document.getElementById('comb-loc');
+      const loc = inp?.value || '';
+      const lat = inp?.dataset.lat ? parseFloat(inp.dataset.lat) : null;
+      const lng = inp?.dataset.lng ? parseFloat(inp.dataset.lng) : null;
       const curr = localAvail[date]||{};
-      const data = Object.assign({}, curr, {location:loc});
+      const extra = lat ? {locationLat: lat, locationLng: lng} : {};
+      const data = Object.assign({}, curr, {location:loc}, extra);
       try {
         await updateDoc(doc(db,'instructors',instrId),{[`availability.${date}`]:data});
         localAvail[date]=data;
