@@ -17,8 +17,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/WLEg=" crossorigin=""></script>
+
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -417,7 +416,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.53</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.54</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1098,12 +1097,7 @@ async function loadInstrSettings(instr, container) {
 
   window._setLessonDur = (d) => { lessonDur = d; renderAll(); };
   let _mpMapObj = null, _mpMarker = null, _mpLatLng = null;
-  window._openMpMap = () => {
-    const wrap = document.getElementById('mp-map-wrap');
-    if (!wrap) return;
-    const isOpen = wrap.classList.toggle('open');
-    if (!isOpen) return;
-    if (_mpMapObj) { _mpMapObj.invalidateSize(); return; }
+  function _initMpMapNow() {
     const inp = document.getElementById('mp-new-input');
     _mpMapObj = L.map('mp-map-el', {zoomControl:true}).setView([50.4501,30.5234],12);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(_mpMapObj);
@@ -1118,6 +1112,28 @@ async function loadInstrSettings(instr, container) {
     });
     const q = inp?.value.trim();
     if (q) window._mpGeoSearch(q);
+  }
+  function _loadLeaflet(cb) {
+    if (window.L) { cb(); return; }
+    if (!document.getElementById('leaflet-css')) {
+      const lk = document.createElement('link');
+      lk.id = 'leaflet-css'; lk.rel = 'stylesheet';
+      lk.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(lk);
+    }
+    const sc = document.createElement('script');
+    sc.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    sc.onload = cb;
+    sc.onerror = () => console.warn('Leaflet failed to load');
+    document.head.appendChild(sc);
+  }
+  window._openMpMap = () => {
+    const wrap = document.getElementById('mp-map-wrap');
+    if (!wrap) return;
+    const isOpen = wrap.classList.toggle('open');
+    if (!isOpen) return;
+    if (_mpMapObj) { _mpMapObj.invalidateSize(); return; }
+    _loadLeaflet(_initMpMapNow);
   };
   window._mpGeoSearch = (q) => {
     if (!_mpMapObj || !q) return;
