@@ -270,7 +270,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.29</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.30</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1262,6 +1262,7 @@ window._pickDate = async function(instrId, dateStr) {
       }).join('')}
     </div>
     <div id="booking-confirm" style="display:none;margin-top:16px">
+      <div id="booking-err" style="display:none;background:var(--pink-light);color:var(--pink);border-radius:9px;padding:10px 14px;font-size:13px;margin-bottom:10px"></div>
       <button class="btn-booking-confirm" id="btn-do-booking">
         <i class="ti ti-calendar-check"></i> Підтвердити запис
       </button>
@@ -1280,9 +1281,14 @@ window._selectSlot = function(instrId, dateStr, time, btn) {
 
 window._bookSlot = async function(instrId, dateStr, time) {
   const user = auth.currentUser;
-  if (!user) return;
+  const errEl = document.getElementById('booking-err');
+  if (!user) {
+    if (errEl) { errEl.textContent = 'Увійдіть в акаунт щоб записатись.'; errEl.style.display = ''; }
+    return;
+  }
   const btn = document.getElementById('btn-do-booking');
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> …'; }
+  if (errEl) errEl.style.display = 'none';
   const d = (window._instrProfiles||{})[instrId];
   try {
     await addDoc(collection(db, 'bookings'), {
@@ -1309,7 +1315,10 @@ window._bookSlot = async function(instrId, dateStr, time) {
     }
   } catch(e) {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-calendar-check"></i> Підтвердити запис'; }
-    alert('Помилка при бронюванні. Спробуйте ще раз.');
+    const msg = e?.code === 'permission-denied' || e?.message?.includes('permission')
+      ? 'Немає доступу. Оновіть Firestore Rules у Firebase Console.'
+      : 'Помилка збереження. Перевірте підключення.';
+    if (errEl) { errEl.textContent = msg; errEl.style.display = ''; }
   }
 };
 

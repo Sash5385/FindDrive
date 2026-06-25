@@ -23,10 +23,8 @@ service cloud.firestore {
 
     // Бронювання
     match /bookings/{bookingId} {
-      // Клієнт читає свої записи; інструктор читає записи до себе (якщо є userId)
-      allow read: if isAdmin()
-               || (request.auth != null && resource.data.clientId == request.auth.uid)
-               || (request.auth != null && resource.data.instructorUserId == request.auth.uid);
+      // Читання відкрите — потрібно для перевірки вільних слотів
+      allow read: if true;
 
       // Клієнт бронює (clientId == своя uid, статус pending)
       allow create: if request.auth != null
