@@ -270,7 +270,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.28</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.29</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -998,8 +998,9 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
     instrForm.querySelector(`[name="${field}"]`).style.borderColor = val ? '' : '#cc3333';
     if (!val) valid = false;
   });
-  if (!alreadyLoggedIn && pass.length < 6) {
+  if (!alreadyLoggedIn && pass && pass.length < 6) {
     instrForm.querySelector('[name="instr-pass"]').style.borderColor = '#cc3333';
+    if (errEl) { errEl.textContent = 'Пароль занадто простий — мінімум 6 символів.'; errEl.style.display = ''; }
     valid = false;
   }
   if (!valid) return;
@@ -1008,39 +1009,65 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
   btn.disabled = true;
   btn.innerHTML = '<i class="ti ti-loader"></i> Збереження…';
 
-  const days = [...instrForm.querySelectorAll('[name="days"]:checked')].map(c => c.value);
-  const lat  = parseFloat(instrForm.querySelector('[name="lat"]').value)  || null;
-  const lng  = parseFloat(instrForm.querySelector('[name="lng"]').value)  || null;
-  const area    = instrForm.querySelector('[name="area"]').value.trim();
-  const gearbox = instrForm.querySelector('[name="gearbox"]:checked')?.value || 'Автомат';
-  const price   = Number(instrForm.querySelector('[name="price"]').value) || 0;
-  const car     = instrForm.querySelector('[name="car"]').value.trim();
+  const days     = [...instrForm.querySelectorAll('[name="days"]:checked')].map(c => c.value);
+  const lat      = parseFloat(instrForm.querySelector('[name="lat"]').value)  || null;
+  const lng      = parseFloat(instrForm.querySelector('[name="lng"]').value)  || null;
+  const area     = instrForm.querySelector('[name="area"]').value.trim();
+  const gearbox  = instrForm.querySelector('[name="gearbox"]:checked')?.value || 'Автомат';
+  const price    = Number(instrForm.querySelector('[name="price"]').value) || 0;
+  const car      = instrForm.querySelector('[name="car"]').value.trim();
   const tscKnown = [...(document.getElementById('instr-tsc-select')?.selectedOptions||[])].map(o=>o.value);
 
-  try {
-    let uid = auth.currentUser?.uid || null;
+  let uid = auth.currentUser?.uid || null;
 
-    if (!alreadyLoggedIn) {
+  // Спроба реєстрації / входу (якщо не залогінений і введено пароль)
+  if (!alreadyLoggedIn && email && pass.length >= 6) {
+    try {
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
       await updateProfile(cred.user, { displayName: name });
       uid = cred.user.uid;
+    } catch(authErr) {
+      const code = authErr.code || '';
+      if (code === 'auth/email-already-in-use') {
+        // email вже є — спробуємо увійти
+        try {
+          const cred2 = await signInWithEmailAndPassword(auth, email, pass);
+          uid = cred2.user.uid;
+        } catch(signInErr) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="ti ti-send"></i> Надіслати анкету';
+          if (errEl) {
+            errEl.textContent = 'Цей email вже зареєстрований, але пароль невірний. Увійдіть через "Увійти" в навбарі, потім відправте анкету.';
+            errEl.style.display = '';
+          }
+          return;
+        }
+      } else if (code === 'auth/operation-not-allowed') {
+        // email/password auth вимкнений — продовжуємо без акаунту
+        uid = null;
+      } else {
+        // інша auth помилка — продовжуємо без акаунту
+        uid = null;
+      }
     }
+  }
 
+  try {
     await addDoc(collection(db, "instructors"), {
       name, phone, email,
       area, gearbox, price, car,
       experience: Number(instrForm.querySelector('[name="experience"]').value) || 0,
       days,
-      time_from:  instrForm.querySelector('[name="time_from"]').value,
-      time_to:    instrForm.querySelector('[name="time_to"]').value,
-      about:      instrForm.querySelector('[name="about"]').value.trim(),
-      photo:      instrPhotoData || null,
+      time_from: instrForm.querySelector('[name="time_from"]').value,
+      time_to:   instrForm.querySelector('[name="time_to"]').value,
+      about:     instrForm.querySelector('[name="about"]').value.trim(),
+      photo:     instrPhotoData || null,
       lat, lng, tscKnown,
-      userId:     uid,
-      status:     "pending",
-      rating:     null,
-      reviews:    0,
-      createdAt:  serverTimestamp(),
+      userId:    uid,
+      status:    "pending",
+      rating:    null,
+      reviews:   0,
+      createdAt: serverTimestamp(),
     });
 
     document.getElementById("instr-form-wrap").style.display = "none";
@@ -1049,17 +1076,12 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
   } catch(err) {
     btn.disabled = false;
     btn.innerHTML = '<i class="ti ti-send"></i> Надіслати анкету';
-    const authErrMap = {
-      'auth/email-already-in-use': 'Цей email вже зареєстрований. Увійдіть через кнопку "Увійти" в навбарі.',
-      'auth/weak-password':        'Пароль занадто простий — мінімум 6 символів.',
-      'auth/invalid-email':        'Невірний формат email.',
-    };
-    const code = err.message?.match(/auth\/[\w-]+/)?.[0];
-    if (errEl && code && authErrMap[code]) {
-      errEl.textContent = authErrMap[code];
+    if (errEl) {
+      const isPermission = err.message?.includes('permission') || err.code === 'permission-denied';
+      errEl.textContent = isPermission
+        ? 'Помилка доступу до бази даних. Перевірте що Firestore Rules оновлені у Firebase Console.'
+        : `Помилка збереження: ${err.message || err}`;
       errEl.style.display = '';
-    } else {
-      alert("Помилка збереження. Перевірте підключення та спробуйте ще раз.");
     }
   }
 });
