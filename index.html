@@ -257,6 +257,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .bk-status.pending{background:#fff3cd;color:#856404}
 .bk-status.confirmed{background:var(--green-light);color:var(--green)}
 .bk-status.cancelled{background:var(--bg);color:var(--text-hint);border:.5px solid var(--border)}
+.bk-status.reschedule_requested{background:#fff3cd;color:#856404}
 .bk-meta{font-size:12px;color:var(--text-muted);line-height:1.6;display:flex;align-items:center;gap:5px}
 .bk-tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap}
 .bk-tab{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:var(--bg);color:var(--text-muted);font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
@@ -270,6 +271,33 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .btn-bk-action:hover{background:var(--green-dark)}
 .btn-bk-reject{background:none;border:.5px solid var(--border);border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--text-muted);transition:border-color .15s,color .15s}
 .btn-bk-reject:hover{border-color:#cc3333;color:#cc3333}
+/* Calendar */
+.bk-view-toggle{display:flex;gap:4px;margin-bottom:10px}
+.bk-view-btn{flex:1;padding:6px 0;border:.5px solid var(--border);border-radius:7px;background:none;font-size:12px;color:var(--text-muted);cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+.bk-view-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
+.bk-cal-wrap{margin-bottom:12px;background:var(--white);border-radius:12px;padding:12px;border:.5px solid var(--border)}
+.bk-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.bk-cal-nav{background:none;border:.5px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;color:var(--text-muted);font-family:inherit;font-size:13px;line-height:1;transition:all .15s}
+.bk-cal-nav:hover{background:var(--green-light);color:var(--green);border-color:#b8ddc8}
+.bk-cal-title{font-size:13px;font-weight:600;color:var(--text)}
+.bk-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.bk-cal-dow{font-size:10px;color:var(--text-hint);text-align:center;padding:3px 0;font-weight:500}
+.bk-cal-day{position:relative;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:6px;font-size:12px;color:var(--text-muted);transition:background .1s;user-select:none}
+.bk-cal-day.in-month{color:var(--text)}
+.bk-cal-day.today{background:var(--green-light);color:var(--green);font-weight:600}
+.bk-cal-day.has-bk{cursor:pointer}
+.bk-cal-day.has-bk::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--green)}
+.bk-cal-day.has-pending::after{background:#f59e0b}
+.bk-cal-day.selected{background:var(--green)!important;color:#fff!important;font-weight:600}
+.bk-cal-day.selected::after{background:rgba(255,255,255,.8)}
+.bk-cal-day.in-month:not(.selected):not(.today):hover{background:var(--bg)}
+.bk-reschedule-hint{font-size:11px;color:#856404;background:#fff8e6;border-radius:7px;padding:7px 10px;margin-top:6px;line-height:1.5;border:.5px solid #f0e0a0}
+.bk-reschedule-form{margin-top:8px;background:var(--bg);border:.5px solid var(--border);border-radius:8px;padding:10px 12px;display:none}
+.bk-reschedule-inputs{display:flex;gap:6px}
+.bk-reschedule-inputs>div{flex:1}
+.bk-reschedule-inputs label{font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px}
+.bk-reschedule-inputs input{width:100%;border:.5px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;background:var(--white);box-sizing:border-box}
+.bk-reschedule-row{display:flex;gap:6px;margin-top:8px}
 /* TOAST */
 #toast-wrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
 .toast{background:var(--white);border:.5px solid var(--border);border-radius:12px;padding:12px 16px;font-size:13px;box-shadow:0 4px 18px rgba(0,0,0,.12);max-width:300px;pointer-events:auto;display:flex;align-items:flex-start;gap:10px;animation:toastIn .25s ease}
@@ -290,7 +318,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.39</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.40</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1448,8 +1476,57 @@ window._bookSlot = async function(instrId, dateStr, time) {
 };
 
 // Спільні константи для рендеру карток
-const BK_LABEL = { pending:'Очікує', confirmed:'Підтверджено', cancelled:'Скасовано' };
-const BK_ICON  = { pending:'ti-clock', confirmed:'ti-circle-check', cancelled:'ti-circle-x' };
+const BK_LABEL = {
+  pending:'Очікує', confirmed:'Підтверджено', cancelled:'Скасовано',
+  reschedule_requested:'Перенос запитано'
+};
+const BK_ICON = {
+  pending:'ti-clock', confirmed:'ti-circle-check', cancelled:'ti-circle-x',
+  reschedule_requested:'ti-calendar-time'
+};
+
+const MONTHS_UA = ['Січень','Лютий','Березень','Квітень','Травень','Червень',
+  'Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
+const DOWS_UA   = ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
+
+function renderCalendar(bookings, year, month, selectedDate, prefix) {
+  const bkMap = {};
+  bookings.forEach(b => {
+    if (b.status === 'cancelled') return;
+    if (!bkMap[b.date]) bkMap[b.date] = [];
+    bkMap[b.date].push(b.status);
+  });
+  const firstDay = new Date(year, month, 1);
+  const lastDay  = new Date(year, month + 1, 0);
+  const startDow = (firstDay.getDay() + 6) % 7;
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const [py, pm] = month === 0  ? [year-1, 11] : [year, month-1];
+  const [ny, nm] = month === 11 ? [year+1,  0] : [year, month+1];
+  const navFn  = `window._${prefix}CalNav`;
+  const dateFn = `window._${prefix}CalDate`;
+
+  let cells = DOWS_UA.map(d => `<div class="bk-cal-dow">${d}</div>`).join('');
+  for (let i = 0; i < startDow; i++) cells += '<div class="bk-cal-day"></div>';
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const ds  = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const sts = bkMap[ds] || [];
+    const hasPending = sts.some(s => s === 'pending' || s === 'reschedule_requested');
+    let cls = 'bk-cal-day in-month';
+    if (ds === todayStr)     cls += ' today';
+    if (sts.length)          cls += hasPending ? ' has-bk has-pending' : ' has-bk';
+    if (ds === selectedDate) cls += ' selected';
+    const click = sts.length ? `onclick="${dateFn}('${ds}')"` : '';
+    cells += `<div class="${cls}" ${click}>${d}</div>`;
+  }
+  return `<div class="bk-cal-wrap">
+    <div class="bk-cal-header">
+      <button class="bk-cal-nav" onclick="${navFn}(${py},${pm})"><i class="ti ti-chevron-left"></i></button>
+      <span class="bk-cal-title">${MONTHS_UA[month]} ${year}</span>
+      <button class="bk-cal-nav" onclick="${navFn}(${ny},${nm})"><i class="ti ti-chevron-right"></i></button>
+    </div>
+    <div class="bk-cal-grid">${cells}</div>
+  </div>`;
+}
 
 function bkDateStr(b) {
   const [y,m,day] = (b.date||'').split('-');
@@ -1475,33 +1552,54 @@ async function loadClientBookings(user, container) {
   if (!container) return;
   container.innerHTML = '<div class="cab-empty"><i class="ti ti-loader"></i></div>';
   try {
-    const snap = await getDocs(query(collection(db, 'bookings'), where('clientId','==',user.uid)));
-    const all = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-      .sort((a,b) => (b.date+b.time).localeCompare(a.date+a.time));
+    const snap = await getDocs(query(collection(db,'bookings'),where('clientId','==',user.uid)));
+    const all  = snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+
+    window._reloadClientBk = () => loadClientBookings(user, container);
 
     if (!all.length) {
       container.innerHTML = '<div class="cab-empty"><i class="ti ti-calendar-off"></i><br>Записів ще немає</div>';
       return;
     }
 
-    const today   = new Date().toISOString().slice(0,10);
-    const active  = all.filter(b => (b.status==='pending'||b.status==='confirmed') && b.date >= today);
+    const today  = new Date().toISOString().slice(0,10);
+    const active = all.filter(b =>
+      (b.status==='pending'||b.status==='confirmed'||b.status==='reschedule_requested') && b.date >= today);
     const archive = all.filter(b => b.status==='cancelled' || b.date < today);
 
-    window._reloadClientBk = () => loadClientBookings(user, container);
+    const now = new Date();
+    let calYear = now.getFullYear(), calMonth = now.getMonth(), calSelected = null, viewMode = 'list';
 
-    container.innerHTML = `<div data-bk-tabs>
-      <div class="bk-tabs">
-        <button class="bk-tab active" onclick="switchBkTab(this,'active')">
-          Активні${active.length?`<span class="bk-badge">${active.length}</span>`:''}
-        </button>
-        <button class="bk-tab" onclick="switchBkTab(this,'archive')">
-          Архів${archive.length?`<span class="bk-badge" style="background:var(--text-hint)">${archive.length}</span>`:''}
-        </button>
-      </div>
-      <div data-bk-panel="active">${renderClientCards(active)}</div>
-      <div data-bk-panel="archive" style="display:none">${renderClientCards(archive)}</div>
-    </div>`;
+    function renderAll() {
+      const calHtml  = renderCalendar(all, calYear, calMonth, calSelected, 'client');
+      const filtered = calSelected ? all.filter(b => b.date === calSelected) : null;
+      container.innerHTML = `
+        <div class="bk-view-toggle">
+          <button class="bk-view-btn${viewMode==='list'?' active':''}" onclick="window._clientSwitchView('list')"><i class="ti ti-list"></i> Список</button>
+          <button class="bk-view-btn${viewMode==='cal'?' active':''}" onclick="window._clientSwitchView('cal')"><i class="ti ti-calendar"></i> Календар</button>
+        </div>
+        ${viewMode==='cal' ? `
+          ${calHtml}
+          ${calSelected
+            ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px"><i class="ti ti-calendar-event" style="color:var(--green)"></i> <b>${calSelected.split('-').reverse().join('.')}</b> — ${filtered.length} запис(ів)</div>${renderClientCards(filtered)}`
+            : '<div style="font-size:12px;color:var(--text-hint);margin-bottom:10px;text-align:center">Натисніть на дату щоб побачити записи</div>'}
+        ` : `
+          <div data-bk-tabs>
+            <div class="bk-tabs">
+              <button class="bk-tab active" onclick="switchBkTab(this,'active')">Активні${active.length?`<span class="bk-badge">${active.length}</span>`:''}</button>
+              <button class="bk-tab" onclick="switchBkTab(this,'archive')">Архів${archive.length?`<span class="bk-badge" style="background:var(--text-hint)">${archive.length}</span>`:''}</button>
+            </div>
+            <div data-bk-panel="active">${renderClientCards(active)}</div>
+            <div data-bk-panel="archive" style="display:none">${renderClientCards(archive)}</div>
+          </div>
+        `}`;
+    }
+
+    window._clientCalNav     = (y,m)  => { calYear=y; calMonth=m; calSelected=null; renderAll(); };
+    window._clientCalDate    = (date) => { calSelected = calSelected===date ? null : date; renderAll(); };
+    window._clientSwitchView = (mode) => { viewMode=mode; renderAll(); };
+    renderAll();
   } catch(e) {
     container.innerHTML = '<div class="cab-empty">Помилка завантаження</div>';
   }
@@ -1509,22 +1607,64 @@ async function loadClientBookings(user, container) {
 
 function renderClientCards(docs) {
   if (!docs.length) return '<div class="bk-empty-tab"><i class="ti ti-calendar-off"></i><br>Порожньо</div>';
-  return docs.map(b => `<div class="bk-card" id="bk-${b.id}">
-    <div class="bk-card-head">
-      <div class="bk-name">${esc(b.instructorName||'Інструктор')}</div>
-      ${bkStatusBadge(b.status)}
-    </div>
-    <div class="bk-meta"><i class="ti ti-calendar" style="font-size:11px;color:var(--green)"></i>${esc(bkDateStr(b))} о ${esc(b.time||'')} · ${b.duration||90} хв</div>
-    ${b.status==='pending'?`<button class="btn-bk-cancel" style="margin-top:6px" onclick="window._cancelBooking('${b.id}')"><i class="ti ti-x"></i> Скасувати</button>`:''}
-  </div>`).join('');
+  const today = new Date().toISOString().slice(0,10);
+  return docs.map(b => {
+    const isActive = (b.status==='pending'||b.status==='confirmed'||b.status==='reschedule_requested') && b.date >= today;
+    const showReschedule = isActive && b.status !== 'reschedule_requested' && b.status !== 'cancelled';
+    const showCancel     = isActive;
+    return `<div class="bk-card" id="bk-${b.id}">
+      <div class="bk-card-head">
+        <div class="bk-name">${esc(b.instructorName||'Інструктор')}</div>
+        ${bkStatusBadge(b.status)}
+      </div>
+      <div class="bk-meta"><i class="ti ti-calendar" style="font-size:11px;color:var(--green)"></i>${esc(bkDateStr(b))} о ${esc(b.time||'')} · ${b.duration||90} хв</div>
+      ${b.status==='reschedule_requested'&&b.proposedDate?`<div class="bk-reschedule-hint"><i class="ti ti-clock"></i> Запит на перенос: <b>${esc(b.proposedDate.split('-').reverse().join('.'))} о ${esc(b.proposedTime||'')}</b> — очікуємо відповідь інструктора</div>`:''}
+      ${showReschedule||showCancel?`
+        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+          ${showReschedule?`<button class="btn-bk-reject" style="font-size:11px;padding:5px 10px" onclick="window._showReschForm('${b.id}')"><i class="ti ti-calendar-time"></i> Перенести</button>`:''}
+          ${showCancel?`<button class="btn-bk-cancel" onclick="window._cancelBooking('${b.id}')"><i class="ti ti-x"></i> Скасувати</button>`:''}
+        </div>
+        <div class="bk-reschedule-form" id="rf-${b.id}">
+          <div class="bk-reschedule-inputs">
+            <div><label>Нова дата</label><input type="date" id="rd-${b.id}" min="${today}"></div>
+            <div><label>Час</label><input type="time" id="rt-${b.id}" step="900"></div>
+          </div>
+          <div class="bk-reschedule-row">
+            <button class="btn-bk-action" style="font-size:11px;padding:5px 12px" onclick="window._submitReschedule('${b.id}')"><i class="ti ti-send"></i> Запросити перенос</button>
+            <button class="btn-bk-reject" style="font-size:11px;padding:5px 12px" onclick="window._hideReschForm('${b.id}')">Відмінити</button>
+          </div>
+        </div>` : ''}
+    </div>`;
+  }).join('');
 }
+
+window._showReschForm = function(id) {
+  const f = document.getElementById('rf-'+id);
+  if (f) { f.style.display = ''; f.querySelector('input[type=date]')?.focus(); }
+};
+window._hideReschForm = function(id) {
+  const f = document.getElementById('rf-'+id);
+  if (f) f.style.display = 'none';
+};
 
 window._cancelBooking = async function(bookingId) {
   if (!confirm('Скасувати цей запис?')) return;
   try {
-    await updateDoc(doc(db, 'bookings', bookingId), { status: 'cancelled' });
+    await updateDoc(doc(db,'bookings',bookingId), { status:'cancelled' });
     window._reloadClientBk?.();
   } catch(e) { alert('Не вдалось скасувати.'); }
+};
+
+window._submitReschedule = async function(bookingId) {
+  const newDate = document.getElementById('rd-'+bookingId)?.value;
+  const newTime = document.getElementById('rt-'+bookingId)?.value;
+  if (!newDate || !newTime) { alert('Вкажіть нову дату і час'); return; }
+  try {
+    await updateDoc(doc(db,'bookings',bookingId), {
+      status:'reschedule_requested', proposedDate:newDate, proposedTime:newTime
+    });
+    window._reloadClientBk?.();
+  } catch(e) { alert('Не вдалось надіслати запит.'); }
 };
 
 async function getMyInstrProfile(user) {
@@ -1545,35 +1685,55 @@ async function loadInstrBookings(instrId, container) {
   container.innerHTML = '<div class="cab-empty"><i class="ti ti-loader"></i></div>';
   try {
     const snap = await getDocs(query(collection(db,'bookings'),where('instructorId','==',instrId)));
-    const all = snap.docs.map(d=>({id:d.id,...d.data()}))
-      .sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
+    const all  = snap.docs.map(d=>({id:d.id,...d.data()}))
+      .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+
+    window._reloadInstrBk = () => loadInstrBookings(instrId, container);
 
     if (!all.length) {
       container.innerHTML = '<div class="cab-empty"><i class="ti ti-calendar-off"></i><br>Записів ще немає</div>';
       return;
     }
 
-    const today     = new Date().toISOString().slice(0,10);
-    const pending   = all.filter(b => b.status==='pending');
-    const upcoming  = all.filter(b => b.status==='confirmed' && b.date >= today);
-    const archive   = all.filter(b => b.status==='cancelled' || (b.status==='confirmed' && b.date < today));
+    const today   = new Date().toISOString().slice(0,10);
+    const pending  = all.filter(b => b.status==='pending'||b.status==='reschedule_requested');
+    const upcoming = all.filter(b => b.status==='confirmed' && b.date >= today);
+    const archive  = all.filter(b => b.status==='cancelled' || (b.status==='confirmed'&&b.date<today));
 
-    window._reloadInstrBk = () => loadInstrBookings(instrId, container);
+    const now = new Date();
+    let calYear=now.getFullYear(), calMonth=now.getMonth(), calSelected=null, viewMode='list';
 
-    container.innerHTML = `<div data-bk-tabs>
-      <div class="bk-tabs">
-        <button class="bk-tab active" onclick="switchBkTab(this,'new')">
-          Нові${pending.length?`<span class="bk-badge">${pending.length}</span>`:''}
-        </button>
-        <button class="bk-tab" onclick="switchBkTab(this,'upcoming')">
-          Заплановані${upcoming.length?`<span class="bk-badge" style="background:var(--green-dark)">${upcoming.length}</span>`:''}
-        </button>
-        <button class="bk-tab" onclick="switchBkTab(this,'archive')">Архів</button>
-      </div>
-      <div data-bk-panel="new">${renderInstrCards(pending, true)}</div>
-      <div data-bk-panel="upcoming" style="display:none">${renderInstrCards(upcoming, false)}</div>
-      <div data-bk-panel="archive" style="display:none">${renderInstrCards(archive, false)}</div>
-    </div>`;
+    function renderAll() {
+      const calHtml  = renderCalendar(all, calYear, calMonth, calSelected, 'instr');
+      const filtered = calSelected ? all.filter(b=>b.date===calSelected) : null;
+      container.innerHTML = `
+        <div class="bk-view-toggle">
+          <button class="bk-view-btn${viewMode==='list'?' active':''}" onclick="window._instrSwitchView('list')"><i class="ti ti-list"></i> Список</button>
+          <button class="bk-view-btn${viewMode==='cal'?' active':''}" onclick="window._instrSwitchView('cal')"><i class="ti ti-calendar"></i> Календар</button>
+        </div>
+        ${viewMode==='cal' ? `
+          ${calHtml}
+          ${calSelected
+            ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px"><i class="ti ti-calendar-event" style="color:var(--green)"></i> <b>${calSelected.split('-').reverse().join('.')}</b> — ${filtered.length} запис(ів)</div>${renderInstrCards(filtered, true)}`
+            : '<div style="font-size:12px;color:var(--text-hint);margin-bottom:10px;text-align:center">Натисніть на дату щоб побачити записи</div>'}
+        ` : `
+          <div data-bk-tabs>
+            <div class="bk-tabs">
+              <button class="bk-tab active" onclick="switchBkTab(this,'new')">Нові${pending.length?`<span class="bk-badge">${pending.length}</span>`:''}</button>
+              <button class="bk-tab" onclick="switchBkTab(this,'upcoming')">Заплановані${upcoming.length?`<span class="bk-badge" style="background:var(--green-dark)">${upcoming.length}</span>`:''}</button>
+              <button class="bk-tab" onclick="switchBkTab(this,'archive')">Архів</button>
+            </div>
+            <div data-bk-panel="new">${renderInstrCards(pending, true)}</div>
+            <div data-bk-panel="upcoming" style="display:none">${renderInstrCards(upcoming, false)}</div>
+            <div data-bk-panel="archive" style="display:none">${renderInstrCards(archive, false)}</div>
+          </div>
+        `}`;
+    }
+
+    window._instrCalNav     = (y,m)  => { calYear=y; calMonth=m; calSelected=null; renderAll(); };
+    window._instrCalDate    = (date) => { calSelected = calSelected===date ? null : date; renderAll(); };
+    window._instrSwitchView = (mode) => { viewMode=mode; renderAll(); };
+    renderAll();
   } catch(e) {
     container.innerHTML = '<div class="cab-empty">Помилка завантаження</div>';
   }
@@ -1581,6 +1741,7 @@ async function loadInstrBookings(instrId, container) {
 
 function renderInstrCards(docs, showActions) {
   if (!docs.length) return '<div class="bk-empty-tab"><i class="ti ti-calendar-off"></i><br>Порожньо</div>';
+  const today = new Date().toISOString().slice(0,10);
   return docs.map(b => `<div class="bk-card" id="bk-${b.id}">
     <div class="bk-card-head">
       <div class="bk-name">${esc(b.clientName||b.clientEmail||'Учень')}</div>
@@ -1588,10 +1749,17 @@ function renderInstrCards(docs, showActions) {
     </div>
     <div class="bk-meta"><i class="ti ti-calendar" style="font-size:11px;color:var(--green)"></i>${esc(bkDateStr(b))} о ${esc(b.time||'')} · ${b.duration||90} хв</div>
     ${b.clientEmail?`<div class="bk-meta"><i class="ti ti-mail" style="font-size:11px;color:var(--text-hint)"></i>${esc(b.clientEmail)}</div>`:''}
-    ${showActions && b.status==='pending'?`<div style="margin-top:8px">
+    ${b.status==='reschedule_requested'&&b.proposedDate?`
+      <div class="bk-reschedule-hint"><i class="ti ti-calendar-time"></i> Учень просить перенести на <b>${esc(b.proposedDate.split('-').reverse().join('.'))} о ${esc(b.proposedTime||'')}</b></div>
+      <div style="margin-top:8px;display:flex;gap:6px">
+        <button class="btn-bk-action" style="font-size:11px;padding:5px 12px" onclick="window._acceptReschedule('${b.id}')"><i class="ti ti-check"></i> Прийняти</button>
+        <button class="btn-bk-reject" style="font-size:11px;padding:5px 12px" onclick="window._rejectReschedule('${b.id}')">Залишити дату</button>
+      </div>` : ''}
+    ${showActions&&b.status==='pending'?`<div style="margin-top:8px">
       <button class="btn-bk-action" onclick="window._confirmBk('${b.id}')"><i class="ti ti-check"></i> Підтвердити</button>
       <button class="btn-bk-reject" onclick="window._rejectBk('${b.id}')">Відхилити</button>
     </div>`:''}
+    ${b.status==='confirmed'&&b.date>=today?`<button class="btn-bk-cancel" style="margin-top:6px" onclick="window._instrCancelBk('${b.id}')"><i class="ti ti-x"></i> Скасувати заняття</button>`:''}
   </div>`).join('');
 }
 
@@ -1604,6 +1772,35 @@ window._confirmBk = async function(bookingId) {
 
 window._rejectBk = async function(bookingId) {
   if (!confirm('Відхилити цей запис?')) return;
+  try {
+    await updateDoc(doc(db,'bookings',bookingId),{status:'cancelled'});
+    window._reloadInstrBk?.();
+  } catch(e) { alert('Помилка. Спробуйте ще раз.'); }
+};
+
+window._acceptReschedule = async function(bookingId) {
+  try {
+    const s = await getDoc(doc(db,'bookings',bookingId));
+    const d = s.data();
+    if (!d?.proposedDate) return;
+    await updateDoc(doc(db,'bookings',bookingId), {
+      date:d.proposedDate, time:d.proposedTime,
+      status:'confirmed', proposedDate:null, proposedTime:null
+    });
+    window._reloadInstrBk?.();
+  } catch(e) { alert('Помилка. Спробуйте ще раз.'); }
+};
+
+window._rejectReschedule = async function(bookingId) {
+  if (!confirm('Відхилити перенос і залишити оригінальну дату?')) return;
+  try {
+    await updateDoc(doc(db,'bookings',bookingId),{status:'confirmed',proposedDate:null,proposedTime:null});
+    window._reloadInstrBk?.();
+  } catch(e) { alert('Помилка. Спробуйте ще раз.'); }
+};
+
+window._instrCancelBk = async function(bookingId) {
+  if (!confirm('Скасувати це заняття? Учень отримає сповіщення.')) return;
   try {
     await updateDoc(doc(db,'bookings',bookingId),{status:'cancelled'});
     window._reloadInstrBk?.();
