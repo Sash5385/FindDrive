@@ -190,10 +190,15 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .mp-map-wrap{border-radius:12px;overflow:hidden;margin:8px 0;border:.5px solid var(--border);display:none}
 .mp-map-wrap.open{display:block}
 .mp-map-el{height:200px;width:100%}
-.mp-map-search{display:flex;gap:6px;margin-bottom:6px}
-.mp-map-search input{flex:1;border:.5px solid var(--border);border-radius:7px;padding:6px 10px;font-size:12px;font-family:inherit;background:var(--white);outline:none}
-.mp-map-search input:focus{border-color:var(--green)}
+.mp-map-search{display:flex;gap:6px;margin-bottom:6px;align-items:flex-start}
 .mp-map-coords{font-size:10px;color:var(--text-hint);margin-top:4px;text-align:center}
+.mp-search-wrap{position:relative;flex:1;min-width:0}
+.mp-search-wrap input{width:100%;box-sizing:border-box;border:.5px solid var(--border);border-radius:7px;padding:6px 10px;font-size:12px;font-family:inherit;background:var(--white);outline:none}
+.mp-search-wrap input:focus{border-color:var(--green)}
+.mp-suggests{position:absolute;left:0;right:0;top:100%;background:var(--white);border:.5px solid var(--border);border-top:none;border-radius:0 0 9px 9px;z-index:20;max-height:160px;overflow-y:auto;list-style:none;margin:0;padding:0;box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.mp-suggests li{padding:7px 10px;font-size:11px;color:var(--text);cursor:pointer;border-bottom:.5px solid var(--border)}
+.mp-suggests li:last-child{border-bottom:none}
+.mp-suggests li:hover{background:var(--green-light)}
 .book-loc-link{display:inline-flex;align-items:center;gap:5px;color:var(--green);font-size:12px;text-decoration:none;font-weight:500}
 .book-loc-link:hover{text-decoration:underline}
 .mp-add-row input{flex:1;border:.5px solid var(--border);border-radius:7px;padding:6px 10px;font-size:12px;font-family:inherit;background:var(--white);outline:none;transition:border-color .2s}
@@ -314,9 +319,9 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .slot-crm-free-label{font-size:11px;color:var(--text-hint)}
 .slot-crm-actions{display:flex;gap:4px;margin-left:auto}
 .slot-hr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
-.slot-hr-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:54px;border-radius:9px;border:.5px solid var(--border);background:var(--bg);cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s;padding:0}
+.slot-hr-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:40px;border-radius:7px;border:.5px solid var(--border);background:var(--bg);cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s;padding:0}
 .slot-hr-btn:disabled{cursor:default;opacity:.7}
-.slot-hr-time{font-size:14px;font-weight:600;color:var(--text-muted)}
+.slot-hr-time{font-size:12px;font-weight:600;color:var(--text-muted)}
 .slot-hr-lbl{font-size:9px;color:var(--text-hint);margin-top:1px}
 .slot-hr-nm{font-size:9px;color:var(--text);margin-top:1px;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .slot-hr-dot{width:6px;height:6px;border-radius:50%;margin-top:2px}
@@ -331,8 +336,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .slot-hr-booked.selected{background:var(--green);border-color:var(--green-dark)}
 .slot-hr-booked.selected .slot-hr-time,.slot-hr-booked.selected .slot-hr-nm{color:#fff}
 .slot-hr-detail{background:var(--bg);border:.5px solid var(--border);border-radius:10px;padding:12px;margin-top:8px;font-size:12px}
-.slot-break-row{display:flex;align-items:center;gap:4px;margin:6px 0 8px;overflow-x:auto;scrollbar-width:none}
-.slot-break-sel{border:.5px solid var(--border);border-radius:7px;padding:4px 4px;font-size:11px;font-family:inherit;background:var(--white);color:var(--text);min-width:0;max-width:80px}
+
 .slot-dayoff-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:8px;border:.5px solid var(--border);background:var(--bg);font-size:11px;color:var(--text-muted);cursor:pointer;font-family:inherit;transition:background .15s}
 .slot-dayoff-btn.active{background:#fff0f0;border-color:#cc3333;color:#cc3333}
 .btn-bk-reject:hover{border-color:#cc3333;color:#cc3333}
@@ -416,7 +420,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.54</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.55</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -998,10 +1002,11 @@ async function renderProfileScreen(user) {
   const headerHtml = `
     <div class="cab-profile">
       ${user.photoURL ? `<img class="cab-photo" src="${esc(user.photoURL)}" alt="">` : `<div class="cab-photo" style="background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;flex-shrink:0">${esc(ini)}</div>`}
-      <div>
+      <div style="flex:1">
         <div class="cab-fullname">${esc(name || 'Користувач')}</div>
         <div class="cab-email">${esc(user.email || '')}</div>
       </div>
+      <button onclick="window._signOut()" title="Вийти з акаунту" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:20px;padding:4px;line-height:1;flex-shrink:0;transition:color .15s" onmouseover="this.style.color='#cc3333'" onmouseout="this.style.color='var(--text-muted)'"><i class="ti ti-logout"></i></button>
     </div>
     ${phone ? `<div class="cab-phone-row"><i class="ti ti-phone" style="color:var(--green)"></i> ${esc(phone)}</div>` : ''}`;
 
@@ -1083,7 +1088,10 @@ async function loadInstrSettings(instr, container) {
           ? `<div class="mp-list">${meetingPts.map((pt,idx) => { const lbl=typeof pt==='string'?pt:pt.label; const hasCoords=typeof pt==='object'&&pt.lat; return `<span class="mp-chip">${hasCoords?'<i class="ti ti-map-pin" style="font-size:10px;color:var(--green);margin-right:3px"></i>':''}${esc(lbl)}<button class="mp-chip-del" onclick="window._removeMp(${idx})" title="Видалити"><i class="ti ti-x"></i></button></span>`; }).join('')}</div>`
           : '<div style="font-size:11px;color:var(--text-hint);margin-bottom:8px">Немає збережених точок</div>'}
         <div class="mp-map-search">
-          <input type="text" id="mp-new-input" placeholder="Адреса або орієнтир…" maxlength="100" onkeydown="if(event.key==='Enter')window._addMp()">
+          <div class="mp-search-wrap">
+            <input type="text" id="mp-new-input" placeholder="Адреса або орієнтир…" maxlength="100" oninput="window._mpAutoComplete(this.value)" onkeydown="if(event.key==='Enter'){window._mpHideSuggest();window._addMp()}" onblur="setTimeout(()=>window._mpHideSuggest(),200)">
+            <ul id="mp-suggests" class="mp-suggests" style="display:none"></ul>
+          </div>
           <button class="btn-bk-action" style="font-size:11px;padding:6px 10px;flex-shrink:0" title="Знайти на карті" onclick="window._openMpMap()"><i class="ti ti-map-pin"></i></button>
           <button class="btn-bk-action" style="font-size:11px;padding:6px 10px;flex-shrink:0" onclick="window._addMp()"><i class="ti ti-plus"></i></button>
         </div>
@@ -1150,6 +1158,39 @@ async function loadInstrSettings(instr, container) {
         const coordEl = document.getElementById('mp-map-coords');
         if (coordEl) coordEl.textContent = `${_mpLatLng.lat}, ${_mpLatLng.lng}`;
       }).catch(()=>{});
+  };
+  let _mpAcTimer = null;
+  window._mpHideSuggest = () => { const ul=document.getElementById('mp-suggests'); if(ul) ul.style.display='none'; };
+  window._mpAutoComplete = (q) => {
+    clearTimeout(_mpAcTimer);
+    const ul = document.getElementById('mp-suggests');
+    if (!q || q.length < 2) { if(ul) ul.style.display='none'; return; }
+    _mpAcTimer = setTimeout(() => {
+      fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=ua&accept-language=uk`)
+        .then(r=>r.json()).then(results => {
+          const ul2 = document.getElementById('mp-suggests');
+          if (!ul2) return;
+          if (!results.length) { ul2.style.display='none'; return; }
+          ul2.innerHTML = results.map(r => {
+            const short = r.display_name.split(',').slice(0,3).join(', ');
+            return `<li onmousedown="window._mpSelectSuggest(${JSON.stringify(r.display_name)},${r.lat},${r.lon})">${short}</li>`;
+          }).join('');
+          ul2.style.display = '';
+        }).catch(()=>{});
+    }, 350);
+  };
+  window._mpSelectSuggest = (name, lat, lon) => {
+    const inp = document.getElementById('mp-new-input');
+    if (inp) inp.value = name.split(',').slice(0,3).join(', ');
+    window._mpHideSuggest();
+    _mpLatLng = {lat:+parseFloat(lat).toFixed(6), lng:+parseFloat(lon).toFixed(6)};
+    if (_mpMapObj) {
+      const ll = L.latLng(+parseFloat(lat),+parseFloat(lon));
+      _mpMapObj.setView(ll,16);
+      if (_mpMarker) _mpMarker.setLatLng(ll); else _mpMarker = L.marker(ll).addTo(_mpMapObj);
+      const coordEl = document.getElementById('mp-map-coords');
+      if (coordEl) coordEl.textContent = `${_mpLatLng.lat}, ${_mpLatLng.lng}`;
+    }
   };
   window._addMp = () => {
     const inp = document.getElementById('mp-new-input');
@@ -1674,25 +1715,29 @@ window._pickDate = async function(instrId, dateStr) {
   }
   const lessonMin = d.lessonDuration || LESSON_MIN;
   const busy = await getBusySlots(instrId, dateStr);
-  const slotsPerLesson = Math.max(1, Math.floor(lessonMin / 60));
+  const slotsPerLesson = Math.max(1, Math.round(lessonMin / 30));
   const busyExpanded = new Set(busy);
   if (slotsPerLesson > 1) {
     busy.forEach(t => {
       const [h,m] = t.split(':').map(Number);
-      for (let i = 1; i < slotsPerLesson; i++)
-        busyExpanded.add(`${String(h+i).padStart(2,'0')}:${String(m).padStart(2,'0')}`);
+      const _bt = h*60+m;
+      for (let i = 1; i < slotsPerLesson; i++) {
+        const nx = _bt+i*30;
+        busyExpanded.add(`${String(Math.floor(nx/60)).padStart(2,'0')}:${String(nx%60).padStart(2,'0')}`);
+      }
     });
   }
   let slots;
   if (avail.openSlots) {
     const avSet = new Set(avail.openSlots);
     let av = avail.openSlots.slice().sort();
-    if (avail.breakFrom && avail.breakTo) av = av.filter(s => s < avail.breakFrom || s >= avail.breakTo);
     if (slotsPerLesson > 1) {
       av = av.filter(s => {
         const [h,m] = s.split(':').map(Number);
+        const _bt = h*60+m;
         for (let i = 0; i < slotsPerLesson; i++) {
-          const si = `${String(h+i).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+          const nx = _bt+i*30;
+          const si = `${String(Math.floor(nx/60)).padStart(2,'0')}:${String(nx%60).padStart(2,'0')}`;
           if (busyExpanded.has(si) || !avSet.has(si)) return false;
         }
         return true;
@@ -2060,8 +2105,7 @@ async function loadInstrCombined(instr, container) {
       const avCurr = localAvail[editDate] || {};
       const isDayOff = avCurr.open === false;
       const openSlots = avCurr.openSlots || [];
-      const breakFrom = avCurr.breakFrom || '';
-      const breakTo   = avCurr.breakTo   || '';
+
       const location  = avCurr.location  || '';
       const dt = new Date(editDate+'T00:00:00');
       const [y,m,d] = editDate.split('-');
@@ -2071,26 +2115,27 @@ async function loadInstrCombined(instr, container) {
       const bkMap = {};
       dayBks.forEach(b => { if (b.time) bkMap[b.time] = b; });
       const lessonMin = instr.lessonDuration || LESSON_MIN;
-      const slotsPerLesson = Math.max(1, Math.floor(lessonMin / 60));
+      const slotsPerLesson = Math.max(1, Math.round(lessonMin / 30));
       if (slotsPerLesson > 1) {
         dayBks.forEach(b => {
           if (!b.time) return;
           const [bh,bm] = b.time.split(':').map(Number);
+          const _bt = bh*60+bm;
           for (let i = 1; i < slotsPerLesson; i++) {
-            const cont = `${String(bh+i).padStart(2,'0')}:${String(bm).padStart(2,'0')}`;
+            const nx = _bt+i*30;
+            const cont = `${String(Math.floor(nx/60)).padStart(2,'0')}:${String(nx%60).padStart(2,'0')}`;
             if (!bkMap[cont]) bkMap[cont] = {...b, _cont: true};
           }
         });
       }
 
-      const [fh] = (instr.time_from||'09:00').split(':').map(Number);
-      const [th] = (instr.time_to||'18:00').split(':').map(Number);
+      const [fh,fm] = (instr.time_from||'09:00').split(':').map(Number);
+      const [th,tm] = (instr.time_to||'18:00').split(':').map(Number);
       const hours = [];
-      for (let h=fh; h<th; h++) hours.push(`${String(h).padStart(2,'0')}:00`);
+      { let _sc=fh*60+(fm||0),_ec=th*60+(tm||0); while(_sc<_ec){hours.push(`${String(Math.floor(_sc/60)).padStart(2,'0')}:${String(_sc%60).padStart(2,'0')}`);_sc+=30;} }
 
       const hourBtns = hours.map(hr => {
         const bk = bkMap[hr];
-        const inBreak = breakFrom && breakTo && hr >= breakFrom && hr < breakTo;
         const isOpen = openSlots.includes(hr);
         if (bk) {
           if (bk._cont) {
@@ -2099,8 +2144,6 @@ async function loadInstrCombined(instr, container) {
           const nm = esc(bk.clientName||bk.clientEmail||'Учень');
           const dotClr = bk.status==='pending'?'#c07000':bk.status==='confirmed'?'var(--green)':'#993556';
           return `<button class="slot-hr-btn slot-hr-booked${selectedBkId===bk.id?' selected':''}" onclick="window._combSlotDetail('${bk.id}')"><span class="slot-hr-time">${hr}</span><span class="slot-hr-nm">${nm}</span><span class="slot-hr-dot" style="background:${dotClr}"></span></button>`;
-        } else if (inBreak) {
-          return `<button class="slot-hr-btn slot-hr-break" disabled><span class="slot-hr-time">${hr}</span><span class="slot-hr-lbl">обід</span></button>`;
         } else if (isOpen) {
           return `<button class="slot-hr-btn slot-hr-open" onclick="window._combToggleSlot('${instr.id}','${editDate}','${hr}')"><span class="slot-hr-time">${hr}</span><span class="slot-hr-lbl">вільно</span></button>`;
         } else {
@@ -2117,20 +2160,9 @@ async function loadInstrCombined(instr, container) {
         ${selBk.status==='confirmed'&&selBk.date>=(new Date().toISOString().slice(0,10))?`<button class="btn-bk-cancel" style="margin-top:6px" onclick="window._instrCancelBk('${selBk.id}')"><i class="ti ti-x"></i> Скасувати заняття</button>`:''}
       </div>` : '';
 
-      const bfOpts = `<option value="">—</option>${hours.map(h=>`<option value="${h}"${breakFrom===h?' selected':''}>${h}</option>`).join('')}`;
-      const btOpts = `<option value="">—</option>${hours.map(h=>`<option value="${h}"${breakTo===h?' selected':''}>${h}</option>`).join('')}`;
-
       const mainContent = isDayOff
         ? `<div style="text-align:center;padding:20px 0;color:var(--text-hint);font-size:12px"><i class="ti ti-moon" style="font-size:20px"></i><br>День позначено як вихідний</div>`
-        : `<div class="slot-break-row">
-          <span style="color:var(--text-muted);font-size:11px">Обід:</span>
-          <select id="slot-break-from" class="slot-break-sel">${bfOpts}</select>
-          <span style="color:var(--text-hint);font-size:11px">—</span>
-          <select id="slot-break-to" class="slot-break-sel">${btOpts}</select>
-          <button class="btn-bk-action" style="font-size:11px;padding:4px 10px" onclick="window._combSaveBreak('${instr.id}','${editDate}')">Ок</button>
-          ${breakFrom?`<button class="btn-bk-reject" style="font-size:11px;padding:4px 8px" onclick="window._combClearBreak('${instr.id}','${editDate}')"><i class="ti ti-x"></i></button>`:''}
-        </div>
-        <div class="slot-hr-grid">${hourBtns}</div>
+        : `<div class="slot-hr-grid">${hourBtns}</div>
         ${detPanel}
         <div class="avail-loc-row" style="margin-top:10px">
           <label>Місце зустрічі</label>
@@ -2209,30 +2241,6 @@ async function loadInstrCombined(instr, container) {
       try {
         if (data===null) { await updateDoc(doc(db,'instructors',instrId),{[`availability.${date}`]:deleteField()}); delete localAvail[date]; if (window._instrProfiles?.[instrId]?.availability) delete window._instrProfiles[instrId].availability[date]; }
         else { await updateDoc(doc(db,'instructors',instrId),{[`availability.${date}`]:data}); localAvail[date]=data; if (window._instrProfiles?.[instrId]) { window._instrProfiles[instrId].availability=window._instrProfiles[instrId].availability||{}; window._instrProfiles[instrId].availability[date]=data; } }
-        renderAll();
-      } catch(e) { alert('Помилка.'); }
-    };
-    window._combSaveBreak = async (instrId, date) => {
-      const from = document.getElementById('slot-break-from')?.value;
-      const to   = document.getElementById('slot-break-to')?.value;
-      const curr = localAvail[date]||{};
-      const data = Object.assign({}, curr);
-      if (from && to && from < to) { data.breakFrom=from; data.breakTo=to; } else { delete data.breakFrom; delete data.breakTo; }
-      try {
-        await updateDoc(doc(db,'instructors',instrId),{[`availability.${date}`]:data});
-        localAvail[date]=data;
-        if (window._instrProfiles?.[instrId]) { window._instrProfiles[instrId].availability=window._instrProfiles[instrId].availability||{}; window._instrProfiles[instrId].availability[date]=data; }
-        renderAll();
-      } catch(e) { alert('Помилка.'); }
-    };
-    window._combClearBreak = async (instrId, date) => {
-      const curr = localAvail[date]||{};
-      const data = Object.assign({}, curr);
-      delete data.breakFrom; delete data.breakTo;
-      try {
-        await updateDoc(doc(db,'instructors',instrId),{[`availability.${date}`]:data});
-        localAvail[date]=data;
-        if (window._instrProfiles?.[instrId]) { window._instrProfiles[instrId].availability=window._instrProfiles[instrId].availability||{}; window._instrProfiles[instrId].availability[date]=data; }
         renderAll();
       } catch(e) { alert('Помилка.'); }
     };
