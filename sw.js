@@ -33,7 +33,7 @@ self.addEventListener('notificationclick', e => {
 });
 
 // --- Caching ---
-const CACHE = 'finddrive-v4';
+const CACHE = 'finddrive-v5';
 
 // Свої файли + Firebase CDN модулі (щоб PWA працювала офлайн / при слабкому сигналі)
 const PRECACHE = [

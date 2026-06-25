@@ -290,7 +290,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.36</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.37</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -542,7 +542,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged,
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
+         signOut, onAuthStateChanged,
          createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp,
@@ -563,6 +564,9 @@ const app      = initializeApp(firebaseConfig);
 const auth     = getAuth(app);
 const db       = getFirestore(app);
 const provider = new GoogleAuthProvider();
+
+// Обробка редіректу після Google Sign-In у PWA
+getRedirectResult(auth).catch(() => {});
 const VAPID_KEY = 'BGSuM0lNQTvXWAx6H8m1ORaBOWVajW0XFz8bRA39VzBW7dToZ-bsXnL9TTd1kACItrCMbi_HhXATND-MhQ0cpGY';
 
 const TSC_LIST = [
@@ -683,8 +687,11 @@ function renderAuthScreen() {
         ? 'Вже є акаунт? <a href="#" id="auth-switch">Увійти</a>'
         : 'Немає акаунту? <a href="#" id="auth-switch">Зареєструватись</a>'}
     </p>`;
-  document.getElementById('btn-google-cab').addEventListener('click', () =>
-    signInWithPopup(auth, provider).catch(e => showAuthErr(e.message)));
+  document.getElementById('btn-google-cab').addEventListener('click', () => {
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || !!navigator.standalone;
+    if (isPWA) signInWithRedirect(auth, provider);
+    else signInWithPopup(auth, provider).catch(e => showAuthErr(e.message));
+  });
   document.getElementById('auth-switch').addEventListener('click', e => {
     e.preventDefault();
     authMode = authMode === 'login' ? 'register' : 'login';
