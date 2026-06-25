@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null
+          && request.auth.token.email == 'sash5385@gmail.com';
+    }
+
+    // Інструктори
+    match /instructors/{docId} {
+      // Всі (без авторизації) бачать лише схвалених
+      // Адмін бачить усіх (pending + approved)
+      allow read: if isAdmin() || resource.data.status == 'approved';
+
+      // Авторизований користувач може подати заявку зі статусом pending
+      allow create: if request.auth != null
+                    && request.resource.data.status == 'pending';
+
+      // Тільки адмін може змінювати та видаляти
+      allow update, delete: if isAdmin();
+    }
+
+    // Профілі учнів
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if isAdmin();
+    }
+  }
+}
