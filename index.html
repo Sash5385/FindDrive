@@ -1312,6 +1312,10 @@ window._openBooking = function(instrId) {
     </div>`;
     return;
   }
+  if (profD.userId && user.uid === profD.userId) {
+    box.innerHTML = `<div class="booking-login-prompt"><p style="color:var(--text-muted)"><i class="ti ti-info-circle"></i> Це ваш власний профіль</p></div>`;
+    return;
+  }
   renderBookingDates(box, instrId, profD);
 };
 
