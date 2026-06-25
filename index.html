@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FindDrive — Знайди інструктора з водіння</title>
+<meta name="description" content="Маркетплейс пошуку інструкторів з водіння за геолокацією. Знайди інструктора поряд з тобою.">
+<meta name="theme-color" content="#1a7a4a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="FindDrive">
+<link rel="manifest" href="/manifest.json">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
 <link rel="apple-touch-icon" href="logo192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -263,7 +270,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.27</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.28</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1617,5 +1624,12 @@ document.getElementById("version-badge").addEventListener("click", function() {
 </script>
 <!-- Замініть YOUR_API_KEY на ключ з Google Cloud Console (Maps JavaScript API) -->
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDcpDLj_F9Qp6RNZuuzoqeWovEo_sNp1L4&libraries=places&callback=initMap&language=uk&region=UA"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+</script>
 </body>
 </html>
