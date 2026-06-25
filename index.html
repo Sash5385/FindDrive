@@ -290,7 +290,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.34</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.35</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -548,8 +548,6 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
 import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp,
          setDoc, getDoc, doc, updateDoc, onSnapshot }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
-import { getMessaging, getToken }
-  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAr-Q8ojscCoMLXNAKNjqbGrqw0JN6_mbo",
@@ -566,9 +564,6 @@ const auth     = getAuth(app);
 const db       = getFirestore(app);
 const provider = new GoogleAuthProvider();
 const VAPID_KEY = 'BGSuM0lNQTvXWAx6H8m1ORaBOWVajW0XFz8bRA39VzBW7dToZ-bsXnL9TTd1kACItrCMbi_HhXATND-MhQ0cpGY';
-
-let messaging = null;
-try { messaging = getMessaging(app); } catch(e) { console.warn('FCM unavailable:', e.message); }
 
 const TSC_LIST = [
   ['Київ',[
@@ -963,13 +958,15 @@ async function showBrowserNotif(title, body) {
 }
 
 async function registerFcmToken() {
-  if (!messaging || !('Notification' in window)) return;
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
   if (Notification.permission === 'default') {
     const p = await Notification.requestPermission();
     if (p !== 'granted') return;
   }
   if (Notification.permission !== 'granted') return;
   try {
+    const { getMessaging, getToken } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js');
+    const messaging = getMessaging(app);
     const reg   = await navigator.serviceWorker.ready;
     const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
     if (token && auth.currentUser) {
