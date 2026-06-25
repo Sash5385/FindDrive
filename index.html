@@ -290,7 +290,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.37</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.38</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1586,9 +1586,6 @@ function renderInstrCards(docs, showActions) {
       <button class="btn-bk-reject" onclick="window._rejectBk('${b.id}')">Відхилити</button>
     </div>`:''}
   </div>`).join('');
-  } catch(e) {
-    container.innerHTML = '<div class="cab-empty">Помилка завантаження</div>';
-  }
 }
 
 window._confirmBk = async function(bookingId) {
