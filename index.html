@@ -207,6 +207,11 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .bk-mp-chip{display:inline-flex;align-items:center;gap:4px;background:var(--green-light);color:var(--green);border-radius:20px;padding:3px 10px;font-size:11px;text-decoration:none;border:.5px solid #b8ddc8;transition:background .15s,color .15s}
 .bk-mp-chip:hover{background:var(--green);color:#fff}
 .bk-day-hours{display:inline-flex;align-items:center;gap:5px;background:var(--bg);border-radius:7px;padding:4px 10px;font-size:12px;color:var(--text-muted);margin-bottom:6px}
+.mp-sel-chip.active{background:var(--green-light);border-color:var(--green);color:var(--green)}
+.mp-preview-map{width:100%;height:160px;border-radius:8px;border:.5px solid var(--border);margin-top:8px;display:block}
+.bk-mp-filter-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.bk-mp-filter-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 12px;border:.5px solid var(--border);border-radius:20px;font-size:11px;background:var(--bg);color:var(--text-muted);cursor:pointer;font-family:inherit;transition:all .15s}
+.bk-mp-filter-chip.active{background:var(--green);color:#fff;border-color:var(--green)}
 .mp-add-row input{flex:1;border:.5px solid var(--border);border-radius:7px;padding:6px 10px;font-size:12px;font-family:inherit;background:var(--white);outline:none;transition:border-color .2s}
 .mp-add-row input:focus{border-color:var(--green)}
 .mp-sel-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
@@ -426,7 +431,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.57</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.58</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1708,39 +1713,77 @@ function getDateAvail(instr, dateStr) {
 
 function renderBookingDates(box, instrId, d) {
   const today = new Date();
-  const dates = [];
+  const allDates = [];
   for (let i = 1; i <= 90; i++) {
     const dt = new Date(today);
     dt.setDate(today.getDate() + i);
     const iso = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-    if (getDateAvail(d, iso)) dates.push({ dt, iso });
-    if (dates.length >= 14) break;
+    if (getDateAvail(d, iso)) allDates.push({ dt, iso });
+    if (allDates.length >= 28) break;
   }
-  if (!dates.length) {
+  if (!allDates.length) {
     box.innerHTML = '<p class="booking-hint">Розклад ще не заповнено</p>';
     return;
   }
+
   const sched = [(d.days||[]).join(', '), d.time_from && d.time_to ? d.time_from+'–'+d.time_to : ''].filter(Boolean).join(' · ');
-  const mps = (d.meetingPoints||[]);
-  box.innerHTML = `
-    ${sched || mps.length ? `<div class="bk-sched-block">
-      ${sched ? `<div class="bk-sched-row"><i class="ti ti-clock" style="color:var(--green)"></i> ${esc(sched)}</div>` : ''}
-      ${mps.length ? `<div class="bk-mp-row">${mps.map(pt => {
-        const lbl = typeof pt==='string' ? pt : pt.label;
-        const hasCoords = typeof pt==='object' && pt.lat;
-        return hasCoords
-          ? `<a class="bk-mp-chip" href="https://www.google.com/maps?q=${pt.lat},${pt.lng}" target="_blank" rel="noopener"><i class="ti ti-map-pin"></i> ${esc(lbl)}</a>`
-          : `<span class="bk-mp-chip"><i class="ti ti-map-pin"></i> ${esc(lbl)}</span>`;
-      }).join('')}</div>` : ''}
-    </div>` : ''}
-    <div class="booking-label">Оберіть дату</div>
-    <div class="date-grid">
+  const mps = (d.meetingPoints||[]).filter(pt => typeof pt==='object' && pt.lat);
+
+  window._bkActiveMp = null;
+
+  function getFilteredDates(mpIdx) {
+    if (mpIdx === null) return allDates.slice(0, 14);
+    const pt = mps[mpIdx];
+    if (!pt) return allDates.slice(0, 14);
+    return allDates.filter(({ iso }) => {
+      const av = d.availability?.[iso];
+      return av?.locationLat && Math.abs(av.locationLat - pt.lat) < 0.0001 && Math.abs(av.locationLng - pt.lng) < 0.0001;
+    }).slice(0, 14);
+  }
+
+  function dateGridHtml(mpIdx) {
+    const dates = getFilteredDates(mpIdx);
+    if (!dates.length) return '<p class="booking-hint" style="margin-top:8px">Немає дат для цієї точки</p><div id="slot-picker"></div>';
+    return `<div class="date-grid">
       ${dates.map(({ dt, iso }) => `<button class="date-chip" data-date="${iso}" onclick="window._pickDate('${esc(instrId)}','${iso}')">
         <span class="date-chip-day">${DAY_UK_S[dt.getDay()]}</span>
         <span class="date-chip-num">${dt.getDate()} ${MON_UK_S[dt.getMonth()]}</span>
       </button>`).join('')}
     </div>
     <div id="slot-picker"></div>`;
+  }
+
+  window._bkSetMp = (mpIdx) => {
+    window._bkActiveMp = window._bkActiveMp === mpIdx ? null : mpIdx;
+    const active = window._bkActiveMp;
+    document.querySelectorAll('.bk-mp-filter-chip').forEach((c, i) => c.classList.toggle('active', i === active));
+    const mapEl = document.getElementById('bk-mp-map');
+    if (mapEl) {
+      if (active !== null && mps[active]) {
+        const pt = mps[active];
+        const bbox = `${(pt.lng-0.005).toFixed(5)},${(pt.lat-0.005).toFixed(5)},${(pt.lng+0.005).toFixed(5)},${(pt.lat+0.005).toFixed(5)}`;
+        mapEl.innerHTML = `<iframe class="mp-preview-map" src="https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${pt.lat},${pt.lng}" loading="lazy"></iframe>`;
+      } else {
+        mapEl.innerHTML = '';
+      }
+    }
+    const datesEl = document.getElementById('bk-dates-wrap');
+    if (datesEl) datesEl.innerHTML = dateGridHtml(active);
+  };
+
+  const mpFilterHtml = mps.length ? `
+    <div class="bk-mp-filter-row">
+      ${mps.map((pt, i) => `<button class="bk-mp-filter-chip" onclick="window._bkSetMp(${i})"><i class="ti ti-map-pin"></i> ${esc(pt.label)}</button>`).join('')}
+    </div>
+    <div id="bk-mp-map"></div>` : '';
+
+  box.innerHTML = `
+    ${sched ? `<div class="bk-sched-block">
+      <div class="bk-sched-row"><i class="ti ti-clock" style="color:var(--green)"></i> ${esc(sched)}</div>
+    </div>` : ''}
+    ${mpFilterHtml}
+    <div class="booking-label">Оберіть дату</div>
+    <div id="bk-dates-wrap">${dateGridHtml(null)}</div>`;
 }
 
 window._pickDate = async function(instrId, dateStr) {
@@ -2156,6 +2199,16 @@ async function loadInstrCombined(instr, container) {
       const [y,m,d] = editDate.split('-');
       const dowLabel = DOWS_UA[(dt.getDay()+6)%7];
       const pts = (window._instrProfiles?.[instr.id]?.meetingPoints)||instr.meetingPoints||[];
+      const savedLocLat = avCurr.locationLat;
+      const savedMpIdx = (savedLocLat && pts.length)
+        ? pts.findIndex(pt => typeof pt==='object' && pt.lat && Math.abs(pt.lat - savedLocLat) < 0.0001)
+        : -1;
+      let previewHtml = '';
+      if (savedMpIdx >= 0) {
+        const spt = pts[savedMpIdx];
+        const bbox = `${(spt.lng-0.005).toFixed(5)},${(spt.lat-0.005).toFixed(5)},${(spt.lng+0.005).toFixed(5)},${(spt.lat+0.005).toFixed(5)}`;
+        previewHtml = `<iframe class="mp-preview-map" src="https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${spt.lat},${spt.lng}" loading="lazy"></iframe>`;
+      }
       const dayBks = bkByDate[editDate]||[];
       const bkMap = {};
       dayBks.forEach(b => { if (b.time) bkMap[b.time] = b; });
@@ -2211,8 +2264,9 @@ async function loadInstrCombined(instr, container) {
         ${detPanel}
         <div class="avail-loc-row" style="margin-top:10px">
           <label>Місце зустрічі</label>
-          ${pts.length?`<div class="mp-sel-list">${pts.map((pt,pi)=>{ const lbl=typeof pt==='string'?pt:pt.label; const hasCoords=typeof pt==='object'&&pt.lat; return `<button class="mp-sel-chip" onclick="window._selectMpChip(this,'${pi}')">${hasCoords?'<i class=\'ti ti-map-pin\' style=\'font-size:9px;margin-right:2px\'></i>':''}${esc(lbl)}</button>`; }).join('')}</div>`:''}
+          ${pts.length?`<div class="mp-sel-list">${pts.map((pt,pi)=>{ const lbl=typeof pt==='string'?pt:pt.label; const hasCoords=typeof pt==='object'&&pt.lat; return `<button class="mp-sel-chip${pi===savedMpIdx?' active':''}" onclick="window._selectMpChip(this,'${pi}')">${hasCoords?'<i class=\'ti ti-map-pin\' style=\'font-size:9px;margin-right:2px\'></i>':''}${esc(lbl)}</button>`; }).join('')}</div>`:''}
           <input type="text" id="comb-loc" placeholder="Або введіть адресу вручну…" value="${esc(location)}">
+          <div id="comb-mp-preview"${savedMpIdx < 0 ? ' style="display:none"' : ''}>${previewHtml}</div>
         </div>
         <div class="avail-save-row" style="margin-top:8px">
           <button class="btn-bk-action" style="font-size:11px;padding:5px 12px" onclick="window._combSaveLoc('${instr.id}','${editDate}')"><i class="ti ti-map-pin"></i> Зберегти місце</button>
@@ -2300,8 +2354,18 @@ async function loadInstrCombined(instr, container) {
         inp.dataset.lat = (typeof pt==='object' && pt.lat) ? pt.lat : '';
         inp.dataset.lng = (typeof pt==='object' && pt.lng) ? pt.lng : '';
       }
-      document.querySelectorAll('.mp-sel-chip').forEach(b => b.style.background='');
-      btn.style.background = 'var(--green-light)';
+      document.querySelectorAll('.mp-sel-chip').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const preview = document.getElementById('comb-mp-preview');
+      if (preview && typeof pt==='object' && pt.lat && pt.lng) {
+        const lat = pt.lat, lng = pt.lng;
+        const bbox = `${(lng-0.005).toFixed(5)},${(lat-0.005).toFixed(5)},${(lng+0.005).toFixed(5)},${(lat+0.005).toFixed(5)}`;
+        preview.innerHTML = `<iframe class="mp-preview-map" src="https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${lat},${lng}" loading="lazy"></iframe>`;
+        preview.style.display = '';
+      } else if (preview) {
+        preview.innerHTML = '';
+        preview.style.display = 'none';
+      }
     };
     window._combSaveLoc = async (instrId, date) => {
       const inp = document.getElementById('comb-loc');
