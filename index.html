@@ -298,6 +298,39 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .bk-reschedule-inputs label{font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px}
 .bk-reschedule-inputs input{width:100%;border:.5px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;background:var(--white);box-sizing:border-box}
 .bk-reschedule-row{display:flex;gap:6px;margin-top:8px}
+/* AVAILABILITY CALENDAR */
+.av-cal-wrap{margin-bottom:12px;background:var(--white);border-radius:12px;padding:12px;border:.5px solid var(--border)}
+.av-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.av-cal-nav{background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px 8px;border-radius:6px;font-size:14px;transition:background .15s}
+.av-cal-nav:hover{background:var(--bg)}
+.av-cal-title{font-size:13px;font-weight:600;color:var(--text)}
+.av-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.av-cal-dow{font-size:10px;color:var(--text-hint);text-align:center;padding:2px 0}
+.av-cal-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:11px;border-radius:6px;transition:opacity .15s}
+.av-cal-day.clickable{cursor:pointer}
+.av-cal-day.clickable:hover{opacity:.75}
+.av-cal-day.past{color:var(--text-hint)}
+.av-cal-day.out-month{color:var(--border)}
+.av-cal-day.av-open{background:var(--green-light);color:var(--green);font-weight:600}
+.av-cal-day.av-weekly{background:#f0faf4;color:#2a8a5a}
+.av-cal-day.av-closed{background:#fff0f0;color:#cc3333}
+.av-cal-day.today-av{outline:1.5px solid var(--green);outline-offset:-1px}
+.av-cal-day.selected-av{background:var(--green)!important;color:#fff!important;font-weight:600}
+.av-legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.av-legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-muted)}
+.av-legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.avail-edit-wrap{background:var(--white);border:.5px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px}
+.avail-edit-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.avail-toggle-row{display:flex;gap:4px;margin-bottom:10px}
+.avail-toggle-btn{flex:1;padding:6px 0;border:.5px solid var(--border);border-radius:7px;font-size:11px;background:var(--bg);color:var(--text-muted);cursor:pointer;font-family:inherit;transition:background .15s,color .15s,border-color .15s}
+.avail-toggle-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
+.avail-time-row{display:flex;gap:8px;margin-bottom:8px}
+.avail-time-row>div{flex:1}
+.avail-time-row label,.avail-loc-row label{font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px}
+.avail-time-row input,.avail-loc-row input{width:100%;border:.5px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;background:var(--white);box-sizing:border-box}
+.avail-loc-row{margin-bottom:10px}
+.avail-save-row{display:flex;gap:6px}
+.book-loc{display:inline-flex;align-items:center;gap:5px;background:var(--blue-light);color:var(--blue);border-radius:8px;padding:4px 10px;font-size:11px;margin-bottom:8px}
 /* TOAST */
 #toast-wrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
 .toast{background:var(--white);border:.5px solid var(--border);border-radius:12px;padding:12px 16px;font-size:13px;box-shadow:0 4px 18px rgba(0,0,0,.12);max-width:300px;pointer-events:auto;display:flex;align-items:flex-start;gap:10px;animation:toastIn .25s ease}
@@ -318,7 +351,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.40</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.41</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -575,7 +608,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRe
          createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp,
-         setDoc, getDoc, doc, updateDoc, onSnapshot }
+         setDoc, getDoc, doc, updateDoc, onSnapshot, deleteField }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -961,10 +994,13 @@ async function renderInstrSectionIfNeeded(user) {
       ${esc(instr.name)} · <span style="color:${instr.status==='approved'?'var(--green)':instr.status==='pending'?'#856404':'#cc3333'}">${statusLabel[instr.status]||instr.status}</span>
     </div>
     ${instr.status === 'approved' ? `
-    <div class="cab-section-title" style="margin-top:12px">Записи від учнів</div>
+    <div class="cab-section-title" style="margin-top:12px">Розклад</div>
+    <div id="cab-instr-schedule"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>
+    <div class="cab-section-title" style="margin-top:16px">Записи від учнів</div>
     <div id="cab-instr-bookings"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>` : ''}`;
   cab.appendChild(section);
   if (instr.status === 'approved') {
+    loadInstrSchedule(instr, document.getElementById('cab-instr-schedule'));
     loadInstrBookings(instr.id, document.getElementById('cab-instr-bookings'));
   }
 }
@@ -1359,15 +1395,31 @@ window._openBooking = function(instrId) {
   renderBookingDates(box, instrId, profD);
 };
 
+const DAY_UA_FULL = ['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
+
+function getDateAvail(instr, dateStr) {
+  const avail = instr.availability || {};
+  const ov = avail[dateStr];
+  if (ov !== undefined) {
+    if (!ov || ov.open === false) return null;
+    return { from: ov.from || instr.time_from, to: ov.to || instr.time_to, location: ov.location || '' };
+  }
+  const dt = new Date(dateStr + 'T00:00:00');
+  const dayName = DAY_UA_FULL[dt.getDay()];
+  if (!(instr.days||[]).includes(dayName)) return null;
+  if (!instr.time_from || !instr.time_to) return null;
+  return { from: instr.time_from, to: instr.time_to, location: '' };
+}
+
 function renderBookingDates(box, instrId, d) {
-  const workSet = new Set((d.days||[]).map(x => DAY_IDX[x]).filter(x => x !== undefined));
   const today = new Date();
   const dates = [];
-  for (let i = 1; i <= 28; i++) {
+  for (let i = 1; i <= 90; i++) {
     const dt = new Date(today);
     dt.setDate(today.getDate() + i);
-    if (!workSet.size || workSet.has(dt.getDay())) dates.push(dt);
-    if (dates.length >= 10) break;
+    const iso = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    if (getDateAvail(d, iso)) dates.push({ dt, iso });
+    if (dates.length >= 14) break;
   }
   if (!dates.length) {
     box.innerHTML = '<p class="booking-hint">Розклад ще не заповнено</p>';
@@ -1376,13 +1428,10 @@ function renderBookingDates(box, instrId, d) {
   box.innerHTML = `
     <div class="booking-label">Оберіть дату</div>
     <div class="date-grid">
-      ${dates.map(dt => {
-        const iso = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-        return `<button class="date-chip" data-date="${iso}" onclick="window._pickDate('${esc(instrId)}','${iso}')">
-          <span class="date-chip-day">${DAY_UK_S[dt.getDay()]}</span>
-          <span class="date-chip-num">${dt.getDate()} ${MON_UK_S[dt.getMonth()]}</span>
-        </button>`;
-      }).join('')}
+      ${dates.map(({ dt, iso }) => `<button class="date-chip" data-date="${iso}" onclick="window._pickDate('${esc(instrId)}','${iso}')">
+        <span class="date-chip-day">${DAY_UK_S[dt.getDay()]}</span>
+        <span class="date-chip-num">${dt.getDate()} ${MON_UK_S[dt.getMonth()]}</span>
+      </button>`).join('')}
     </div>
     <div id="slot-picker"></div>`;
 }
@@ -1395,18 +1444,20 @@ window._pickDate = async function(instrId, dateStr) {
   if (!slotBox) return;
   slotBox.innerHTML = '<div class="slot-loading"><i class="ti ti-loader"></i></div>';
   const d = (window._instrProfiles||{})[instrId];
-  if (!d?.time_from || !d?.time_to) {
+  const avail = getDateAvail(d, dateStr);
+  if (!avail) {
     slotBox.innerHTML = '<p class="booking-hint">Години роботи не вказано</p>';
     return;
   }
   const busy  = await getBusySlots(instrId, dateStr);
-  const slots = genSlots(d.time_from, d.time_to);
+  const slots = genSlots(avail.from, avail.to);
   if (!slots.length) {
     slotBox.innerHTML = '<p class="booking-hint">Слоти недоступні</p>';
     return;
   }
   slotBox.innerHTML = `
-    <div class="booking-label" style="margin-top:16px">Оберіть час</div>
+    ${avail.location ? `<div class="book-loc"><i class="ti ti-map-pin"></i>${esc(avail.location)}</div>` : ''}
+    <div class="booking-label" style="margin-top:${avail.location ? 8 : 16}px">Оберіть час</div>
     <div class="slot-grid">
       ${slots.map(t => {
         const taken = busy.includes(t);
@@ -1666,6 +1717,164 @@ window._submitReschedule = async function(bookingId) {
     window._reloadClientBk?.();
   } catch(e) { alert('Не вдалось надіслати запит.'); }
 };
+
+// --- Розклад інструктора ---
+async function loadInstrSchedule(instr, container) {
+  if (!container) return;
+  const now = new Date();
+  let calYear = now.getFullYear(), calMonth = now.getMonth(), editDate = null;
+  let localAvail = Object.assign({}, instr.availability || {});
+  const todayStr = now.toISOString().slice(0,10);
+
+  function dateMode(dateStr) {
+    const ov = localAvail[dateStr];
+    if (ov !== undefined) return (!ov || ov.open === false) ? 'closed' : 'open';
+    const dt = new Date(dateStr + 'T00:00:00');
+    return (instr.days||[]).includes(DAY_UA_FULL[dt.getDay()]) ? 'weekly' : 'default';
+  }
+
+  function buildAvailCal() {
+    const firstDay = new Date(calYear, calMonth, 1);
+    const lastDay  = new Date(calYear, calMonth+1, 0);
+    const startDow = (firstDay.getDay() + 6) % 7;
+    const [py, pm] = calMonth === 0  ? [calYear-1, 11] : [calYear, calMonth-1];
+    const [ny, nm] = calMonth === 11 ? [calYear+1,  0] : [calYear, calMonth+1];
+    let cells = DOWS_UA.map(d => `<div class="av-cal-dow">${d}</div>`).join('');
+    for (let i = 0; i < startDow; i++) cells += '<div class="av-cal-day out-month"></div>';
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      const ds   = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const past = ds < todayStr;
+      const mode = dateMode(ds);
+      let cls = 'av-cal-day';
+      if (past)           cls += ' past';
+      else if (mode==='open')    cls += ' av-open clickable';
+      else if (mode==='weekly')  cls += ' av-weekly clickable';
+      else if (mode==='closed')  cls += ' av-closed clickable';
+      else                       cls += ' clickable';
+      if (ds === todayStr) cls += ' today-av';
+      if (ds === editDate) cls += ' selected-av';
+      const click = !past ? `onclick="window._availPickDate('${ds}')"` : '';
+      cells += `<div class="${cls}" ${click}>${d}</div>`;
+    }
+    return `<div class="av-cal-wrap">
+      <div class="av-cal-header">
+        <button class="av-cal-nav" onclick="window._availCalNav(${py},${pm})"><i class="ti ti-chevron-left"></i></button>
+        <span class="av-cal-title">${MONTHS_UA[calMonth]} ${calYear}</span>
+        <button class="av-cal-nav" onclick="window._availCalNav(${ny},${nm})"><i class="ti ti-chevron-right"></i></button>
+      </div>
+      <div class="av-cal-grid">${cells}</div>
+    </div>`;
+  }
+
+  function buildEditPanel() {
+    if (!editDate) return '';
+    const ov = localAvail[editDate];
+    const hasOverride = ov !== undefined;
+    const dt = new Date(editDate + 'T00:00:00');
+    const weeklyActive = (instr.days||[]).includes(DAY_UA_FULL[dt.getDay()]);
+    let mode, from, to, location;
+    if (hasOverride) {
+      mode     = (!ov || ov.open === false) ? 'closed' : 'open';
+      from     = (ov && ov.from)     || instr.time_from || '09:00';
+      to       = (ov && ov.to)       || instr.time_to   || '18:00';
+      location = (ov && ov.location) || '';
+    } else {
+      mode     = weeklyActive ? 'weekly' : 'default';
+      from     = instr.time_from || '09:00';
+      to       = instr.time_to   || '18:00';
+      location = '';
+    }
+    const [y,m,d] = editDate.split('-');
+    const dowLabel = DOWS_UA[(dt.getDay()+6)%7];
+    return `<div class="avail-edit-wrap">
+      <div class="avail-edit-title">
+        <span><i class="ti ti-calendar-event" style="color:var(--green)"></i> ${d}.${m}.${y} (${dowLabel})</span>
+        <button class="av-cal-nav" onclick="window._availPickDate(null)" title="Закрити"><i class="ti ti-x"></i></button>
+      </div>
+      <div class="avail-toggle-row">
+        <button class="avail-toggle-btn${mode==='open'?' active':''}" onclick="window._availSetMode('open')"><i class="ti ti-calendar-check"></i> Відкрито</button>
+        <button class="avail-toggle-btn${mode==='weekly'||mode==='default'?' active':''}" onclick="window._availSetMode('weekly')"><i class="ti ti-calendar-repeat"></i> За розкладом</button>
+        <button class="avail-toggle-btn${mode==='closed'?' active':''}" onclick="window._availSetMode('closed')"><i class="ti ti-calendar-off"></i> Закрито</button>
+      </div>
+      <div id="avail-time-loc" style="display:${mode==='open'?'':'none'}">
+        <div class="avail-time-row">
+          <div><label>Початок</label><input type="time" id="avail-from" value="${from}" step="900"></div>
+          <div><label>Кінець</label><input type="time" id="avail-to" value="${to}" step="900"></div>
+        </div>
+        <div class="avail-loc-row">
+          <label>Місце зустрічі</label>
+          <input type="text" id="avail-loc" placeholder="Наприклад: метро Осокорки, парковка…" value="${esc(location)}">
+        </div>
+      </div>
+      <div class="avail-save-row">
+        <button class="btn-bk-action" style="font-size:11px;padding:6px 14px" onclick="window._saveAvailDate('${instr.id}','${editDate}')"><i class="ti ti-device-floppy"></i> Зберегти</button>
+        ${hasOverride ? `<button class="btn-bk-reject" style="font-size:11px;padding:6px 12px" onclick="window._deleteAvailDate('${instr.id}','${editDate}')"><i class="ti ti-refresh"></i> Скинути</button>` : ''}
+      </div>
+    </div>`;
+  }
+
+  function renderAll() {
+    container.innerHTML = `
+      <div class="av-legend">
+        <div class="av-legend-item"><div class="av-legend-dot" style="background:var(--green-light);border:.5px solid var(--green)"></div>Своя дата</div>
+        <div class="av-legend-item"><div class="av-legend-dot" style="background:#f0faf4;border:.5px solid #2a8a5a"></div>Щотижня</div>
+        <div class="av-legend-item"><div class="av-legend-dot" style="background:#fff0f0;border:.5px solid #cc3333"></div>Закрито</div>
+      </div>
+      ${buildAvailCal()}
+      ${buildEditPanel()}`;
+  }
+
+  window._availCalNav   = (y, m) => { calYear=y; calMonth=m; renderAll(); };
+  window._availPickDate = (date) => { editDate = date; renderAll(); };
+  window._availSetMode  = (mode) => {
+    const btns = document.querySelectorAll('.avail-toggle-btn');
+    const modes = ['open','weekly','closed'];
+    btns.forEach((b,i) => b.classList.toggle('active', modes[i]===mode));
+    const tl = document.getElementById('avail-time-loc');
+    if (tl) tl.style.display = mode==='open' ? '' : 'none';
+  };
+
+  window._saveAvailDate = async function(instrId, date) {
+    const btns  = [...document.querySelectorAll('.avail-toggle-btn')];
+    const modes = ['open','weekly','closed'];
+    const mode  = modes[btns.findIndex(b => b.classList.contains('active'))] || 'weekly';
+    try {
+      if (mode === 'weekly') {
+        await updateDoc(doc(db,'instructors',instrId), { [`availability.${date}`]: deleteField() });
+        delete localAvail[date];
+        if (window._instrProfiles?.[instrId]?.availability) delete window._instrProfiles[instrId].availability[date];
+      } else {
+        const data = mode === 'closed' ? { open: false } : {
+          open:     true,
+          from:     document.getElementById('avail-from')?.value || instr.time_from,
+          to:       document.getElementById('avail-to')?.value   || instr.time_to,
+          location: document.getElementById('avail-loc')?.value  || '',
+        };
+        await updateDoc(doc(db,'instructors',instrId), { [`availability.${date}`]: data });
+        localAvail[date] = data;
+        if (window._instrProfiles?.[instrId]) {
+          window._instrProfiles[instrId].availability = window._instrProfiles[instrId].availability || {};
+          window._instrProfiles[instrId].availability[date] = data;
+        }
+      }
+      showToast('Збережено!', date.split('-').reverse().join('.'), 'success');
+      editDate = null;
+      renderAll();
+    } catch(e) { alert('Помилка збереження.'); }
+  };
+
+  window._deleteAvailDate = async function(instrId, date) {
+    try {
+      await updateDoc(doc(db,'instructors',instrId), { [`availability.${date}`]: deleteField() });
+      delete localAvail[date];
+      if (window._instrProfiles?.[instrId]?.availability) delete window._instrProfiles[instrId].availability[date];
+      editDate = null;
+      renderAll();
+    } catch(e) { alert('Помилка скидання.'); }
+  };
+
+  renderAll();
+}
 
 async function getMyInstrProfile(user) {
   try {
