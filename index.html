@@ -369,7 +369,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.42</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.43</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -954,7 +954,7 @@ async function renderProfileScreen(user) {
   document.getElementById('cab-foot').style.display = '';
   document.getElementById('btn-signout').addEventListener('click', () => { signOut(auth); closeAll(); });
 
-  document.getElementById('cab-body').innerHTML = `
+  const headerHtml = `
     <div class="cab-profile">
       ${user.photoURL
         ? `<img class="cab-photo" src="${esc(user.photoURL)}" alt="">`
@@ -964,38 +964,62 @@ async function renderProfileScreen(user) {
         <div class="cab-email">${esc(user.email || '')}</div>
       </div>
     </div>
-    ${phone ? `<div class="cab-phone-row"><i class="ti ti-phone" style="color:var(--green)"></i> ${esc(phone)}</div>` : ''}
-    ${ud.setupDone ? `
-    <div class="cab-section">
-      <div class="cab-section-title">Профіль учня</div>
-      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--text-muted)">
-        ${ud.level ? `<div><i class="ti ti-school" style="color:var(--green)"></i> ${esc(LEVEL_LABELS[ud.level]||ud.level)}</div>` : ''}
-        ${ud.budget ? `<div><i class="ti ti-wallet" style="color:var(--green)"></i> ${esc(BUDGET_LABELS[ud.budget]||ud.budget)}</div>` : ''}
-        ${ud.tsc ? `<div style="display:flex;align-items:flex-start;gap:6px"><i class="ti ti-building" style="color:var(--green);flex-shrink:0;margin-top:1px"></i><span>${esc(ud.tsc)}</span></div>` : ''}
-        ${(ud.goals||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:2px">${ud.goals.map(g=>`<span class="tag">${esc(GOAL_LABELS[g]||g)}</span>`).join('')}</div>` : ''}
-        ${(ud.schedule||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${ud.schedule.map(s=>`<span class="tag">${esc(SCHED_LABELS[s]||s)}</span>`).join('')}</div>` : ''}
-        ${(ud.weakSpots||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${ud.weakSpots.map(w=>`<span class="weak-chip">${esc(WEAK_LABELS[w]||w)}</span>`).join('')}</div>` : ''}
-      </div>
-      <button id="btn-edit-setup" style="margin-top:12px;background:none;border:.5px solid var(--border);border-radius:8px;padding:7px 14px;font-size:12px;color:var(--text-muted);cursor:pointer;font-family:inherit"><i class="ti ti-edit"></i> Редагувати</button>
-    </div>` : `
-    <div class="cab-section">
-      <div style="background:var(--bg);border-radius:12px;padding:16px">
-        <div style="font-size:20px;color:var(--green)"><i class="ti ti-user-question"></i></div>
-        <p style="margin-top:8px;font-size:13px;color:var(--text);font-weight:500">Заповніть профіль учня</p>
-        <p style="font-size:12px;color:var(--text-muted);margin-top:4px;line-height:1.5">Інструктори побачать ваші цілі та підберуть підхід.</p>
-        <button id="btn-fill-setup" class="btn-submit-instr" style="margin-top:12px;width:auto;padding:9px 18px;font-size:12px"><i class="ti ti-clipboard-list"></i> Заповнити</button>
-      </div>
-    </div>`}
-    <div class="cab-section">
-      <div class="cab-section-title">Мої записи</div>
-      <div id="cab-my-bookings"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>
-    </div>`;
+    ${phone ? `<div class="cab-phone-row"><i class="ti ti-phone" style="color:var(--green)"></i> ${esc(phone)}</div>` : ''}`;
 
-  document.getElementById('btn-fill-setup')?.addEventListener('click', () => renderSetupScreen(user, ud));
-  document.getElementById('btn-edit-setup')?.addEventListener('click', () => renderSetupScreen(user, ud));
+  document.getElementById('cab-body').innerHTML = headerHtml + '<div class="cab-empty"><i class="ti ti-loader"></i></div>';
 
-  loadClientBookings(user, document.getElementById('cab-my-bookings'));
-  renderInstrSectionIfNeeded(user);
+  const instr = await getMyInstrProfile(user);
+
+  if (instr) {
+    const statusLabel = { pending: '⏳ На розгляді', approved: '✓ Активний', rejected: '✗ Відхилено' };
+    document.getElementById('cab-body').innerHTML = headerHtml + `
+      <div class="cab-section">
+        <div class="cab-section-title">Мій профіль інструктора</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">
+          ${esc(instr.name)} · <span style="color:${instr.status==='approved'?'var(--green)':instr.status==='pending'?'#856404':'#cc3333'}">${statusLabel[instr.status]||instr.status}</span>
+        </div>
+        ${instr.status === 'approved' ? `
+        <div class="cab-section-title" style="margin-top:12px">Налаштування</div>
+        <div id="cab-instr-settings"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>
+        <div class="cab-section-title" style="margin-top:16px">Розклад та записи</div>
+        <div id="cab-instr-combined"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>
+        ` : ''}
+      </div>`;
+    if (instr.status === 'approved') {
+      loadInstrSettings(instr, document.getElementById('cab-instr-settings'));
+      loadInstrCombined(instr, document.getElementById('cab-instr-combined'));
+    }
+  } else {
+    document.getElementById('cab-body').innerHTML = headerHtml + `
+      ${ud.setupDone ? `
+      <div class="cab-section">
+        <div class="cab-section-title">Профіль учня</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--text-muted)">
+          ${ud.level ? `<div><i class="ti ti-school" style="color:var(--green)"></i> ${esc(LEVEL_LABELS[ud.level]||ud.level)}</div>` : ''}
+          ${ud.budget ? `<div><i class="ti ti-wallet" style="color:var(--green)"></i> ${esc(BUDGET_LABELS[ud.budget]||ud.budget)}</div>` : ''}
+          ${ud.tsc ? `<div style="display:flex;align-items:flex-start;gap:6px"><i class="ti ti-building" style="color:var(--green);flex-shrink:0;margin-top:1px"></i><span>${esc(ud.tsc)}</span></div>` : ''}
+          ${(ud.goals||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:2px">${ud.goals.map(g=>`<span class="tag">${esc(GOAL_LABELS[g]||g)}</span>`).join('')}</div>` : ''}
+          ${(ud.schedule||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${ud.schedule.map(s=>`<span class="tag">${esc(SCHED_LABELS[s]||s)}</span>`).join('')}</div>` : ''}
+          ${(ud.weakSpots||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${ud.weakSpots.map(w=>`<span class="weak-chip">${esc(WEAK_LABELS[w]||w)}</span>`).join('')}</div>` : ''}
+        </div>
+        <button id="btn-edit-setup" style="margin-top:12px;background:none;border:.5px solid var(--border);border-radius:8px;padding:7px 14px;font-size:12px;color:var(--text-muted);cursor:pointer;font-family:inherit"><i class="ti ti-edit"></i> Редагувати</button>
+      </div>` : `
+      <div class="cab-section">
+        <div style="background:var(--bg);border-radius:12px;padding:16px">
+          <div style="font-size:20px;color:var(--green)"><i class="ti ti-user-question"></i></div>
+          <p style="margin-top:8px;font-size:13px;color:var(--text);font-weight:500">Заповніть профіль учня</p>
+          <p style="font-size:12px;color:var(--text-muted);margin-top:4px;line-height:1.5">Інструктори побачать ваші цілі та підберуть підхід.</p>
+          <button id="btn-fill-setup" class="btn-submit-instr" style="margin-top:12px;width:auto;padding:9px 18px;font-size:12px"><i class="ti ti-clipboard-list"></i> Заповнити</button>
+        </div>
+      </div>`}
+      <div class="cab-section">
+        <div class="cab-section-title">Мої записи</div>
+        <div id="cab-my-bookings"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>
+      </div>`;
+    document.getElementById('btn-fill-setup')?.addEventListener('click', () => renderSetupScreen(user, ud));
+    document.getElementById('btn-edit-setup')?.addEventListener('click', () => renderSetupScreen(user, ud));
+    loadClientBookings(user, document.getElementById('cab-my-bookings'));
+  }
 }
 
 async function loadInstrSettings(instr, container) {
@@ -1062,31 +1086,8 @@ async function loadInstrSettings(instr, container) {
 }
 
 async function renderInstrSectionIfNeeded(user) {
-  const instr = await getMyInstrProfile(user);
-  if (!instr) return;
-  const cab = document.getElementById('cab-body');
-  if (!cab) return;
-  const section = document.createElement('div');
-  section.className = 'cab-section';
-  const statusLabel = { pending: '⏳ На розгляді', approved: '✓ Активний', rejected: '✗ Відхилено' };
-  section.innerHTML = `
-    <div class="cab-section-title">Мій профіль інструктора</div>
-    <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">
-      ${esc(instr.name)} · <span style="color:${instr.status==='approved'?'var(--green)':instr.status==='pending'?'#856404':'#cc3333'}">${statusLabel[instr.status]||instr.status}</span>
-    </div>
-    ${instr.status === 'approved' ? `
-    <div class="cab-section-title" style="margin-top:12px">Налаштування</div>
-    <div id="cab-instr-settings"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>
-    <div class="cab-section-title" style="margin-top:16px">Розклад</div>
-    <div id="cab-instr-schedule"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>
-    <div class="cab-section-title" style="margin-top:16px">Записи від учнів</div>
-    <div id="cab-instr-bookings"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>` : ''}`;
-  cab.appendChild(section);
-  if (instr.status === 'approved') {
-    loadInstrSettings(instr, document.getElementById('cab-instr-settings'));
-    loadInstrSchedule(instr, document.getElementById('cab-instr-schedule'));
-    loadInstrBookings(instr.id, document.getElementById('cab-instr-bookings'));
-  }
+  // kept for compatibility — renderProfileScreen handles instructor cabinet now
+  return;
 }
 
 document.getElementById("btn-login").addEventListener("click", () => { renderAuthScreen(); openPanel("cabinet"); });
@@ -1804,169 +1805,6 @@ window._submitReschedule = async function(bookingId) {
   } catch(e) { alert('Не вдалось надіслати запит.'); }
 };
 
-// --- Розклад інструктора ---
-async function loadInstrSchedule(instr, container) {
-  if (!container) return;
-  const now = new Date();
-  let calYear = now.getFullYear(), calMonth = now.getMonth(), editDate = null;
-  let localAvail = Object.assign({}, instr.availability || {});
-  const todayStr = now.toISOString().slice(0,10);
-
-  function dateMode(dateStr) {
-    const ov = localAvail[dateStr];
-    if (ov !== undefined) return (!ov || ov.open === false) ? 'closed' : 'open';
-    const dt = new Date(dateStr + 'T00:00:00');
-    return (instr.days||[]).includes(DAY_UA_FULL[dt.getDay()]) ? 'weekly' : 'default';
-  }
-
-  function buildAvailCal() {
-    const firstDay = new Date(calYear, calMonth, 1);
-    const lastDay  = new Date(calYear, calMonth+1, 0);
-    const startDow = (firstDay.getDay() + 6) % 7;
-    const [py, pm] = calMonth === 0  ? [calYear-1, 11] : [calYear, calMonth-1];
-    const [ny, nm] = calMonth === 11 ? [calYear+1,  0] : [calYear, calMonth+1];
-    let cells = DOWS_UA.map(d => `<div class="av-cal-dow">${d}</div>`).join('');
-    for (let i = 0; i < startDow; i++) cells += '<div class="av-cal-day out-month"></div>';
-    for (let d = 1; d <= lastDay.getDate(); d++) {
-      const ds   = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-      const past = ds < todayStr;
-      const mode = dateMode(ds);
-      let cls = 'av-cal-day';
-      if (past)           cls += ' past';
-      else if (mode==='open')    cls += ' av-open clickable';
-      else if (mode==='weekly')  cls += ' av-weekly clickable';
-      else if (mode==='closed')  cls += ' av-closed clickable';
-      else                       cls += ' clickable';
-      if (ds === todayStr) cls += ' today-av';
-      if (ds === editDate) cls += ' selected-av';
-      const click = !past ? `onclick="window._availPickDate('${ds}')"` : '';
-      cells += `<div class="${cls}" ${click}>${d}</div>`;
-    }
-    return `<div class="av-cal-wrap">
-      <div class="av-cal-header">
-        <button class="av-cal-nav" onclick="window._availCalNav(${py},${pm})"><i class="ti ti-chevron-left"></i></button>
-        <span class="av-cal-title">${MONTHS_UA[calMonth]} ${calYear}</span>
-        <button class="av-cal-nav" onclick="window._availCalNav(${ny},${nm})"><i class="ti ti-chevron-right"></i></button>
-      </div>
-      <div class="av-cal-grid">${cells}</div>
-    </div>`;
-  }
-
-  function buildEditPanel() {
-    if (!editDate) return '';
-    const ov = localAvail[editDate];
-    const hasOverride = ov !== undefined;
-    const dt = new Date(editDate + 'T00:00:00');
-    const weeklyActive = (instr.days||[]).includes(DAY_UA_FULL[dt.getDay()]);
-    let mode, from, to, location;
-    if (hasOverride) {
-      mode     = (!ov || ov.open === false) ? 'closed' : 'open';
-      from     = (ov && ov.from)     || instr.time_from || '09:00';
-      to       = (ov && ov.to)       || instr.time_to   || '18:00';
-      location = (ov && ov.location) || '';
-    } else {
-      mode     = weeklyActive ? 'weekly' : 'default';
-      from     = instr.time_from || '09:00';
-      to       = instr.time_to   || '18:00';
-      location = '';
-    }
-    const [y,m,d] = editDate.split('-');
-    const dowLabel = DOWS_UA[(dt.getDay()+6)%7];
-    return `<div class="avail-edit-wrap">
-      <div class="avail-edit-title">
-        <span><i class="ti ti-calendar-event" style="color:var(--green)"></i> ${d}.${m}.${y} (${dowLabel})</span>
-        <button class="av-cal-nav" onclick="window._availPickDate(null)" title="Закрити"><i class="ti ti-x"></i></button>
-      </div>
-      <div class="avail-toggle-row">
-        <button class="avail-toggle-btn${mode==='open'?' active':''}" onclick="window._availSetMode('open')"><i class="ti ti-calendar-check"></i> Відкрито</button>
-        <button class="avail-toggle-btn${mode==='weekly'||mode==='default'?' active':''}" onclick="window._availSetMode('weekly')"><i class="ti ti-calendar-repeat"></i> За розкладом</button>
-        <button class="avail-toggle-btn${mode==='closed'?' active':''}" onclick="window._availSetMode('closed')"><i class="ti ti-calendar-off"></i> Закрито</button>
-      </div>
-      <div id="avail-time-loc" style="display:${mode==='open'?'':'none'}">
-        <div class="avail-time-row">
-          <div><label>Початок</label><input type="time" id="avail-from" value="${from}" step="900"></div>
-          <div><label>Кінець</label><input type="time" id="avail-to" value="${to}" step="900"></div>
-        </div>
-        <div class="avail-loc-row">
-          <label>Місце зустрічі</label>
-          ${(() => {
-            const pts = (window._instrProfiles?.[instr.id]?.meetingPoints) || instr.meetingPoints || [];
-            return pts.length
-              ? `<div class="mp-sel-list">${pts.map(pt => `<button class="mp-sel-chip" onclick="document.getElementById('avail-loc').value='${esc(pt)}';document.querySelectorAll('.mp-sel-chip').forEach(b=>b.style.background='');this.style.background='var(--green-light)'">${esc(pt)}</button>`).join('')}</div>` : '';
-          })()}
-          <input type="text" id="avail-loc" placeholder="Або введіть адресу вручну…" value="${esc(location)}">
-        </div>
-      </div>
-      <div class="avail-save-row">
-        <button class="btn-bk-action" style="font-size:11px;padding:6px 14px" onclick="window._saveAvailDate('${instr.id}','${editDate}')"><i class="ti ti-device-floppy"></i> Зберегти</button>
-        ${hasOverride ? `<button class="btn-bk-reject" style="font-size:11px;padding:6px 12px" onclick="window._deleteAvailDate('${instr.id}','${editDate}')"><i class="ti ti-refresh"></i> Скинути</button>` : ''}
-      </div>
-    </div>`;
-  }
-
-  function renderAll() {
-    container.innerHTML = `
-      <div class="av-legend">
-        <div class="av-legend-item"><div class="av-legend-dot" style="background:var(--green-light);border:.5px solid var(--green)"></div>Своя дата</div>
-        <div class="av-legend-item"><div class="av-legend-dot" style="background:#f0faf4;border:.5px solid #2a8a5a"></div>Щотижня</div>
-        <div class="av-legend-item"><div class="av-legend-dot" style="background:#fff0f0;border:.5px solid #cc3333"></div>Закрито</div>
-      </div>
-      ${buildAvailCal()}
-      ${buildEditPanel()}`;
-  }
-
-  window._availCalNav   = (y, m) => { calYear=y; calMonth=m; renderAll(); };
-  window._availPickDate = (date) => { editDate = date; renderAll(); };
-  window._availSetMode  = (mode) => {
-    const btns = document.querySelectorAll('.avail-toggle-btn');
-    const modes = ['open','weekly','closed'];
-    btns.forEach((b,i) => b.classList.toggle('active', modes[i]===mode));
-    const tl = document.getElementById('avail-time-loc');
-    if (tl) tl.style.display = mode==='open' ? '' : 'none';
-  };
-
-  window._saveAvailDate = async function(instrId, date) {
-    const btns  = [...document.querySelectorAll('.avail-toggle-btn')];
-    const modes = ['open','weekly','closed'];
-    const mode  = modes[btns.findIndex(b => b.classList.contains('active'))] || 'weekly';
-    try {
-      if (mode === 'weekly') {
-        await updateDoc(doc(db,'instructors',instrId), { [`availability.${date}`]: deleteField() });
-        delete localAvail[date];
-        if (window._instrProfiles?.[instrId]?.availability) delete window._instrProfiles[instrId].availability[date];
-      } else {
-        const data = mode === 'closed' ? { open: false } : {
-          open:     true,
-          from:     document.getElementById('avail-from')?.value || instr.time_from,
-          to:       document.getElementById('avail-to')?.value   || instr.time_to,
-          location: document.getElementById('avail-loc')?.value  || '',
-        };
-        await updateDoc(doc(db,'instructors',instrId), { [`availability.${date}`]: data });
-        localAvail[date] = data;
-        if (window._instrProfiles?.[instrId]) {
-          window._instrProfiles[instrId].availability = window._instrProfiles[instrId].availability || {};
-          window._instrProfiles[instrId].availability[date] = data;
-        }
-      }
-      showToast('Збережено!', date.split('-').reverse().join('.'), 'success');
-      editDate = null;
-      renderAll();
-    } catch(e) { alert('Помилка збереження.'); }
-  };
-
-  window._deleteAvailDate = async function(instrId, date) {
-    try {
-      await updateDoc(doc(db,'instructors',instrId), { [`availability.${date}`]: deleteField() });
-      delete localAvail[date];
-      if (window._instrProfiles?.[instrId]?.availability) delete window._instrProfiles[instrId].availability[date];
-      editDate = null;
-      renderAll();
-    } catch(e) { alert('Помилка скидання.'); }
-  };
-
-  renderAll();
-}
-
 async function getMyInstrProfile(user) {
   try {
     const s1 = await getDocs(query(collection(db,'instructors'),where('userId','==',user.uid)));
@@ -1979,60 +1817,197 @@ async function getMyInstrProfile(user) {
   return null;
 }
 
-// --- Кабінет інструктора ---
-async function loadInstrBookings(instrId, container) {
+// --- Об'єднаний розклад + записи інструктора ---
+async function loadInstrCombined(instr, container) {
   if (!container) return;
   container.innerHTML = '<div class="cab-empty"><i class="ti ti-loader"></i></div>';
   try {
-    const snap = await getDocs(query(collection(db,'bookings'),where('instructorId','==',instrId)));
-    const all  = snap.docs.map(d=>({id:d.id,...d.data()}))
+    const snap = await getDocs(query(collection(db,'bookings'),where('instructorId','==',instr.id)));
+    const allBk = snap.docs.map(d=>({id:d.id,...d.data()}))
       .sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
 
-    window._reloadInstrBk = () => loadInstrBookings(instrId, container);
+    window._reloadInstrBk = () => loadInstrCombined(instr, container);
 
-    if (!all.length) {
-      container.innerHTML = '<div class="cab-empty"><i class="ti ti-calendar-off"></i><br>Записів ще немає</div>';
-      return;
+    const bkByDate = {};
+    allBk.forEach(b => { (bkByDate[b.date] = bkByDate[b.date]||[]).push(b); });
+
+    const localAvail = Object.assign({}, instr.availability || {});
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0,10);
+    let calYear = now.getFullYear(), calMonth = now.getMonth(), editDate = null;
+
+    function dateMode(ds) {
+      const ov = localAvail[ds];
+      if (ov !== undefined) return (!ov || ov.open === false) ? 'closed' : 'open';
+      return (instr.days||[]).includes(DAY_UA_FULL[new Date(ds+'T00:00:00').getDay()]) ? 'weekly' : 'default';
     }
 
-    const today   = new Date().toISOString().slice(0,10);
-    const pending  = all.filter(b => b.status==='pending'||b.status==='reschedule_requested');
-    const upcoming = all.filter(b => b.status==='confirmed' && b.date >= today);
-    const archive  = all.filter(b => b.status==='cancelled' || (b.status==='confirmed'&&b.date<today));
+    function buildCal() {
+      const firstDay = new Date(calYear, calMonth, 1);
+      const lastDay  = new Date(calYear, calMonth+1, 0);
+      const startDow = (firstDay.getDay()+6)%7;
+      const [py,pm] = calMonth===0  ? [calYear-1,11] : [calYear,calMonth-1];
+      const [ny,nm] = calMonth===11 ? [calYear+1, 0] : [calYear,calMonth+1];
+      let cells = DOWS_UA.map(d=>`<div class="av-cal-dow">${d}</div>`).join('');
+      for (let i=0;i<startDow;i++) cells += '<div class="av-cal-day out-month"></div>';
+      for (let d=1;d<=lastDay.getDate();d++) {
+        const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const past = ds < todayStr;
+        const mode = dateMode(ds);
+        let cls = 'av-cal-day';
+        if (past)               cls += ' past';
+        else if (mode==='open')   cls += ' av-open clickable';
+        else if (mode==='weekly') cls += ' av-weekly clickable';
+        else if (mode==='closed') cls += ' av-closed clickable';
+        else                      cls += ' clickable';
+        if (ds===todayStr) cls += ' today-av';
+        if (ds===editDate) cls += ' selected-av';
+        const dayBks = bkByDate[ds]||[];
+        const hasPending  = dayBks.some(b=>b.status==='pending'||b.status==='reschedule_requested');
+        const hasConfirmed = dayBks.some(b=>b.status==='confirmed');
+        const dot = hasPending
+          ? `<span style="position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:#cc3333"></span>`
+          : hasConfirmed
+          ? `<span style="position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--green)"></span>`
+          : '';
+        const click = !past ? `onclick="window._combPickDate('${ds}')"` : '';
+        cells += `<div class="${cls}" style="position:relative" ${click}>${d}${dot}</div>`;
+      }
+      return `<div class="av-cal-wrap">
+        <div class="av-cal-header">
+          <button class="av-cal-nav" onclick="window._combCalNav(${py},${pm})"><i class="ti ti-chevron-left"></i></button>
+          <span class="av-cal-title">${MONTHS_UA[calMonth]} ${calYear}</span>
+          <button class="av-cal-nav" onclick="window._combCalNav(${ny},${nm})"><i class="ti ti-chevron-right"></i></button>
+        </div>
+        <div class="av-cal-grid">${cells}</div>
+      </div>`;
+    }
 
-    const now = new Date();
-    let calYear=now.getFullYear(), calMonth=now.getMonth(), calSelected=null, viewMode='list';
+    function buildDayPanel() {
+      if (!editDate) return '';
+      const ov = localAvail[editDate];
+      const hasOverride = ov !== undefined;
+      const dt = new Date(editDate+'T00:00:00');
+      const weeklyActive = (instr.days||[]).includes(DAY_UA_FULL[dt.getDay()]);
+      let mode, from, to, location;
+      if (hasOverride) {
+        mode     = (!ov||ov.open===false) ? 'closed' : 'open';
+        from     = (ov&&ov.from)||instr.time_from||'09:00';
+        to       = (ov&&ov.to)||instr.time_to||'18:00';
+        location = (ov&&ov.location)||'';
+      } else {
+        mode     = weeklyActive ? 'weekly' : 'default';
+        from     = instr.time_from||'09:00';
+        to       = instr.time_to||'18:00';
+        location = '';
+      }
+      const [y,m,d] = editDate.split('-');
+      const dowLabel = DOWS_UA[(dt.getDay()+6)%7];
+      const pts = (window._instrProfiles?.[instr.id]?.meetingPoints)||instr.meetingPoints||[];
+      const dayBks = bkByDate[editDate]||[];
+      return `<div class="avail-edit-wrap">
+        <div class="avail-edit-title">
+          <span><i class="ti ti-calendar-event" style="color:var(--green)"></i> ${d}.${m}.${y} (${dowLabel})</span>
+          <button class="av-cal-nav" onclick="window._combPickDate(null)" title="Закрити"><i class="ti ti-x"></i></button>
+        </div>
+        <div class="avail-toggle-row">
+          <button class="avail-toggle-btn${mode==='open'?' active':''}" onclick="window._combSetMode('open')"><i class="ti ti-calendar-check"></i> Відкрито</button>
+          <button class="avail-toggle-btn${mode==='weekly'||mode==='default'?' active':''}" onclick="window._combSetMode('weekly')"><i class="ti ti-calendar-repeat"></i> За розкладом</button>
+          <button class="avail-toggle-btn${mode==='closed'?' active':''}" onclick="window._combSetMode('closed')"><i class="ti ti-calendar-off"></i> Закрито</button>
+        </div>
+        <div id="comb-time-loc" style="display:${mode==='open'?'':'none'}">
+          <div class="avail-time-row">
+            <div><label>Початок</label><input type="time" id="comb-from" value="${from}" step="900"></div>
+            <div><label>Кінець</label><input type="time" id="comb-to" value="${to}" step="900"></div>
+          </div>
+          <div class="avail-loc-row">
+            <label>Місце зустрічі</label>
+            ${pts.length?`<div class="mp-sel-list">${pts.map(pt=>`<button class="mp-sel-chip" onclick="document.getElementById('comb-loc').value='${esc(pt)}';document.querySelectorAll('.mp-sel-chip').forEach(b=>b.style.background='');this.style.background='var(--green-light)'">${esc(pt)}</button>`).join('')}</div>`:''}
+            <input type="text" id="comb-loc" placeholder="Або введіть адресу вручну…" value="${esc(location)}">
+          </div>
+        </div>
+        <div class="avail-save-row">
+          <button class="btn-bk-action" style="font-size:11px;padding:6px 14px" onclick="window._combSaveDate('${instr.id}','${editDate}')"><i class="ti ti-device-floppy"></i> Зберегти</button>
+          ${hasOverride?`<button class="btn-bk-reject" style="font-size:11px;padding:6px 12px" onclick="window._combDeleteDate('${instr.id}','${editDate}')"><i class="ti ti-refresh"></i> Скинути</button>`:''}
+        </div>
+        <div style="margin-top:14px">
+          <div class="cab-section-title" style="margin-bottom:8px">Записи на цей день</div>
+          ${dayBks.length ? renderInstrCards(dayBks, true) : '<div class="bk-empty-tab"><i class="ti ti-calendar-off"></i><br>Записів немає</div>'}
+        </div>
+      </div>`;
+    }
+
+    function buildAllBk() {
+      if (!allBk.length) return '<div class="cab-empty" style="margin-top:16px"><i class="ti ti-calendar-off"></i><br>Записів ще немає</div>';
+      const today   = todayStr;
+      const pending  = allBk.filter(b=>b.status==='pending'||b.status==='reschedule_requested');
+      const upcoming = allBk.filter(b=>b.status==='confirmed'&&b.date>=today);
+      const archive  = allBk.filter(b=>b.status==='cancelled'||(b.status==='confirmed'&&b.date<today));
+      return `<div style="margin-top:16px">
+        <div class="bk-tabs">
+          <button class="bk-tab active" onclick="switchBkTab(this,'new')">Нові${pending.length?`<span class="bk-badge">${pending.length}</span>`:''}</button>
+          <button class="bk-tab" onclick="switchBkTab(this,'upcoming')">Заплановані${upcoming.length?`<span class="bk-badge" style="background:var(--green-dark)">${upcoming.length}</span>`:''}</button>
+          <button class="bk-tab" onclick="switchBkTab(this,'archive')">Архів</button>
+        </div>
+        <div data-bk-panel="new">${renderInstrCards(pending,true)}</div>
+        <div data-bk-panel="upcoming" style="display:none">${renderInstrCards(upcoming,false)}</div>
+        <div data-bk-panel="archive" style="display:none">${renderInstrCards(archive,false)}</div>
+      </div>`;
+    }
 
     function renderAll() {
-      const calHtml  = renderCalendar(all, calYear, calMonth, calSelected, 'instr');
-      const filtered = calSelected ? all.filter(b=>b.date===calSelected) : null;
       container.innerHTML = `
-        <div class="bk-view-toggle">
-          <button class="bk-view-btn${viewMode==='list'?' active':''}" onclick="window._instrSwitchView('list')"><i class="ti ti-list"></i> Список</button>
-          <button class="bk-view-btn${viewMode==='cal'?' active':''}" onclick="window._instrSwitchView('cal')"><i class="ti ti-calendar"></i> Календар</button>
+        <div class="av-legend">
+          <div class="av-legend-item"><div class="av-legend-dot" style="background:var(--green-light);border:.5px solid var(--green)"></div>Відкрито</div>
+          <div class="av-legend-item"><div class="av-legend-dot" style="background:#f0faf4;border:.5px solid #2a8a5a"></div>Щотижня</div>
+          <div class="av-legend-item"><div class="av-legend-dot" style="background:#fff0f0;border:.5px solid #cc3333"></div>Закрито</div>
         </div>
-        ${viewMode==='cal' ? `
-          ${calHtml}
-          ${calSelected
-            ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:8px"><i class="ti ti-calendar-event" style="color:var(--green)"></i> <b>${calSelected.split('-').reverse().join('.')}</b> — ${filtered.length} запис(ів)</div>${renderInstrCards(filtered, true)}`
-            : '<div style="font-size:12px;color:var(--text-hint);margin-bottom:10px;text-align:center">Натисніть на дату щоб побачити записи</div>'}
-        ` : `
-          <div data-bk-tabs>
-            <div class="bk-tabs">
-              <button class="bk-tab active" onclick="switchBkTab(this,'new')">Нові${pending.length?`<span class="bk-badge">${pending.length}</span>`:''}</button>
-              <button class="bk-tab" onclick="switchBkTab(this,'upcoming')">Заплановані${upcoming.length?`<span class="bk-badge" style="background:var(--green-dark)">${upcoming.length}</span>`:''}</button>
-              <button class="bk-tab" onclick="switchBkTab(this,'archive')">Архів</button>
-            </div>
-            <div data-bk-panel="new">${renderInstrCards(pending, true)}</div>
-            <div data-bk-panel="upcoming" style="display:none">${renderInstrCards(upcoming, false)}</div>
-            <div data-bk-panel="archive" style="display:none">${renderInstrCards(archive, false)}</div>
-          </div>
-        `}`;
+        ${buildCal()}
+        ${editDate ? buildDayPanel() : buildAllBk()}`;
     }
 
-    window._instrCalNav     = (y,m)  => { calYear=y; calMonth=m; calSelected=null; renderAll(); };
-    window._instrCalDate    = (date) => { calSelected = calSelected===date ? null : date; renderAll(); };
-    window._instrSwitchView = (mode) => { viewMode=mode; renderAll(); };
+    window._combCalNav    = (y,m) => { calYear=y; calMonth=m; editDate=null; renderAll(); };
+    window._combPickDate  = (date) => { editDate=date; renderAll(); };
+    window._combSetMode   = (mode) => {
+      document.querySelectorAll('.avail-toggle-btn').forEach((b,i)=>b.classList.toggle('active',['open','weekly','closed'][i]===mode));
+      const tl = document.getElementById('comb-time-loc');
+      if (tl) tl.style.display = mode==='open' ? '' : 'none';
+    };
+    window._combSaveDate  = async function(instrId, date) {
+      const modes = ['open','weekly','closed'];
+      const mode  = modes[[...document.querySelectorAll('.avail-toggle-btn')].findIndex(b=>b.classList.contains('active'))] || 'weekly';
+      try {
+        if (mode==='weekly') {
+          await updateDoc(doc(db,'instructors',instrId),{[`availability.${date}`]:deleteField()});
+          delete localAvail[date];
+          if (window._instrProfiles?.[instrId]?.availability) delete window._instrProfiles[instrId].availability[date];
+        } else {
+          const data = mode==='closed' ? {open:false} : {
+            open:true,
+            from:document.getElementById('comb-from')?.value||instr.time_from,
+            to:document.getElementById('comb-to')?.value||instr.time_to,
+            location:document.getElementById('comb-loc')?.value||'',
+          };
+          await updateDoc(doc(db,'instructors',instrId),{[`availability.${date}`]:data});
+          localAvail[date]=data;
+          if (window._instrProfiles?.[instrId]) {
+            window._instrProfiles[instrId].availability = window._instrProfiles[instrId].availability||{};
+            window._instrProfiles[instrId].availability[date]=data;
+          }
+        }
+        showToast('Збережено!',date.split('-').reverse().join('.'),'success');
+        editDate=null; renderAll();
+      } catch(e) { alert('Помилка збереження.'); }
+    };
+    window._combDeleteDate = async function(instrId, date) {
+      try {
+        await updateDoc(doc(db,'instructors',instrId),{[`availability.${date}`]:deleteField()});
+        delete localAvail[date];
+        if (window._instrProfiles?.[instrId]?.availability) delete window._instrProfiles[instrId].availability[date];
+        editDate=null; renderAll();
+      } catch(e) { alert('Помилка скидання.'); }
+    };
+
     renderAll();
   } catch(e) {
     container.innerHTML = '<div class="cab-empty">Помилка завантаження</div>';
