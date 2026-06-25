@@ -89,17 +89,21 @@ Blob-и (розмиті кола): зелений `#a8f0c0`, жовтий `#f0e0
    - `NN` — порядковий номер релізу за цей день (01, 02, 03…)
    - Приклад: перший реліз 24 червня → `24.06.01`, другий → `24.06.02`
 3. **Версія оновлюється в `index.html`** — бейдж `<span class="logo-version">v24.06.04</span>` у навбарі.
-4. Після змін — **деплой на продакшн**: змерджити в `main`, GitHub Pages оновиться автоматично.
+4. **АВТОДЕПЛОЙ — обов'язково після кожного коміту**: одразу мерджити в `main` і пушити. GitHub Pages оновиться автоматично.
 
-### Воркфлоу кожного оновлення
+### Воркфлоу кожного оновлення (АВТОДЕПЛОЙ)
 
 ```
 1. Внести зміни в код
 2. Оновити CHANGELOG.md — додати новий запис зверху з наступним номером
 3. Оновити версію в index.html (logo-version у навбарі)
-4. git add . && git commit
-5. git push origin claude/<branch>
-6. Змерджити в main → деплой на finddrive.id4drive.pro
+4. git add . && git commit -m "..."
+5. git push -u origin claude/<branch>
+6. # АВТОДЕПЛОЙ — завжди одразу після commit:
+   git checkout main
+   git merge --ff-only claude/<branch> || git checkout --theirs index.html CHANGELOG.md && git add . && git commit -m "merge"
+   git push origin main
+   git checkout claude/<branch>
 ```
 
 ### Формат запису в CHANGELOG.md
