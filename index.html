@@ -90,7 +90,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 /* INSTRUCTOR CARDS */
 .instr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 @media(max-width:900px){.instr-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:600px){.instr-grid{grid-template-columns:1fr}.nav-links{display:none}.hero{padding:40px 20px 36px}.section,.how,.map-section{padding-left:20px;padding-right:20px}.nav{padding:0 20px}.hero-h1{font-size:28px}}
+@media(max-width:600px){.instr-grid{grid-template-columns:1fr}.nav-links{display:none}.hero{padding:40px 20px 36px}.section,.map-section{padding-left:20px;padding-right:20px}.nav{padding:0 20px}.hero-h1{font-size:28px}}
 .instr-card{background:var(--white);border-radius:18px;padding:20px 18px;border:.5px solid var(--border);position:relative;overflow:hidden;transition:border-color .2s,transform .2s}
 .instr-card:hover{border-color:#aad0aa;transform:translateY(-2px)}
 .card-blob{position:absolute;width:110px;height:90px;border-radius:50%;filter:blur(35px);opacity:.4;top:-20px;right:-10px;pointer-events:none}
@@ -116,14 +116,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .btn-book:hover{background:var(--green-dark)}
 
 /* HOW */
-.how{padding:0 48px 44px}
-.how-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-@media(max-width:800px){.how-grid{grid-template-columns:1fr 1fr}}
-.how-step{border-radius:16px;padding:20px 16px}
-.step-num{width:30px;height:30px;border-radius:50%;color:#fff;font-size:13px;font-weight:500;display:flex;align-items:center;justify-content:center;margin-bottom:14px}
-.step-icon{font-size:26px;margin-bottom:10px;display:block}
-.step-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:5px}
-.step-sub{font-size:12px;color:var(--text-muted);line-height:1.55}
+.how-mini{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.how-mini-step{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.55);border-radius:10px;padding:7px 12px;flex:1;min-width:120px;border:.5px solid rgba(26,122,74,.12)}
+.how-mini-num{width:18px;height:18px;border-radius:50%;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.how-mini-title{font-size:11px;font-weight:500;color:var(--text);line-height:1.3}
+@media(max-width:600px){.how-mini{gap:6px}.how-mini-step{min-width:calc(50% - 3px);flex:0 0 calc(50% - 3px)}}
 
 /* MAP */
 .map-section{padding:24px 48px 24px}
@@ -420,11 +417,10 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.52</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.53</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
-    <a class="nav-link" href="#how">Як це працює</a>
     <a class="nav-link" href="#map-anchor">Відгуки</a>
   </div>
   <div class="nav-right">
@@ -448,6 +444,12 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
     <div class="hero-badge"><i class="ti ti-map-pin"></i> Знайдемо інструктора поряд з вами</div>
     <h1 class="hero-h1">Знайдіть свого<br><span>інструктора</span> з водіння</h1>
     <p class="hero-sub">Порівнюйте інструкторів за районом, ціною та рейтингом. Записуйтесь онлайн за 2 хвилини.</p>
+    <div class="how-mini">
+      <div class="how-mini-step"><div class="how-mini-num" style="background:#1a7a4a">1</div><span class="how-mini-title">Вкажіть район</span></div>
+      <div class="how-mini-step"><div class="how-mini-num" style="background:#993556">2</div><span class="how-mini-title">Оберіть інструктора</span></div>
+      <div class="how-mini-step"><div class="how-mini-num" style="background:#185fa5">3</div><span class="how-mini-title">Забронюйте час</span></div>
+      <div class="how-mini-step"><div class="how-mini-num" style="background:#3b6d11">4</div><span class="how-mini-title">Їдьте на урок</span></div>
+    </div>
     <div class="search-box">
       <i class="ti ti-search"></i>
       <input id="search-input" class="search-input" type="text" placeholder="Район, метро або адреса..." onkeydown="if(event.key==='Enter') doSearch()">
@@ -487,37 +489,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   </div>
 </section>
 
-<section class="how" id="how">
-  <div class="section-top">
-    <span class="section-label">Як це працює</span>
-  </div>
-  <div class="how-grid">
-    <div class="how-step" style="background:#e8f4ee">
-      <div class="step-num" style="background:#1a7a4a">1</div>
-      <i class="ti ti-map-pin step-icon" style="color:#1a7a4a"></i>
-      <div class="step-title">Вкажіть район</div>
-      <div class="step-sub">Введіть адресу або дозвольте доступ до геолокації</div>
-    </div>
-    <div class="how-step" style="background:#fbeaf0">
-      <div class="step-num" style="background:#993556">2</div>
-      <i class="ti ti-adjustments step-icon" style="color:#993556"></i>
-      <div class="step-title">Оберіть інструктора</div>
-      <div class="step-sub">Фільтруйте за ціною, рейтингом і типом КПП</div>
-    </div>
-    <div class="how-step" style="background:#e6f1fb">
-      <div class="step-num" style="background:#185fa5">3</div>
-      <i class="ti ti-calendar step-icon" style="color:#185fa5"></i>
-      <div class="step-title">Забронюйте час</div>
-      <div class="step-sub">Виберіть слот у календарі інструктора онлайн</div>
-    </div>
-    <div class="how-step" style="background:#eaf3de">
-      <div class="step-num" style="background:#3b6d11">4</div>
-      <i class="ti ti-car step-icon" style="color:#3b6d11"></i>
-      <div class="step-title">Їдьте на урок</div>
-      <div class="step-sub">Отримайте підтвердження і нагадування в додатку</div>
-    </div>
-  </div>
-</section>
+
 
 
 <footer>
