@@ -190,7 +190,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .mp-map-wrap{border-radius:12px;overflow:hidden;margin:8px 0;border:.5px solid var(--border);display:none}
 .mp-map-wrap.open{display:block}
 .mp-map-el{height:200px;width:100%}
-.mp-map-search{display:flex;gap:6px;margin-bottom:6px;align-items:flex-start}
+.mp-map-search{display:flex;gap:6px;margin-bottom:6px;align-items:flex-start;position:relative;z-index:100}
 .mp-map-coords{font-size:10px;color:var(--text-hint);margin-top:4px;text-align:center}
 .mp-search-wrap{position:relative;flex:1;min-width:0}
 .mp-search-wrap input{width:100%;box-sizing:border-box;border:.5px solid var(--border);border-radius:7px;padding:6px 10px;font-size:12px;font-family:inherit;background:var(--white);outline:none}
@@ -420,7 +420,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.55</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.56</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -761,6 +761,12 @@ function closeAll() {
 document.getElementById("cab-overlay").addEventListener("click", closeAll);
 window.openPanel = openPanel;
 window.closeAll  = closeAll;
+window._setStudentLessonDur = async (dur) => {
+  document.querySelectorAll('.student-dur-btn').forEach(b =>
+    b.classList.toggle('active', parseInt(b.dataset.dur) === dur));
+  if (window._clientProfile) window._clientProfile.lessonDuration = dur;
+  if (auth.currentUser) setDoc(doc(db,'users',auth.currentUser.uid),{lessonDuration:dur},{merge:true}).catch(()=>{});
+};
 
 // --- Auth ---
 let authMode = 'login';
@@ -907,6 +913,15 @@ async function renderSetupScreen(user, pre = {}) {
   </div>
 
   <div class="form-group">
+    <label class="form-label">Тривалість заняття</label>
+    <div class="radio-group">
+      ${[[60,'1 год (60 хв)'],[120,'2 год (120 хв)']].map(([v,l])=>
+        `<label class="radio-opt"><input type="radio" name="s-dur" value="${v}"${(pre.lessonDuration===v||(v===60&&!pre.lessonDuration))?' checked':''}> ${l}</label>`
+      ).join('')}
+    </div>
+  </div>
+
+  <div class="form-group">
     <label class="form-label">Бюджет (грн / год)</label>
     <div class="radio-group">
       ${[['<500','до 500'],['500-700','500–700'],['700-1000','700–1000'],['>1000','понад 1000']].map(([v,l])=>
@@ -953,8 +968,9 @@ async function saveSetup(user) {
     level:     body.querySelector('[name="s-level"]:checked')?.value || 'beginner',
     lessons:   body.querySelector('[name="s-lessons"]:checked')?.value || '0',
     goals:     [...body.querySelectorAll('[name="s-goals"]:checked')].map(c=>c.value),
-    gearbox:   body.querySelector('[name="s-gearbox"]:checked')?.value || 'any',
-    budget:    body.querySelector('[name="s-budget"]:checked')?.value || '500-700',
+    gearbox:       body.querySelector('[name="s-gearbox"]:checked')?.value || 'any',
+    lessonDuration: parseInt(body.querySelector('[name="s-dur"]:checked')?.value || '60'),
+    budget:        body.querySelector('[name="s-budget"]:checked')?.value || '500-700',
     schedule:  [...body.querySelectorAll('[name="s-sched"]:checked')].map(c=>c.value),
     tsc:       body.querySelector('[name="s-tsc"]')?.value || '',
     weakSpots: [...body.querySelectorAll('[name="s-weak"]:checked')].map(c=>c.value),
@@ -1030,11 +1046,20 @@ async function renderProfileScreen(user) {
       loadInstrCombined(instr, document.getElementById('cab-instr-combined'));
     }
   } else {
+    window._clientProfile = ud;
+    const dur = ud.lessonDuration || 60;
     document.getElementById('cab-body').innerHTML = headerHtml + `
+      <div class="cab-section">
+        <div class="cab-section-title">Тривалість заняття</div>
+        <div class="toggle-row" style="margin-top:8px">
+          <button class="toggle-btn student-dur-btn${dur===60?' active':''}" data-dur="60" onclick="window._setStudentLessonDur(60)"><i class="ti ti-clock"></i> 1 год</button>
+          <button class="toggle-btn student-dur-btn${dur===120?' active':''}" data-dur="120" onclick="window._setStudentLessonDur(120)"><i class="ti ti-clock-2"></i> 2 год</button>
+        </div>
+      </div>
       ${ud.setupDone ? `
       <div class="cab-section">
         <div class="cab-section-title">Профіль учня</div>
-        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--text-muted)">
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--text-muted);margin-top:6px">
           ${ud.level ? `<div><i class="ti ti-school" style="color:var(--green)"></i> ${esc(LEVEL_LABELS[ud.level]||ud.level)}</div>` : ''}
           ${ud.budget ? `<div><i class="ti ti-wallet" style="color:var(--green)"></i> ${esc(BUDGET_LABELS[ud.budget]||ud.budget)}</div>` : ''}
           ${ud.tsc ? `<div style="display:flex;align-items:flex-start;gap:6px"><i class="ti ti-building" style="color:var(--green);flex-shrink:0;margin-top:1px"></i><span>${esc(ud.tsc)}</span></div>` : ''}
@@ -1042,14 +1067,14 @@ async function renderProfileScreen(user) {
           ${(ud.schedule||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${ud.schedule.map(s=>`<span class="tag">${esc(SCHED_LABELS[s]||s)}</span>`).join('')}</div>` : ''}
           ${(ud.weakSpots||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${ud.weakSpots.map(w=>`<span class="weak-chip">${esc(WEAK_LABELS[w]||w)}</span>`).join('')}</div>` : ''}
         </div>
-        <button id="btn-edit-setup" style="margin-top:12px;background:none;border:.5px solid var(--border);border-radius:8px;padding:7px 14px;font-size:12px;color:var(--text-muted);cursor:pointer;font-family:inherit"><i class="ti ti-edit"></i> Редагувати</button>
+        <button id="btn-edit-setup" class="btn-bk-action" style="margin-top:12px;width:100%;font-size:12px;padding:8px"><i class="ti ti-edit"></i> Редагувати профіль</button>
       </div>` : `
       <div class="cab-section">
         <div style="background:var(--bg);border-radius:12px;padding:16px">
-          <div style="font-size:20px;color:var(--green)"><i class="ti ti-user-question"></i></div>
+          <div style="font-size:22px;color:var(--green)"><i class="ti ti-user-question"></i></div>
           <p style="margin-top:8px;font-size:13px;color:var(--text);font-weight:500">Заповніть профіль учня</p>
           <p style="font-size:12px;color:var(--text-muted);margin-top:4px;line-height:1.5">Інструктори побачать ваші цілі та підберуть підхід.</p>
-          <button id="btn-fill-setup" class="btn-submit-instr" style="margin-top:12px;width:auto;padding:9px 18px;font-size:12px"><i class="ti ti-clipboard-list"></i> Заповнити</button>
+          <button id="btn-fill-setup" class="btn-submit-instr" style="margin-top:12px;width:100%;padding:10px"><i class="ti ti-clipboard-list"></i> Заповнити профіль</button>
         </div>
       </div>`}
       <div class="cab-section">
@@ -1713,7 +1738,7 @@ window._pickDate = async function(instrId, dateStr) {
     slotBox.innerHTML = '<p class="booking-hint">Години роботи не вказано</p>';
     return;
   }
-  const lessonMin = d.lessonDuration || LESSON_MIN;
+  const lessonMin = window._clientProfile?.lessonDuration || d.lessonDuration || 60;
   const busy = await getBusySlots(instrId, dateStr);
   const slotsPerLesson = Math.max(1, Math.round(lessonMin / 30));
   const busyExpanded = new Set(busy);
@@ -1804,7 +1829,7 @@ window._bookSlot = async function(instrId, dateStr, time) {
       clientEmail:      user.email || '',
       date:             dateStr,
       time:             time,
-      duration:         d?.lessonDuration || LESSON_MIN,
+      duration:         window._clientProfile?.lessonDuration || d?.lessonDuration || 60,
       status:           'pending',
       createdAt:        serverTimestamp(),
     });
@@ -1920,7 +1945,7 @@ async function loadClientBookings(user, container) {
     const archive = all.filter(b => b.status==='cancelled' || b.date < today);
 
     const now = new Date();
-    let calYear = now.getFullYear(), calMonth = now.getMonth(), calSelected = null, viewMode = 'list';
+    let calYear = now.getFullYear(), calMonth = now.getMonth(), calSelected = null, viewMode = 'cal';
 
     function renderAll() {
       const calHtml  = renderCalendar(all, calYear, calMonth, calSelected, 'client');
