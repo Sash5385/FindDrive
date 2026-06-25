@@ -262,15 +262,27 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .btn-bk-action:hover{background:var(--green-dark)}
 .btn-bk-reject{background:none;border:.5px solid var(--border);border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--text-muted);transition:border-color .15s,color .15s}
 .btn-bk-reject:hover{border-color:#cc3333;color:#cc3333}
+/* TOAST */
+#toast-wrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{background:var(--white);border:.5px solid var(--border);border-radius:12px;padding:12px 16px;font-size:13px;box-shadow:0 4px 18px rgba(0,0,0,.12);max-width:300px;pointer-events:auto;display:flex;align-items:flex-start;gap:10px;animation:toastIn .25s ease}
+.toast-icon{font-size:18px;flex-shrink:0;line-height:1}
+.toast.is-success .toast-icon{color:var(--green)}
+.toast.is-error .toast-icon{color:var(--pink)}
+.toast.is-info .toast-icon{color:var(--blue)}
+.toast-body{line-height:1.45}
+.toast-title{font-weight:600;color:var(--text);font-size:13px}
+.toast-text{color:var(--text-muted);font-size:12px;margin-top:2px}
+@keyframes toastIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 </style>
 </head>
 <body>
+<div id="toast-wrap"></div>
 
 <nav class="nav">
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.30</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.31</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -526,7 +538,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
          createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp,
-         setDoc, getDoc, doc, updateDoc }
+         setDoc, getDoc, doc, updateDoc, onSnapshot }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -914,6 +926,72 @@ document.getElementById("nav-user").addEventListener("click", async () => {
 });
 document.getElementById("cab-close").addEventListener("click", closeAll);
 
+// --- Notifications ---
+function showToast(title, text = '', type = 'info') {
+  const icons = { success: 'ti-circle-check', error: 'ti-circle-x', info: 'ti-bell' };
+  const wrap = document.getElementById('toast-wrap');
+  if (!wrap) return;
+  const el = document.createElement('div');
+  el.className = `toast is-${type}`;
+  el.innerHTML = `<div class="toast-icon"><i class="ti ${icons[type]||icons.info}"></i></div>
+    <div class="toast-body"><div class="toast-title">${title}</div>${text ? `<div class="toast-text">${text}</div>` : ''}</div>`;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 5000);
+}
+
+async function showBrowserNotif(title, body) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if ('serviceWorker' in navigator) {
+    const reg = await navigator.serviceWorker.ready.catch(() => null);
+    if (reg) { reg.showNotification(title, { body, icon: '/favicon.png', badge: '/favicon.png' }); return; }
+  }
+  new Notification(title, { body, icon: '/favicon.png' });
+}
+
+async function requestNotifPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    await Notification.requestPermission();
+  }
+}
+
+let _unsubInstr = null;
+let _unsubClient = null;
+
+function listenInstrBookings(uid) {
+  if (_unsubInstr) { _unsubInstr(); _unsubInstr = null; }
+  let ready = false;
+  const q = query(collection(db, 'bookings'), where('instructorUserId', '==', uid), where('status', '==', 'pending'));
+  _unsubInstr = onSnapshot(q, snap => {
+    if (!ready) { ready = true; return; }
+    snap.docChanges().forEach(ch => {
+      if (ch.type !== 'added') return;
+      const d = ch.doc.data();
+      showToast('Новий запис!', `${d.clientName || 'Учень'} — ${d.date} о ${d.time}`, 'success');
+      showBrowserNotif('Новий запис на заняття', `${d.clientName || 'Учень'} — ${d.date} о ${d.time}`);
+    });
+  }, () => {});
+}
+
+function listenClientBookings(uid) {
+  if (_unsubClient) { _unsubClient(); _unsubClient = null; }
+  let ready = false;
+  const q = query(collection(db, 'bookings'), where('clientId', '==', uid));
+  _unsubClient = onSnapshot(q, snap => {
+    if (!ready) { ready = true; return; }
+    snap.docChanges().forEach(ch => {
+      if (ch.type !== 'modified') return;
+      const d = ch.doc.data();
+      if (d.status === 'confirmed') {
+        showToast('Запис підтверджено!', `${d.date} о ${d.time} з ${d.instructorName || 'інструктором'}`, 'success');
+        showBrowserNotif('Запис підтверджено!', `${d.date} о ${d.time} з ${d.instructorName || 'інструктором'}`);
+      } else if (d.status === 'cancelled') {
+        showToast('Запис скасовано', `${d.date} о ${d.time}`, 'error');
+        showBrowserNotif('Запис скасовано', `${d.date} о ${d.time}`);
+      }
+    });
+  }, () => {});
+}
+
 onAuthStateChanged(auth, async user => {
   const btnLogin = document.getElementById("btn-login");
   const navUser  = document.getElementById("nav-user");
@@ -926,10 +1004,18 @@ onAuthStateChanged(auth, async user => {
       setDoc(doc(db, 'users', user.uid), { name: user.displayName||'', email: user.email||'', photo: user.photoURL||'' }, { merge: true }).catch(()=>{});
     }
     if (document.getElementById("cabinet").classList.contains("open")) await renderProfileScreen(user);
+    requestNotifPermission();
+    // Запустити слухач для клієнта; слухач інструктора — після визначення профілю
+    listenClientBookings(user.uid);
+    getMyInstrProfile(user).then(instr => {
+      if (instr?.id) listenInstrBookings(user.uid);
+    }).catch(() => {});
   } else {
     btnLogin.style.display = "";
     navUser.style.display  = "none";
     authMode = 'login';
+    if (_unsubInstr)  { _unsubInstr();  _unsubInstr  = null; }
+    if (_unsubClient) { _unsubClient(); _unsubClient = null; }
   }
 });
 
