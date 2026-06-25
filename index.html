@@ -151,6 +151,12 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .auth-toggle a{color:var(--green);text-decoration:none;font-weight:500}
 .cab-err{background:#fbeaf0;color:#cc3333;border-radius:8px;padding:10px 12px;font-size:12px;margin-bottom:12px;line-height:1.4}
 .cab-phone-row{padding:0 20px 12px;font-size:13px;color:var(--text-muted);display:flex;align-items:center;gap:6px}
+.chip-opts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.chip-opt{border-radius:20px;border:.5px solid var(--border);padding:5px 12px;font-size:12px;font-weight:500;color:var(--text-muted);cursor:pointer;transition:background .15s,border-color .15s,color .15s;user-select:none;position:relative}
+.chip-opt input{position:absolute;opacity:0;width:0;height:0}
+.chip-opt:has(input:checked){background:var(--green);border-color:var(--green);color:#fff}
+.chip-opt:hover:not(:has(input:checked)){background:var(--green-light);border-color:#b8d8c8;color:var(--green)}
+.weak-chip{background:var(--pink-light);color:var(--pink);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:500}
 .nav-user{display:flex;align-items:center;gap:8px;cursor:pointer}
 .nav-avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;border:1.5px solid var(--border)}
 .nav-name{font-size:13px;color:var(--text);font-weight:500}
@@ -213,7 +219,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.21</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.22</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -530,6 +536,33 @@ const auth = getAuth(app);
 const db   = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
+const TSC_LIST = [
+  ['Київ',['ТСЦ 8044 — Деснянський р-н','ТСЦ 8041 — Голосіївський р-н','ТСЦ 8042 — Дарницький р-н','ТСЦ 8043 — Дніпровський р-н','ТСЦ 8045 — Оболонський р-н','ТСЦ 8046 — Печерський р-н','ТСЦ 8047 — Подільський р-н','ТСЦ 8048 — Святошинський р-н','ТСЦ 8049 — Солом\'янський р-н','ТСЦ 8050 — Шевченківський р-н']],
+  ['Київська обл.',['Бориспіль','Бровари','Ірпінь','Вишневе','Фастів','Обухів','Васильків']],
+  ['Харківська обл.',['Харків — Київський р-н','Харків — Слобідський р-н','Харків — Холодногірський р-н','Харків — Основ\'янський р-н','Харків — Немишлянський р-н','Харків — Новобаварський р-н','Харків — Шевченківський р-н']],
+  ['Дніпропетровська обл.',['Дніпро — Амур-Нижньодніпровський','Дніпро — Самарський','Дніпро — Центральний','Кривий Ріг','Кам\'янське','Нікополь','Кривий Ріг — Довгинцівський']],
+  ['Одеська обл.',['Одеса — Суворовський р-н','Одеса — Малиновський р-н','Одеса — Приморський р-н','Одеса — Київський р-н','Одеса — Хаджибейський р-н','Чорноморськ','Ізмаїл']],
+  ['Львівська обл.',['Львів','Дрогобич','Самбір','Червоноград','Стрий','Трускавець','Борислав']],
+  ['Запорізька обл.',['Запоріжжя — Олександрівський р-н','Запоріжжя — Хортицький р-н','Запоріжжя — Дніпровський р-н','Мелітополь','Бердянськ','Енергодар']],
+  ['Вінницька обл.',['Вінниця','Жмеринка','Козятин','Могилів-Подільський','Ладижин']],
+  ['Полтавська обл.',['Полтава','Кременчук','Миргород','Лубни','Комсомольськ']],
+  ['Чернігівська обл.',['Чернігів','Ніжин','Прилуки','Бахмач']],
+  ['Черкаська обл.',['Черкаси','Умань','Золотоноша','Канів','Сміла']],
+  ['Сумська обл.',['Суми','Шостка','Конотоп','Охтирка','Ромни']],
+  ['Житомирська обл.',['Житомир','Бердичів','Коростень','Новоград-Волинський']],
+  ['Миколаївська обл.',['Миколаїв','Первомайськ','Вознесенськ','Южноукраїнськ']],
+  ['Рівненська обл.',['Рівне','Дубно','Здолбунів','Острог','Сарни']],
+  ['Івано-Франківська обл.',['Івано-Франківськ','Коломия','Калуш','Надвірна','Долина']],
+  ['Тернопільська обл.',['Тернопіль','Кременець','Чортків','Збараж']],
+  ['Хмельницька обл.',['Хмельницький','Кам\'янець-Подільський','Шепетівка','Нетішин','Старокостянтинів']],
+  ['Волинська обл.',['Луцьк','Ковель','Нововолинськ','Володимир-Волинський']],
+  ['Закарпатська обл.',['Ужгород','Мукачево','Берегово','Хуст','Виноградів']],
+  ['Кіровоградська обл.',['Кропивницький','Олександрія','Знам\'янка']],
+  ['Чернівецька обл.',['Чернівці','Коломия','Сторожинець']],
+  ['Донецька обл.',['Краматорськ','Слов\'янськ','Покровськ','Лиман','Маріуполь (евакуйований)']],
+  ['Луганська обл.',['Сєвєродонецьк','Лисичанськ','Рубіжне']],
+];
+
 // --- Panels ---
 function openPanel(id) {
   document.getElementById(id).classList.add("open");
@@ -627,13 +660,135 @@ async function handleAuthSubmit() {
   }
 }
 
+const LEVEL_LABELS  = { beginner:'Починаю з нуля', some:'Є базові навички', licensed:'Маю права, без практики', experienced:'Досвідчений водій' };
+const GOAL_LABELS   = { exam:'Скласти іспит', city:'Місто', parking:'Паркування', highway:'Траса', night:'Нічне водіння', abroad:'За кордоном' };
+const WEAK_LABELS   = { parking:'Паркування', reverse:'Задній хід', turns:'Розвороти', traffic:'Трафік', crossroads:'Перехрестя', night:'Нічне водіння', highway:'Траса', distance:'Дистанція' };
+const SCHED_LABELS  = { morning:'Ранок', day:'День', evening:'Вечір', weekend:'Вихідні' };
+const BUDGET_LABELS = { '<500':'до 500 грн', '500-700':'500–700 грн', '700-1000':'700–1000 грн', '>1000':'понад 1000 грн' };
+
+async function renderSetupScreen(user, pre = {}) {
+  document.getElementById('cab-foot').style.display = 'none';
+  const tscOpts = TSC_LIST.map(([region, centers]) =>
+    `<optgroup label="${esc(region)}">${centers.map(c=>`<option value="${esc(c)}"${pre.tsc===c?' selected':''}>${esc(c)}</option>`).join('')}</optgroup>`
+  ).join('');
+
+  document.getElementById('cab-body').innerHTML = `
+<div style="padding:16px 20px 8px">
+  <p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:16px">Розкажіть про себе — інструктори підберуть підхід до навчання.</p>
+
+  <div class="form-group">
+    <label class="form-label">Рівень водіння *</label>
+    <div class="radio-group" style="flex-direction:column;gap:8px">
+      ${[['beginner','Починаю з нуля'],['some','Є базові навички'],['licensed','Маю права, але немає практики'],['experienced','Досвідчений — хочу вдосконалитись']].map(([v,l])=>
+        `<label class="radio-opt"><input type="radio" name="s-level" value="${v}"${(pre.level===v||(!pre.level&&v==='beginner'))?' checked':''}> ${l}</label>`
+      ).join('')}
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Кількість занять раніше</label>
+    <div class="radio-group">
+      ${[['0','0'],['1-5','1–5'],['6-15','6–15'],['16+','16+']].map(([v,l])=>
+        `<label class="radio-opt"><input type="radio" name="s-lessons" value="${v}"${(pre.lessons===v||(!pre.lessons&&v==='0'))?' checked':''}> ${l}</label>`
+      ).join('')}
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Цілі навчання</label>
+    <div class="chip-opts">
+      ${[['exam','Скласти іспит'],['city','Місто'],['parking','Паркування'],['highway','Траса'],['night','Нічне водіння'],['abroad','За кордоном']].map(([v,l])=>
+        `<label class="chip-opt"><input type="checkbox" name="s-goals" value="${v}"${(pre.goals||[]).includes(v)?' checked':''}> ${l}</label>`
+      ).join('')}
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Тип КПП</label>
+    <div class="radio-group">
+      ${[['auto','Автомат'],['manual','Механіка'],['any','Байдуже']].map(([v,l])=>
+        `<label class="radio-opt"><input type="radio" name="s-gearbox" value="${v}"${(pre.gearbox===v||(!pre.gearbox&&v==='any'))?' checked':''}> ${l}</label>`
+      ).join('')}
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Бюджет (грн / год)</label>
+    <div class="radio-group">
+      ${[['<500','до 500'],['500-700','500–700'],['700-1000','700–1000'],['>1000','понад 1000']].map(([v,l])=>
+        `<label class="radio-opt"><input type="radio" name="s-budget" value="${v}"${(pre.budget===v||(!pre.budget&&v==='500-700'))?' checked':''}> ${l}</label>`
+      ).join('')}
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Зручний час занять</label>
+    <div class="chip-opts">
+      ${[['morning','Ранок (7–11)'],['day','День (11–17)'],['evening','Вечір (17–21)'],['weekend','Вихідні']].map(([v,l])=>
+        `<label class="chip-opt"><input type="checkbox" name="s-sched" value="${v}"${(pre.schedule||[]).includes(v)?' checked':''}> ${l}</label>`
+      ).join('')}
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">Сервісний центр МВС для іспиту</label>
+    <select name="s-tsc" class="form-input" style="appearance:auto">
+      <option value="">— не обрано —</option>
+      ${tscOpts}
+    </select>
+  </div>
+
+  <div class="form-group" style="margin-bottom:20px">
+    <label class="form-label">Слабкі місця (що хочете покращити)</label>
+    <div class="chip-opts">
+      ${[['parking','Паркування'],['reverse','Задній хід'],['turns','Розвороти'],['traffic','Інтенсивний трафік'],['crossroads','Перехрестя'],['night','Нічне водіння'],['highway','Траса'],['distance','Дистанція']].map(([v,l])=>
+        `<label class="chip-opt"><input type="checkbox" name="s-weak" value="${v}"${(pre.weakSpots||[]).includes(v)?' checked':''}> ${l}</label>`
+      ).join('')}
+    </div>
+  </div>
+</div>`;
+
+  document.getElementById('cab-foot').innerHTML = `<button id="btn-setup-save" class="btn-submit-instr"><i class="ti ti-check"></i> Зберегти профіль</button>`;
+  document.getElementById('cab-foot').style.display = '';
+  document.getElementById('btn-setup-save').addEventListener('click', () => saveSetup(user));
+}
+
+async function saveSetup(user) {
+  const body = document.getElementById('cab-body');
+  const data = {
+    level:     body.querySelector('[name="s-level"]:checked')?.value || 'beginner',
+    lessons:   body.querySelector('[name="s-lessons"]:checked')?.value || '0',
+    goals:     [...body.querySelectorAll('[name="s-goals"]:checked')].map(c=>c.value),
+    gearbox:   body.querySelector('[name="s-gearbox"]:checked')?.value || 'any',
+    budget:    body.querySelector('[name="s-budget"]:checked')?.value || '500-700',
+    schedule:  [...body.querySelectorAll('[name="s-sched"]:checked')].map(c=>c.value),
+    tsc:       body.querySelector('[name="s-tsc"]')?.value || '',
+    weakSpots: [...body.querySelectorAll('[name="s-weak"]:checked')].map(c=>c.value),
+    setupDone: true,
+  };
+  const btn = document.getElementById('btn-setup-save');
+  btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> …';
+  try {
+    await setDoc(doc(db, 'users', user.uid), data, { merge: true });
+    await renderProfileScreen(user);
+  } catch(e) {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-check"></i> Зберегти профіль';
+    alert('Помилка збереження. Спробуйте ще раз.');
+  }
+}
+
 async function renderProfileScreen(user) {
   let ud = {};
   try { const s = await getDoc(doc(db, 'users', user.uid)); if (s.exists()) ud = s.data(); } catch(e) {}
   const name = ud.name || user.displayName || '';
   const phone = ud.phone || '';
   const ini  = name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || (user.email||'?')[0].toUpperCase();
+
+  document.getElementById('cab-foot').innerHTML = `<button id="btn-signout" class="btn-signout"><i class="ti ti-logout"></i> Вийти з акаунту</button>`;
   document.getElementById('cab-foot').style.display = '';
+  document.getElementById('btn-signout').addEventListener('click', () => { signOut(auth); closeAll(); });
+
   document.getElementById('cab-body').innerHTML = `
     <div class="cab-profile">
       ${user.photoURL
@@ -645,23 +800,43 @@ async function renderProfileScreen(user) {
       </div>
     </div>
     ${phone ? `<div class="cab-phone-row"><i class="ti ti-phone" style="color:var(--green)"></i> ${esc(phone)}</div>` : ''}
+    ${ud.setupDone ? `
+    <div class="cab-section">
+      <div class="cab-section-title">Профіль учня</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--text-muted)">
+        ${ud.level ? `<div><i class="ti ti-school" style="color:var(--green)"></i> ${esc(LEVEL_LABELS[ud.level]||ud.level)}</div>` : ''}
+        ${ud.budget ? `<div><i class="ti ti-wallet" style="color:var(--green)"></i> ${esc(BUDGET_LABELS[ud.budget]||ud.budget)}</div>` : ''}
+        ${ud.tsc ? `<div style="display:flex;align-items:flex-start;gap:6px"><i class="ti ti-building" style="color:var(--green);flex-shrink:0;margin-top:1px"></i><span>${esc(ud.tsc)}</span></div>` : ''}
+        ${(ud.goals||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:2px">${ud.goals.map(g=>`<span class="tag">${esc(GOAL_LABELS[g]||g)}</span>`).join('')}</div>` : ''}
+        ${(ud.schedule||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${ud.schedule.map(s=>`<span class="tag">${esc(SCHED_LABELS[s]||s)}</span>`).join('')}</div>` : ''}
+        ${(ud.weakSpots||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${ud.weakSpots.map(w=>`<span class="weak-chip">${esc(WEAK_LABELS[w]||w)}</span>`).join('')}</div>` : ''}
+      </div>
+      <button id="btn-edit-setup" style="margin-top:12px;background:none;border:.5px solid var(--border);border-radius:8px;padding:7px 14px;font-size:12px;color:var(--text-muted);cursor:pointer;font-family:inherit"><i class="ti ti-edit"></i> Редагувати</button>
+    </div>` : `
+    <div class="cab-section">
+      <div style="background:var(--bg);border-radius:12px;padding:16px">
+        <div style="font-size:20px;color:var(--green)"><i class="ti ti-user-question"></i></div>
+        <p style="margin-top:8px;font-size:13px;color:var(--text);font-weight:500">Заповніть профіль учня</p>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:4px;line-height:1.5">Інструктори побачать ваші цілі та підберуть підхід.</p>
+        <button id="btn-fill-setup" class="btn-submit-instr" style="margin-top:12px;width:auto;padding:9px 18px;font-size:12px"><i class="ti ti-clipboard-list"></i> Заповнити</button>
+      </div>
+    </div>`}
     <div class="cab-section">
       <div class="cab-section-title">Мої записи</div>
       <div class="cab-empty"><i class="ti ti-calendar-off"></i><br>Записів ще немає</div>
-    </div>
-    <div class="cab-section">
-      <div class="cab-section-title">Обрані інструктори</div>
-      <div class="cab-empty"><i class="ti ti-heart-off"></i><br>Поки немає обраних</div>
     </div>`;
+
+  document.getElementById('btn-fill-setup')?.addEventListener('click', () => renderSetupScreen(user, ud));
+  document.getElementById('btn-edit-setup')?.addEventListener('click', () => renderSetupScreen(user, ud));
 }
 
 document.getElementById("btn-login").addEventListener("click", () => { renderAuthScreen(); openPanel("cabinet"); });
 document.getElementById("nav-user").addEventListener("click", async () => {
   if (auth.currentUser) await renderProfileScreen(auth.currentUser);
+  else renderAuthScreen();
   openPanel("cabinet");
 });
 document.getElementById("cab-close").addEventListener("click", closeAll);
-document.getElementById("btn-signout").addEventListener("click", () => { signOut(auth); closeAll(); });
 
 onAuthStateChanged(auth, async user => {
   const btnLogin = document.getElementById("btn-login");
