@@ -25,32 +25,38 @@ async function sendPush(uid, title, body) {
 }
 
 // Інструктор отримує push коли клієнт бронює
-exports.onBookingCreated = onDocumentCreated('bookings/{id}', async event => {
-  const d = event.data.data();
-  if (!d.instructorUserId) return;
-  await sendPush(
-    d.instructorUserId,
-    'Новий запис на заняття!',
-    `${d.clientName || 'Учень'} — ${d.date} о ${d.time}`
-  );
-});
-
-// Клієнт отримує push коли інструктор підтверджує / скасовує
-exports.onBookingUpdated = onDocumentUpdated('bookings/{id}', async event => {
-  const before = event.data.before.data();
-  const after  = event.data.after.data();
-  if (before.status === after.status || !after.clientId) return;
-  if (after.status === 'confirmed') {
+exports.onBookingCreated = onDocumentCreated(
+  { document: 'bookings/{id}', region: 'europe-west1' },
+  async event => {
+    const d = event.data.data();
+    if (!d.instructorUserId) return;
     await sendPush(
-      after.clientId,
-      'Запис підтверджено!',
-      `${after.date} о ${after.time} з ${after.instructorName || 'інструктором'}`
-    );
-  } else if (after.status === 'cancelled') {
-    await sendPush(
-      after.clientId,
-      'Запис скасовано',
-      `${after.date} о ${after.time}`
+      d.instructorUserId,
+      'Новий запис на заняття!',
+      `${d.clientName || 'Учень'} — ${d.date} о ${d.time}`
     );
   }
-});
+);
+
+// Клієнт отримує push коли інструктор підтверджує / скасовує
+exports.onBookingUpdated = onDocumentUpdated(
+  { document: 'bookings/{id}', region: 'europe-west1' },
+  async event => {
+    const before = event.data.before.data();
+    const after  = event.data.after.data();
+    if (before.status === after.status || !after.clientId) return;
+    if (after.status === 'confirmed') {
+      await sendPush(
+        after.clientId,
+        'Запис підтверджено!',
+        `${after.date} о ${after.time} з ${after.instructorName || 'інструктором'}`
+      );
+    } else if (after.status === 'cancelled') {
+      await sendPush(
+        after.clientId,
+        'Запис скасовано',
+        `${after.date} о ${after.time}`
+      );
+    }
+  }
+);
