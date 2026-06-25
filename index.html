@@ -211,6 +211,50 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .btn-show-phone:hover{background:#c8e8d4}
 .btn-call{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;background:var(--green);color:#fff;border-radius:10px;padding:13px;font-size:15px;font-weight:600;text-decoration:none;transition:background .2s}
 .btn-call:hover{background:var(--green-dark)}
+
+/* BOOKING PICKER */
+.prof-booking-section{padding:0 0 4px}
+.booking-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-hint);margin-bottom:10px;font-weight:500}
+.date-grid{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:4px}
+.date-chip{background:var(--bg);border:.5px solid var(--border);border-radius:10px;padding:8px 10px;cursor:pointer;font-size:11px;font-family:inherit;text-align:center;min-width:52px;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--text)}
+.date-chip-day{font-size:10px;color:var(--text-hint);text-transform:uppercase;transition:color .15s}
+.date-chip-num{font-size:12px;font-weight:500;white-space:nowrap;transition:color .15s}
+.date-chip:hover{border-color:var(--green);background:var(--green-light)}
+.date-chip.selected{background:var(--green);border-color:var(--green)}
+.date-chip.selected .date-chip-day,.date-chip.selected .date-chip-num{color:#fff}
+.slot-grid{display:flex;flex-wrap:wrap;gap:7px}
+.slot-chip{background:var(--bg);border:.5px solid var(--border);border-radius:9px;padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;color:var(--text);transition:all .15s}
+.slot-chip:hover:not(:disabled){background:var(--green-light);border-color:var(--green);color:var(--green)}
+.slot-chip.selected{background:var(--green);border-color:var(--green);color:#fff}
+.slot-chip.is-busy{background:none;border-color:var(--border);color:var(--text-hint);opacity:.4;cursor:not-allowed;text-decoration:line-through}
+.btn-booking-confirm{width:100%;background:var(--green);color:#fff;border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s}
+.btn-booking-confirm:hover:not(:disabled){background:var(--green-dark)}
+.btn-booking-confirm:disabled{opacity:.6;cursor:not-allowed}
+.booking-done{text-align:center;padding:16px 0 8px}
+.booking-done-icon{font-size:32px;color:var(--green);margin-bottom:8px}
+.booking-done-text{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}
+.booking-done-sub{font-size:13px;color:var(--text-muted);line-height:1.6}
+.booking-login-prompt{text-align:center;padding:14px 0}
+.booking-login-prompt p{font-size:13px;color:var(--text-muted);margin-bottom:12px}
+.btn-book-login{background:var(--green-light);color:var(--green);border:.5px solid #b8d8c8;border-radius:9px;padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;transition:background .2s}
+.btn-book-login:hover{background:#d0ecdc}
+.slot-loading{text-align:center;padding:16px 0;color:var(--text-hint);font-size:18px}
+.booking-hint{font-size:13px;color:var(--text-hint);text-align:center;padding:12px 0}
+
+/* BOOKING CARDS in cabinet */
+.bk-card{background:var(--bg);border-radius:12px;padding:14px;margin-bottom:8px}
+.bk-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
+.bk-name{font-size:13px;font-weight:600;color:var(--text)}
+.bk-status{border-radius:20px;padding:2px 9px;font-size:11px;font-weight:500;flex-shrink:0}
+.bk-status.pending{background:#fff3cd;color:#856404}
+.bk-status.confirmed{background:var(--green-light);color:var(--green)}
+.bk-status.cancelled{background:var(--bg);color:var(--text-hint);border:.5px solid var(--border)}
+.bk-meta{font-size:12px;color:var(--text-muted);line-height:1.6}
+.btn-bk-cancel{background:none;border:none;font-size:11px;color:var(--text-hint);cursor:pointer;font-family:inherit;padding:4px 0 0;text-decoration:underline}
+.btn-bk-action{background:var(--green);color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;margin-right:6px;transition:background .15s}
+.btn-bk-action:hover{background:var(--green-dark)}
+.btn-bk-reject{background:none;border:.5px solid var(--border);border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--text-muted);transition:border-color .15s,color .15s}
+.btn-bk-reject:hover{border-color:#cc3333;color:#cc3333}
 </style>
 </head>
 <body>
@@ -219,7 +263,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.25</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.26</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -469,7 +513,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
          createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp,
-         setDoc, getDoc, doc }
+         setDoc, getDoc, doc, updateDoc }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -817,11 +861,36 @@ async function renderProfileScreen(user) {
     </div>`}
     <div class="cab-section">
       <div class="cab-section-title">Мої записи</div>
-      <div class="cab-empty"><i class="ti ti-calendar-off"></i><br>Записів ще немає</div>
+      <div id="cab-my-bookings"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>
     </div>`;
 
   document.getElementById('btn-fill-setup')?.addEventListener('click', () => renderSetupScreen(user, ud));
   document.getElementById('btn-edit-setup')?.addEventListener('click', () => renderSetupScreen(user, ud));
+
+  loadClientBookings(user, document.getElementById('cab-my-bookings'));
+  renderInstrSectionIfNeeded(user);
+}
+
+async function renderInstrSectionIfNeeded(user) {
+  const instr = await getMyInstrProfile(user);
+  if (!instr) return;
+  const cab = document.getElementById('cab-body');
+  if (!cab) return;
+  const section = document.createElement('div');
+  section.className = 'cab-section';
+  const statusLabel = { pending: '⏳ На розгляді', approved: '✓ Активний', rejected: '✗ Відхилено' };
+  section.innerHTML = `
+    <div class="cab-section-title">Мій профіль інструктора</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">
+      ${esc(instr.name)} · <span style="color:${instr.status==='approved'?'var(--green)':instr.status==='pending'?'#856404':'#cc3333'}">${statusLabel[instr.status]||instr.status}</span>
+    </div>
+    ${instr.status === 'approved' ? `
+    <div class="cab-section-title" style="margin-top:12px">Записи від учнів</div>
+    <div id="cab-instr-bookings"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>` : ''}`;
+  cab.appendChild(section);
+  if (instr.status === 'approved') {
+    loadInstrBookings(instr.id, document.getElementById('cab-instr-bookings'));
+  }
 }
 
 document.getElementById("btn-login").addEventListener("click", () => { renderAuthScreen(); openPanel("cabinet"); });
@@ -930,6 +999,7 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
       about:      instrForm.querySelector('[name="about"]').value.trim(),
       photo:      instrPhotoData || null,
       lat, lng, tscKnown,
+      userId:     auth.currentUser?.uid || null,
       status:     "pending",
       rating:     null,
       reviews:    0,
@@ -1019,6 +1089,264 @@ async function loadInstructors() {
 }
 
 loadInstructors();
+
+// =================== BOOKING SYSTEM ===================
+const DAY_IDX  = { 'Нд':0,'Пн':1,'Вт':2,'Ср':3,'Чт':4,'Пт':5,'Сб':6 };
+const DAY_UK_S = ['нд','пн','вт','ср','чт','пт','сб'];
+const MON_UK_S = ['січ','лют','бер','кві','тра','чер','лип','сер','вер','жов','лис','гру'];
+const LESSON_MIN = 90;
+
+function genSlots(from, to, dur = LESSON_MIN) {
+  const r = [];
+  const [fh, fm] = from.split(':').map(Number);
+  const [th, tm] = to.split(':').map(Number);
+  let c = fh*60+fm, e = th*60+tm;
+  while (c + dur <= e) {
+    r.push(`${String(Math.floor(c/60)).padStart(2,'0')}:${String(c%60).padStart(2,'0')}`);
+    c += dur;
+  }
+  return r;
+}
+
+async function getBusySlots(instrId, dateStr) {
+  try {
+    const snap = await getDocs(query(
+      collection(db, 'bookings'),
+      where('instructorId','==',instrId),
+      where('date','==',dateStr)
+    ));
+    return snap.docs.filter(d => ['pending','confirmed'].includes(d.data().status)).map(d => d.data().time);
+  } catch(e) { return []; }
+}
+
+window._openBooking = function(instrId) {
+  const profD = (window._instrProfiles||{})[instrId];
+  const box = document.getElementById('prof-booking');
+  if (!profD || !box) return;
+  const user = auth.currentUser;
+  if (!user) {
+    box.innerHTML = `<div class="booking-login-prompt">
+      <p>Увійдіть, щоб записатись на заняття</p>
+      <button class="btn-book-login" onclick="window.closeAll?.();setTimeout(()=>document.getElementById('btn-login')?.click(),200)">
+        <i class="ti ti-login"></i> Увійти
+      </button>
+    </div>`;
+    return;
+  }
+  renderBookingDates(box, instrId, profD);
+};
+
+function renderBookingDates(box, instrId, d) {
+  const workSet = new Set((d.days||[]).map(x => DAY_IDX[x]).filter(x => x !== undefined));
+  const today = new Date();
+  const dates = [];
+  for (let i = 1; i <= 28; i++) {
+    const dt = new Date(today);
+    dt.setDate(today.getDate() + i);
+    if (!workSet.size || workSet.has(dt.getDay())) dates.push(dt);
+    if (dates.length >= 10) break;
+  }
+  if (!dates.length) {
+    box.innerHTML = '<p class="booking-hint">Розклад ще не заповнено</p>';
+    return;
+  }
+  box.innerHTML = `
+    <div class="booking-label">Оберіть дату</div>
+    <div class="date-grid">
+      ${dates.map(dt => {
+        const iso = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+        return `<button class="date-chip" data-date="${iso}" onclick="window._pickDate('${esc(instrId)}','${iso}')">
+          <span class="date-chip-day">${DAY_UK_S[dt.getDay()]}</span>
+          <span class="date-chip-num">${dt.getDate()} ${MON_UK_S[dt.getMonth()]}</span>
+        </button>`;
+      }).join('')}
+    </div>
+    <div id="slot-picker"></div>`;
+}
+
+window._pickDate = async function(instrId, dateStr) {
+  document.querySelectorAll('.date-chip').forEach(b =>
+    b.classList.toggle('selected', b.dataset.date === dateStr)
+  );
+  const slotBox = document.getElementById('slot-picker');
+  if (!slotBox) return;
+  slotBox.innerHTML = '<div class="slot-loading"><i class="ti ti-loader"></i></div>';
+  const d = (window._instrProfiles||{})[instrId];
+  if (!d?.time_from || !d?.time_to) {
+    slotBox.innerHTML = '<p class="booking-hint">Години роботи не вказано</p>';
+    return;
+  }
+  const busy  = await getBusySlots(instrId, dateStr);
+  const slots = genSlots(d.time_from, d.time_to);
+  if (!slots.length) {
+    slotBox.innerHTML = '<p class="booking-hint">Слоти недоступні</p>';
+    return;
+  }
+  slotBox.innerHTML = `
+    <div class="booking-label" style="margin-top:16px">Оберіть час</div>
+    <div class="slot-grid">
+      ${slots.map(t => {
+        const taken = busy.includes(t);
+        return `<button class="slot-chip${taken?' is-busy':''}" ${taken?'disabled':''}
+          onclick="window._selectSlot('${esc(instrId)}','${esc(dateStr)}','${esc(t)}',this)">${t}</button>`;
+      }).join('')}
+    </div>
+    <div id="booking-confirm" style="display:none;margin-top:16px">
+      <button class="btn-booking-confirm" id="btn-do-booking">
+        <i class="ti ti-calendar-check"></i> Підтвердити запис
+      </button>
+    </div>`;
+};
+
+window._selectSlot = function(instrId, dateStr, time, btn) {
+  document.querySelectorAll('.slot-chip').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  const cf = document.getElementById('booking-confirm');
+  if (cf) {
+    cf.style.display = '';
+    document.getElementById('btn-do-booking').onclick = () => window._bookSlot(instrId, dateStr, time);
+  }
+};
+
+window._bookSlot = async function(instrId, dateStr, time) {
+  const user = auth.currentUser;
+  if (!user) return;
+  const btn = document.getElementById('btn-do-booking');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> …'; }
+  const d = (window._instrProfiles||{})[instrId];
+  try {
+    await addDoc(collection(db, 'bookings'), {
+      instructorId:     instrId,
+      instructorName:   d?.name || '',
+      instructorUserId: d?.userId || null,
+      clientId:         user.uid,
+      clientName:       user.displayName || '',
+      clientEmail:      user.email || '',
+      date:             dateStr,
+      time:             time,
+      duration:         LESSON_MIN,
+      status:           'pending',
+      createdAt:        serverTimestamp(),
+    });
+    const box = document.getElementById('prof-booking');
+    if (box) {
+      const [y,m,day] = dateStr.split('-');
+      box.innerHTML = `<div class="booking-done">
+        <div class="booking-done-icon"><i class="ti ti-circle-check"></i></div>
+        <div class="booking-done-text">Запис надіслано!</div>
+        <div class="booking-done-sub">${esc(day)}.${esc(m)}.${esc(y)} о ${esc(time)}<br>Інструктор підтвердить найближчим часом</div>
+      </div>`;
+    }
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-calendar-check"></i> Підтвердити запис'; }
+    alert('Помилка при бронюванні. Спробуйте ще раз.');
+  }
+};
+
+async function loadClientBookings(user, container) {
+  if (!container) return;
+  try {
+    const snap = await getDocs(query(collection(db, 'bookings'), where('clientId','==',user.uid)));
+    if (snap.empty) {
+      container.innerHTML = '<div class="cab-empty"><i class="ti ti-calendar-off"></i><br>Записів ще немає</div>';
+      return;
+    }
+    const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a,b) => (b.date+b.time).localeCompare(a.date+a.time));
+    const statusLabel = { pending:'Очікує', confirmed:'Підтверджено', cancelled:'Скасовано' };
+    container.innerHTML = docs.map(b => {
+      const [y,m,day] = (b.date||'').split('-');
+      const ds = day ? `${day}.${m}.${y}` : b.date||'—';
+      return `<div class="bk-card" id="bk-${b.id}">
+        <div class="bk-card-head">
+          <div class="bk-name">${esc(b.instructorName||'Інструктор')}</div>
+          <span class="bk-status ${b.status}">${statusLabel[b.status]||b.status}</span>
+        </div>
+        <div class="bk-meta">${esc(ds)} о ${esc(b.time||'')}</div>
+        ${b.status==='pending'?`<button class="btn-bk-cancel" onclick="window._cancelBooking('${b.id}')">Скасувати</button>`:''}
+      </div>`;
+    }).join('');
+  } catch(e) {
+    container.innerHTML = '<div class="cab-empty">Помилка завантаження</div>';
+  }
+}
+
+window._cancelBooking = async function(bookingId) {
+  if (!confirm('Скасувати цей запис?')) return;
+  try {
+    await updateDoc(doc(db, 'bookings', bookingId), { status: 'cancelled' });
+    const card = document.getElementById(`bk-${bookingId}`);
+    if (card) {
+      card.querySelector('.bk-status').className = 'bk-status cancelled';
+      card.querySelector('.bk-status').textContent = 'Скасовано';
+      card.querySelector('.btn-bk-cancel')?.remove();
+    }
+  } catch(e) { alert('Не вдалось скасувати.'); }
+};
+
+async function getMyInstrProfile(user) {
+  try {
+    const s1 = await getDocs(query(collection(db,'instructors'),where('userId','==',user.uid)));
+    if (!s1.empty) return { id:s1.docs[0].id, ...s1.docs[0].data() };
+    if (user.email) {
+      const s2 = await getDocs(query(collection(db,'instructors'),where('email','==',user.email)));
+      if (!s2.empty) return { id:s2.docs[0].id, ...s2.docs[0].data() };
+    }
+  } catch(e) {}
+  return null;
+}
+
+async function loadInstrBookings(instrId, container) {
+  if (!container) return;
+  try {
+    const snap = await getDocs(query(collection(db,'bookings'),where('instructorId','==',instrId)));
+    const docs = snap.docs.map(d=>({id:d.id,...d.data()}))
+      .filter(b => b.status !== 'cancelled')
+      .sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
+    if (!docs.length) {
+      container.innerHTML = '<div class="cab-empty"><i class="ti ti-calendar-off"></i><br>Записів ще немає</div>';
+      return;
+    }
+    const statusLabel = { pending:'Очікує', confirmed:'Підтверджено' };
+    container.innerHTML = docs.map(b => {
+      const [y,m,day] = (b.date||'').split('-');
+      const ds = day ? `${day}.${m}.${y}` : b.date||'—';
+      return `<div class="bk-card" id="bk-${b.id}">
+        <div class="bk-card-head">
+          <div class="bk-name">${esc(b.clientName||b.clientEmail||'Учень')}</div>
+          <span class="bk-status ${b.status}">${statusLabel[b.status]||b.status}</span>
+        </div>
+        <div class="bk-meta">${esc(ds)} о ${esc(b.time||'')}</div>
+        ${b.status==='pending'?`<div style="margin-top:8px">
+          <button class="btn-bk-action" onclick="window._confirmBk('${b.id}')"><i class="ti ti-check"></i> Підтвердити</button>
+          <button class="btn-bk-reject" onclick="window._rejectBk('${b.id}')">Відхилити</button>
+        </div>`:''}
+      </div>`;
+    }).join('');
+  } catch(e) {
+    container.innerHTML = '<div class="cab-empty">Помилка завантаження</div>';
+  }
+}
+
+window._confirmBk = async function(bookingId) {
+  try {
+    await updateDoc(doc(db,'bookings',bookingId),{status:'confirmed'});
+    const card = document.getElementById(`bk-${bookingId}`);
+    if (card) {
+      card.querySelector('.bk-status').className = 'bk-status confirmed';
+      card.querySelector('.bk-status').textContent = 'Підтверджено';
+      card.querySelector('[onclick*="_confirmBk"]')?.closest('div[style]')?.remove();
+    }
+  } catch(e) { alert('Помилка. Спробуйте ще раз.'); }
+};
+
+window._rejectBk = async function(bookingId) {
+  if (!confirm('Відхилити цей запис?')) return;
+  try {
+    await updateDoc(doc(db,'bookings',bookingId),{status:'cancelled'});
+    document.getElementById(`bk-${bookingId}`)?.remove();
+  } catch(e) { alert('Помилка. Спробуйте ще раз.'); }
+};
 </script>
 
 <script>
@@ -1057,8 +1385,14 @@ function openInstrProfile(id) {
       <button class="btn-show-phone" onclick="showPhone('${_esc(d.phone||'')}','${col}')">
         <i class="ti ti-phone"></i> Показати телефон
       </button>
+    </div>
+    <div class="prof-divider"></div>
+    <div class="prof-booking-section">
+      <div class="booking-label">Записатись на заняття</div>
+      <div id="prof-booking"></div>
     </div>`;
   if (window.openPanel) window.openPanel('instr-profile');
+  setTimeout(() => window._openBooking?.(id), 50);
 }
 
 function showPhone(phone, col) {
