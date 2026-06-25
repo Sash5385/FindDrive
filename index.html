@@ -369,7 +369,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.43</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.44</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -944,31 +944,41 @@ async function saveSetup(user) {
 }
 
 async function renderProfileScreen(user) {
-  let ud = {};
-  try { const s = await getDoc(doc(db, 'users', user.uid)); if (s.exists()) ud = s.data(); } catch(e) {}
-  const name = ud.name || user.displayName || '';
-  const phone = ud.phone || '';
-  const ini  = name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || (user.email||'?')[0].toUpperCase();
-
   document.getElementById('cab-foot').innerHTML = `<button id="btn-signout" class="btn-signout"><i class="ti ti-logout"></i> Вийти з акаунту</button>`;
   document.getElementById('cab-foot').style.display = '';
   document.getElementById('btn-signout').addEventListener('click', () => { signOut(auth); closeAll(); });
 
+  const name0 = user.displayName || '';
+  const ini0  = name0.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || (user.email||'?')[0].toUpperCase();
+  document.getElementById('cab-body').innerHTML = `
+    <div class="cab-profile">
+      ${user.photoURL ? `<img class="cab-photo" src="${esc(user.photoURL)}" alt="">` : `<div class="cab-photo" style="background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;flex-shrink:0">${esc(ini0)}</div>`}
+      <div>
+        <div class="cab-fullname">${esc(name0 || 'Користувач')}</div>
+        <div class="cab-email">${esc(user.email || '')}</div>
+      </div>
+    </div>
+    <div class="cab-empty"><i class="ti ti-loader"></i></div>`;
+
+  const [snap, instr] = await Promise.all([
+    getDoc(doc(db, 'users', user.uid)).catch(() => null),
+    getMyInstrProfile(user),
+  ]);
+  let ud = {};
+  if (snap?.exists()) ud = snap.data();
+  const name  = ud.name || user.displayName || '';
+  const phone = ud.phone || '';
+  const ini   = name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || (user.email||'?')[0].toUpperCase();
+
   const headerHtml = `
     <div class="cab-profile">
-      ${user.photoURL
-        ? `<img class="cab-photo" src="${esc(user.photoURL)}" alt="">`
-        : `<div class="cab-photo" style="background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;flex-shrink:0">${esc(ini)}</div>`}
+      ${user.photoURL ? `<img class="cab-photo" src="${esc(user.photoURL)}" alt="">` : `<div class="cab-photo" style="background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;flex-shrink:0">${esc(ini)}</div>`}
       <div>
         <div class="cab-fullname">${esc(name || 'Користувач')}</div>
         <div class="cab-email">${esc(user.email || '')}</div>
       </div>
     </div>
     ${phone ? `<div class="cab-phone-row"><i class="ti ti-phone" style="color:var(--green)"></i> ${esc(phone)}</div>` : ''}`;
-
-  document.getElementById('cab-body').innerHTML = headerHtml + '<div class="cab-empty"><i class="ti ti-loader"></i></div>';
-
-  const instr = await getMyInstrProfile(user);
 
   if (instr) {
     const statusLabel = { pending: '⏳ На розгляді', approved: '✓ Активний', rejected: '✗ Відхилено' };
@@ -1024,8 +1034,7 @@ async function renderProfileScreen(user) {
 
 async function loadInstrSettings(instr, container) {
   if (!container) return;
-  let lessonDur    = instr.lessonDuration || 90;
-  let breakMin     = instr.breakMin       || 0;
+  let lessonDur    = [60,120].includes(instr.lessonDuration) ? instr.lessonDuration : 60;
   let meetingPts   = [...(instr.meetingPoints || [])];
 
   function renderAll() {
@@ -1033,13 +1042,7 @@ async function loadInstrSettings(instr, container) {
       <div class="instr-set-group">
         <span class="instr-set-label">Тривалість уроку</span>
         <div class="toggle-row">
-          ${[60,90,120].map(d => `<button class="toggle-btn${lessonDur===d?' active':''}" onclick="window._setLessonDur(${d})">${d} хв</button>`).join('')}
-        </div>
-      </div>
-      <div class="instr-set-group">
-        <span class="instr-set-label">Перерва між уроками</span>
-        <div class="toggle-row">
-          ${[0,15,30].map(b => `<button class="toggle-btn${breakMin===b?' active':''}" onclick="window._setBreakMin(${b})">${b===0?'Без перерви':b+' хв'}</button>`).join('')}
+          ${[60,120].map(d => `<button class="toggle-btn${lessonDur===d?' active':''}" onclick="window._setLessonDur(${d})">${d} хв</button>`).join('')}
         </div>
       </div>
       <div class="instr-set-group">
@@ -1056,7 +1059,6 @@ async function loadInstrSettings(instr, container) {
   }
 
   window._setLessonDur = (d) => { lessonDur = d; renderAll(); };
-  window._setBreakMin  = (b) => { breakMin  = b; renderAll(); };
   window._addMp = () => {
     const inp = document.getElementById('mp-new-input');
     const val = inp?.value.trim();
@@ -1069,14 +1071,12 @@ async function loadInstrSettings(instr, container) {
     try {
       await updateDoc(doc(db,'instructors',instrId), {
         lessonDuration: lessonDur,
-        breakMin:       breakMin,
         meetingPoints:  meetingPts,
       });
       instr.lessonDuration = lessonDur;
-      instr.breakMin       = breakMin;
       instr.meetingPoints  = meetingPts;
       if (window._instrProfiles?.[instrId]) {
-        Object.assign(window._instrProfiles[instrId], { lessonDuration:lessonDur, breakMin, meetingPoints:meetingPts });
+        Object.assign(window._instrProfiles[instrId], { lessonDuration:lessonDur, meetingPoints:meetingPts });
       }
       showToast('Налаштування збережено!', '', 'success');
     } catch(e) { alert('Помилка збереження.'); }
@@ -1535,7 +1535,8 @@ window._pickDate = async function(instrId, dateStr) {
     return;
   }
   const lessonMin = d.lessonDuration || LESSON_MIN;
-  const stepMin   = lessonMin + (d.breakMin || 0);
+  const dayBreak  = avail.breakMin != null ? avail.breakMin : (d.breakMin || 0);
+  const stepMin   = lessonMin + dayBreak;
   const busy  = await getBusySlots(instrId, dateStr);
   const slots = genSlots(avail.from, avail.to, lessonMin, stepMin);
   if (!slots.length) {
@@ -1889,17 +1890,19 @@ async function loadInstrCombined(instr, container) {
       const hasOverride = ov !== undefined;
       const dt = new Date(editDate+'T00:00:00');
       const weeklyActive = (instr.days||[]).includes(DAY_UA_FULL[dt.getDay()]);
-      let mode, from, to, location;
+      let mode, from, to, location, breakMin;
       if (hasOverride) {
         mode     = (!ov||ov.open===false) ? 'closed' : 'open';
         from     = (ov&&ov.from)||instr.time_from||'09:00';
         to       = (ov&&ov.to)||instr.time_to||'18:00';
         location = (ov&&ov.location)||'';
+        breakMin = (ov&&ov.breakMin!=null) ? ov.breakMin : 0;
       } else {
         mode     = weeklyActive ? 'weekly' : 'default';
         from     = instr.time_from||'09:00';
         to       = instr.time_to||'18:00';
         location = '';
+        breakMin = 0;
       }
       const [y,m,d] = editDate.split('-');
       const dowLabel = DOWS_UA[(dt.getDay()+6)%7];
@@ -1919,6 +1922,12 @@ async function loadInstrCombined(instr, container) {
           <div class="avail-time-row">
             <div><label>Початок</label><input type="time" id="comb-from" value="${from}" step="900"></div>
             <div><label>Кінець</label><input type="time" id="comb-to" value="${to}" step="900"></div>
+          </div>
+          <div class="instr-set-group" style="margin-top:10px">
+            <span class="instr-set-label">Перерва між уроками</span>
+            <div class="toggle-row">
+              ${[0,15,30].map(b=>`<button class="toggle-btn${breakMin===b?' active':''}" id="comb-break-${b}" onclick="window._combSetBreak(${b})">${b===0?'Без перерви':b+' хв'}</button>`).join('')}
+            </div>
           </div>
           <div class="avail-loc-row">
             <label>Місце зустрічі</label>
@@ -1973,6 +1982,9 @@ async function loadInstrCombined(instr, container) {
       const tl = document.getElementById('comb-time-loc');
       if (tl) tl.style.display = mode==='open' ? '' : 'none';
     };
+    window._combSetBreak  = (b) => {
+      [0,15,30].forEach(v => document.getElementById(`comb-break-${v}`)?.classList.toggle('active', v===b));
+    };
     window._combSaveDate  = async function(instrId, date) {
       const modes = ['open','weekly','closed'];
       const mode  = modes[[...document.querySelectorAll('.avail-toggle-btn')].findIndex(b=>b.classList.contains('active'))] || 'weekly';
@@ -1982,11 +1994,13 @@ async function loadInstrCombined(instr, container) {
           delete localAvail[date];
           if (window._instrProfiles?.[instrId]?.availability) delete window._instrProfiles[instrId].availability[date];
         } else {
+          const activeBreak = [0,15,30].find(v=>document.getElementById(`comb-break-${v}`)?.classList.contains('active')) ?? 0;
           const data = mode==='closed' ? {open:false} : {
             open:true,
             from:document.getElementById('comb-from')?.value||instr.time_from,
             to:document.getElementById('comb-to')?.value||instr.time_to,
             location:document.getElementById('comb-loc')?.value||'',
+            breakMin:activeBreak,
           };
           await updateDoc(doc(db,'instructors',instrId),{[`availability.${date}`]:data});
           localAvail[date]=data;
