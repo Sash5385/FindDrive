@@ -32,19 +32,27 @@ self.addEventListener('notificationclick', e => {
   e.waitUntil(clients.openWindow(url));
 });
 
-// --- Caching (stale-while-revalidate) ---
-const CACHE = 'finddrive-v3';
+// --- Caching ---
+const CACHE = 'finddrive-v4';
+
+// Свої файли + Firebase CDN модулі (щоб PWA працювала офлайн / при слабкому сигналі)
 const PRECACHE = [
   '/',
   '/index.html',
   '/favicon.png',
   '/logo192.png',
   '/logo.png',
+  'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js',
+  'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js',
+  'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js',
+  'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js',
 ];
 
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(PRECACHE)).then(() => self.skipWaiting())
+    caches.open(CACHE)
+      .then(c => c.addAll(PRECACHE))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -58,12 +66,21 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-  if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
+  if (e.request.method !== 'GET') return;
+
+  const isSameOrigin  = url.origin === self.location.origin;
+  const isFirebaseCDN = url.hostname === 'www.gstatic.com';
+
+  if (!isSameOrigin && !isFirebaseCDN) return;
+
   e.respondWith(
     caches.open(CACHE).then(cache =>
       cache.match(e.request).then(cached => {
         const network = fetch(e.request)
-          .then(res => { cache.put(e.request, res.clone()); return res; })
+          .then(res => {
+            if (res && res.status === 200) cache.put(e.request, res.clone());
+            return res;
+          })
           .catch(() => null);
         return cached || network;
       })
