@@ -290,7 +290,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.38</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.39</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -565,8 +565,10 @@ const auth     = getAuth(app);
 const db       = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-// Обробка редіректу після Google Sign-In у PWA
-getRedirectResult(auth).catch(() => {});
+// Обробка редіректу після Google Sign-In
+getRedirectResult(auth).catch(e => {
+  if (e.code && e.code !== 'auth/no-auth-event') console.warn('Redirect auth:', e.message);
+});
 const VAPID_KEY = 'BGSuM0lNQTvXWAx6H8m1ORaBOWVajW0XFz8bRA39VzBW7dToZ-bsXnL9TTd1kACItrCMbi_HhXATND-MhQ0cpGY';
 
 const TSC_LIST = [
@@ -705,12 +707,17 @@ function showAuthErr(msg) {
   const el = document.getElementById('cab-err');
   if (!el) return;
   const map = {
-    'auth/wrong-password':       'Неправильний пароль',
-    'auth/user-not-found':       'Користувача з таким email не знайдено',
-    'auth/email-already-in-use': 'Цей email вже зареєстровано',
-    'auth/weak-password':        'Пароль занадто простий (мінімум 6 символів)',
-    'auth/invalid-email':        'Невірний формат email',
-    'auth/invalid-credential':   'Неправильний email або пароль',
+    'auth/wrong-password':        'Неправильний пароль',
+    'auth/user-not-found':        'Користувача з таким email не знайдено',
+    'auth/email-already-in-use':  'Цей email вже зареєстровано',
+    'auth/weak-password':         'Пароль занадто простий (мінімум 6 символів)',
+    'auth/invalid-email':         'Невірний формат email',
+    'auth/invalid-credential':    'Неправильний email або пароль',
+    'auth/popup-blocked':         'Спливаюче вікно заблоковано браузером. Спробуйте ще раз або використайте email/пароль.',
+    'auth/popup-closed-by-user':  'Вікно входу було закрите. Спробуйте ще раз.',
+    'auth/unauthorized-domain':   'Цей домен не авторизований у Firebase. Зверніться до адміністратора.',
+    'auth/network-request-failed':'Немає з\'єднання з інтернетом. Перевірте мережу.',
+    'auth/too-many-requests':     'Забагато спроб. Спробуйте пізніше.',
   };
   el.textContent = map[msg.match(/auth\/[\w-]+/)?.[0]] || 'Помилка входу. Спробуйте ще раз.';
   el.style.display = '';

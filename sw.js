@@ -33,12 +33,9 @@ self.addEventListener('notificationclick', e => {
 });
 
 // --- Caching ---
-const CACHE = 'finddrive-v5';
+const CACHE = 'finddrive-v6';
 
-// Свої файли + Firebase CDN модулі (щоб PWA працювала офлайн / при слабкому сигналі)
 const PRECACHE = [
-  '/',
-  '/index.html',
   '/favicon.png',
   '/logo192.png',
   '/logo.png',
@@ -73,6 +70,25 @@ self.addEventListener('fetch', e => {
 
   if (!isSameOrigin && !isFirebaseCDN) return;
 
+  // HTML-сторінки: network-first → кеш-fallback (завжди свіжий код)
+  const isNavigate = e.request.mode === 'navigate' ||
+    (isSameOrigin && (url.pathname === '/' || url.pathname.endsWith('.html')));
+
+  if (isNavigate) {
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          if (res && res.status === 200) {
+            caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+          }
+          return res;
+        })
+        .catch(() => caches.match(e.request))
+    );
+    return;
+  }
+
+  // Статичні ресурси: stale-while-revalidate
   e.respondWith(
     caches.open(CACHE).then(cache =>
       cache.match(e.request).then(cached => {
