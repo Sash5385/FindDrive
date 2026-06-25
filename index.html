@@ -135,6 +135,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .cab-overlay.open{opacity:1;pointer-events:all}
 .cabinet{position:fixed;top:0;right:0;width:320px;height:100vh;background:var(--white);z-index:201;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.12)}
 .cabinet.open{transform:translateX(0)}
+@media(min-width:900px){.cabinet{width:480px}.instr-wide{width:540px}.instr-profile-panel{width:540px}}
+@media(min-width:1280px){.cabinet{width:600px}.instr-wide{width:660px}.instr-profile-panel{width:660px}}
 .cab-header{display:flex;align-items:center;justify-content:space-between;padding:20px 20px 16px;border-bottom:.5px solid var(--border);flex-shrink:0}
 .cab-title{font-size:15px;font-weight:600;color:var(--text)}
 .cab-close{background:none;border:none;cursor:pointer;color:var(--text-hint);font-size:20px;display:flex;align-items:center;padding:2px}
@@ -168,6 +170,22 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .nav-avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;border:1.5px solid var(--border)}
 .nav-name{font-size:13px;color:var(--text);font-weight:500}
 
+/* INSTRUCTOR SETTINGS */
+.instr-set-group{margin-bottom:14px}
+.instr-set-label{font-size:11px;color:var(--text-muted);margin-bottom:6px;display:block;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.toggle-row{display:flex;gap:4px}
+.toggle-btn{flex:1;padding:7px 0;border:.5px solid var(--border);border-radius:7px;font-size:12px;background:var(--bg);color:var(--text-muted);cursor:pointer;font-family:inherit;transition:all .15s;text-align:center}
+.toggle-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
+.mp-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.mp-chip{display:inline-flex;align-items:center;gap:6px;background:var(--green-light);color:var(--green);border:.5px solid #b8ddc8;border-radius:20px;padding:4px 12px;font-size:12px}
+.mp-chip-del{background:none;border:none;cursor:pointer;color:var(--text-hint);padding:0;font-size:12px;line-height:1;display:flex;align-items:center;transition:color .15s}
+.mp-chip-del:hover{color:#cc3333}
+.mp-add-row{display:flex;gap:6px}
+.mp-add-row input{flex:1;border:.5px solid var(--border);border-radius:7px;padding:6px 10px;font-size:12px;font-family:inherit;background:var(--white);outline:none;transition:border-color .2s}
+.mp-add-row input:focus{border-color:var(--green)}
+.mp-sel-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.mp-sel-chip{padding:5px 12px;border:.5px solid var(--border);border-radius:20px;font-size:11px;background:var(--bg);color:var(--text-muted);cursor:pointer;transition:all .15s;font-family:inherit}
+.mp-sel-chip:hover{border-color:var(--green);color:var(--green);background:var(--green-light)}
 /* INSTRUCTOR FORM PANEL */
 .instr-wide{width:380px}
 .instr-intro{font-size:13px;color:var(--text-muted);line-height:1.6;padding:14px 20px 0}
@@ -351,7 +369,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.41</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.42</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -980,6 +998,69 @@ async function renderProfileScreen(user) {
   renderInstrSectionIfNeeded(user);
 }
 
+async function loadInstrSettings(instr, container) {
+  if (!container) return;
+  let lessonDur    = instr.lessonDuration || 90;
+  let breakMin     = instr.breakMin       || 0;
+  let meetingPts   = [...(instr.meetingPoints || [])];
+
+  function renderAll() {
+    container.innerHTML = `
+      <div class="instr-set-group">
+        <span class="instr-set-label">Тривалість уроку</span>
+        <div class="toggle-row">
+          ${[60,90,120].map(d => `<button class="toggle-btn${lessonDur===d?' active':''}" onclick="window._setLessonDur(${d})">${d} хв</button>`).join('')}
+        </div>
+      </div>
+      <div class="instr-set-group">
+        <span class="instr-set-label">Перерва між уроками</span>
+        <div class="toggle-row">
+          ${[0,15,30].map(b => `<button class="toggle-btn${breakMin===b?' active':''}" onclick="window._setBreakMin(${b})">${b===0?'Без перерви':b+' хв'}</button>`).join('')}
+        </div>
+      </div>
+      <div class="instr-set-group">
+        <span class="instr-set-label">Точки зустрічі</span>
+        ${meetingPts.length
+          ? `<div class="mp-list">${meetingPts.map((pt,i) => `<span class="mp-chip">${esc(pt)}<button class="mp-chip-del" onclick="window._removeMp(${i})" title="Видалити"><i class="ti ti-x"></i></button></span>`).join('')}</div>`
+          : '<div style="font-size:11px;color:var(--text-hint);margin-bottom:8px">Немає збережених точок</div>'}
+        <div class="mp-add-row">
+          <input type="text" id="mp-new-input" placeholder="Адреса або орієнтир…" maxlength="80" onkeydown="if(event.key==='Enter')window._addMp()">
+          <button class="btn-bk-action" style="font-size:11px;padding:6px 12px;flex-shrink:0" onclick="window._addMp()"><i class="ti ti-plus"></i></button>
+        </div>
+      </div>
+      <button class="btn-bk-action" style="width:100%;font-size:12px;padding:9px" onclick="window._saveInstrSettings('${instr.id}')"><i class="ti ti-device-floppy"></i> Зберегти налаштування</button>`;
+  }
+
+  window._setLessonDur = (d) => { lessonDur = d; renderAll(); };
+  window._setBreakMin  = (b) => { breakMin  = b; renderAll(); };
+  window._addMp = () => {
+    const inp = document.getElementById('mp-new-input');
+    const val = inp?.value.trim();
+    if (!val) return;
+    meetingPts.push(val);
+    renderAll();
+  };
+  window._removeMp = (i) => { meetingPts.splice(i, 1); renderAll(); };
+  window._saveInstrSettings = async (instrId) => {
+    try {
+      await updateDoc(doc(db,'instructors',instrId), {
+        lessonDuration: lessonDur,
+        breakMin:       breakMin,
+        meetingPoints:  meetingPts,
+      });
+      instr.lessonDuration = lessonDur;
+      instr.breakMin       = breakMin;
+      instr.meetingPoints  = meetingPts;
+      if (window._instrProfiles?.[instrId]) {
+        Object.assign(window._instrProfiles[instrId], { lessonDuration:lessonDur, breakMin, meetingPoints:meetingPts });
+      }
+      showToast('Налаштування збережено!', '', 'success');
+    } catch(e) { alert('Помилка збереження.'); }
+  };
+
+  renderAll();
+}
+
 async function renderInstrSectionIfNeeded(user) {
   const instr = await getMyInstrProfile(user);
   if (!instr) return;
@@ -994,12 +1075,15 @@ async function renderInstrSectionIfNeeded(user) {
       ${esc(instr.name)} · <span style="color:${instr.status==='approved'?'var(--green)':instr.status==='pending'?'#856404':'#cc3333'}">${statusLabel[instr.status]||instr.status}</span>
     </div>
     ${instr.status === 'approved' ? `
-    <div class="cab-section-title" style="margin-top:12px">Розклад</div>
+    <div class="cab-section-title" style="margin-top:12px">Налаштування</div>
+    <div id="cab-instr-settings"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>
+    <div class="cab-section-title" style="margin-top:16px">Розклад</div>
     <div id="cab-instr-schedule"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>
     <div class="cab-section-title" style="margin-top:16px">Записи від учнів</div>
     <div id="cab-instr-bookings"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>` : ''}`;
   cab.appendChild(section);
   if (instr.status === 'approved') {
+    loadInstrSettings(instr, document.getElementById('cab-instr-settings'));
     loadInstrSchedule(instr, document.getElementById('cab-instr-schedule'));
     loadInstrBookings(instr.id, document.getElementById('cab-instr-bookings'));
   }
@@ -1351,14 +1435,14 @@ const DAY_UK_S = ['нд','пн','вт','ср','чт','пт','сб'];
 const MON_UK_S = ['січ','лют','бер','кві','тра','чер','лип','сер','вер','жов','лис','гру'];
 const LESSON_MIN = 90;
 
-function genSlots(from, to, dur = LESSON_MIN) {
+function genSlots(from, to, lessonMin = LESSON_MIN, stepMin = lessonMin) {
   const r = [];
   const [fh, fm] = from.split(':').map(Number);
   const [th, tm] = to.split(':').map(Number);
   let c = fh*60+fm, e = th*60+tm;
-  while (c + dur <= e) {
+  while (c + lessonMin <= e) {
     r.push(`${String(Math.floor(c/60)).padStart(2,'0')}:${String(c%60).padStart(2,'0')}`);
-    c += dur;
+    c += stepMin;
   }
   return r;
 }
@@ -1449,8 +1533,10 @@ window._pickDate = async function(instrId, dateStr) {
     slotBox.innerHTML = '<p class="booking-hint">Години роботи не вказано</p>';
     return;
   }
+  const lessonMin = d.lessonDuration || LESSON_MIN;
+  const stepMin   = lessonMin + (d.breakMin || 0);
   const busy  = await getBusySlots(instrId, dateStr);
-  const slots = genSlots(avail.from, avail.to);
+  const slots = genSlots(avail.from, avail.to, lessonMin, stepMin);
   if (!slots.length) {
     slotBox.innerHTML = '<p class="booking-hint">Слоти недоступні</p>';
     return;
@@ -1504,7 +1590,7 @@ window._bookSlot = async function(instrId, dateStr, time) {
       clientEmail:      user.email || '',
       date:             dateStr,
       time:             time,
-      duration:         LESSON_MIN,
+      duration:         d?.lessonDuration || LESSON_MIN,
       status:           'pending',
       createdAt:        serverTimestamp(),
     });
@@ -1803,7 +1889,12 @@ async function loadInstrSchedule(instr, container) {
         </div>
         <div class="avail-loc-row">
           <label>Місце зустрічі</label>
-          <input type="text" id="avail-loc" placeholder="Наприклад: метро Осокорки, парковка…" value="${esc(location)}">
+          ${(() => {
+            const pts = (window._instrProfiles?.[instr.id]?.meetingPoints) || instr.meetingPoints || [];
+            return pts.length
+              ? `<div class="mp-sel-list">${pts.map(pt => `<button class="mp-sel-chip" onclick="document.getElementById('avail-loc').value='${esc(pt)}';document.querySelectorAll('.mp-sel-chip').forEach(b=>b.style.background='');this.style.background='var(--green-light)'">${esc(pt)}</button>`).join('')}</div>` : '';
+          })()}
+          <input type="text" id="avail-loc" placeholder="Або введіть адресу вручну…" value="${esc(location)}">
         </div>
       </div>
       <div class="avail-save-row">
