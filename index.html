@@ -282,7 +282,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.31</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.32</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -540,6 +540,8 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChang
 import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp,
          setDoc, getDoc, doc, updateDoc, onSnapshot }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getMessaging, getToken }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAr-Q8ojscCoMLXNAKNjqbGrqw0JN6_mbo",
@@ -551,10 +553,13 @@ const firebaseConfig = {
   measurementId: "G-1QDLW9TCGZ"
 };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getFirestore(app);
-const provider = new GoogleAuthProvider();
+const app       = initializeApp(firebaseConfig);
+const auth      = getAuth(app);
+const db        = getFirestore(app);
+const messaging = getMessaging(app);
+const provider  = new GoogleAuthProvider();
+// Отримати VAPID key: Firebase Console → Project Settings → Cloud Messaging → Web Push certificates
+const VAPID_KEY = 'YOUR_VAPID_KEY_HERE';
 
 const TSC_LIST = [
   ['Київ',[
@@ -948,10 +953,20 @@ async function showBrowserNotif(title, body) {
   new Notification(title, { body, icon: '/favicon.png' });
 }
 
-async function requestNotifPermission() {
-  if ('Notification' in window && Notification.permission === 'default') {
-    await Notification.requestPermission();
+async function registerFcmToken() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    const p = await Notification.requestPermission();
+    if (p !== 'granted') return;
   }
+  if (Notification.permission !== 'granted') return;
+  try {
+    const reg   = await navigator.serviceWorker.ready;
+    const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
+    if (token && auth.currentUser) {
+      await setDoc(doc(db, 'users', auth.currentUser.uid), { fcmToken: token }, { merge: true });
+    }
+  } catch (e) { console.warn('FCM token:', e.message); }
 }
 
 let _unsubInstr = null;
@@ -1004,7 +1019,7 @@ onAuthStateChanged(auth, async user => {
       setDoc(doc(db, 'users', user.uid), { name: user.displayName||'', email: user.email||'', photo: user.photoURL||'' }, { merge: true }).catch(()=>{});
     }
     if (document.getElementById("cabinet").classList.contains("open")) await renderProfileScreen(user);
-    requestNotifPermission();
+    registerFcmToken();
     // Запустити слухач для клієнта; слухач інструктора — після визначення профілю
     listenClientBookings(user.uid);
     getMyInstrProfile(user).then(instr => {

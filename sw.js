@@ -1,4 +1,37 @@
-const CACHE = 'finddrive-v1';
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+  apiKey:            "AIzaSyAr-Q8ojscCoMLXNAKNjqbGrqw0JN6_mbo",
+  authDomain:        "finddrive-b009d.firebaseapp.com",
+  projectId:         "finddrive-b009d",
+  storageBucket:     "finddrive-b009d.firebasestorage.app",
+  messagingSenderId: "8431552805",
+  appId:             "1:8431552805:web:6708f74b843ff5b94332cc"
+});
+
+const messaging = firebase.messaging();
+
+// Background push (вкладка закрита або у фоні)
+messaging.onBackgroundMessage(payload => {
+  const title = payload.notification?.title || 'FindDrive';
+  const body  = payload.notification?.body  || '';
+  self.registration.showNotification(title, {
+    body,
+    icon:  '/favicon.png',
+    badge: '/favicon.png',
+    data:  { url: '/' }
+  });
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = e.notification.data?.url || '/';
+  e.waitUntil(clients.openWindow(url));
+});
+
+// --- Caching (stale-while-revalidate) ---
+const CACHE = 'finddrive-v2';
 const PRECACHE = [
   '/',
   '/index.html',
@@ -23,11 +56,7 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-
-  // Тільки GET і тільки свій origin
   if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
-
-  // Стратегія: stale-while-revalidate
   e.respondWith(
     caches.open(CACHE).then(cache =>
       cache.match(e.request).then(cached => {
