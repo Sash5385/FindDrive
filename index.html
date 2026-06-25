@@ -290,7 +290,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.33</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.34</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -561,13 +561,14 @@ const firebaseConfig = {
   measurementId: "G-1QDLW9TCGZ"
 };
 
-const app       = initializeApp(firebaseConfig);
-const auth      = getAuth(app);
-const db        = getFirestore(app);
-const messaging = getMessaging(app);
-const provider  = new GoogleAuthProvider();
-// Отримати VAPID key: Firebase Console → Project Settings → Cloud Messaging → Web Push certificates
+const app      = initializeApp(firebaseConfig);
+const auth     = getAuth(app);
+const db       = getFirestore(app);
+const provider = new GoogleAuthProvider();
 const VAPID_KEY = 'BGSuM0lNQTvXWAx6H8m1ORaBOWVajW0XFz8bRA39VzBW7dToZ-bsXnL9TTd1kACItrCMbi_HhXATND-MhQ0cpGY';
+
+let messaging = null;
+try { messaging = getMessaging(app); } catch(e) { console.warn('FCM unavailable:', e.message); }
 
 const TSC_LIST = [
   ['Київ',[
@@ -962,7 +963,7 @@ async function showBrowserNotif(title, body) {
 }
 
 async function registerFcmToken() {
-  if (!('Notification' in window)) return;
+  if (!messaging || !('Notification' in window)) return;
   if (Notification.permission === 'default') {
     const p = await Notification.requestPermission();
     if (p !== 'granted') return;

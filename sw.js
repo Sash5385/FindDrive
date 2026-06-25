@@ -1,28 +1,30 @@
-importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
+try {
+  importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+  importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
-firebase.initializeApp({
-  apiKey:            "AIzaSyAr-Q8ojscCoMLXNAKNjqbGrqw0JN6_mbo",
-  authDomain:        "finddrive-b009d.firebaseapp.com",
-  projectId:         "finddrive-b009d",
-  storageBucket:     "finddrive-b009d.firebasestorage.app",
-  messagingSenderId: "8431552805",
-  appId:             "1:8431552805:web:6708f74b843ff5b94332cc"
-});
-
-const messaging = firebase.messaging();
-
-// Background push (вкладка закрита або у фоні)
-messaging.onBackgroundMessage(payload => {
-  const title = payload.notification?.title || 'FindDrive';
-  const body  = payload.notification?.body  || '';
-  self.registration.showNotification(title, {
-    body,
-    icon:  '/favicon.png',
-    badge: '/favicon.png',
-    data:  { url: '/' }
+  firebase.initializeApp({
+    apiKey:            "AIzaSyAr-Q8ojscCoMLXNAKNjqbGrqw0JN6_mbo",
+    authDomain:        "finddrive-b009d.firebaseapp.com",
+    projectId:         "finddrive-b009d",
+    storageBucket:     "finddrive-b009d.firebasestorage.app",
+    messagingSenderId: "8431552805",
+    appId:             "1:8431552805:web:6708f74b843ff5b94332cc"
   });
-});
+
+  const messaging = firebase.messaging();
+  messaging.onBackgroundMessage(payload => {
+    const title = payload.notification?.title || 'FindDrive';
+    const body  = payload.notification?.body  || '';
+    self.registration.showNotification(title, {
+      body,
+      icon:  '/favicon.png',
+      badge: '/favicon.png',
+      data:  { url: '/' }
+    });
+  });
+} catch(e) {
+  console.warn('FCM SW init failed:', e.message);
+}
 
 self.addEventListener('notificationclick', e => {
   e.notification.close();
@@ -31,7 +33,7 @@ self.addEventListener('notificationclick', e => {
 });
 
 // --- Caching (stale-while-revalidate) ---
-const CACHE = 'finddrive-v2';
+const CACHE = 'finddrive-v3';
 const PRECACHE = [
   '/',
   '/index.html',
