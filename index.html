@@ -133,7 +133,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 /* CABINET */
 .cab-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;opacity:0;pointer-events:none;transition:opacity .3s}
 .cab-overlay.open{opacity:1;pointer-events:all}
-.cabinet{position:fixed;top:0;right:0;width:320px;height:100vh;background:var(--green-light);z-index:201;display:flex;flex-direction:column;box-shadow:-4px 0 32px rgba(0,0,0,.14);opacity:0;pointer-events:none;transform:scale(.96);transform-origin:right center;transition:opacity .22s ease,transform .22s ease}
+.cabinet{position:fixed;top:0;right:0;width:320px;height:100vh;background:var(--green-light);z-index:201;display:flex;flex-direction:column;box-shadow:-4px 0 32px rgba(0,0,0,.14);opacity:0;pointer-events:none;transform:scale(.82);transform-origin:right center;transition:opacity .18s ease,transform .45s cubic-bezier(.34,1.56,.64,1)}
 .cabinet.open{opacity:1;pointer-events:all;transform:scale(1)}
 @media(min-width:900px){.cabinet{width:560px}.instr-wide{width:620px}.instr-profile-panel{width:620px}}
 @media(min-width:1280px){.cabinet{width:720px}.instr-wide{width:780px}.instr-profile-panel{width:780px}}
@@ -401,7 +401,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.47</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.48</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
