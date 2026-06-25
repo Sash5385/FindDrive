@@ -263,7 +263,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.26</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.27</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -410,10 +410,16 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
           <input class="form-input" name="phone" type="tel" placeholder="+380 XX XXX XX XX">
         </div>
         <div class="form-group">
-          <label class="form-label">Email</label>
-          <input class="form-input" name="email" type="email" placeholder="you@gmail.com">
+          <label class="form-label">Email *</label>
+          <input class="form-input" name="email" type="email" placeholder="you@gmail.com" autocomplete="email">
         </div>
       </div>
+      <div class="form-group" id="instr-pass-group">
+        <label class="form-label">Пароль для входу *</label>
+        <input class="form-input" name="instr-pass" type="password" placeholder="Мінімум 6 символів" autocomplete="new-password">
+        <div style="font-size:11px;color:var(--text-hint);margin-top:5px;line-height:1.5">Після підтвердження анкети зможете увійти і керувати записами від учнів</div>
+      </div>
+      <div id="instr-auth-err" style="display:none;background:var(--pink-light);color:var(--pink);border-radius:9px;padding:10px 14px;font-size:13px;margin-bottom:12px"></div>
 
       <div class="form-divider">Умови роботи</div>
       <div class="form-group">
@@ -925,6 +931,12 @@ document.getElementById("btn-instr").addEventListener("click", () => {
   openPanel("instr-panel");
   populateInstrTscSelect();
   setTimeout(() => window.initInstrMap?.(), 150);
+  const passGroup = document.getElementById('instr-pass-group');
+  if (passGroup) passGroup.style.display = auth.currentUser ? 'none' : '';
+  if (auth.currentUser) {
+    const emailEl = instrForm?.querySelector('[name="email"]');
+    if (emailEl && !emailEl.value) emailEl.value = auth.currentUser.email || '';
+  }
 });
 document.getElementById("instr-close").addEventListener("click", closeAll);
 
@@ -967,11 +979,22 @@ instrForm.addEventListener("input", e => { e.target.style.borderColor = ""; });
 document.getElementById("btn-submit-instr").addEventListener("click", async () => {
   const name  = instrForm.querySelector('[name="name"]').value.trim();
   const phone = instrForm.querySelector('[name="phone"]').value.trim();
+  const email = instrForm.querySelector('[name="email"]').value.trim();
+  const pass  = instrForm.querySelector('[name="instr-pass"]')?.value || '';
+  const alreadyLoggedIn = !!auth.currentUser;
+
+  const errEl = document.getElementById('instr-auth-err');
+  if (errEl) errEl.style.display = 'none';
+
   let valid = true;
-  [["name", name], ["phone", phone]].forEach(([field, val]) => {
-    instrForm.querySelector(`[name="${field}"]`).style.borderColor = val ? "" : "#cc3333";
+  [['name', name], ['phone', phone], ['email', email]].forEach(([field, val]) => {
+    instrForm.querySelector(`[name="${field}"]`).style.borderColor = val ? '' : '#cc3333';
     if (!val) valid = false;
   });
+  if (!alreadyLoggedIn && pass.length < 6) {
+    instrForm.querySelector('[name="instr-pass"]').style.borderColor = '#cc3333';
+    valid = false;
+  }
   if (!valid) return;
 
   const btn = document.getElementById("btn-submit-instr");
@@ -988,9 +1011,16 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
   const tscKnown = [...(document.getElementById('instr-tsc-select')?.selectedOptions||[])].map(o=>o.value);
 
   try {
+    let uid = auth.currentUser?.uid || null;
+
+    if (!alreadyLoggedIn) {
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      await updateProfile(cred.user, { displayName: name });
+      uid = cred.user.uid;
+    }
+
     await addDoc(collection(db, "instructors"), {
-      name, phone,
-      email:      instrForm.querySelector('[name="email"]').value.trim(),
+      name, phone, email,
       area, gearbox, price, car,
       experience: Number(instrForm.querySelector('[name="experience"]').value) || 0,
       days,
@@ -999,20 +1029,31 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
       about:      instrForm.querySelector('[name="about"]').value.trim(),
       photo:      instrPhotoData || null,
       lat, lng, tscKnown,
-      userId:     auth.currentUser?.uid || null,
+      userId:     uid,
       status:     "pending",
       rating:     null,
       reviews:    0,
       createdAt:  serverTimestamp(),
     });
+
     document.getElementById("instr-form-wrap").style.display = "none";
     document.getElementById("instr-foot").style.display = "none";
     document.getElementById("instr-success").style.display = "flex";
   } catch(err) {
-    console.error(err);
     btn.disabled = false;
     btn.innerHTML = '<i class="ti ti-send"></i> Надіслати анкету';
-    alert("Помилка збереження. Перевірте підключення та спробуйте ще раз.");
+    const authErrMap = {
+      'auth/email-already-in-use': 'Цей email вже зареєстрований. Увійдіть через кнопку "Увійти" в навбарі.',
+      'auth/weak-password':        'Пароль занадто простий — мінімум 6 символів.',
+      'auth/invalid-email':        'Невірний формат email.',
+    };
+    const code = err.message?.match(/auth\/[\w-]+/)?.[0];
+    if (errEl && code && authErrMap[code]) {
+      errEl.textContent = authErrMap[code];
+      errEl.style.display = '';
+    } else {
+      alert("Помилка збереження. Перевірте підключення та спробуйте ще раз.");
+    }
   }
 });
 
