@@ -201,6 +201,12 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .mp-suggests li:hover{background:var(--green-light)}
 .book-loc-link{display:inline-flex;align-items:center;gap:5px;color:var(--green);font-size:12px;text-decoration:none;font-weight:500}
 .book-loc-link:hover{text-decoration:underline}
+.bk-sched-block{background:var(--bg);border-radius:10px;padding:10px 12px;margin-bottom:14px}
+.bk-sched-row{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted)}
+.bk-mp-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.bk-mp-chip{display:inline-flex;align-items:center;gap:4px;background:var(--green-light);color:var(--green);border-radius:20px;padding:3px 10px;font-size:11px;text-decoration:none;border:.5px solid #b8ddc8;transition:background .15s,color .15s}
+.bk-mp-chip:hover{background:var(--green);color:#fff}
+.bk-day-hours{display:inline-flex;align-items:center;gap:5px;background:var(--bg);border-radius:7px;padding:4px 10px;font-size:12px;color:var(--text-muted);margin-bottom:6px}
 .mp-add-row input{flex:1;border:.5px solid var(--border);border-radius:7px;padding:6px 10px;font-size:12px;font-family:inherit;background:var(--white);outline:none;transition:border-color .2s}
 .mp-add-row input:focus{border-color:var(--green)}
 .mp-sel-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
@@ -420,7 +426,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.56</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.57</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1714,7 +1720,19 @@ function renderBookingDates(box, instrId, d) {
     box.innerHTML = '<p class="booking-hint">Розклад ще не заповнено</p>';
     return;
   }
+  const sched = [(d.days||[]).join(', '), d.time_from && d.time_to ? d.time_from+'–'+d.time_to : ''].filter(Boolean).join(' · ');
+  const mps = (d.meetingPoints||[]);
   box.innerHTML = `
+    ${sched || mps.length ? `<div class="bk-sched-block">
+      ${sched ? `<div class="bk-sched-row"><i class="ti ti-clock" style="color:var(--green)"></i> ${esc(sched)}</div>` : ''}
+      ${mps.length ? `<div class="bk-mp-row">${mps.map(pt => {
+        const lbl = typeof pt==='string' ? pt : pt.label;
+        const hasCoords = typeof pt==='object' && pt.lat;
+        return hasCoords
+          ? `<a class="bk-mp-chip" href="https://www.google.com/maps?q=${pt.lat},${pt.lng}" target="_blank" rel="noopener"><i class="ti ti-map-pin"></i> ${esc(lbl)}</a>`
+          : `<span class="bk-mp-chip"><i class="ti ti-map-pin"></i> ${esc(lbl)}</span>`;
+      }).join('')}</div>` : ''}
+    </div>` : ''}
     <div class="booking-label">Оберіть дату</div>
     <div class="date-grid">
       ${dates.map(({ dt, iso }) => `<button class="date-chip" data-date="${iso}" onclick="window._pickDate('${esc(instrId)}','${iso}')">
@@ -1780,9 +1798,11 @@ window._pickDate = async function(instrId, dateStr) {
     slotBox.innerHTML = '<p class="booking-hint">Слоти недоступні</p>';
     return;
   }
+  const dayHours = avail.from && avail.to ? avail.from+'–'+avail.to : '';
   slotBox.innerHTML = `
+    ${dayHours ? `<div class="bk-day-hours"><i class="ti ti-clock" style="color:var(--green)"></i> ${esc(dayHours)}</div>` : ''}
     ${avail.location ? `<div class="book-loc"><i class="ti ti-map-pin"></i>${avail.locationLat ? `<a class="book-loc-link" href="https://www.google.com/maps?q=${avail.locationLat},${avail.locationLng}" target="_blank" rel="noopener">${esc(avail.location)} <i class="ti ti-external-link" style="font-size:10px"></i></a>` : esc(avail.location)}</div>` : ''}
-    <div class="booking-label" style="margin-top:${avail.location ? 8 : 16}px">Оберіть час</div>
+    <div class="booking-label" style="margin-top:${dayHours || avail.location ? 8 : 16}px">Оберіть час</div>
     <div class="slot-grid">
       ${slots.map(t => {
         const taken = busy.includes(t);
