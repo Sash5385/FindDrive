@@ -219,7 +219,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.22</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.23</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -459,6 +459,11 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
         <label class="form-label">Авто (марка, модель)</label>
         <input class="form-input" name="car" type="text" placeholder="Toyota Corolla 2020, автомат">
       </div>
+      <div class="form-group">
+        <label class="form-label">ТСЦ де знаєте маршрути</label>
+        <select id="instr-tsc-select" multiple class="form-input" style="height:148px;padding:0;overflow-y:auto"></select>
+        <p style="font-size:11px;color:var(--text-hint);margin-top:5px;display:flex;align-items:center;gap:4px"><i class="ti ti-info-circle"></i> Ctrl (або Cmd) для вибору кількох ТСЦ</p>
+      </div>
 
       <div class="form-divider">Графік</div>
       <div class="form-group">
@@ -537,31 +542,74 @@ const db   = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 const TSC_LIST = [
-  ['Київ',['ТСЦ 8044 — Деснянський р-н','ТСЦ 8041 — Голосіївський р-н','ТСЦ 8042 — Дарницький р-н','ТСЦ 8043 — Дніпровський р-н','ТСЦ 8045 — Оболонський р-н','ТСЦ 8046 — Печерський р-н','ТСЦ 8047 — Подільський р-н','ТСЦ 8048 — Святошинський р-н','ТСЦ 8049 — Солом\'янський р-н','ТСЦ 8050 — Шевченківський р-н']],
-  ['Київська обл.',['Бориспіль','Бровари','Ірпінь','Вишневе','Фастів','Обухів','Васильків']],
-  ['Харківська обл.',['Харків — Київський р-н','Харків — Слобідський р-н','Харків — Холодногірський р-н','Харків — Основ\'янський р-н','Харків — Немишлянський р-н','Харків — Новобаварський р-н','Харків — Шевченківський р-н']],
-  ['Дніпропетровська обл.',['Дніпро — Амур-Нижньодніпровський','Дніпро — Самарський','Дніпро — Центральний','Кривий Ріг','Кам\'янське','Нікополь','Кривий Ріг — Довгинцівський']],
-  ['Одеська обл.',['Одеса — Суворовський р-н','Одеса — Малиновський р-н','Одеса — Приморський р-н','Одеса — Київський р-н','Одеса — Хаджибейський р-н','Чорноморськ','Ізмаїл']],
-  ['Львівська обл.',['Львів','Дрогобич','Самбір','Червоноград','Стрий','Трускавець','Борислав']],
-  ['Запорізька обл.',['Запоріжжя — Олександрівський р-н','Запоріжжя — Хортицький р-н','Запоріжжя — Дніпровський р-н','Мелітополь','Бердянськ','Енергодар']],
-  ['Вінницька обл.',['Вінниця','Жмеринка','Козятин','Могилів-Подільський','Ладижин']],
-  ['Полтавська обл.',['Полтава','Кременчук','Миргород','Лубни','Комсомольськ']],
-  ['Чернігівська обл.',['Чернігів','Ніжин','Прилуки','Бахмач']],
-  ['Черкаська обл.',['Черкаси','Умань','Золотоноша','Канів','Сміла']],
-  ['Сумська обл.',['Суми','Шостка','Конотоп','Охтирка','Ромни']],
-  ['Житомирська обл.',['Житомир','Бердичів','Коростень','Новоград-Волинський']],
-  ['Миколаївська обл.',['Миколаїв','Первомайськ','Вознесенськ','Южноукраїнськ']],
-  ['Рівненська обл.',['Рівне','Дубно','Здолбунів','Острог','Сарни']],
-  ['Івано-Франківська обл.',['Івано-Франківськ','Коломия','Калуш','Надвірна','Долина']],
-  ['Тернопільська обл.',['Тернопіль','Кременець','Чортків','Збараж']],
-  ['Хмельницька обл.',['Хмельницький','Кам\'янець-Подільський','Шепетівка','Нетішин','Старокостянтинів']],
-  ['Волинська обл.',['Луцьк','Ковель','Нововолинськ','Володимир-Волинський']],
-  ['Закарпатська обл.',['Ужгород','Мукачево','Берегово','Хуст','Виноградів']],
-  ['Кіровоградська обл.',['Кропивницький','Олександрія','Знам\'янка']],
-  ['Чернівецька обл.',['Чернівці','Коломия','Сторожинець']],
-  ['Донецька обл.',['Краматорськ','Слов\'янськ','Покровськ','Лиман','Маріуполь (евакуйований)']],
-  ['Луганська обл.',['Сєвєродонецьк','Лисичанськ','Рубіжне']],
+  ['Київ',[
+    'ТСЦ МВС №8041 — Київ','ТСЦ МВС №8042 — Київ','ТСЦ МВС №8043 — Київ',
+    'ТСЦ МВС №8044 — Київ','ТСЦ МВС №8046 — Київ','ТСЦ МВС №8048 — Київ',
+  ]],
+  ['Київська обл.',[
+    'ТСЦ МВС №3241 — Біла Церква','ТСЦ МВС №3242 — Бровари',
+    'ТСЦ МВС №3243 — Бориспіль','ТСЦ МВС №3244 — Фастів','ТСЦ МВС №3245 — Обухів',
+  ]],
+  ['Чернігівська обл.',[
+    'ТСЦ МВС №7441 — Чернігів','ТСЦ МВС №7442 — Ніжин',
+    'ТСЦ МВС №7443 — Прилуки','ТСЦ МВС №7444 — Новгород-Сіверський',
+  ]],
+  ['Волинська обл.',[
+    'ТСЦ МВС №0741 — Луцьк (Струмівка)','ТСЦ МВС №0744 — Нововолинськ',
+  ]],
+  ['Рівненська обл.',[
+    'ТСЦ МВС №5641 — Рівне','ТСЦ МВС №5643 — Сарни',
+  ]],
+  ['Житомирська обл.',[
+    'ТСЦ МВС №1841 — Житомир (с. Довжик)',
+  ]],
+  ['Львівська обл.',[
+    'ТСЦ МВС №4641 — Львів','ТСЦ МВС №4643 — Стрий',
+    'ТСЦ МВС №4645 — Червоноград','ТСЦ МВС №4646 — Дрогобич',
+  ]],
+  ['Івано-Франківська обл.',[
+    'ТСЦ МВС №2641 — Івано-Франківськ','ТСЦ МВС №2642 — Коломия','ТСЦ МВС №2643 — Калуш',
+  ]],
+  ['Закарпатська обл.',[
+    'ТСЦ МВС №2141 — Ужгород','ТСЦ МВС №2143 — Мукачево','ТСЦ МВС №2144 — Хуст',
+  ]],
+  ['Тернопільська обл.',[
+    'ТСЦ МВС №6141 — Тернопіль','ТСЦ МВС №6142 — Чортків',
+  ]],
+  ['Хмельницька обл.',[
+    'ТСЦ МВС №6841 — Хмельницький','ТСЦ МВС №6842 — Кам\'янець-Подільський','ТСЦ МВС №6843 — Шепетівка',
+  ]],
+  ['Вінницька обл.',[
+    'ТСЦ МВС №0541 — Вінниця','ТСЦ МВС №0542 — Могилів-Подільський','ТСЦ МВС №0543 — Жмеринка',
+  ]],
+  ['Черкаська обл.',[
+    'ТСЦ МВС №7141 — Черкаси','ТСЦ МВС №7142 — Умань','ТСЦ МВС №7143 — Сміла',
+  ]],
+  ['Кіровоградська обл.',[
+    'ТСЦ МВС №3541 — Кропивницький','ТСЦ МВС №3542 — Олександрія',
+  ]],
+  ['Полтавська обл.',[
+    'ТСЦ МВС №5341 — Полтава','ТСЦ МВС №5342 — Кременчук','ТСЦ МВС №5343 — Лубни',
+  ]],
+  ['Сумська обл.',[
+    'ТСЦ МВС №5941 — Суми','ТСЦ МВС №5942 — Шостка','ТСЦ МВС №5943 — Конотоп',
+  ]],
 ];
+
+function buildTscOptions(selected = []) {
+  return TSC_LIST.map(([region, centers]) =>
+    `<optgroup label="${esc(region)}">${centers.map(c=>`<option value="${esc(c)}"${selected.includes(c)?' selected':''}>${esc(c)}</option>`).join('')}</optgroup>`
+  ).join('');
+}
+
+function populateInstrTscSelect() {
+  const sel = document.getElementById('instr-tsc-select');
+  if (!sel || sel.children.length) return;
+  sel.innerHTML = TSC_LIST.map(([region, centers]) => {
+    const grp = `<optgroup label="${esc(region)}">${centers.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')}</optgroup>`;
+    return grp;
+  }).join('');
+}
 
 // --- Panels ---
 function openPanel(id) {
@@ -860,6 +908,7 @@ onAuthStateChanged(auth, async user => {
 // --- Instructor panel ---
 document.getElementById("btn-instr").addEventListener("click", () => {
   openPanel("instr-panel");
+  populateInstrTscSelect();
   setTimeout(() => window.initInstrMap?.(), 150);
 });
 document.getElementById("instr-close").addEventListener("click", closeAll);
@@ -921,6 +970,7 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
   const gearbox = instrForm.querySelector('[name="gearbox"]:checked')?.value || 'Автомат';
   const price   = Number(instrForm.querySelector('[name="price"]').value) || 0;
   const car     = instrForm.querySelector('[name="car"]').value.trim();
+  const tscKnown = [...(document.getElementById('instr-tsc-select')?.selectedOptions||[])].map(o=>o.value);
 
   try {
     await addDoc(collection(db, "instructors"), {
@@ -933,7 +983,7 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
       time_to:    instrForm.querySelector('[name="time_to"]').value,
       about:      instrForm.querySelector('[name="about"]').value.trim(),
       photo:      instrPhotoData || null,
-      lat, lng,
+      lat, lng, tscKnown,
       status:     "pending",
       rating:     null,
       reviews:    0,
@@ -1058,6 +1108,7 @@ function openInstrProfile(id) {
     ${d.area ? `<div class="prof-row"><i class="ti ti-map-pin" style="color:${col}"></i> ${_esc(d.area)}</div>` : ''}
     ${tags.length ? `<div class="prof-tags-row">${tags.map(t=>`<span class="tag">${_esc(t)}</span>`).join('')}</div>` : ''}
     ${sched ? `<div class="prof-row"><i class="ti ti-calendar" style="color:${col}"></i> ${_esc(sched)}</div>` : ''}
+    ${(d.tscKnown||[]).length ? `<div class="prof-row" style="align-items:flex-start"><i class="ti ti-building" style="color:${col};flex-shrink:0;margin-top:1px"></i><span style="font-size:12px;line-height:1.5">${d.tscKnown.map(_esc).join('<br>')}</span></div>` : ''}
     ${d.about ? `<div class="prof-about-box">"${_esc(d.about)}"</div>` : ''}
     <div class="prof-divider"></div>
     <div id="prof-phone-wrap">
