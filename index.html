@@ -59,7 +59,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .hero-content{position:relative;z-index:2}
 @media(max-width:1100px){.hero-3col{gap:20px}.hero-left-emblem,.hero-cloud-wrap{width:210px;height:210px}}
 @media(max-width:900px){.hero-3col{grid-template-columns:1fr 1.6fr 1fr;gap:14px}.hero-left-emblem,.hero-cloud-wrap{width:168px;height:168px}}
-@media(max-width:700px){.hero{padding:28px 20px 24px}.hero-3col{grid-template-columns:1fr;gap:14px}.hero-content{order:1}.hero-cloud-col{order:2}.hero-map-col{display:none}.hero-cloud-wrap{width:min(88vw,320px);height:220px}}
+@media(max-width:700px){
+  .hero{padding:28px 16px 24px}
+  .hero-3col{grid-template-columns:1fr;gap:14px}
+  .hero-content{order:1;text-align:center}
+  .hero-sub,.hero-cloud-hint{max-width:100%;text-align:center}
+  .hero-badge{justify-content:center}
+  .how-mini{justify-content:center}
+  .search-box{max-width:100%}
+  .hints{justify-content:center}
+  .hero-cloud-col{order:2;width:100%}
+  .hero-map-col{display:none}
+  .hero-cloud-wrap{width:min(92vw,340px);height:240px;margin:0 auto}
+}
 .tc-tag{position:absolute;white-space:nowrap;cursor:pointer;border-radius:20px;padding:4px 11px;font-weight:500;font-family:inherit;user-select:none;will-change:opacity,transform;pointer-events:auto;transition:filter .15s;border:.5px solid transparent}
 .tc-tag:hover{filter:brightness(.88)}
 .hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--green-mid);border-radius:20px;padding:5px 14px;font-size:12px;color:#1a6a3a;margin-bottom:22px}
@@ -466,7 +478,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.85</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.86</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -496,7 +508,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
       <div class="hero-badge"><i class="ti ti-map-pin"></i> Знайдемо інструктора поряд з вами</div>
       <h1 class="hero-h1">Знайдіть свого<br><span>інструктора</span> з водіння</h1>
       <p class="hero-sub">Порівнюйте інструкторів за районом, ціною та рейтингом. Записуйтесь онлайн за 2 хвилини.</p>
-      <p class="hero-cloud-hint"><i class="ti ti-tag" style="font-size:12px;margin-right:4px;opacity:.7"></i>Не знаєте з чого почати? Клацніть тег у хмарі праворуч — наприклад «Автомат» або «Ранкові заняття» — і побачите підходящих інструкторів.</p>
+      <p class="hero-cloud-hint"><i class="ti ti-tag" style="font-size:12px;margin-right:4px;opacity:.7"></i>Не знаєте з чого почати? Клацніть тег у хмарі — наприклад «Автомат» або «Ранкові заняття» — і побачите підходящих інструкторів.</p>
       <div class="how-mini">
         <div class="how-mini-step"><div class="how-mini-num" style="background:#1a7a4a">1</div><span class="how-mini-title">Вкажіть район</span></div>
         <div class="how-mini-step"><div class="how-mini-num" style="background:#993556">2</div><span class="how-mini-title">Оберіть інструктора</span></div>
