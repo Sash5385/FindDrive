@@ -495,7 +495,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.91</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.92</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1213,9 +1213,57 @@ async function loadInstrSettings(instr, container) {
   let lessonDur  = [60,120].includes(instr.lessonDuration) ? instr.lessonDuration : 60;
   let meetingPts = [...(instr.meetingPoints || [])];
   let instrTags  = [...(Array.isArray(instr.tags) ? instr.tags : [])];
+  let pendingFacePhoto = null;
+  let pendingCarPhoto  = null;
+
+  window._onInstrFaceChange = async (input) => {
+    const file = input.files[0]; if (!file) return;
+    pendingFacePhoto = await resizePhoto(file, 200);
+    renderAll();
+  };
+  window._onInstrCarChange = async (input) => {
+    const file = input.files[0]; if (!file) return;
+    pendingCarPhoto = await resizePhoto(file, 400);
+    renderAll();
+  };
+  window._saveInstrPhotos = async (instrId) => {
+    const btn = document.getElementById('btn-save-instr-photos');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> …'; }
+    try {
+      const updates = {};
+      if (pendingFacePhoto) updates.photo = pendingFacePhoto;
+      if (pendingCarPhoto)  updates.carPhoto = pendingCarPhoto;
+      await setDoc(doc(db, 'instructors', instrId), updates, { merge: true });
+      if (pendingFacePhoto) { instr.photo = pendingFacePhoto; if (window._instrProfiles?.[instrId]) window._instrProfiles[instrId].photo = pendingFacePhoto; }
+      if (pendingCarPhoto)  { instr.carPhoto = pendingCarPhoto; if (window._instrProfiles?.[instrId]) window._instrProfiles[instrId].carPhoto = pendingCarPhoto; }
+      pendingFacePhoto = null; pendingCarPhoto = null;
+      renderAll();
+    } catch(e) {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-device-floppy"></i> Зберегти фото'; }
+      alert('Помилка: ' + (e.message || e));
+    }
+  };
 
   function renderAll() {
+    const faceSrc = pendingFacePhoto || instr.photo || '';
+    const carSrc  = pendingCarPhoto  || instr.carPhoto || '';
     container.innerHTML = `
+      <div class="instr-set-group">
+        <span class="instr-set-label">Фото</span>
+        <div class="photo-uploads" style="justify-content:flex-start;padding:0 0 4px">
+          <div class="photo-upload" onclick="document.getElementById('instr-face-input').click()" style="cursor:pointer">
+            <div class="photo-preview">${faceSrc?`<img src="${esc(faceSrc)}" style="width:100%;height:100%;object-fit:cover">`:'<i class="ti ti-camera"></i>'}</div>
+            <input type="file" id="instr-face-input" accept="image/*" hidden onchange="window._onInstrFaceChange(this)">
+            <span class="photo-label">Обличчя</span>
+          </div>
+          <div class="photo-upload" onclick="document.getElementById('instr-car-input').click()" style="cursor:pointer">
+            <div class="photo-car-preview">${carSrc?`<img src="${esc(carSrc)}" style="width:100%;height:100%;object-fit:cover">`:'<i class="ti ti-car"></i>'}</div>
+            <input type="file" id="instr-car-input" accept="image/*" hidden onchange="window._onInstrCarChange(this)">
+            <span class="photo-label">Авто</span>
+          </div>
+        </div>
+        ${pendingFacePhoto||pendingCarPhoto ? `<button class="btn-bk-action" id="btn-save-instr-photos" style="width:100%;font-size:12px;padding:9px;margin-top:6px" onclick="window._saveInstrPhotos('${instr.id}')"><i class="ti ti-device-floppy"></i> Зберегти фото</button>` : ''}
+      </div>
       <div class="instr-set-group">
         <span class="instr-set-label">Тривалість уроку</span>
         <div class="toggle-row">
