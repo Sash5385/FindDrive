@@ -443,7 +443,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.68</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.69</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1229,13 +1229,14 @@ async function loadInstrSettings(instr, container) {
           if (!results.length) { ul2.style.display='none'; return; }
           ul2.innerHTML = results.map(r => {
             const short = r.display_name.split(',').slice(0,3).join(', ');
-            return `<li onmousedown="window._mpSelectSuggest(${JSON.stringify(r.display_name)},${r.lat},${r.lon})">${short}</li>`;
+            return `<li data-name="${_esc(r.display_name)}" data-lat="${r.lat}" data-lon="${r.lon}" onmousedown="window._mpSelectSuggest(this)">${_esc(short)}</li>`;
           }).join('');
           ul2.style.display = '';
         }).catch(()=>{});
     }, 350);
   };
-  window._mpSelectSuggest = (name, lat, lon) => {
+  window._mpSelectSuggest = (el) => {
+    const name = el.dataset.name, lat = el.dataset.lat, lon = el.dataset.lon;
     const inp = document.getElementById('mp-new-input');
     if (inp) inp.value = name.split(',').slice(0,3).join(', ');
     window._mpHideSuggest();
@@ -2688,13 +2689,14 @@ function _showSearchSuggest(q) {
         if (!results.length) { ul2.style.display='none'; return; }
         ul2.innerHTML = results.map(r => {
           const short = r.display_name.split(',').slice(0,3).join(', ');
-          return `<li onmousedown="window._searchPickSuggest(${JSON.stringify(r.display_name)},${r.lat},${r.lon})">${_esc(short)}</li>`;
+          return `<li data-name="${_esc(r.display_name)}" data-lat="${r.lat}" data-lon="${r.lon}" onmousedown="window._searchPickSuggest(this)">${_esc(short)}</li>`;
         }).join('');
         ul2.style.display = '';
       }).catch(()=>{});
   }, 350);
 }
-window._searchPickSuggest = function(name, lat, lon) {
+window._searchPickSuggest = function(el) {
+  const name = el.dataset.name, lat = el.dataset.lat, lon = el.dataset.lon;
   const inp = document.getElementById('search-input');
   if (inp) inp.value = name.split(',').slice(0,3).join(', ');
   const ul = document.getElementById('search-suggest');
