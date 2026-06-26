@@ -443,7 +443,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.67</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.68</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -2646,29 +2646,32 @@ const DISTRICT_COORDS = {
   'Відрадний, Київ':            { lat:50.4341, lng:30.4108 },
 };
 
+const KYIV_VIEWBOX = '30.20,50.20,30.90,50.60';
+const NOM_BASE = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=ua&accept-language=uk&viewbox=${KYIV_VIEWBOX}&bounded=0`;
+
 function scrollToMap() {
   document.getElementById("map").scrollIntoView({ behavior:"smooth", block:"center" });
 }
 
 function focusMap(latlng) {
   if (!_mainMap) return;
-  _mainMap.setView([latlng.lat, latlng.lng], 13);
+  _mainMap.setView([latlng.lat, latlng.lng], 15);
 }
 
 function doSearch() {
   const query = document.getElementById("search-input").value.trim();
   if (!query) return;
   scrollToMap();
-  if (DISTRICT_COORDS[query]) { focusMap(DISTRICT_COORDS[query]); return; }
-  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query+' Київ')}&format=json&limit=1&countrycodes=ua&accept-language=uk`)
+  if (DISTRICT_COORDS[query]) { _mainMap?.setView([DISTRICT_COORDS[query].lat, DISTRICT_COORDS[query].lng], 13); return; }
+  fetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(query)}`)
     .then(r=>r.json()).then(data => { if (data.length) focusMap({lat:+data[0].lat, lng:+data[0].lon}); }).catch(()=>{});
 }
 
 function searchQuery(query) {
   document.getElementById("search-input").value = query;
   scrollToMap();
-  if (DISTRICT_COORDS[query]) { focusMap(DISTRICT_COORDS[query]); return; }
-  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query+' Київ')}&format=json&limit=1&countrycodes=ua&accept-language=uk`)
+  if (DISTRICT_COORDS[query]) { _mainMap?.setView([DISTRICT_COORDS[query].lat, DISTRICT_COORDS[query].lng], 13); return; }
+  fetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(query)}`)
     .then(r=>r.json()).then(data => { if (data.length) focusMap({lat:+data[0].lat, lng:+data[0].lon}); }).catch(()=>{});
 }
 
@@ -2678,7 +2681,7 @@ function _showSearchSuggest(q) {
   const ul = document.getElementById('search-suggest');
   if (!q || q.length < 2) { if (ul) ul.style.display='none'; return; }
   _searchAcTimer = setTimeout(() => {
-    fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=ua&accept-language=uk`)
+    fetch(`${NOM_BASE}&limit=6&q=${encodeURIComponent(q)}`)
       .then(r=>r.json()).then(results => {
         const ul2 = document.getElementById('search-suggest');
         if (!ul2) return;
@@ -2696,7 +2699,7 @@ window._searchPickSuggest = function(name, lat, lon) {
   if (inp) inp.value = name.split(',').slice(0,3).join(', ');
   const ul = document.getElementById('search-suggest');
   if (ul) ul.style.display = 'none';
-  if (_mainMap) { _mainMap.setView([+lat, +lon], 14); scrollToMap(); }
+  if (_mainMap) { _mainMap.setView([+lat, +lon], 16); scrollToMap(); }
 };
 
 function initLeafletMap() {
