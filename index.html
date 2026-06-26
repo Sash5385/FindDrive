@@ -438,7 +438,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.61</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.62</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -779,7 +779,7 @@ function closeAll() {
 document.getElementById("cab-overlay").addEventListener("click", closeAll);
 window.openPanel = openPanel;
 window.closeAll  = closeAll;
-window._signOut  = () => { signOut(auth); closeAll(); };
+window._signOut  = async () => { try { await signOut(auth); } catch(e) {} closeAll(); };
 window._setStudentLessonDur = async (dur) => {
   document.querySelectorAll('.student-dur-btn').forEach(b =>
     b.classList.toggle('active', parseInt(b.dataset.dur) === dur));
@@ -1010,7 +1010,7 @@ async function saveSetup(user) {
 async function renderProfileScreen(user) {
   document.getElementById('cab-foot').innerHTML = `<button id="btn-signout" class="btn-signout"><i class="ti ti-logout"></i> Вийти з акаунту</button>`;
   document.getElementById('cab-foot').style.display = '';
-  document.getElementById('btn-signout').addEventListener('click', () => { signOut(auth); closeAll(); });
+  document.getElementById('btn-signout').addEventListener('click', () => window._signOut());
 
   const name0 = user.displayName || '';
   const ini0  = name0.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || (user.email||'?')[0].toUpperCase();
@@ -1389,6 +1389,8 @@ onAuthStateChanged(auth, async user => {
     authMode = 'login';
     if (_unsubInstr)  { _unsubInstr();  _unsubInstr  = null; }
     if (_unsubClient) { _unsubClient(); _unsubClient = null; }
+    window._clientProfile = null;
+    renderAuthScreen();
   }
 });
 
