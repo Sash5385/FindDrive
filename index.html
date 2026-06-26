@@ -772,6 +772,7 @@ function closeAll() {
 document.getElementById("cab-overlay").addEventListener("click", closeAll);
 window.openPanel = openPanel;
 window.closeAll  = closeAll;
+window._signOut  = () => { signOut(auth); closeAll(); };
 window._setStudentLessonDur = async (dur) => {
   document.querySelectorAll('.student-dur-btn').forEach(b =>
     b.classList.toggle('active', parseInt(b.dataset.dur) === dur));
