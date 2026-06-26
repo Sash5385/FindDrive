@@ -61,13 +61,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 @media(max-width:900px){.hero-3col{grid-template-columns:1fr 1.6fr 1fr;gap:14px}.hero-left-emblem,.hero-cloud-wrap{width:168px;height:168px}}
 @media(max-width:700px){
   .hero{padding:28px 16px 24px}
-  .hero-3col{grid-template-columns:1fr;gap:14px}
-  .hero-content{order:1;text-align:center}
-  .hero-sub,.hero-cloud-hint{max-width:100%;text-align:center}
+  .hero-3col{grid-template-columns:1fr;gap:14px;overflow:hidden}
+  .hero-content{order:1;text-align:center;min-width:0}
+  .hero-sub,.hero-cloud-hint{max-width:100%;text-align:center;box-sizing:border-box}
   .hero-badge{justify-content:center}
-  .how-mini{justify-content:center}
-  .search-box{max-width:100%}
-  .hints{justify-content:center}
+  .how-mini{justify-content:center;flex-wrap:wrap}
+  .search-box{max-width:100%;box-sizing:border-box}
+  .search-loc span,.btn-search span{display:none}
+  .hints{justify-content:center;flex-wrap:wrap}
   .hero-cloud-col{order:2;width:100%}
   .hero-map-col{display:none}
   .hero-cloud-wrap{width:min(92vw,340px);height:240px;margin:0 auto}
@@ -478,7 +479,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.86</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.87</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -519,8 +520,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
         <i class="ti ti-search"></i>
         <input id="search-input" class="search-input" type="text" placeholder="Район, метро або адреса..." onkeydown="if(event.key==='Enter'){doSearch();document.getElementById('search-suggest').style.display='none'}" oninput="_showSearchSuggest(this.value)" onblur="setTimeout(()=>{const s=document.getElementById('search-suggest');if(s)s.style.display='none'},200)">
         <div class="search-divider"></div>
-        <div class="search-loc" onclick="locateMe(true)"><i class="ti ti-current-location"></i> Моє місце</div>
-        <button class="btn-search" onclick="doSearch()"><i class="ti ti-search"></i> Знайти</button>
+        <div class="search-loc" onclick="locateMe(true)"><i class="ti ti-current-location"></i><span> Моє місце</span></div>
+        <button class="btn-search" onclick="doSearch()"><i class="ti ti-search"></i><span> Знайти</span></button>
         <ul id="search-suggest" class="search-suggest"></ul>
       </div>
       <div class="hints">
@@ -3039,8 +3040,7 @@ function locateMe(fromSearch = false) {
 
   window.addEventListener('resize',()=>{resize();});
   new IntersectionObserver(e=>e[0].isIntersecting?start():stop(),{threshold:.05}).observe(el);
-  setTimeout(()=>{resize();},150);
-  start();
+  requestAnimationFrame(()=>{resize();setTimeout(()=>resize(),300);start();});
 })();
 
 function initHeroMap() {
