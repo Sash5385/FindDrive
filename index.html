@@ -169,8 +169,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .cab-overlay.open{opacity:1;pointer-events:all}
 .cabinet{position:fixed;top:0;right:0;width:320px;height:100vh;background:var(--green-light);z-index:901;display:flex;flex-direction:column;box-shadow:-4px 0 32px rgba(0,0,0,.14);opacity:0;pointer-events:none;transform:scale(.82);transform-origin:right center;transition:opacity .18s ease,transform .45s cubic-bezier(.34,1.56,.64,1)}
 .cabinet.open{opacity:1;pointer-events:all;transform:scale(1)}
-@media(min-width:900px){.cabinet{width:560px}.instr-wide{width:620px}.instr-profile-panel{width:620px}}
-@media(min-width:1280px){.cabinet{width:720px}.instr-wide{width:780px}.instr-profile-panel{width:780px}}
+@media(min-width:900px){.cabinet{width:560px}.instr-wide{width:620px}.instr-profile-panel{width:720px}}
+@media(min-width:1280px){.cabinet{width:720px}.instr-wide{width:780px}.instr-profile-panel{width:960px}}
 .cab-header{display:flex;align-items:center;justify-content:space-between;padding:20px 20px 16px;border-bottom:.5px solid var(--border);flex-shrink:0}
 .cab-title{font-size:15px;font-weight:600;color:var(--text)}
 .cab-close{background:none;border:none;cursor:pointer;color:var(--text-hint);font-size:20px;display:flex;align-items:center;padding:2px}
@@ -295,7 +295,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .success-sub{font-size:13px;color:var(--text-muted);line-height:1.65}
 
 /* INSTRUCTOR PROFILE PANEL */
-.instr-profile-panel{width:400px}
+.instr-profile-panel{width:min(96vw,480px)}
 .cabinet.instr-profile-panel{transform:scale(.9) translateY(28px);transform-origin:center 85%}
 .cabinet.instr-profile-panel.open{transform:scale(1) translateY(0)}
 .prof-section-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-hint);margin-bottom:10px;font-weight:500;display:flex;align-items:center;gap:6px}
@@ -527,7 +527,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.93</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.94</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -2227,7 +2227,6 @@ function renderBookingDates(box, instrId, d) {
     return;
   }
 
-  const sched = [(d.days||[]).join(', '), d.time_from && d.time_to ? d.time_from+'–'+d.time_to : ''].filter(Boolean).join(' · ');
   const mps = (d.meetingPoints||[]).filter(pt => typeof pt==='object' && pt.lat);
 
   window._bkActiveMp = null;
@@ -2279,9 +2278,6 @@ function renderBookingDates(box, instrId, d) {
     <div id="bk-mp-map"></div>` : '';
 
   box.innerHTML = `
-    ${sched ? `<div class="bk-sched-block">
-      <div class="bk-sched-row"><i class="ti ti-clock" style="color:var(--green)"></i> ${esc(sched)}</div>
-    </div>` : ''}
     ${mpFilterHtml}
     <div class="booking-label">Оберіть дату</div>
     <div id="bk-dates-wrap">${dateGridHtml(null)}</div>`;
@@ -3062,8 +3058,6 @@ function openInstrProfile(id, mpIdx) {
   function _ts(tag){ const c=TC[tag]; return c?`background:${c.bg};color:${c.tx};border-color:${c.bd}`:'background:#f0f5f0;color:#4a6a5a;border-color:#dde8dd'; }
   const instrTags = Array.isArray(d.tags) ? d.tags.filter(t=>(window.INSTR_TAGS||[]).includes(t)) : [];
   const mps = (d.meetingPoints||[]).filter(pt=>typeof pt==='object'&&pt.lat);
-  const days = (d.days||[]).join(' ');
-  const sched = [days, d.time_from ? d.time_from+'–'+d.time_to : ''].filter(Boolean).join(' · ');
 
   document.getElementById('prof-head').innerHTML = `
     ${d.photo
@@ -3088,10 +3082,9 @@ function openInstrProfile(id, mpIdx) {
       <div class="prof-section-label"><i class="ti ti-map-pins" style="color:${col}"></i> Точки зустрічі</div>
       <div class="prof-mp-list">${mps.map((mp,i)=>`<div class="prof-mp-item"><div class="prof-mp-dot" style="background:${MP_COLORS[i%4]}"></div><span>${_esc(mp.label||'Точка '+(i+1))}</span></div>`).join('')}</div>
     ` : ''}
-    ${sched || (d.tscKnown||[]).length ? `
+    ${(d.tscKnown||[]).length ? `
       <div class="prof-divider"></div>
-      ${sched ? `<div class="prof-row"><i class="ti ti-calendar" style="color:${col}"></i> ${_esc(sched)}</div>` : ''}
-      ${(d.tscKnown||[]).length ? `<div class="prof-row" style="align-items:flex-start"><i class="ti ti-building" style="color:${col};flex-shrink:0;margin-top:1px"></i><span style="font-size:12px;line-height:1.5">${d.tscKnown.map(_esc).join('<br>')}</span></div>` : ''}
+      <div class="prof-row" style="align-items:flex-start"><i class="ti ti-building" style="color:${col};flex-shrink:0;margin-top:1px"></i><span style="font-size:12px;line-height:1.5">${d.tscKnown.map(_esc).join('<br>')}</span></div>
     ` : ''}
     <div class="prof-divider"></div>
     <div class="prof-section-label"><i class="ti ti-star" style="color:#f5a623"></i> Відгуки</div>
