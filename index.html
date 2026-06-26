@@ -17,6 +17,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<link id="leaflet-css" rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -61,7 +62,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .hero-sub{font-size:15px;color:var(--text-muted);line-height:1.65;max-width:400px;margin-bottom:36px}
 
 /* SEARCH */
-.search-box{background:var(--white);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;max-width:560px;border:.5px solid #cce0cc;box-shadow:0 2px 16px rgba(26,122,74,.06)}
+.search-box{background:var(--white);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;max-width:560px;border:.5px solid #cce0cc;box-shadow:0 2px 16px rgba(26,122,74,.06);position:relative}
+.search-suggest{display:none;position:absolute;top:calc(100% + 6px);left:0;width:100%;background:var(--white);border:.5px solid var(--border);border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.1);z-index:9999;overflow:hidden;max-height:220px;overflow-y:auto}
+.search-suggest li{list-style:none;padding:9px 14px;font-size:13px;color:var(--text);cursor:pointer;border-bottom:.5px solid var(--border)}
+.search-suggest li:last-child{border-bottom:none}
+.search-suggest li:hover{background:var(--green-light)}
 .search-box>.ti{font-size:18px;color:#9ab0a0;flex-shrink:0}
 .search-input{border:none;outline:none;font-size:14px;color:var(--text);flex:1;background:transparent;font-family:inherit}
 .search-input::placeholder{color:#9ab0a0}
@@ -438,7 +443,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.62</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.63</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -473,10 +478,11 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
     </div>
     <div class="search-box">
       <i class="ti ti-search"></i>
-      <input id="search-input" class="search-input" type="text" placeholder="Район, метро або адреса..." onkeydown="if(event.key==='Enter') doSearch()">
+      <input id="search-input" class="search-input" type="text" placeholder="Район, метро або адреса..." onkeydown="if(event.key==='Enter'){doSearch();document.getElementById('search-suggest').style.display='none'}" oninput="_showSearchSuggest(this.value)" onblur="setTimeout(()=>{const s=document.getElementById('search-suggest');if(s)s.style.display='none'},200)">
       <div class="search-divider"></div>
       <div class="search-loc" onclick="locateMe(true)"><i class="ti ti-current-location"></i> Моє місце</div>
       <button class="btn-search" onclick="doSearch()"><i class="ti ti-search"></i> Знайти</button>
+      <ul id="search-suggest" class="search-suggest"></ul>
     </div>
     <div class="hints">
       <span class="hint-tag" onclick="searchQuery('Шевченківський район, Київ')"><i class="ti ti-trending-up"></i> Шевченківський</span>
@@ -2558,6 +2564,7 @@ window._instrCancelBk = async function(bookingId) {
 };
 </script>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 window._instrProfiles = window._instrProfiles || {};
 
@@ -2616,7 +2623,7 @@ function showPhone(phone, col) {
   w.innerHTML = `<a href="tel:${_esc(phone)}" class="btn-call" style="background:${col||'var(--green)'}"><i class="ti ti-phone-call"></i> ${_esc(phone)}</a>`;
 }
 
-let gmap, userMarker, placesService, instrPickMap, instrPickMarker;
+let _mainMap, _userMarker, _instrPickMap, _instrPickMarker;
 
 const DISTRICT_COORDS = {
   'Шевченківський район, Київ': { lat:50.4564, lng:30.5131 },
@@ -2630,8 +2637,8 @@ function scrollToMap() {
 }
 
 function focusMap(latlng) {
-  gmap.setCenter(latlng);
-  gmap.setZoom(13);
+  if (!_mainMap) return;
+  _mainMap.setView([latlng.lat, latlng.lng], 13);
 }
 
 function doSearch() {
@@ -2639,110 +2646,84 @@ function doSearch() {
   if (!query) return;
   scrollToMap();
   if (DISTRICT_COORDS[query]) { focusMap(DISTRICT_COORDS[query]); return; }
-  if (!placesService) return;
-  placesService.textSearch({ query: query + " Київ", region:"ua" }, (results, status) => {
-    if (status === google.maps.places.PlacesServiceStatus.OK && results[0])
-      focusMap(results[0].geometry.location);
-  });
+  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query+' Київ')}&format=json&limit=1&countrycodes=ua&accept-language=uk`)
+    .then(r=>r.json()).then(data => { if (data.length) focusMap({lat:+data[0].lat, lng:+data[0].lon}); }).catch(()=>{});
 }
 
 function searchQuery(query) {
   document.getElementById("search-input").value = query;
   scrollToMap();
   if (DISTRICT_COORDS[query]) { focusMap(DISTRICT_COORDS[query]); return; }
-  if (!placesService) return;
-  placesService.textSearch({ query: query + " Київ", region:"ua" }, (results, status) => {
-    if (status === google.maps.places.PlacesServiceStatus.OK && results[0])
-      focusMap(results[0].geometry.location);
-  });
+  fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query+' Київ')}&format=json&limit=1&countrycodes=ua&accept-language=uk`)
+    .then(r=>r.json()).then(data => { if (data.length) focusMap({lat:+data[0].lat, lng:+data[0].lon}); }).catch(()=>{});
 }
 
-function initMap() {
-  gmap = new google.maps.Map(document.getElementById("map"), {
-    center: { lat:50.4501, lng:30.5234 },
-    zoom: 12,
-    mapTypeControl: false,
-    streetViewControl: false,
-    fullscreenControl: false,
-    styles: [
-      { featureType:"poi",     elementType:"labels", stylers:[{visibility:"off"}] },
-      { featureType:"transit", elementType:"labels", stylers:[{visibility:"off"}] },
-      { featureType:"water",   elementType:"geometry", stylers:[{color:"#c8dff0"}] },
-      { featureType:"landscape",elementType:"geometry",stylers:[{color:"#f0f2f0"}] },
-      { featureType:"road",    elementType:"geometry", stylers:[{color:"#ffffff"}] },
-      { featureType:"road",    elementType:"geometry.stroke", stylers:[{color:"#dde8dd"}] },
-      { featureType:"administrative.locality", elementType:"labels.text.fill", stylers:[{color:"#5a7a6a"}] },
-    ],
-  });
-  placesService = new google.maps.places.PlacesService(gmap);
+let _searchAcTimer = null;
+function _showSearchSuggest(q) {
+  clearTimeout(_searchAcTimer);
+  const ul = document.getElementById('search-suggest');
+  if (!q || q.length < 2) { if (ul) ul.style.display='none'; return; }
+  _searchAcTimer = setTimeout(() => {
+    fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=ua&accept-language=uk`)
+      .then(r=>r.json()).then(results => {
+        const ul2 = document.getElementById('search-suggest');
+        if (!ul2) return;
+        if (!results.length) { ul2.style.display='none'; return; }
+        ul2.innerHTML = results.map(r => {
+          const short = r.display_name.split(',').slice(0,3).join(', ');
+          return `<li onmousedown="window._searchPickSuggest(${JSON.stringify(r.display_name)},${r.lat},${r.lon})">${_esc(short)}</li>`;
+        }).join('');
+        ul2.style.display = '';
+      }).catch(()=>{});
+  }, 350);
+}
+window._searchPickSuggest = function(name, lat, lon) {
+  const inp = document.getElementById('search-input');
+  if (inp) inp.value = name.split(',').slice(0,3).join(', ');
+  const ul = document.getElementById('search-suggest');
+  if (ul) ul.style.display = 'none';
+  if (_mainMap) { _mainMap.setView([+lat, +lon], 14); scrollToMap(); }
+};
 
-  const autocomplete = new google.maps.places.Autocomplete(
-    document.getElementById("search-input"),
-    { componentRestrictions:{ country:"ua" }, types:["geocode"], fields:["geometry","name"] }
-  );
-  autocomplete.addListener("place_changed", () => {
-    const place = autocomplete.getPlace();
-    if (!place.geometry) return;
-    gmap.setCenter(place.geometry.location);
-    gmap.setZoom(13);
-    scrollToMap();
-  });
-
+function initLeafletMap() {
+  _mainMap = L.map('map', {zoomControl:true}).setView([50.4501,30.5234],12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom:19,
+  }).addTo(_mainMap);
   window._mapReady = true;
   window._onMapReady?.();
 }
 
-const MAP_STYLES = [
-  { featureType:"poi",     elementType:"labels", stylers:[{visibility:"off"}] },
-  { featureType:"transit", elementType:"labels", stylers:[{visibility:"off"}] },
-  { featureType:"water",   elementType:"geometry", stylers:[{color:"#c8dff0"}] },
-  { featureType:"landscape",elementType:"geometry",stylers:[{color:"#f0f2f0"}] },
-  { featureType:"road",    elementType:"geometry", stylers:[{color:"#ffffff"}] },
-  { featureType:"road",    elementType:"geometry.stroke", stylers:[{color:"#dde8dd"}] },
-];
-
 window._addInstrMarker = function(inst, id) {
-  if (!gmap) return;
+  if (!_mainMap) return;
   const color = inst.color || '#1a7a4a';
   const mpParam = inst.mpIdx !== undefined ? inst.mpIdx : 'null';
-  const marker = new google.maps.Marker({
-    position: { lat: inst.lat, lng: inst.lng },
-    map: gmap,
-    icon: { path: google.maps.SymbolPath.CIRCLE, scale:11, fillColor: color, fillOpacity:1, strokeColor:"#fff", strokeWeight:2.5 },
-    title: inst.name,
-  });
-  const info = new google.maps.InfoWindow({
-    content: `<div style="font-family:Inter,sans-serif;min-width:140px;padding:2px 0">
-      <div style="font-weight:600;color:#0d2a1a;font-size:13px">${_esc(inst.name)}</div>
-      ${inst.mpLabel ? `<div style="color:${color};font-size:11px;margin-top:2px"><i class="ti ti-map-pin" style="font-size:10px"></i> ${_esc(inst.mpLabel)}</div>` : ''}
-      <div style="color:#5a7a6a;font-size:12px;margin-top:3px">⭐ ${inst.rating||'—'} · ${inst.price ? inst.price+' грн/год' : '—'}</div>
-      <button onclick="openInstrProfile('${_esc(id||'')}',${mpParam})" style="margin-top:8px;background:${color};color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit">Записатись</button>
-    </div>`,
-  });
-  marker.addListener("click", () => info.open(gmap, marker));
+  const marker = L.circleMarker([inst.lat, inst.lng], {
+    radius:11, fillColor:color, fillOpacity:1, color:'#fff', weight:2.5,
+  }).addTo(_mainMap);
+  marker.bindPopup(`<div style="font-family:Inter,sans-serif;min-width:140px;padding:2px 0">
+    <div style="font-weight:600;color:#0d2a1a;font-size:13px">${_esc(inst.name)}</div>
+    ${inst.mpLabel ? `<div style="color:${color};font-size:11px;margin-top:2px"><i class="ti ti-map-pin" style="font-size:10px"></i> ${_esc(inst.mpLabel)}</div>` : ''}
+    <div style="color:#5a7a6a;font-size:12px;margin-top:3px">⭐ ${inst.rating||'—'} · ${inst.price ? inst.price+' грн/год' : '—'}</div>
+    <button onclick="openInstrProfile('${_esc(id||'')}',${mpParam})" style="margin-top:8px;background:${color};color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit">Записатись</button>
+  </div>`);
+  marker.on('click', () => marker.openPopup());
 };
 
 window.initInstrMap = function() {
-  if (instrPickMap) { google.maps.event.trigger(instrPickMap, 'resize'); return; }
+  if (_instrPickMap) { _instrPickMap.invalidateSize(); return; }
   const el = document.getElementById("instr-map-pick");
   if (!el) return;
-  instrPickMap = new google.maps.Map(el, {
-    center: { lat:50.4501, lng:30.5234 }, zoom:12,
-    mapTypeControl:false, streetViewControl:false, fullscreenControl:false,
-    styles: MAP_STYLES,
-  });
-  instrPickMarker = new google.maps.Marker({
-    position: { lat:50.4501, lng:30.5234 },
-    map: instrPickMap, draggable: true,
-    icon: { path: google.maps.SymbolPath.CIRCLE, scale:11, fillColor:"#1a7a4a", fillOpacity:1, strokeColor:"#fff", strokeWeight:2.5 },
-    title: "Перетягніть сюди",
-  });
+  _instrPickMap = L.map(el, {zoomControl:true}).setView([50.4501,30.5234],12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(_instrPickMap);
+  _instrPickMarker = L.marker([50.4501,30.5234], {draggable:true}).addTo(_instrPickMap);
   function syncLatLng() {
-    const pos = instrPickMarker.getPosition();
-    document.querySelector('#instr-form [name="lat"]').value = pos.lat().toFixed(6);
-    document.querySelector('#instr-form [name="lng"]').value = pos.lng().toFixed(6);
+    const pos = _instrPickMarker.getLatLng();
+    document.querySelector('#instr-form [name="lat"]').value = pos.lat.toFixed(6);
+    document.querySelector('#instr-form [name="lng"]').value = pos.lng.toFixed(6);
   }
-  instrPickMarker.addListener("dragend", syncLatLng);
+  _instrPickMarker.on('dragend', syncLatLng);
   syncLatLng();
 };
 
@@ -2753,25 +2734,13 @@ function locateMe(fromSearch = false) {
   const restore = () => btns.forEach(b => { b.innerHTML = b._orig; b.style.opacity = ''; b.style.pointerEvents = ''; });
   navigator.geolocation.getCurrentPosition(pos => {
     restore();
-    const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-    gmap.setCenter(latlng);
-    gmap.setZoom(14);
+    const lat = pos.coords.latitude, lng = pos.coords.longitude;
+    if (_mainMap) _mainMap.setView([lat,lng], 14);
     if (fromSearch) scrollToMap();
-    if (userMarker) userMarker.setMap(null);
-    userMarker = new google.maps.Marker({
-      position: latlng,
-      map: gmap,
-      icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 9,
-        fillColor: "#1a7a4a",
-        fillOpacity: 0.9,
-        strokeColor: "#fff",
-        strokeWeight: 3,
-      },
-      title: "Ваше місце",
-      zIndex: 99,
-    });
+    if (_userMarker) _mainMap.removeLayer(_userMarker);
+    _userMarker = L.circleMarker([lat,lng], {
+      radius:9, fillColor:'#1a7a4a', fillOpacity:0.9, color:'#fff', weight:3,
+    }).addTo(_mainMap);
   }, err => {
     restore();
     const msgs = {
@@ -2783,6 +2752,8 @@ function locateMe(fromSearch = false) {
   }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
 }
 
+initLeafletMap();
+
 document.getElementById("version-badge").addEventListener("click", function() {
   this.classList.add("reloading");
   this.textContent = "↻ Оновлення…";
@@ -2791,8 +2762,6 @@ document.getElementById("version-badge").addEventListener("click", function() {
   setTimeout(() => location.replace(url.toString()), 300);
 });
 </script>
-<!-- Замініть YOUR_API_KEY на ключ з Google Cloud Console (Maps JavaScript API) -->
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDcpDLj_F9Qp6RNZuuzoqeWovEo_sNp1L4&libraries=places&callback=initMap&language=uk&region=UA"></script>
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
