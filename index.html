@@ -327,10 +327,13 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .bk-badge{background:#e53935;color:#fff;border-radius:10px;padding:1px 6px;font-size:10px;font-weight:600;line-height:1.4}
 .bk-tab.active .bk-badge{background:rgba(255,255,255,.3)}
 .bk-empty-tab{text-align:center;padding:20px;color:var(--text-hint);font-size:12px}
-.btn-bk-cancel{background:none;border:none;font-size:11px;color:var(--text-hint);cursor:pointer;font-family:inherit;padding:4px 0 0;text-decoration:underline}
-.btn-bk-action{background:var(--green);color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;margin-right:6px;transition:background .15s}
+.btn-bk-cancel{background:none;border:.5px solid #e8b0b8;border-radius:7px;padding:6px 12px;font-size:11px;color:#cc3333;cursor:pointer;font-family:inherit;transition:border-color .15s,background .15s}
+.btn-bk-cancel:hover{background:#fff0f0;border-color:#cc3333}
+.btn-bk-action{background:var(--green);color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;transition:background .15s}
 .btn-bk-action:hover{background:var(--green-dark)}
 .btn-bk-reject{background:none;border:.5px solid var(--border);border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--text-muted);transition:border-color .15s,color .15s}
+.btn-row{display:flex;gap:6px;margin-top:8px}
+.btn-row>button,.bk-reschedule-row>button,.avail-save-row>button{flex:1;min-width:0}
 .slot-crm-list{display:flex;flex-direction:column;gap:6px;margin-top:10px}
 .slot-crm-card{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;border:.5px solid var(--border);background:var(--white);font-size:12px}
 .slot-crm-busy{border-color:var(--green);background:var(--green-light)}
@@ -443,7 +446,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.70</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.71</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -2130,9 +2133,9 @@ function renderClientCards(docs) {
       <div class="bk-meta"><i class="ti ti-calendar" style="font-size:11px;color:var(--green)"></i>${esc(bkDateStr(b))} о ${esc(b.time||'')} · ${b.duration||90} хв</div>
       ${b.status==='reschedule_requested'&&b.proposedDate?`<div class="bk-reschedule-hint"><i class="ti ti-clock"></i> Запит на перенос: <b>${esc(b.proposedDate.split('-').reverse().join('.'))} о ${esc(b.proposedTime||'')}</b> — очікуємо відповідь інструктора</div>`:''}
       ${showReschedule||showCancel?`
-        <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        <div class="btn-row" style="flex-wrap:wrap;align-items:center">
           ${showReschedule?`<button class="btn-bk-reject" style="font-size:11px;padding:5px 10px" onclick="window._showReschForm('${b.id}')"><i class="ti ti-calendar-time"></i> Перенести</button>`:''}
-          ${showCancel?`<button class="btn-bk-cancel" onclick="window._cancelBooking('${b.id}')"><i class="ti ti-x"></i> Скасувати</button>`:''}
+          ${showCancel?`<button class="btn-bk-cancel" style="font-size:11px;padding:5px 10px" onclick="window._cancelBooking('${b.id}')"><i class="ti ti-x"></i> Скасувати</button>`:''}
         </div>
         <div class="bk-reschedule-form" id="rf-${b.id}">
           <div class="bk-reschedule-inputs">
@@ -2328,8 +2331,8 @@ async function loadInstrCombined(instr, container) {
         <div style="font-weight:600;margin-bottom:4px">${esc(selBk.clientName||selBk.clientEmail||'Учень')}</div>
         ${selBk.clientEmail?`<div style="font-size:11px;color:var(--text-muted)"><i class="ti ti-mail" style="font-size:10px"></i> ${esc(selBk.clientEmail)}</div>`:''}
         <div style="margin-top:6px">${bkStatusBadge(selBk.status)}</div>
-        ${selBk.status==='pending'?`<div style="margin-top:8px;display:flex;gap:6px"><button class="btn-bk-action" style="font-size:11px;padding:4px 10px" onclick="window._confirmBk('${selBk.id}')"><i class="ti ti-check"></i> Підтвердити</button><button class="btn-bk-reject" style="font-size:11px;padding:4px 10px" onclick="window._rejectBk('${selBk.id}')">Відхилити</button></div>`:''}
-        ${selBk.status==='confirmed'&&selBk.date>=(new Date().toISOString().slice(0,10))?`<button class="btn-bk-cancel" style="margin-top:6px" onclick="window._instrCancelBk('${selBk.id}')"><i class="ti ti-x"></i> Скасувати заняття</button>`:''}
+        ${selBk.status==='pending'?`<div class="btn-row"><button class="btn-bk-action" style="font-size:11px;padding:4px 10px" onclick="window._confirmBk('${selBk.id}')"><i class="ti ti-check"></i> Підтвердити</button><button class="btn-bk-reject" style="font-size:11px;padding:4px 10px" onclick="window._rejectBk('${selBk.id}')">Відхилити</button></div>`:''}
+        ${selBk.status==='confirmed'&&selBk.date>=(new Date().toISOString().slice(0,10))?`<div class="btn-row"><button class="btn-bk-cancel" style="font-size:11px;padding:5px 10px" onclick="window._instrCancelBk('${selBk.id}')"><i class="ti ti-x"></i> Скасувати заняття</button></div>`:''}
       </div>` : '';
 
       const avDurs = Array.isArray(avCurr.durations) && avCurr.durations.length ? avCurr.durations : [60];
@@ -2526,15 +2529,15 @@ function renderInstrCards(docs, showActions) {
     ${b.clientEmail?`<div class="bk-meta"><i class="ti ti-mail" style="font-size:11px;color:var(--text-hint)"></i>${esc(b.clientEmail)}</div>`:''}
     ${b.status==='reschedule_requested'&&b.proposedDate?`
       <div class="bk-reschedule-hint"><i class="ti ti-calendar-time"></i> Учень просить перенести на <b>${esc(b.proposedDate.split('-').reverse().join('.'))} о ${esc(b.proposedTime||'')}</b></div>
-      <div style="margin-top:8px;display:flex;gap:6px">
+      <div class="btn-row">
         <button class="btn-bk-action" style="font-size:11px;padding:5px 12px" onclick="window._acceptReschedule('${b.id}')"><i class="ti ti-check"></i> Прийняти</button>
         <button class="btn-bk-reject" style="font-size:11px;padding:5px 12px" onclick="window._rejectReschedule('${b.id}')">Залишити дату</button>
       </div>` : ''}
-    ${showActions&&b.status==='pending'?`<div style="margin-top:8px">
+    ${showActions&&b.status==='pending'?`<div class="btn-row">
       <button class="btn-bk-action" onclick="window._confirmBk('${b.id}')"><i class="ti ti-check"></i> Підтвердити</button>
       <button class="btn-bk-reject" onclick="window._rejectBk('${b.id}')">Відхилити</button>
     </div>`:''}
-    ${b.status==='confirmed'&&b.date>=today?`<button class="btn-bk-cancel" style="margin-top:6px" onclick="window._instrCancelBk('${b.id}')"><i class="ti ti-x"></i> Скасувати заняття</button>`:''}
+    ${b.status==='confirmed'&&b.date>=today?`<div class="btn-row"><button class="btn-bk-cancel" style="font-size:11px;padding:5px 10px" onclick="window._instrCancelBk('${b.id}')"><i class="ti ti-x"></i> Скасувати заняття</button></div>`:''}
   </div>`).join('');
 }
 
