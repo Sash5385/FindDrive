@@ -483,7 +483,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.88</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.89</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1550,19 +1550,23 @@ carPhotoInput.addEventListener("change", async e => {
 window._cabUser = null;
 window._onStudentPhotoChange = async function(input) {
   const file = input.files[0];
-  if (!file || !window._cabUser) return;
-  const data = await resizePhoto(file, 200);
-  const el = document.getElementById('student-photo-img');
-  if (el) {
-    if (el.tagName === 'IMG') {
-      el.src = data;
-    } else {
-      el.outerHTML = `<img class="cab-photo" id="student-photo-img" src="${data}" alt="" style="display:block">`;
-    }
-  }
+  const user = window._cabUser || auth.currentUser;
+  if (!file || !user) return;
   try {
-    await setDoc(doc(db, 'users', window._cabUser.uid), { photo: data }, { merge: true });
-  } catch(e) { console.warn('Student photo save:', e.message); }
+    const data = await resizePhoto(file, 200);
+    const el = document.getElementById('student-photo-img');
+    if (el) {
+      if (el.tagName === 'IMG') {
+        el.src = data;
+      } else {
+        el.outerHTML = `<img class="cab-photo" id="student-photo-img" src="${data}" alt="" style="display:block">`;
+      }
+    }
+    await setDoc(doc(db, 'users', user.uid), { photo: data }, { merge: true });
+  } catch(e) {
+    console.error('Student photo save:', e);
+    alert('Помилка збереження фото: ' + (e.message || e));
+  }
 };
 
 // Form submit → Firestore
