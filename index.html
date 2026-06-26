@@ -460,7 +460,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.78</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.79</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -2933,7 +2933,10 @@ function locateMe(fromSearch = false) {
       if (chip && window._filterByTag) {
         window._filterByTag(chip);
         item.on = chip.classList.contains('active');
-        span.style.filter = item.on ? 'saturate(1.8) brightness(1.05)' : '';
+        span.style.filter = item.on ? 'saturate(2.8) brightness(1.12)' : '';
+        span.style.boxShadow = item.on ? `0 0 14px 3px ${c.bd}` : '';
+        span.style.fontWeight = item.on ? '700' : '500';
+        span.style.borderWidth = item.on ? '1.5px' : '';
       }
     };
     el.appendChild(span);
@@ -2955,7 +2958,7 @@ function locateMe(fromSearch = false) {
       const s = p.span.style;
       s.left = (cx+x1*R*sc).toFixed(1)+'px';
       s.top  = (cy+y1*R*sc).toFixed(1)+'px';
-      s.transform = 'translate(-50%,-50%) scale('+sc.toFixed(3)+')';
+      s.transform = 'translate(-50%,-50%) scale('+(p.on ? (sc*1.25).toFixed(3) : sc.toFixed(3))+')';
       s.opacity = op;
       s.fontSize = fs+'px';
       s.zIndex = p.on ? 9999 : (z2*R+R+1)|0;
