@@ -178,6 +178,10 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .cab-body{flex:1;overflow-y:auto;padding-bottom:8px;overscroll-behavior:contain}
 .cab-profile{display:flex;align-items:center;gap:14px;padding:20px 20px 16px}
 .cab-photo{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--border)}
+.cab-photo-edit{position:relative;cursor:pointer;flex-shrink:0;display:inline-block}
+.cab-photo-edit .cab-photo{display:block}
+.cab-photo-badge{position:absolute;bottom:0;right:-1px;width:18px;height:18px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff;pointer-events:none}
+.cab-photo-badge i{font-size:9px;color:#fff}
 .cab-fullname{font-size:15px;font-weight:600;color:var(--text)}
 .cab-email{font-size:12px;color:var(--text-hint);margin-top:2px}
 .cab-section{padding:0 20px 20px}
@@ -479,7 +483,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.87</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.88</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1081,6 +1085,7 @@ async function saveSetup(user) {
 }
 
 async function renderProfileScreen(user) {
+  window._cabUser = user;
   document.getElementById('cab-foot').innerHTML = `<button id="btn-signout" class="btn-signout"><i class="ti ti-logout"></i> Вийти з акаунту</button>`;
   document.getElementById('cab-foot').style.display = '';
   document.getElementById('btn-signout').addEventListener('click', () => window._signOut());
@@ -1089,7 +1094,7 @@ async function renderProfileScreen(user) {
   const ini0  = name0.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || (user.email||'?')[0].toUpperCase();
   document.getElementById('cab-body').innerHTML = `
     <div class="cab-profile">
-      ${user.photoURL ? `<img class="cab-photo" src="${esc(user.photoURL)}" alt="">` : `<div class="cab-photo" style="background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;flex-shrink:0">${esc(ini0)}</div>`}
+      ${user.photoURL ? `<img class="cab-photo" src="${esc(user.photoURL)}" alt="">` : `<div class="cab-photo" style="background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600">${esc(ini0)}</div>`}
       <div>
         <div class="cab-fullname">${esc(name0 || 'Користувач')}</div>
         <div class="cab-email">${esc(user.email || '')}</div>
@@ -1107,9 +1112,16 @@ async function renderProfileScreen(user) {
   const phone = ud.phone || '';
   const ini   = name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || (user.email||'?')[0].toUpperCase();
 
+  const photoSrc = ud.photo || user.photoURL || '';
   const headerHtml = `
     <div class="cab-profile">
-      ${user.photoURL ? `<img class="cab-photo" src="${esc(user.photoURL)}" alt="">` : `<div class="cab-photo" style="background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;flex-shrink:0">${esc(ini)}</div>`}
+      <div class="cab-photo-edit" onclick="document.getElementById('s-photo-input').click()" title="Змінити фото">
+        ${photoSrc
+          ? `<img class="cab-photo" id="student-photo-img" src="${esc(photoSrc)}" alt="" style="display:block">`
+          : `<div class="cab-photo" id="student-photo-img" style="background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600">${esc(ini)}</div>`}
+        <div class="cab-photo-badge"><i class="ti ti-camera"></i></div>
+      </div>
+      <input type="file" id="s-photo-input" accept="image/*" hidden onchange="window._onStudentPhotoChange(this)">
       <div style="flex:1">
         <div class="cab-fullname">${esc(name || 'Користувач')}</div>
         <div class="cab-email">${esc(user.email || '')}</div>
@@ -1533,6 +1545,25 @@ carPhotoInput.addEventListener("change", async e => {
   document.getElementById("car-photo-preview").innerHTML =
     `<img src="${instrCarPhotoData}" style="width:100%;height:100%;object-fit:cover">`;
 });
+
+// Student photo upload
+window._cabUser = null;
+window._onStudentPhotoChange = async function(input) {
+  const file = input.files[0];
+  if (!file || !window._cabUser) return;
+  const data = await resizePhoto(file, 200);
+  const el = document.getElementById('student-photo-img');
+  if (el) {
+    if (el.tagName === 'IMG') {
+      el.src = data;
+    } else {
+      el.outerHTML = `<img class="cab-photo" id="student-photo-img" src="${data}" alt="" style="display:block">`;
+    }
+  }
+  try {
+    await setDoc(doc(db, 'users', window._cabUser.uid), { photo: data }, { merge: true });
+  } catch(e) { console.warn('Student photo save:', e.message); }
+};
 
 // Form submit → Firestore
 const instrForm = document.getElementById("instr-form");
