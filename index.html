@@ -483,7 +483,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.89</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.90</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1128,7 +1128,8 @@ async function renderProfileScreen(user) {
       </div>
       <button onclick="window._signOut()" title="Вийти з акаунту" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:20px;padding:4px;line-height:1;flex-shrink:0;transition:color .15s" onmouseover="this.style.color='#cc3333'" onmouseout="this.style.color='var(--text-muted)'"><i class="ti ti-logout"></i></button>
     </div>
-    ${phone ? `<div class="cab-phone-row"><i class="ti ti-phone" style="color:var(--green)"></i> ${esc(phone)}</div>` : ''}`;
+    ${phone ? `<div class="cab-phone-row"><i class="ti ti-phone" style="color:var(--green)"></i> ${esc(phone)}</div>` : ''}
+    <button id="btn-save-student-photo" onclick="window._saveStudentPhoto()" style="display:none;width:100%;margin-top:10px;padding:9px;background:var(--green);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit"><i class="ti ti-device-floppy"></i> Зберегти фото</button>`;
 
   if (instr) {
     const statusLabel = { pending: '⏳ На розгляді', approved: '✓ Активний', rejected: '✗ Відхилено' };
@@ -1548,24 +1549,33 @@ carPhotoInput.addEventListener("change", async e => {
 
 // Student photo upload
 window._cabUser = null;
+window._pendingStudentPhoto = null;
 window._onStudentPhotoChange = async function(input) {
   const file = input.files[0];
+  if (!file) return;
+  const data = await resizePhoto(file, 200);
+  window._pendingStudentPhoto = data;
+  const el = document.getElementById('student-photo-img');
+  if (el) {
+    if (el.tagName === 'IMG') { el.src = data; }
+    else { el.outerHTML = `<img class="cab-photo" id="student-photo-img" src="${data}" alt="" style="display:block">`; }
+  }
+  const btn = document.getElementById('btn-save-student-photo');
+  if (btn) btn.style.display = '';
+};
+window._saveStudentPhoto = async function() {
   const user = window._cabUser || auth.currentUser;
-  if (!file || !user) return;
+  if (!window._pendingStudentPhoto || !user) return;
+  const btn = document.getElementById('btn-save-student-photo');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> …'; }
   try {
-    const data = await resizePhoto(file, 200);
-    const el = document.getElementById('student-photo-img');
-    if (el) {
-      if (el.tagName === 'IMG') {
-        el.src = data;
-      } else {
-        el.outerHTML = `<img class="cab-photo" id="student-photo-img" src="${data}" alt="" style="display:block">`;
-      }
-    }
-    await setDoc(doc(db, 'users', user.uid), { photo: data }, { merge: true });
+    await setDoc(doc(db, 'users', user.uid), { photo: window._pendingStudentPhoto }, { merge: true });
+    window._pendingStudentPhoto = null;
+    if (btn) btn.style.display = 'none';
   } catch(e) {
     console.error('Student photo save:', e);
-    alert('Помилка збереження фото: ' + (e.message || e));
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-device-floppy"></i> Зберегти фото'; }
+    alert('Помилка: ' + (e.message || e));
   }
 };
 
