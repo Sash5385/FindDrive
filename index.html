@@ -443,7 +443,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.66</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.67</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1171,7 +1171,7 @@ async function loadInstrSettings(instr, container) {
       if (_mpMarker) _mpMarker.setLatLng(e.latlng); else _mpMarker = L.marker(e.latlng).addTo(_mpMapObj);
       const coordEl = document.getElementById('mp-map-coords');
       if (coordEl) coordEl.textContent = `${_mpLatLng.lat}, ${_mpLatLng.lng}`;
-      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
+      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
         .then(r=>r.json()).then(d=>{ if (inp && d.display_name) inp.value = d.display_name.split(',').slice(0,3).join(', '); }).catch(()=>{});
     });
     const q = inp?.value.trim();
@@ -1201,7 +1201,7 @@ async function loadInstrSettings(instr, container) {
   };
   window._mpGeoSearch = (q) => {
     if (!_mpMapObj || !q) return;
-    fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=ua`)
+    fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=ua&accept-language=uk`)
       .then(r=>r.json()).then(results=>{
         if (!results.length) return;
         const {lat,lon,display_name} = results[0];
