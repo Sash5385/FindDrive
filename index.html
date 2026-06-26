@@ -45,21 +45,21 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .btn-cta:hover{background:var(--green-dark)}
 
 /* HERO */
-.hero{position:relative;padding:64px 48px 56px;overflow:hidden;min-height:340px}
+.hero{position:relative;padding:48px 48px 44px;overflow:hidden}
 .blob{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none}
 .b1{width:320px;height:260px;background:#a8f0c0;opacity:.5;top:-60px;right:40px}
-.b2{width:220px;height:200px;background:#f0e060;opacity:.32;top:10px;right:240px}
-.b3{width:180px;height:160px;background:#f0a8d0;opacity:.28;top:-20px;right:420px}
-.b4{width:200px;height:170px;background:#a0d8f8;opacity:.32;bottom:-10px;right:100px}
-.b5{width:150px;height:130px;background:#c0b8f8;opacity:.28;bottom:20px;left:220px}
-.hero-content{position:relative;z-index:2;max-width:680px}
-.hero-emblem{position:absolute;right:60px;top:50%;transform:translateY(-50%);width:300px;height:300px;object-fit:cover;border-radius:50%;z-index:1;pointer-events:none;filter:drop-shadow(0 8px 32px rgba(26,122,74,.15))}
-@media(max-width:900px){.hero-emblem{width:200px;height:200px;right:20px}}
-@media(max-width:600px){.hero-emblem{display:none}}
-.hero-emblem-cloud{position:absolute;right:48px;top:50%;transform:translateY(-50%);width:300px;height:300px;z-index:2;overflow:visible;pointer-events:none}
-@media(max-width:1100px){.hero-emblem-cloud{width:240px;height:240px;right:24px}}
-@media(max-width:900px){.hero-emblem-cloud{width:200px;height:200px;right:16px}}
-@media(max-width:700px){.hero-emblem-cloud{display:none}}
+.b2{width:220px;height:200px;background:#f0e060;opacity:.32;top:-20px;left:50%;transform:translateX(-50%)}
+.b3{width:180px;height:160px;background:#f0a8d0;opacity:.28;top:-20px;left:40px}
+.b4{width:200px;height:170px;background:#a0d8f8;opacity:.32;bottom:-10px;right:80px}
+.b5{width:150px;height:130px;background:#c0b8f8;opacity:.28;bottom:20px;left:50%;transform:translateX(-50%)}
+.hero-3col{position:relative;z-index:2;display:grid;grid-template-columns:1fr 2fr 1fr;gap:28px;align-items:center;min-height:360px}
+.hero-map-col,.hero-cloud-col{display:flex;justify-content:center;align-items:center}
+.hero-map-circle{width:260px;height:260px;border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,.88);box-shadow:0 8px 32px rgba(26,122,74,.18),0 0 0 8px rgba(255,255,255,.28);flex-shrink:0}
+.hero-cloud-wrap{width:260px;height:260px;position:relative;overflow:visible;flex-shrink:0}
+.hero-content{position:relative;z-index:2}
+@media(max-width:1100px){.hero-3col{gap:20px}.hero-map-circle,.hero-cloud-wrap{width:210px;height:210px}}
+@media(max-width:900px){.hero-3col{grid-template-columns:1fr 1.6fr 1fr;gap:14px}.hero-map-circle,.hero-cloud-wrap{width:168px;height:168px}}
+@media(max-width:700px){.hero{padding:28px 20px 24px}.hero-3col{grid-template-columns:1fr;gap:14px}.hero-content{order:1}.hero-cloud-col{order:2}.hero-map-col{order:3}.hero-map-circle,.hero-cloud-wrap{width:220px;height:220px}}
 .tc-tag{position:absolute;white-space:nowrap;cursor:pointer;border-radius:20px;padding:4px 11px;font-weight:500;font-family:inherit;user-select:none;will-change:opacity,transform;pointer-events:auto;transition:filter .15s;border:.5px solid transparent}
 .tc-tag:hover{filter:brightness(.88)}
 .hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--green-mid);border-radius:20px;padding:5px 14px;font-size:12px;color:#1a6a3a;margin-bottom:22px}
@@ -100,7 +100,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 /* INSTRUCTOR CARDS */
 .instr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 @media(max-width:900px){.instr-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:600px){.instr-grid{grid-template-columns:1fr}.nav-links{display:none}.hero{padding:40px 20px 36px}.section,.map-section{padding-left:20px;padding-right:20px}.nav{padding:0 20px}.hero-h1{font-size:28px}}
+@media(max-width:600px){.instr-grid{grid-template-columns:1fr}.nav-links{display:none}.section,.map-section{padding-left:20px;padding-right:20px}.nav{padding:0 20px}.hero-h1{font-size:26px}}
 .instr-card{background:var(--white);border-radius:18px;padding:20px 18px;border:.5px solid var(--border);position:relative;overflow:hidden;transition:border-color .2s,transform .2s}
 .instr-card:hover{border-color:#aad0aa;transform:translateY(-2px)}
 .card-blob{position:absolute;width:110px;height:90px;border-radius:50%;filter:blur(35px);opacity:.4;top:-20px;right:-10px;pointer-events:none}
@@ -460,7 +460,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.80</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.81</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -482,30 +482,37 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <div class="blob b3"></div>
   <div class="blob b4"></div>
   <div class="blob b5"></div>
-  <div id="tag-cloud-3d" class="hero-emblem-cloud" aria-hidden="true"></div>
-  <div class="hero-content">
-    <div class="hero-badge"><i class="ti ti-map-pin"></i> Знайдемо інструктора поряд з вами</div>
-    <h1 class="hero-h1">Знайдіть свого<br><span>інструктора</span> з водіння</h1>
-    <p class="hero-sub">Порівнюйте інструкторів за районом, ціною та рейтингом. Записуйтесь онлайн за 2 хвилини.</p>
-    <div class="how-mini">
-      <div class="how-mini-step"><div class="how-mini-num" style="background:#1a7a4a">1</div><span class="how-mini-title">Вкажіть район</span></div>
-      <div class="how-mini-step"><div class="how-mini-num" style="background:#993556">2</div><span class="how-mini-title">Оберіть інструктора</span></div>
-      <div class="how-mini-step"><div class="how-mini-num" style="background:#185fa5">3</div><span class="how-mini-title">Забронюйте час</span></div>
-      <div class="how-mini-step"><div class="how-mini-num" style="background:#3b6d11">4</div><span class="how-mini-title">Їдьте на урок</span></div>
+  <div class="hero-3col">
+    <div class="hero-map-col">
+      <div id="hero-map" class="hero-map-circle"></div>
     </div>
-    <div class="search-box">
-      <i class="ti ti-search"></i>
-      <input id="search-input" class="search-input" type="text" placeholder="Район, метро або адреса..." onkeydown="if(event.key==='Enter'){doSearch();document.getElementById('search-suggest').style.display='none'}" oninput="_showSearchSuggest(this.value)" onblur="setTimeout(()=>{const s=document.getElementById('search-suggest');if(s)s.style.display='none'},200)">
-      <div class="search-divider"></div>
-      <div class="search-loc" onclick="locateMe(true)"><i class="ti ti-current-location"></i> Моє місце</div>
-      <button class="btn-search" onclick="doSearch()"><i class="ti ti-search"></i> Знайти</button>
-      <ul id="search-suggest" class="search-suggest"></ul>
+    <div class="hero-content">
+      <div class="hero-badge"><i class="ti ti-map-pin"></i> Знайдемо інструктора поряд з вами</div>
+      <h1 class="hero-h1">Знайдіть свого<br><span>інструктора</span> з водіння</h1>
+      <p class="hero-sub">Порівнюйте інструкторів за районом, ціною та рейтингом. Записуйтесь онлайн за 2 хвилини.</p>
+      <div class="how-mini">
+        <div class="how-mini-step"><div class="how-mini-num" style="background:#1a7a4a">1</div><span class="how-mini-title">Вкажіть район</span></div>
+        <div class="how-mini-step"><div class="how-mini-num" style="background:#993556">2</div><span class="how-mini-title">Оберіть інструктора</span></div>
+        <div class="how-mini-step"><div class="how-mini-num" style="background:#185fa5">3</div><span class="how-mini-title">Забронюйте час</span></div>
+        <div class="how-mini-step"><div class="how-mini-num" style="background:#3b6d11">4</div><span class="how-mini-title">Їдьте на урок</span></div>
+      </div>
+      <div class="search-box">
+        <i class="ti ti-search"></i>
+        <input id="search-input" class="search-input" type="text" placeholder="Район, метро або адреса..." onkeydown="if(event.key==='Enter'){doSearch();document.getElementById('search-suggest').style.display='none'}" oninput="_showSearchSuggest(this.value)" onblur="setTimeout(()=>{const s=document.getElementById('search-suggest');if(s)s.style.display='none'},200)">
+        <div class="search-divider"></div>
+        <div class="search-loc" onclick="locateMe(true)"><i class="ti ti-current-location"></i> Моє місце</div>
+        <button class="btn-search" onclick="doSearch()"><i class="ti ti-search"></i> Знайти</button>
+        <ul id="search-suggest" class="search-suggest"></ul>
+      </div>
+      <div class="hints">
+        <span class="hint-tag" onclick="searchQuery('Шевченківський район, Київ')"><i class="ti ti-trending-up"></i> Шевченківський</span>
+        <span class="hint-tag" onclick="searchQuery('Оболонь, Київ')"><i class="ti ti-trending-up"></i> Оболонь</span>
+        <span class="hint-tag" onclick="searchQuery('Позняки, Київ')"><i class="ti ti-trending-up"></i> Позняки</span>
+        <span class="hint-tag" onclick="searchQuery('Відрадний, Київ')"><i class="ti ti-trending-up"></i> Відрадний</span>
+      </div>
     </div>
-    <div class="hints">
-      <span class="hint-tag" onclick="searchQuery('Шевченківський район, Київ')"><i class="ti ti-trending-up"></i> Шевченківський</span>
-      <span class="hint-tag" onclick="searchQuery('Оболонь, Київ')"><i class="ti ti-trending-up"></i> Оболонь</span>
-      <span class="hint-tag" onclick="searchQuery('Позняки, Київ')"><i class="ti ti-trending-up"></i> Позняки</span>
-      <span class="hint-tag" onclick="searchQuery('Відрадний, Київ')"><i class="ti ti-trending-up"></i> Відрадний</span>
+    <div class="hero-cloud-col">
+      <div id="tag-cloud-3d" class="hero-cloud-wrap" aria-hidden="true"></div>
     </div>
   </div>
 </section>
@@ -1757,9 +1764,11 @@ async function loadInstructors() {
               color: MP_MARKER_COLORS[mpIdx % MP_MARKER_COLORS.length],
               mpIdx, mpLabel: pt.label
             }, id);
+            if (mpIdx === 0) window._addHeroPin?.(pt.lat, pt.lng);
           });
         } else if (d.lat && d.lng) {
           window._addInstrMarker?.({ lat: d.lat, lng: d.lng, name: d.name, price: d.price, rating: d.rating, color: instrColor }, id);
+          window._addHeroPin?.(d.lat, d.lng);
         }
       });
     }
@@ -2974,6 +2983,24 @@ function locateMe(fromSearch = false) {
   start();
 })();
 
+function initHeroMap() {
+  if (!window.L || !document.getElementById('hero-map')) return;
+  const m = L.map('hero-map', {
+    center:[50.4501,30.5234], zoom:11,
+    zoomControl:false, attributionControl:false,
+    scrollWheelZoom:false, dragging:false,
+    touchZoom:false, doubleClickZoom:false, keyboard:false,
+  });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(m);
+  window._heroMap = m;
+  window._addHeroPin = function(lat, lng) {
+    L.circleMarker([lat,lng],{
+      radius:7, fillColor:'#1a7a4a', fillOpacity:.85, color:'#fff', weight:2,
+    }).addTo(m);
+  };
+}
+
+initHeroMap();
 initLeafletMap();
 
 document.getElementById("version-badge").addEventListener("click", function() {
