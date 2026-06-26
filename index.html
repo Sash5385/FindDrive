@@ -443,7 +443,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.69</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.70</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1253,7 +1253,11 @@ async function loadInstrSettings(instr, container) {
     const inp = document.getElementById('mp-new-input');
     const val = inp?.value.trim();
     if (!val) return;
-    const pt = _mpLatLng ? {label:val, lat:_mpLatLng.lat, lng:_mpLatLng.lng} : {label:val};
+    if (!_mpLatLng) {
+      showToast('Виберіть точку на карті або оберіть адресу зі списку підказок', '', 'error');
+      return;
+    }
+    const pt = {label:val, lat:_mpLatLng.lat, lng:_mpLatLng.lng};
     meetingPts.push(pt);
     _mpLatLng = null;
     if (_mpMarker) { _mpMarker.remove(); _mpMarker = null; }
