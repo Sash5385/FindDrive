@@ -200,7 +200,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .mp-search-wrap{position:relative;flex:1;min-width:0}
 .mp-search-wrap input{width:100%;box-sizing:border-box;border:.5px solid var(--border);border-radius:7px;padding:6px 10px;font-size:12px;font-family:inherit;background:var(--white);outline:none}
 .mp-search-wrap input:focus{border-color:var(--green)}
-.mp-suggests{position:absolute;left:0;right:0;top:100%;background:var(--white);border:.5px solid var(--border);border-top:none;border-radius:0 0 9px 9px;z-index:20;max-height:160px;overflow-y:auto;list-style:none;margin:0;padding:0;box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.mp-suggests{position:absolute;left:0;right:0;top:100%;background:var(--white);border:.5px solid var(--border);border-top:none;border-radius:0 0 9px 9px;z-index:9999;max-height:160px;overflow-y:auto;list-style:none;margin:0;padding:0;box-shadow:0 4px 16px rgba(0,0,0,.1)}
 .mp-suggests li{padding:7px 10px;font-size:11px;color:var(--text);cursor:pointer;border-bottom:.5px solid var(--border)}
 .mp-suggests li:last-child{border-bottom:none}
 .mp-suggests li:hover{background:var(--green-light)}
@@ -446,7 +446,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.71</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.72</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1225,7 +1225,7 @@ async function loadInstrSettings(instr, container) {
     const ul = document.getElementById('mp-suggests');
     if (!q || q.length < 2) { if(ul) ul.style.display='none'; return; }
     _mpAcTimer = setTimeout(() => {
-      fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=ua&accept-language=uk`)
+      fetch(`${NOM_BASE}&limit=5&q=${encodeURIComponent(q)}`)
         .then(r=>r.json()).then(results => {
           const ul2 = document.getElementById('mp-suggests');
           if (!ul2) return;
@@ -1236,7 +1236,7 @@ async function loadInstrSettings(instr, container) {
           }).join('');
           ul2.style.display = '';
         }).catch(()=>{});
-    }, 350);
+    }, 200);
   };
   window._mpSelectSuggest = (el) => {
     const name = el.dataset.name, lat = el.dataset.lat, lon = el.dataset.lon;
@@ -2700,7 +2700,7 @@ function _showSearchSuggest(q) {
         }).join('');
         ul2.style.display = '';
       }).catch(()=>{});
-  }, 350);
+  }, 200);
 }
 window._searchPickSuggest = function(el) {
   const name = el.dataset.name, lat = el.dataset.lat, lon = el.dataset.lon;
