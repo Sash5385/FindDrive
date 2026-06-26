@@ -54,12 +54,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .b5{width:150px;height:130px;background:#c0b8f8;opacity:.28;bottom:20px;left:50%;transform:translateX(-50%)}
 .hero-3col{position:relative;z-index:2;display:grid;grid-template-columns:1fr 2fr 1fr;gap:28px;align-items:center;min-height:360px}
 .hero-map-col,.hero-cloud-col{display:flex;justify-content:center;align-items:center}
-.hero-map-circle{width:260px;height:260px;border-radius:50%;overflow:hidden;border:3px solid rgba(255,255,255,.88);box-shadow:0 8px 32px rgba(26,122,74,.18),0 0 0 8px rgba(255,255,255,.28);flex-shrink:0}
+.hero-left-emblem{width:260px;height:260px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.88);box-shadow:0 8px 32px rgba(26,122,74,.18),0 0 0 8px rgba(255,255,255,.28);flex-shrink:0;background:var(--white)}
 .hero-cloud-wrap{width:260px;height:260px;position:relative;overflow:visible;flex-shrink:0}
 .hero-content{position:relative;z-index:2}
-@media(max-width:1100px){.hero-3col{gap:20px}.hero-map-circle,.hero-cloud-wrap{width:210px;height:210px}}
-@media(max-width:900px){.hero-3col{grid-template-columns:1fr 1.6fr 1fr;gap:14px}.hero-map-circle,.hero-cloud-wrap{width:168px;height:168px}}
-@media(max-width:700px){.hero{padding:28px 20px 24px}.hero-3col{grid-template-columns:1fr;gap:14px}.hero-content{order:1}.hero-cloud-col{order:2}.hero-map-col{order:3}.hero-map-circle,.hero-cloud-wrap{width:220px;height:220px}}
+@media(max-width:1100px){.hero-3col{gap:20px}.hero-left-emblem,.hero-cloud-wrap{width:210px;height:210px}}
+@media(max-width:900px){.hero-3col{grid-template-columns:1fr 1.6fr 1fr;gap:14px}.hero-left-emblem,.hero-cloud-wrap{width:168px;height:168px}}
+@media(max-width:700px){.hero{padding:28px 20px 24px}.hero-3col{grid-template-columns:1fr;gap:14px}.hero-content{order:1}.hero-cloud-col{order:2}.hero-map-col{display:none}.hero-cloud-wrap{width:min(88vw,320px);height:220px}}
 .tc-tag{position:absolute;white-space:nowrap;cursor:pointer;border-radius:20px;padding:4px 11px;font-weight:500;font-family:inherit;user-select:none;will-change:opacity,transform;pointer-events:auto;transition:filter .15s;border:.5px solid transparent}
 .tc-tag:hover{filter:brightness(.88)}
 .hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--green-mid);border-radius:20px;padding:5px 14px;font-size:12px;color:#1a6a3a;margin-bottom:22px}
@@ -460,7 +460,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.81</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.82</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -484,7 +484,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <div class="blob b5"></div>
   <div class="hero-3col">
     <div class="hero-map-col">
-      <div id="hero-map" class="hero-map-circle"></div>
+      <img src="logo.png" alt="" class="hero-left-emblem">
     </div>
     <div class="hero-content">
       <div class="hero-badge"><i class="ti ti-map-pin"></i> Знайдемо інструктора поряд з вами</div>
@@ -2980,6 +2980,7 @@ function locateMe(fromSearch = false) {
 
   window.addEventListener('resize',()=>{resize();});
   new IntersectionObserver(e=>e[0].isIntersecting?start():stop(),{threshold:.05}).observe(el);
+  setTimeout(()=>{resize();},150);
   start();
 })();
 
