@@ -207,6 +207,13 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .bk-mp-chip{display:inline-flex;align-items:center;gap:4px;background:var(--green-light);color:var(--green);border-radius:20px;padding:3px 10px;font-size:11px;text-decoration:none;border:.5px solid #b8ddc8;transition:background .15s,color .15s}
 .bk-mp-chip:hover{background:var(--green);color:#fff}
 .bk-day-hours{display:inline-flex;align-items:center;gap:5px;background:var(--bg);border-radius:7px;padding:4px 10px;font-size:12px;color:var(--text-muted);margin-bottom:6px}
+.dur-pick-row{display:flex;gap:8px;margin-top:8px}
+.dur-pick-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:12px 0;border:.5px solid var(--border);border-radius:9px;background:var(--bg);cursor:pointer;font-family:inherit;transition:all .15s;gap:3px}
+.dur-pick-btn:hover,.dur-pick-btn.active{background:var(--green);border-color:var(--green);color:#fff}
+.dur-pick-time{font-size:14px;font-weight:600;color:var(--text)}
+.dur-pick-price{font-size:11px;color:var(--text-muted)}
+.dur-pick-btn:hover .dur-pick-time,.dur-pick-btn.active .dur-pick-time{color:#fff}
+.dur-pick-btn:hover .dur-pick-price,.dur-pick-btn.active .dur-pick-price{color:rgba(255,255,255,.8)}
 .mp-sel-chip.active{background:var(--green-light);border-color:var(--green);color:var(--green)}
 .mp-preview-map{width:100%;height:160px;border-radius:8px;border:.5px solid var(--border);margin-top:8px;display:block}
 .bk-mp-filter-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
@@ -431,7 +438,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.60</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.61</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1712,10 +1719,10 @@ function getDateAvail(instr, dateStr) {
     if (!ov || ov.open === false) return null;
     if (ov.openSlots) {
       if (!ov.openSlots.length) return null;
-      return { openSlots: ov.openSlots, breakFrom: ov.breakFrom||'', breakTo: ov.breakTo||'', location: ov.location||'', locationLat: ov.locationLat||null, locationLng: ov.locationLng||null };
+      return { openSlots: ov.openSlots, breakFrom: ov.breakFrom||'', breakTo: ov.breakTo||'', location: ov.location||'', locationLat: ov.locationLat||null, locationLng: ov.locationLng||null, durations: ov.durations||null };
     }
     if (ov.from || ov.to) {
-      return { from: ov.from||instr.time_from, to: ov.to||instr.time_to, location: ov.location||'' };
+      return { from: ov.from||instr.time_from, to: ov.to||instr.time_to, location: ov.location||'', durations: ov.durations||null };
     }
     return null;
   }
@@ -1814,7 +1821,22 @@ window._pickDate = async function(instrId, dateStr) {
     slotBox.innerHTML = '<p class="booking-hint">Години роботи не вказано</p>';
     return;
   }
-  const lessonMin = window._clientProfile?.lessonDuration || d.lessonDuration || 60;
+  const availDurs = Array.isArray(avail.durations) && avail.durations.length ? avail.durations : null;
+  if (availDurs && availDurs.length > 1 && !window._bkPickedDur) {
+    const instrPrice = d?.price || 0;
+    const dayHours = avail.from && avail.to ? avail.from+'–'+avail.to : '';
+    slotBox.innerHTML = `
+      ${dayHours ? `<div class="bk-day-hours"><i class="ti ti-clock" style="color:var(--green)"></i> ${esc(dayHours)}</div>` : ''}
+      ${avail.location ? `<div class="book-loc"><i class="ti ti-map-pin"></i>${avail.locationLat ? `<a class="book-loc-link" href="https://www.google.com/maps?q=${avail.locationLat},${avail.locationLng}" target="_blank" rel="noopener">${esc(avail.location)} <i class="ti ti-external-link" style="font-size:10px"></i></a>` : esc(avail.location)}</div>` : ''}
+      <div class="booking-label" style="margin-top:${dayHours||avail.location?8:16}px">Тривалість заняття</div>
+      <div class="dur-pick-row">
+        ${availDurs.map(dur=>`<button class="dur-pick-btn" data-dur="${dur}" onclick="window._pickDateWithDur('${esc(instrId)}','${esc(dateStr)}',${dur})"><span class="dur-pick-time">${dur/60} год</span>${instrPrice?`<span class="dur-pick-price">${Math.round(dur/60*instrPrice)} грн</span>`:''}</button>`).join('')}
+      </div>`;
+    return;
+  }
+  const lessonMin = window._bkPickedDur || (availDurs?.[0]) || window._clientProfile?.lessonDuration || d.lessonDuration || 60;
+  window._bkActiveDur = lessonMin;
+  window._bkPickedDur = null;
   const busy = await getBusySlots(instrId, dateStr);
   const slotsPerLesson = Math.max(1, Math.round(lessonMin / 30));
   const busyExpanded = new Set(busy);
@@ -1876,6 +1898,13 @@ window._pickDate = async function(instrId, dateStr) {
     </div>`;
 };
 
+window._pickDateWithDur = async function(instrId, dateStr, dur) {
+  document.querySelectorAll('.dur-pick-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.dur) === dur));
+  window._bkPickedDur = dur;
+  window._bkActiveDur = dur;
+  await window._pickDate(instrId, dateStr);
+};
+
 window._selectSlot = function(instrId, dateStr, time, btn) {
   document.querySelectorAll('.slot-chip').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
@@ -1907,7 +1936,7 @@ window._bookSlot = async function(instrId, dateStr, time) {
       clientEmail:      user.email || '',
       date:             dateStr,
       time:             time,
-      duration:         window._clientProfile?.lessonDuration || d?.lessonDuration || 60,
+      duration:         window._bkActiveDur || window._clientProfile?.lessonDuration || d?.lessonDuration || 60,
       status:           'pending',
       createdAt:        serverTimestamp(),
     });
@@ -2276,10 +2305,20 @@ async function loadInstrCombined(instr, container) {
         ${selBk.status==='confirmed'&&selBk.date>=(new Date().toISOString().slice(0,10))?`<button class="btn-bk-cancel" style="margin-top:6px" onclick="window._instrCancelBk('${selBk.id}')"><i class="ti ti-x"></i> Скасувати заняття</button>`:''}
       </div>` : '';
 
+      const avDurs = Array.isArray(avCurr.durations) && avCurr.durations.length ? avCurr.durations : [60];
       const mainContent = isDayOff
         ? `<div style="text-align:center;padding:20px 0;color:var(--text-hint);font-size:12px"><i class="ti ti-moon" style="font-size:20px"></i><br>День позначено як вихідний</div>`
         : `<div class="slot-hr-grid">${hourBtns}</div>
         ${detPanel}
+        <div class="avail-loc-row" style="margin-top:10px">
+          <label>Тривалість занять</label>
+          <div class="toggle-row" style="margin-top:6px">
+            ${[60,120,180].map(dur=>`<button class="toggle-btn dur-day-btn${avDurs.includes(dur)?' active':''}" data-dur="${dur}" onclick="this.classList.toggle('active')">${dur/60} год</button>`).join('')}
+          </div>
+          <div class="avail-save-row" style="margin-top:8px">
+            <button class="btn-bk-action" style="font-size:11px;padding:5px 12px" onclick="window._combSaveDurs('${instr.id}','${editDate}')"><i class="ti ti-clock"></i> Зберегти</button>
+          </div>
+        </div>
         <div class="avail-loc-row" style="margin-top:10px">
           <label>Місце зустрічі</label>
           ${pts.length
@@ -2414,6 +2453,19 @@ async function loadInstrCombined(instr, container) {
         window._pendingMpLoc=null;
         renderAll();
         showToast('Місце прибрано','','success');
+      } catch(e) { alert('Помилка.'); }
+    };
+    window._combSaveDurs = async (instrId, date) => {
+      const btns = document.querySelectorAll('.dur-day-btn');
+      const durs = [...btns].filter(b => b.classList.contains('active')).map(b => parseInt(b.dataset.dur));
+      if (!durs.length) { showToast('Оберіть хоча б одну тривалість','','error'); return; }
+      const curr = {...(localAvail[date]||{})};
+      curr.durations = durs;
+      try {
+        await updateDoc(doc(db,'instructors',instrId),{[`availability.${date}`]:curr});
+        localAvail[date]=curr;
+        if (window._instrProfiles?.[instrId]) { window._instrProfiles[instrId].availability=window._instrProfiles[instrId].availability||{}; window._instrProfiles[instrId].availability[date]=curr; }
+        showToast('Тривалість збережено','','success');
       } catch(e) { alert('Помилка.'); }
     };
     window._combSlotDetail = (bkId) => {
