@@ -296,6 +296,18 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 
 /* INSTRUCTOR PROFILE PANEL */
 .instr-profile-panel{width:400px}
+.cabinet.instr-profile-panel{transform:scale(.9) translateY(28px);transform-origin:center 85%}
+.cabinet.instr-profile-panel.open{transform:scale(1) translateY(0)}
+.prof-section-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-hint);margin-bottom:10px;font-weight:500;display:flex;align-items:center;gap:6px}
+.prof-mp-list{display:flex;flex-direction:column;gap:7px;margin-bottom:4px}
+.prof-mp-item{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--text-muted)}
+.prof-mp-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.prof-review-empty{background:var(--bg);border-radius:12px;padding:20px;text-align:center;font-size:12px;color:var(--text-hint);line-height:1.8}
+.prof-review-card{background:var(--bg);border-radius:12px;padding:14px;margin-bottom:8px}
+.prof-review-head{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.prof-review-avatar{width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600}
+.prof-review-stars{color:#f5a623;font-size:13px;letter-spacing:1px;margin-top:1px}
+.prof-review-text{font-size:12px;color:var(--text-muted);line-height:1.55;font-style:italic}
 .prof-avatar-lg{width:58px;height:58px;border-radius:50%;flex-shrink:0;object-fit:cover;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600}
 .prof-name-lg{font-size:15px;font-weight:600;line-height:1.3}
 .photo-uploads{display:flex;gap:24px;justify-content:center;padding:16px 20px 6px}
@@ -483,7 +495,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.90</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.91</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -732,7 +744,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRe
          createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp,
-         setDoc, getDoc, doc, updateDoc, onSnapshot, deleteField }
+         setDoc, getDoc, doc, updateDoc, onSnapshot, deleteField, orderBy, limit }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -1579,6 +1591,39 @@ window._saveStudentPhoto = async function() {
   }
 };
 
+// Reviews loader for instructor profile
+window._loadProfReviews = async function(instrId) {
+  const el = document.getElementById('prof-reviews-list');
+  if (!el) return;
+  try {
+    const snap = await getDocs(query(
+      collection(db, 'reviews'), where('instrId','==',instrId),
+      orderBy('createdAt','desc'), limit(20)
+    ));
+    if (snap.empty) {
+      el.innerHTML = `<div class="prof-review-empty"><i class="ti ti-star" style="font-size:22px;opacity:.35"></i><br>Відгуків поки немає<br><span style="font-size:11px">Будьте першим!</span></div>`;
+      return;
+    }
+    el.innerHTML = snap.docs.map(d => {
+      const r = d.data();
+      const stars = '★'.repeat(Math.min(r.rating||5,5)) + '☆'.repeat(Math.max(0,5-(r.rating||5)));
+      const ini = esc((r.clientName||'Учень')[0]).toUpperCase();
+      return `<div class="prof-review-card">
+        <div class="prof-review-head">
+          ${r.clientPhoto ? `<img class="prof-review-avatar" src="${esc(r.clientPhoto)}" alt="">` : `<div class="prof-review-avatar">${ini}</div>`}
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--text)">${esc(r.clientName||'Учень')}</div>
+            <div class="prof-review-stars">${stars}</div>
+          </div>
+        </div>
+        ${r.text ? `<div class="prof-review-text">"${esc(r.text)}"</div>` : ''}
+      </div>`;
+    }).join('');
+  } catch(e) {
+    if (el) el.innerHTML = `<div class="prof-review-empty">Не вдалось завантажити відгуки</div>`;
+  }
+};
+
 // Form submit → Firestore
 const instrForm = document.getElementById("instr-form");
 instrForm.addEventListener("input", e => { e.target.style.borderColor = ""; });
@@ -1732,6 +1777,7 @@ const TAG_COLORS = {
   'Пакет уроків':          {bg:'#f0f8e8',bd:'#b0d490',tx:'#3a6400'},
 };
 window.TAG_COLORS = TAG_COLORS;
+window.INSTR_TAGS = INSTR_TAGS;
 function tagStyle(tag) {
   const c = TAG_COLORS[tag];
   return c ? `background:${c.bg};color:${c.tx};border-color:${c.bd}` : 'background:#f0f5f0;color:#4a6a5a;border-color:#dde8dd';
@@ -2793,6 +2839,14 @@ function openInstrProfile(id, mpIdx) {
   if (!d) return;
   const ini = (d.name||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';
   const col = d.color||'#1a7a4a';
+  const MP_COLORS = ['#1a7a4a','#185fa5','#993556','#b07000'];
+  const TC = window.TAG_COLORS || {};
+  function _ts(tag){ const c=TC[tag]; return c?`background:${c.bg};color:${c.tx};border-color:${c.bd}`:'background:#f0f5f0;color:#4a6a5a;border-color:#dde8dd'; }
+  const instrTags = Array.isArray(d.tags) ? d.tags.filter(t=>(window.INSTR_TAGS||[]).includes(t)) : [];
+  const mps = (d.meetingPoints||[]).filter(pt=>typeof pt==='object'&&pt.lat);
+  const days = (d.days||[]).join(' ');
+  const sched = [days, d.time_from ? d.time_from+'–'+d.time_to : ''].filter(Boolean).join(' · ');
+
   document.getElementById('prof-head').innerHTML = `
     ${d.photo
       ? `<img class="prof-avatar-lg" src="${_esc(d.photo)}" alt="">`
@@ -2801,9 +2855,7 @@ function openInstrProfile(id, mpIdx) {
       <div class="prof-name-lg">${_esc(d.name)}</div>
       <div class="prof-rating-row">${d.rating ? '⭐ '+d.rating+' · '+d.reviews+' відгуків' : 'Новий інструктор'}</div>
     </div>`;
-  const tags = [d.gearbox, d.car].filter(Boolean);
-  const days = (d.days||[]).join(' ');
-  const sched = [days, d.time_from ? d.time_from+'–'+d.time_to : ''].filter(Boolean).join(' · ');
+
   document.getElementById('prof-body').innerHTML = `
     ${d.carPhoto ? `<img class="prof-car-photo" src="${_esc(d.carPhoto)}" alt="Авто інструктора">` : ''}
     <div class="prof-price-row">
@@ -2811,10 +2863,21 @@ function openInstrProfile(id, mpIdx) {
       ${d.experience ? `<span class="prof-exp-chip">${_esc(String(d.experience))} р. стажу</span>` : ''}
     </div>
     ${d.area ? `<div class="prof-row"><i class="ti ti-map-pin" style="color:${col}"></i> ${_esc(d.area)}</div>` : ''}
-    ${tags.length ? `<div class="prof-tags-row">${tags.map(t=>`<span class="tag">${_esc(t)}</span>`).join('')}</div>` : ''}
-    ${sched ? `<div class="prof-row"><i class="ti ti-calendar" style="color:${col}"></i> ${_esc(sched)}</div>` : ''}
-    ${(d.tscKnown||[]).length ? `<div class="prof-row" style="align-items:flex-start"><i class="ti ti-building" style="color:${col};flex-shrink:0;margin-top:1px"></i><span style="font-size:12px;line-height:1.5">${d.tscKnown.map(_esc).join('<br>')}</span></div>` : ''}
+    ${instrTags.length ? `<div class="prof-tags-row">${instrTags.map(t=>`<span class="tag" style="${_ts(t)}">${_esc(t)}</span>`).join('')}</div>` : ''}
     ${d.about ? `<div class="prof-about-box">"${_esc(d.about)}"</div>` : ''}
+    ${mps.length ? `
+      <div class="prof-divider"></div>
+      <div class="prof-section-label"><i class="ti ti-map-pins" style="color:${col}"></i> Точки зустрічі</div>
+      <div class="prof-mp-list">${mps.map((mp,i)=>`<div class="prof-mp-item"><div class="prof-mp-dot" style="background:${MP_COLORS[i%4]}"></div><span>${_esc(mp.label||'Точка '+(i+1))}</span></div>`).join('')}</div>
+    ` : ''}
+    ${sched || (d.tscKnown||[]).length ? `
+      <div class="prof-divider"></div>
+      ${sched ? `<div class="prof-row"><i class="ti ti-calendar" style="color:${col}"></i> ${_esc(sched)}</div>` : ''}
+      ${(d.tscKnown||[]).length ? `<div class="prof-row" style="align-items:flex-start"><i class="ti ti-building" style="color:${col};flex-shrink:0;margin-top:1px"></i><span style="font-size:12px;line-height:1.5">${d.tscKnown.map(_esc).join('<br>')}</span></div>` : ''}
+    ` : ''}
+    <div class="prof-divider"></div>
+    <div class="prof-section-label"><i class="ti ti-star" style="color:#f5a623"></i> Відгуки</div>
+    <div id="prof-reviews-list"><div class="prof-review-empty"><i class="ti ti-loader"></i></div></div>
     <div class="prof-divider"></div>
     <div id="prof-phone-wrap">
       <button class="btn-show-phone" onclick="showPhone('${_esc(d.phone||'')}','${col}')">
@@ -2826,7 +2889,9 @@ function openInstrProfile(id, mpIdx) {
       <div class="booking-label">Записатись на заняття</div>
       <div id="prof-booking"></div>
     </div>`;
+
   if (window.openPanel) window.openPanel('instr-profile');
+  window._loadProfReviews?.(id);
   setTimeout(() => {
     window._openBooking?.(id);
     if (mpIdx !== null && mpIdx !== undefined) {
