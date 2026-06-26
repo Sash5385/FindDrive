@@ -431,7 +431,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.58</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.59</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -2203,6 +2203,9 @@ async function loadInstrCombined(instr, container) {
       const savedMpIdx = (savedLocLat && pts.length)
         ? pts.findIndex(pt => typeof pt==='object' && pt.lat && Math.abs(pt.lat - savedLocLat) < 0.0001)
         : -1;
+      window._pendingMpLoc = savedMpIdx >= 0
+        ? { label: pts[savedMpIdx].label || pts[savedMpIdx], lat: pts[savedMpIdx].lat, lng: pts[savedMpIdx].lng }
+        : null;
       let previewHtml = '';
       if (savedMpIdx >= 0) {
         const spt = pts[savedMpIdx];
@@ -2264,12 +2267,14 @@ async function loadInstrCombined(instr, container) {
         ${detPanel}
         <div class="avail-loc-row" style="margin-top:10px">
           <label>Місце зустрічі</label>
-          ${pts.length?`<div class="mp-sel-list">${pts.map((pt,pi)=>{ const lbl=typeof pt==='string'?pt:pt.label; const hasCoords=typeof pt==='object'&&pt.lat; return `<button class="mp-sel-chip${pi===savedMpIdx?' active':''}" onclick="window._selectMpChip(this,'${pi}')">${hasCoords?'<i class=\'ti ti-map-pin\' style=\'font-size:9px;margin-right:2px\'></i>':''}${esc(lbl)}</button>`; }).join('')}</div>`:''}
-          <input type="text" id="comb-loc" placeholder="Або введіть адресу вручну…" value="${esc(location)}">
-          <div id="comb-mp-preview"${savedMpIdx < 0 ? ' style="display:none"' : ''}>${previewHtml}</div>
-        </div>
-        <div class="avail-save-row" style="margin-top:8px">
-          <button class="btn-bk-action" style="font-size:11px;padding:5px 12px" onclick="window._combSaveLoc('${instr.id}','${editDate}')"><i class="ti ti-map-pin"></i> Зберегти місце</button>
+          ${pts.length
+            ? `<div class="mp-sel-list">${pts.map((pt,pi)=>{ const lbl=typeof pt==='string'?pt:pt.label; const hasCoords=typeof pt==='object'&&pt.lat; return `<button class="mp-sel-chip${pi===savedMpIdx?' active':''}" onclick="window._selectMpChip(this,'${pi}')">${hasCoords?'<i class=\'ti ti-map-pin\' style=\'font-size:9px;margin-right:2px\'></i>':''}${esc(lbl)}</button>`; }).join('')}</div>
+              <div id="comb-mp-preview"${savedMpIdx < 0 ? ' style="display:none"' : ''}>${previewHtml}</div>
+              <div class="avail-save-row" style="margin-top:8px">
+                <button class="btn-bk-action" style="font-size:11px;padding:5px 12px" onclick="window._combSaveLoc('${instr.id}','${editDate}')"><i class="ti ti-map-pin"></i> Зберегти місце</button>
+                ${savedMpIdx >= 0 ? `<button class="btn-bk-reject" style="font-size:11px;padding:5px 12px" onclick="window._combClearLoc('${instr.id}','${editDate}')"><i class="ti ti-x"></i> Прибрати</button>` : ''}
+              </div>`
+            : `<p style="font-size:11px;color:var(--text-hint);margin:4px 0 0">Додайте точки зустрічі в налаштуваннях вище</p>`}
         </div>`;
 
       return `<div class="avail-edit-wrap">
@@ -2354,6 +2359,9 @@ async function loadInstrCombined(instr, container) {
         inp.dataset.lat = (typeof pt==='object' && pt.lat) ? pt.lat : '';
         inp.dataset.lng = (typeof pt==='object' && pt.lng) ? pt.lng : '';
       }
+      window._pendingMpLoc = typeof pt==='object' && pt.lat
+        ? { label: pt.label || lbl, lat: pt.lat, lng: pt.lng }
+        : { label: lbl, lat: null, lng: null };
       document.querySelectorAll('.mp-sel-chip').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const preview = document.getElementById('comb-mp-preview');
@@ -2368,18 +2376,29 @@ async function loadInstrCombined(instr, container) {
       }
     };
     window._combSaveLoc = async (instrId, date) => {
-      const inp = document.getElementById('comb-loc');
-      const loc = inp?.value || '';
-      const lat = inp?.dataset.lat ? parseFloat(inp.dataset.lat) : null;
-      const lng = inp?.dataset.lng ? parseFloat(inp.dataset.lng) : null;
+      const mp = window._pendingMpLoc;
+      if (!mp?.label) { showToast('Оберіть точку зустрічі','','error'); return; }
       const curr = localAvail[date]||{};
-      const extra = lat ? {locationLat: lat, locationLng: lng} : {};
-      const data = Object.assign({}, curr, {location:loc}, extra);
+      const extra = mp.lat ? {locationLat: mp.lat, locationLng: mp.lng} : {};
+      const data = Object.assign({}, curr, {location: mp.label}, extra);
       try {
         await updateDoc(doc(db,'instructors',instrId),{[`availability.${date}`]:data});
         localAvail[date]=data;
         if (window._instrProfiles?.[instrId]) { window._instrProfiles[instrId].availability=window._instrProfiles[instrId].availability||{}; window._instrProfiles[instrId].availability[date]=data; }
         showToast('Збережено!',date.split('-').reverse().join('.'),'success');
+        renderAll();
+      } catch(e) { alert('Помилка.'); }
+    };
+    window._combClearLoc = async (instrId, date) => {
+      const curr = {...(localAvail[date]||{})};
+      delete curr.location; delete curr.locationLat; delete curr.locationLng;
+      try {
+        await updateDoc(doc(db,'instructors',instrId),{[`availability.${date}`]:curr});
+        localAvail[date]=curr;
+        if (window._instrProfiles?.[instrId]) { window._instrProfiles[instrId].availability=window._instrProfiles[instrId].availability||{}; window._instrProfiles[instrId].availability[date]=curr; }
+        window._pendingMpLoc=null;
+        renderAll();
+        showToast('Місце прибрано','','success');
       } catch(e) { alert('Помилка.'); }
     };
     window._combSlotDetail = (bkId) => {
