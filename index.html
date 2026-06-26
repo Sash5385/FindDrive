@@ -60,10 +60,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 @media(max-width:1100px){.hero-emblem-cloud{width:240px;height:240px;right:24px}}
 @media(max-width:900px){.hero-emblem-cloud{width:200px;height:200px;right:16px}}
 @media(max-width:700px){.hero-emblem-cloud{display:none}}
-.tc-tag{position:absolute;white-space:nowrap;cursor:pointer;border-radius:20px;padding:4px 11px;font-weight:500;font-family:inherit;user-select:none;will-change:opacity,transform;pointer-events:auto;transition:filter .15s}
-.tc-tag.tc-f{background:var(--green-light);color:var(--green);border:.5px solid #b0d8b8}
-.tc-tag.tc-d{background:rgba(255,255,255,.72);color:var(--text-muted);border:.5px solid var(--border)}
-.tc-tag:hover{filter:brightness(.9)}
+.tc-tag{position:absolute;white-space:nowrap;cursor:pointer;border-radius:20px;padding:4px 11px;font-weight:500;font-family:inherit;user-select:none;will-change:opacity,transform;pointer-events:auto;transition:filter .15s;border:.5px solid transparent}
+.tc-tag:hover{filter:brightness(.88)}
 .hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--green-mid);border-radius:20px;padding:5px 14px;font-size:12px;color:#1a6a3a;margin-bottom:22px}
 .hero-h1{font-size:42px;font-weight:600;color:var(--text);line-height:1.12;margin-bottom:16px}
 .hero-h1 span{color:var(--green)}
@@ -112,15 +110,18 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .instr-meta{font-size:12px;color:var(--text-hint);margin-top:2px;display:flex;align-items:center;gap:4px}
 .badge-dist{display:inline-flex;align-items:center;gap:5px;background:var(--green-light);border-radius:20px;padding:4px 10px;font-size:11px;color:#1a6a3a;margin-bottom:12px}
 .instr-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
-.tag{font-size:11px;padding:3px 10px;border-radius:20px;background:#f0f5f0;color:#4a6a5a}
+.tag{font-size:11px;padding:3px 10px;border-radius:20px;border:.5px solid transparent}
 .tag-filter-bar{display:flex;gap:8px;overflow-x:auto;padding:0 0 14px;scrollbar-width:none;margin:0 0 8px}
 .tag-filter-bar::-webkit-scrollbar{display:none}
-.tag-filter-chip{flex-shrink:0;padding:7px 18px;border-radius:20px;border:.5px solid var(--border);background:var(--white);font-size:12px;color:var(--text-muted);cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s}
-.tag-filter-chip.active{background:var(--green);color:#fff;border-color:var(--green)}
-.tag-filter-chip:hover:not(.active){border-color:var(--green);color:var(--green);background:var(--green-light)}
+.tag-filter-chip{flex-shrink:0;padding:6px 16px;border-radius:20px;border:.5px solid var(--border);background:var(--white);color:var(--text-muted);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:opacity .15s,box-shadow .15s,border-width .1s}
+.tag-filter-chip[data-tag=""],.tag-filter-chip:not([style]){background:var(--white);color:var(--text-muted)}
+.tag-filter-chip[data-tag=""].active{background:var(--green)!important;color:#fff!important;border-color:var(--green)!important;box-shadow:none}
+.tag-filter-chip.active:not([data-tag=""]){border-width:1.5px;font-weight:600;box-shadow:0 1px 8px rgba(0,0,0,.12)}
+.tag-filter-chip:hover:not(.active){opacity:.72}
 .tag-sel-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-.tag-sel-btn{padding:5px 12px;border-radius:20px;border:.5px solid var(--border);background:var(--bg);font-size:11px;color:var(--text-muted);cursor:pointer;font-family:inherit;transition:all .15s}
-.tag-sel-btn.active{background:var(--green-light);border-color:var(--green);color:var(--green)}
+.tag-sel-btn{padding:5px 12px;border-radius:20px;border:.5px solid transparent;font-size:11px;cursor:pointer;font-family:inherit;transition:border-width .1s,box-shadow .15s,opacity .15s}
+.tag-sel-btn.active{border-width:1.5px;font-weight:500;box-shadow:0 1px 5px rgba(0,0,0,.1)}
+.tag-sel-btn:hover:not(.active){opacity:.75}
 .instr-footer{display:flex;align-items:center;justify-content:space-between;border-top:.5px solid #eef3ee;padding-top:12px}
 .price{font-size:15px;font-weight:500;color:var(--text)}
 .price span{font-size:12px;color:var(--text-hint);font-weight:400}
@@ -184,6 +185,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .chip-opt input{position:absolute;opacity:0;width:0;height:0}
 .chip-opt:has(input:checked){background:var(--green);border-color:var(--green);color:#fff}
 .chip-opt:hover:not(:has(input:checked)){background:var(--green-light);border-color:#b8d8c8;color:var(--green)}
+.chip-opt-c:has(input:checked){background:var(--tc-bg,var(--green))!important;border-color:var(--tc-bd,var(--green))!important;color:var(--tc-tx,#fff)!important;border-width:1.5px;font-weight:600}
+.chip-opt-c:hover:not(:has(input:checked)){background:var(--tc-bg,var(--green-light))!important;border-color:var(--tc-bd,#b8d8c8)!important;color:var(--tc-tx,var(--green))!important;opacity:.85}
 .weak-chip{background:var(--pink-light);color:var(--pink);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:500}
 .nav-user{display:flex;align-items:center;gap:8px;cursor:pointer}
 .nav-avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;border:1.5px solid var(--border)}
@@ -457,7 +460,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.75</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.76</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1004,9 +1007,11 @@ async function renderSetupScreen(user, pre = {}) {
   <div class="form-group" style="margin-bottom:20px">
     <label class="form-label">Що шукаю в інструктора <span style="font-size:10px;color:var(--text-hint);font-weight:400">(фільтрує список)</span></label>
     <div class="chip-opts">
-      ${INSTR_TAGS.map(tag =>
-        `<label class="chip-opt"><input type="checkbox" name="s-ptag" value="${_esc(tag)}"${(pre.preferredTags||[]).includes(tag)?' checked':''}> ${_esc(tag)}</label>`
-      ).join('')}
+      ${INSTR_TAGS.map(tag => {
+        const c = TAG_COLORS[tag]||{};
+        const cv = c.bg ? `--tc-bg:${c.bg};--tc-bd:${c.bd};--tc-tx:${c.tx}` : '';
+        return `<label class="chip-opt chip-opt-c" style="${cv}"><input type="checkbox" name="s-ptag" value="${_esc(tag)}"${(pre.preferredTags||[]).includes(tag)?' checked':''}> ${_esc(tag)}</label>`;
+      }).join('')}
     </div>
   </div>
 </div>`;
@@ -1163,7 +1168,7 @@ async function loadInstrSettings(instr, container) {
       <div class="instr-set-group">
         <span class="instr-set-label">Спеціалізація</span>
         <div class="tag-sel-grid">
-          ${INSTR_TAGS.map(tag => `<button class="tag-sel-btn${instrTags.includes(tag)?' active':''}" onclick="window._toggleTag('${tag}')">${tag}</button>`).join('')}
+          ${INSTR_TAGS.map(tag => `<button class="tag-sel-btn${instrTags.includes(tag)?' active':''}" style="${tagStyle(tag)}" onclick="window._toggleTag('${tag}')">${tag}</button>`).join('')}
         </div>
       </div>
       <div class="instr-set-group">
@@ -1606,7 +1611,42 @@ const THEMES = [
 function initials(name) {
   return (name||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';
 }
-const INSTR_TAGS = ['Автомат','Механіка','ТСЦ','Для новачків','Тільки жінки','Бізнес-клас'];
+const INSTR_TAGS = [
+  'Автомат','Механіка',
+  'Інструктор дівчина','Інструктор не палить',
+  'Кондиціонер',
+  'ТСЦ ВДНГ','ТСЦ Голосіїво','ТСЦ Оболонь',
+  'Паркування','Розвороти','Проїзд маршрутів',
+  'Особистий маршрут','Удосконалення навичок','Подача авто на іспит',
+  'Ранкові заняття','Денні заняття','Вечірні заняття',
+  'Вихідного дня','Пакет уроків',
+];
+const TAG_COLORS = {
+  'Автомат':               {bg:'#e8f4ee',bd:'#a8d0b8',tx:'#1a7a4a'},
+  'Механіка':              {bg:'#e6f1fb',bd:'#a4c4e4',tx:'#185fa5'},
+  'Інструктор дівчина':    {bg:'#fbeaf0',bd:'#e0a8c0',tx:'#993556'},
+  'Інструктор не палить':  {bg:'#f0f8e8',bd:'#b4d890',tx:'#3c7000'},
+  'Кондиціонер':           {bg:'#e3f6f5',bd:'#94d0cc',tx:'#1a6460'},
+  'ТСЦ ВДНГ':              {bg:'#fdf3e3',bd:'#e0c898',tx:'#7a5200'},
+  'ТСЦ Голосіїво':         {bg:'#fdf0e8',bd:'#e0b898',tx:'#7a3e00'},
+  'ТСЦ Оболонь':           {bg:'#f5edfb',bd:'#c8a4e0',tx:'#6a349a'},
+  'Паркування':            {bg:'#fde8e8',bd:'#e0a8a8',tx:'#8a2020'},
+  'Розвороти':             {bg:'#e8eaf6',bd:'#b0b4e0',tx:'#383a9a'},
+  'Проїзд маршрутів':      {bg:'#e8f7ee',bd:'#a8d4b8',tx:'#1a6a40'},
+  'Особистий маршрут':     {bg:'#fbeef5',bd:'#e0a4c8',tx:'#883048'},
+  'Удосконалення навичок': {bg:'#eef3fb',bd:'#a8b8e0',tx:'#285090'},
+  'Подача авто на іспит':  {bg:'#fdf5e3',bd:'#d8c488',tx:'#684800'},
+  'Ранкові заняття':       {bg:'#fff8e8',bd:'#e0d088',tx:'#705800'},
+  'Денні заняття':         {bg:'#eef8f6',bd:'#98d0c8',tx:'#1a6058'},
+  'Вечірні заняття':       {bg:'#eeeaf8',bd:'#a8a4d8',tx:'#38288a'},
+  'Вихідного дня':         {bg:'#fdf0fb',bd:'#d4a4d8',tx:'#782880'},
+  'Пакет уроків':          {bg:'#f0f8e8',bd:'#b0d490',tx:'#3a6400'},
+};
+window.TAG_COLORS = TAG_COLORS;
+function tagStyle(tag) {
+  const c = TAG_COLORS[tag];
+  return c ? `background:${c.bg};color:${c.tx};border-color:${c.bd}` : 'background:#f0f5f0;color:#4a6a5a;border-color:#dde8dd';
+}
 
 function buildCard(d, i, id) {
   const th = THEMES[i % THEMES.length];
@@ -1624,7 +1664,7 @@ function buildCard(d, i, id) {
       </div>
     </div>
     <div class="badge-dist"><i class="ti ti-map-pin"></i> ${esc(d.area||'Київ')}</div>
-    <div class="instr-tags">${tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>
+    <div class="instr-tags">${tags.map(t=>`<span class="tag" style="${tagStyle(t)}">${esc(t)}</span>`).join('')}</div>
     <div class="instr-footer">
       <div class="price">${d.price?d.price+' грн':'—'} <span>/ год</span></div>
       <button class="btn-book" onclick="openInstrProfile('${esc(id||'')}')">Записатись</button>
@@ -1648,6 +1688,7 @@ function populateTagFilterBar() {
     btn.dataset.tag = tag;
     btn.textContent = tag;
     btn.onclick = () => window._filterByTag(btn);
+    btn.setAttribute('style', tagStyle(tag));
     bar.appendChild(btn);
   });
 }
@@ -2842,10 +2883,29 @@ function locateMe(fromSearch = false) {
 (function(){
   const el = document.getElementById('tag-cloud-3d');
   if (!el) return;
-  const FILTER = ['Автомат','Механіка','ТСЦ','Для новачків','Тільки жінки','Бізнес-клас'];
-  const DECO   = ['Паркування','Автотраса','Місто','Від 300₴/год','Онлайн-запис','Позняки','Оболонь','Шевченківський','Безпека','ПДД','Швидко','Зручно'];
-  const tags = [...FILTER.map(t=>({t,f:1})), ...DECO.map(t=>({t,f:0}))];
-  const N = tags.length;
+  const TC = {
+    'Автомат':               {bg:'#e8f4ee',bd:'#a8d0b8',tx:'#1a7a4a'},
+    'Механіка':              {bg:'#e6f1fb',bd:'#a4c4e4',tx:'#185fa5'},
+    'Інструктор дівчина':    {bg:'#fbeaf0',bd:'#e0a8c0',tx:'#993556'},
+    'Інструктор не палить':  {bg:'#f0f8e8',bd:'#b4d890',tx:'#3c7000'},
+    'Кондиціонер':           {bg:'#e3f6f5',bd:'#94d0cc',tx:'#1a6460'},
+    'ТСЦ ВДНГ':              {bg:'#fdf3e3',bd:'#e0c898',tx:'#7a5200'},
+    'ТСЦ Голосіїво':         {bg:'#fdf0e8',bd:'#e0b898',tx:'#7a3e00'},
+    'ТСЦ Оболонь':           {bg:'#f5edfb',bd:'#c8a4e0',tx:'#6a349a'},
+    'Паркування':            {bg:'#fde8e8',bd:'#e0a8a8',tx:'#8a2020'},
+    'Розвороти':             {bg:'#e8eaf6',bd:'#b0b4e0',tx:'#383a9a'},
+    'Проїзд маршрутів':      {bg:'#e8f7ee',bd:'#a8d4b8',tx:'#1a6a40'},
+    'Особистий маршрут':     {bg:'#fbeef5',bd:'#e0a4c8',tx:'#883048'},
+    'Удосконалення навичок': {bg:'#eef3fb',bd:'#a8b8e0',tx:'#285090'},
+    'Подача авто на іспит':  {bg:'#fdf5e3',bd:'#d8c488',tx:'#684800'},
+    'Ранкові заняття':       {bg:'#fff8e8',bd:'#e0d088',tx:'#705800'},
+    'Денні заняття':         {bg:'#eef8f6',bd:'#98d0c8',tx:'#1a6058'},
+    'Вечірні заняття':       {bg:'#eeeaf8',bd:'#a8a4d8',tx:'#38288a'},
+    'Вихідного дня':         {bg:'#fdf0fb',bd:'#d4a4d8',tx:'#782880'},
+    'Пакет уроків':          {bg:'#f0f8e8',bd:'#b0d490',tx:'#3a6400'},
+  };
+  const TAGS = Object.keys(TC);
+  const N = TAGS.length;
   const phi = Math.PI*(3-Math.sqrt(5));
   const cosX = Math.cos(0.18), sinX = Math.sin(0.18);
   let raf = null, W, H, cx, cy, R, focal;
@@ -2858,18 +2918,18 @@ function locateMe(fromSearch = false) {
   }
   resize();
 
-  const items = tags.map(({t,f},i) => {
+  const items = TAGS.map((t,i) => {
+    const c = TC[t];
     const y0 = 1-(i/(N-1))*2;
     const r0 = Math.sqrt(1-y0*y0);
     const th = phi*i;
     const span = document.createElement('span');
-    span.className = 'tc-tag '+(f?'tc-f':'tc-d');
+    span.className = 'tc-tag';
+    span.style.cssText = `background:${c.bg};color:${c.tx};border-color:${c.bd}`;
     span.textContent = t;
     span.onclick = () => {
-      if (f) {
-        const chip = document.querySelector('.tag-filter-chip[data-tag="'+t+'"]');
-        if (chip && window._filterByTag) window._filterByTag(chip);
-      }
+      const chip = document.querySelector('.tag-filter-chip[data-tag="'+t+'"]');
+      if (chip && window._filterByTag) window._filterByTag(chip);
       document.getElementById('instructors')?.scrollIntoView({behavior:'smooth'});
     };
     el.appendChild(span);
@@ -2886,7 +2946,7 @@ function locateMe(fromSearch = false) {
       const y1 = p.oy*cosX - z1*sinX;
       const z2 = p.oy*sinX + z1*cosX;
       const sc = focal/(focal-z2*R);
-      const op = Math.max(0.25, (z2*0.35+0.65)).toFixed(2);
+      const op = Math.max(0.22, (z2*0.38+0.62)).toFixed(2);
       const fs = (z2*2+11).toFixed(1);
       const s = p.span.style;
       s.left = (cx+x1*R*sc).toFixed(1)+'px';
