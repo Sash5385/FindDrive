@@ -460,7 +460,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.82</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.83</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1708,6 +1708,7 @@ function _applyTagFilters() {
     const ct = JSON.parse(card.dataset.tags || '[]');
     card.style.display = (!active.length || active.some(t => ct.includes(t))) ? '' : 'none';
   });
+  window._filterMapMarkers?.(active);
 }
 
 window._filterByTag = function(btn) {
@@ -1755,6 +1756,7 @@ async function loadInstructors() {
         const d = docSnap.data();
         const id = docSnap.id;
         const instrColor = THEMES[i % THEMES.length].color;
+        const instrTags = (Array.isArray(d.tags) ? d.tags : []).filter(t => INSTR_TAGS.includes(t));
         const mps = (d.meetingPoints||[]).filter(pt => typeof pt==='object' && pt.lat);
         if (mps.length) {
           mps.forEach((pt, mpIdx) => {
@@ -1762,12 +1764,12 @@ async function loadInstructors() {
               lat: pt.lat, lng: pt.lng,
               name: d.name, price: d.price, rating: d.rating,
               color: MP_MARKER_COLORS[mpIdx % MP_MARKER_COLORS.length],
-              mpIdx, mpLabel: pt.label
+              mpIdx, mpLabel: pt.label, tags: instrTags
             }, id);
             if (mpIdx === 0) window._addHeroPin?.(pt.lat, pt.lng);
           });
         } else if (d.lat && d.lng) {
-          window._addInstrMarker?.({ lat: d.lat, lng: d.lng, name: d.name, price: d.price, rating: d.rating, color: instrColor }, id);
+          window._addInstrMarker?.({ lat: d.lat, lng: d.lng, name: d.name, price: d.price, rating: d.rating, color: instrColor, tags: instrTags }, id);
           window._addHeroPin?.(d.lat, d.lng);
         }
       });
@@ -2846,6 +2848,19 @@ window._addInstrMarker = function(inst, id) {
     <button onclick="openInstrProfile('${_esc(id||'')}',${mpParam})" style="margin-top:8px;background:${color};color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit">Записатись</button>
   </div>`);
   marker.on('click', () => marker.openPopup());
+  window._instrMarkers = window._instrMarkers || {};
+  (window._instrMarkers[id] = window._instrMarkers[id] || []).push({marker, tags: inst.tags||[]});
+};
+
+window._filterMapMarkers = function(active) {
+  if (!window._instrMarkers || !_mainMap) return;
+  Object.values(window._instrMarkers).forEach(list => {
+    list.forEach(({marker, tags}) => {
+      const show = !active.length || active.some(t => tags.includes(t));
+      if (show) { if (!_mainMap.hasLayer(marker)) marker.addTo(_mainMap); }
+      else _mainMap.removeLayer(marker);
+    });
+  });
 };
 
 window.initInstrMap = function() {
