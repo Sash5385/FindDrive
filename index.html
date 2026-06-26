@@ -460,7 +460,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.79</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.80</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1651,8 +1651,9 @@ function tagStyle(tag) {
 function buildCard(d, i, id) {
   const th = THEMES[i % THEMES.length];
   const instrTags = Array.isArray(d.tags) ? d.tags : [];
-  const tags = instrTags.length ? instrTags : [d.gearbox, (d.car||'').split(' ')[0]].filter(Boolean);
-  return `<div class="instr-card" data-tags='${JSON.stringify(instrTags)}'>
+  const validTags = instrTags.filter(t => INSTR_TAGS.includes(t));
+  const tags = validTags.length ? validTags : [d.gearbox, (d.car||'').split(' ')[0]].filter(Boolean);
+  return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}'>
     <div class="card-blob" style="background:${th.blob}"></div>
     <div class="instr-top">
       ${d.photo
