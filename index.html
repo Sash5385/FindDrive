@@ -449,7 +449,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.73</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.74</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -984,11 +984,20 @@ async function renderSetupScreen(user, pre = {}) {
     </select>
   </div>
 
-  <div class="form-group" style="margin-bottom:20px">
+  <div class="form-group">
     <label class="form-label">Слабкі місця (що хочете покращити)</label>
     <div class="chip-opts">
       ${[['parking','Паркування'],['reverse','Задній хід'],['turns','Розвороти'],['traffic','Інтенсивний трафік'],['crossroads','Перехрестя'],['night','Нічне водіння'],['highway','Траса'],['distance','Дистанція']].map(([v,l])=>
         `<label class="chip-opt"><input type="checkbox" name="s-weak" value="${v}"${(pre.weakSpots||[]).includes(v)?' checked':''}> ${l}</label>`
+      ).join('')}
+    </div>
+  </div>
+
+  <div class="form-group" style="margin-bottom:20px">
+    <label class="form-label">Що шукаю в інструктора <span style="font-size:10px;color:var(--text-hint);font-weight:400">(фільтрує список)</span></label>
+    <div class="chip-opts">
+      ${INSTR_TAGS.map(tag =>
+        `<label class="chip-opt"><input type="checkbox" name="s-ptag" value="${_esc(tag)}"${(pre.preferredTags||[]).includes(tag)?' checked':''}> ${_esc(tag)}</label>`
       ).join('')}
     </div>
   </div>
@@ -1010,7 +1019,8 @@ async function saveSetup(user) {
     budget:        body.querySelector('[name="s-budget"]:checked')?.value || '500-700',
     schedule:  [...body.querySelectorAll('[name="s-sched"]:checked')].map(c=>c.value),
     tsc:       body.querySelector('[name="s-tsc"]')?.value || '',
-    weakSpots: [...body.querySelectorAll('[name="s-weak"]:checked')].map(c=>c.value),
+    weakSpots:     [...body.querySelectorAll('[name="s-weak"]:checked')].map(c=>c.value),
+    preferredTags: [...body.querySelectorAll('[name="s-ptag"]:checked')].map(c=>c.value),
     setupDone: true,
   };
   const btn = document.getElementById('btn-setup-save');
@@ -1103,6 +1113,7 @@ async function renderProfileScreen(user) {
           ${(ud.goals||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:2px">${ud.goals.map(g=>`<span class="tag">${esc(GOAL_LABELS[g]||g)}</span>`).join('')}</div>` : ''}
           ${(ud.schedule||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${ud.schedule.map(s=>`<span class="tag">${esc(SCHED_LABELS[s]||s)}</span>`).join('')}</div>` : ''}
           ${(ud.weakSpots||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${ud.weakSpots.map(w=>`<span class="weak-chip">${esc(WEAK_LABELS[w]||w)}</span>`).join('')}</div>` : ''}
+          ${(ud.preferredTags||[]).length ? `<div style="margin-top:4px"><div style="font-size:11px;color:var(--text-hint);margin-bottom:4px"><i class="ti ti-filter" style="font-size:10px"></i> Шукаю інструктора:</div><div style="display:flex;flex-wrap:wrap;gap:4px">${ud.preferredTags.map(t=>`<span class="tag" style="background:var(--green-light);color:var(--green);border:.5px solid #b8ddc8">${esc(t)}</span>`).join('')}</div></div>` : ''}
         </div>
         <button id="btn-edit-setup" class="btn-bk-action" style="margin-top:12px;width:100%;font-size:12px;padding:8px"><i class="ti ti-edit"></i> Редагувати профіль</button>
       </div>` : `
@@ -1121,6 +1132,7 @@ async function renderProfileScreen(user) {
     document.getElementById('btn-fill-setup')?.addEventListener('click', () => renderSetupScreen(user, ud));
     document.getElementById('btn-edit-setup')?.addEventListener('click', () => renderSetupScreen(user, ud));
     loadClientBookings(user, document.getElementById('cab-my-bookings'));
+    if (ud.preferredTags?.length) window._applyStudentTagFilter?.(ud.preferredTags);
   }
 }
 
@@ -1632,13 +1644,36 @@ function populateTagFilterBar() {
   });
 }
 
+function _applyTagFilters() {
+  const active = [...document.querySelectorAll('.tag-filter-chip.active[data-tag]')]
+    .map(b => b.dataset.tag).filter(Boolean);
+  document.querySelectorAll('#instr-grid .instr-card').forEach(card => {
+    const ct = JSON.parse(card.dataset.tags || '[]');
+    card.style.display = (!active.length || active.some(t => ct.includes(t))) ? '' : 'none';
+  });
+}
+
 window._filterByTag = function(btn) {
   const tag = btn.dataset.tag || '';
-  document.querySelectorAll('.tag-filter-chip').forEach(b => b.classList.toggle('active', b === btn));
-  document.querySelectorAll('#instr-grid .instr-card').forEach(card => {
-    const cardTags = JSON.parse(card.dataset.tags || '[]');
-    card.style.display = (!tag || cardTags.includes(tag)) ? '' : 'none';
-  });
+  if (!tag) {
+    document.querySelectorAll('.tag-filter-chip').forEach(b => b.classList.toggle('active', b === btn));
+  } else {
+    document.querySelector('.tag-filter-chip[data-tag=""]')?.classList.remove('active');
+    btn.classList.toggle('active');
+    const anyActive = [...document.querySelectorAll('.tag-filter-chip[data-tag]')].some(b => b.classList.contains('active'));
+    if (!anyActive) document.querySelector('.tag-filter-chip[data-tag=""]')?.classList.add('active');
+  }
+  _applyTagFilters();
+};
+
+window._applyStudentTagFilter = function(tags) {
+  if (!tags?.length) return;
+  populateTagFilterBar();
+  const allChips = document.querySelectorAll('.tag-filter-chip');
+  allChips.forEach(b => b.classList.toggle('active', tags.includes(b.dataset.tag)));
+  const anyActive = [...allChips].some(b => b.classList.contains('active') && b.dataset.tag);
+  document.querySelector('.tag-filter-chip[data-tag=""]')?.classList.toggle('active', !anyActive);
+  _applyTagFilters();
 };
 
 async function loadInstructors() {
