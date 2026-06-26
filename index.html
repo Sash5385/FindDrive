@@ -56,6 +56,14 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .hero-emblem{position:absolute;right:60px;top:50%;transform:translateY(-50%);width:300px;height:300px;object-fit:cover;border-radius:50%;z-index:1;pointer-events:none;filter:drop-shadow(0 8px 32px rgba(26,122,74,.15))}
 @media(max-width:900px){.hero-emblem{width:200px;height:200px;right:20px}}
 @media(max-width:600px){.hero-emblem{display:none}}
+.hero-emblem-cloud{position:absolute;right:48px;top:50%;transform:translateY(-50%);width:300px;height:300px;z-index:2;overflow:visible;pointer-events:none}
+@media(max-width:1100px){.hero-emblem-cloud{width:240px;height:240px;right:24px}}
+@media(max-width:900px){.hero-emblem-cloud{width:200px;height:200px;right:16px}}
+@media(max-width:700px){.hero-emblem-cloud{display:none}}
+.tc-tag{position:absolute;white-space:nowrap;cursor:pointer;border-radius:20px;padding:4px 11px;font-weight:500;font-family:inherit;user-select:none;will-change:opacity,transform;pointer-events:auto;transition:filter .15s}
+.tc-tag.tc-f{background:var(--green-light);color:var(--green);border:.5px solid #b0d8b8}
+.tc-tag.tc-d{background:rgba(255,255,255,.72);color:var(--text-muted);border:.5px solid var(--border)}
+.tc-tag:hover{filter:brightness(.9)}
 .hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--green-mid);border-radius:20px;padding:5px 14px;font-size:12px;color:#1a6a3a;margin-bottom:22px}
 .hero-h1{font-size:42px;font-weight:600;color:var(--text);line-height:1.12;margin-bottom:16px}
 .hero-h1 span{color:var(--green)}
@@ -449,7 +457,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.74</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.75</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -471,7 +479,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <div class="blob b3"></div>
   <div class="blob b4"></div>
   <div class="blob b5"></div>
-  <img src="logo.png" alt="" class="hero-emblem">
+  <div id="tag-cloud-3d" class="hero-emblem-cloud" aria-hidden="true"></div>
   <div class="hero-content">
     <div class="hero-badge"><i class="ti ti-map-pin"></i> Знайдемо інструктора поряд з вами</div>
     <h1 class="hero-h1">Знайдіть свого<br><span>інструктора</span> з водіння</h1>
@@ -2829,6 +2837,74 @@ function locateMe(fromSearch = false) {
     alert(msgs[err.code] || "Помилка геолокації");
   }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
 }
+
+// 3D rotating tag cloud
+(function(){
+  const el = document.getElementById('tag-cloud-3d');
+  if (!el) return;
+  const FILTER = ['Автомат','Механіка','ТСЦ','Для новачків','Тільки жінки','Бізнес-клас'];
+  const DECO   = ['Паркування','Автотраса','Місто','Від 300₴/год','Онлайн-запис','Позняки','Оболонь','Шевченківський','Безпека','ПДД','Швидко','Зручно'];
+  const tags = [...FILTER.map(t=>({t,f:1})), ...DECO.map(t=>({t,f:0}))];
+  const N = tags.length;
+  const phi = Math.PI*(3-Math.sqrt(5));
+  const cosX = Math.cos(0.18), sinX = Math.sin(0.18);
+  let raf = null, W, H, cx, cy, R, focal;
+
+  function resize(){
+    W = el.offsetWidth||300; H = el.offsetHeight||300;
+    cx = W/2; cy = H/2;
+    R = Math.min(W,H)*0.40;
+    focal = R*4;
+  }
+  resize();
+
+  const items = tags.map(({t,f},i) => {
+    const y0 = 1-(i/(N-1))*2;
+    const r0 = Math.sqrt(1-y0*y0);
+    const th = phi*i;
+    const span = document.createElement('span');
+    span.className = 'tc-tag '+(f?'tc-f':'tc-d');
+    span.textContent = t;
+    span.onclick = () => {
+      if (f) {
+        const chip = document.querySelector('.tag-filter-chip[data-tag="'+t+'"]');
+        if (chip && window._filterByTag) window._filterByTag(chip);
+      }
+      document.getElementById('instructors')?.scrollIntoView({behavior:'smooth'});
+    };
+    el.appendChild(span);
+    return {span, ox:Math.cos(th)*r0, oy:y0, oz:Math.sin(th)*r0};
+  });
+
+  let rotY = 0;
+  function frame(){
+    rotY += 0.005;
+    const cY = Math.cos(rotY), sY = Math.sin(rotY);
+    items.forEach(p => {
+      const x1 = p.ox*cY - p.oz*sY;
+      const z1 = p.ox*sY + p.oz*cY;
+      const y1 = p.oy*cosX - z1*sinX;
+      const z2 = p.oy*sinX + z1*cosX;
+      const sc = focal/(focal-z2*R);
+      const op = Math.max(0.25, (z2*0.35+0.65)).toFixed(2);
+      const fs = (z2*2+11).toFixed(1);
+      const s = p.span.style;
+      s.left = (cx+x1*R*sc).toFixed(1)+'px';
+      s.top  = (cy+y1*R*sc).toFixed(1)+'px';
+      s.transform = 'translate(-50%,-50%) scale('+sc.toFixed(3)+')';
+      s.opacity = op;
+      s.fontSize = fs+'px';
+      s.zIndex = (z2*R+R+1)|0;
+    });
+    raf = requestAnimationFrame(frame);
+  }
+  function start(){if(!raf) raf=requestAnimationFrame(frame);}
+  function stop(){if(raf){cancelAnimationFrame(raf);raf=null;}}
+
+  window.addEventListener('resize',()=>{resize();});
+  new IntersectionObserver(e=>e[0].isIntersecting?start():stop(),{threshold:.05}).observe(el);
+  start();
+})();
 
 initLeafletMap();
 
