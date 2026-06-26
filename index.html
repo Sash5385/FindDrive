@@ -431,7 +431,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.59</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.60</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1625,8 +1625,21 @@ async function loadInstructors() {
     function addMarkers() {
       snap.docs.forEach((docSnap, i) => {
         const d = docSnap.data();
-        if (d.lat && d.lng)
-          window._addInstrMarker?.({ lat: d.lat, lng: d.lng, name: d.name, price: d.price, rating: d.rating, color: THEMES[i % THEMES.length].color }, docSnap.id);
+        const id = docSnap.id;
+        const instrColor = THEMES[i % THEMES.length].color;
+        const mps = (d.meetingPoints||[]).filter(pt => typeof pt==='object' && pt.lat);
+        if (mps.length) {
+          mps.forEach((pt, mpIdx) => {
+            window._addInstrMarker?.({
+              lat: pt.lat, lng: pt.lng,
+              name: d.name, price: d.price, rating: d.rating,
+              color: MP_MARKER_COLORS[mpIdx % MP_MARKER_COLORS.length],
+              mpIdx, mpLabel: pt.label
+            }, id);
+          });
+        } else if (d.lat && d.lng) {
+          window._addInstrMarker?.({ lat: d.lat, lng: d.lng, name: d.name, price: d.price, rating: d.rating, color: instrColor }, id);
+        }
       });
     }
     if (window._mapReady) addMarkers();
@@ -1643,6 +1656,7 @@ const DAY_IDX  = { 'Нд':0,'Пн':1,'Вт':2,'Ср':3,'Чт':4,'Пт':5,'Сб':
 const DAY_UK_S = ['нд','пн','вт','ср','чт','пт','сб'];
 const MON_UK_S = ['січ','лют','бер','кві','тра','чер','лип','сер','вер','жов','лис','гру'];
 const LESSON_MIN = 90;
+const MP_MARKER_COLORS = ['#1a7a4a', '#185fa5', '#993556', '#b07000'];
 
 function genSlots(from, to, lessonMin = LESSON_MIN, stepMin = lessonMin) {
   const r = [];
@@ -2494,7 +2508,7 @@ window._instrProfiles = window._instrProfiles || {};
 
 function _esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-function openInstrProfile(id) {
+function openInstrProfile(id, mpIdx) {
   const d = (window._instrProfiles||{})[id];
   if (!d) return;
   const ini = (d.name||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';
@@ -2532,7 +2546,12 @@ function openInstrProfile(id) {
       <div id="prof-booking"></div>
     </div>`;
   if (window.openPanel) window.openPanel('instr-profile');
-  setTimeout(() => window._openBooking?.(id), 50);
+  setTimeout(() => {
+    window._openBooking?.(id);
+    if (mpIdx !== null && mpIdx !== undefined) {
+      setTimeout(() => window._bkSetMp?.(mpIdx), 150);
+    }
+  }, 50);
 }
 
 function showPhone(phone, col) {
@@ -2629,17 +2648,20 @@ const MAP_STYLES = [
 
 window._addInstrMarker = function(inst, id) {
   if (!gmap) return;
+  const color = inst.color || '#1a7a4a';
+  const mpParam = inst.mpIdx !== undefined ? inst.mpIdx : 'null';
   const marker = new google.maps.Marker({
     position: { lat: inst.lat, lng: inst.lng },
     map: gmap,
-    icon: { path: google.maps.SymbolPath.CIRCLE, scale:11, fillColor: inst.color||"#1a7a4a", fillOpacity:1, strokeColor:"#fff", strokeWeight:2.5 },
+    icon: { path: google.maps.SymbolPath.CIRCLE, scale:11, fillColor: color, fillOpacity:1, strokeColor:"#fff", strokeWeight:2.5 },
     title: inst.name,
   });
   const info = new google.maps.InfoWindow({
     content: `<div style="font-family:Inter,sans-serif;min-width:140px;padding:2px 0">
-      <div style="font-weight:600;color:#0d2a1a;font-size:13px">${inst.name}</div>
+      <div style="font-weight:600;color:#0d2a1a;font-size:13px">${_esc(inst.name)}</div>
+      ${inst.mpLabel ? `<div style="color:${color};font-size:11px;margin-top:2px"><i class="ti ti-map-pin" style="font-size:10px"></i> ${_esc(inst.mpLabel)}</div>` : ''}
       <div style="color:#5a7a6a;font-size:12px;margin-top:3px">⭐ ${inst.rating||'—'} · ${inst.price ? inst.price+' грн/год' : '—'}</div>
-      <button onclick="openInstrProfile('${id||''}')" style="margin-top:8px;background:${inst.color||'#1a7a4a'};color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit">Записатись</button>
+      <button onclick="openInstrProfile('${_esc(id||'')}',${mpParam})" style="margin-top:8px;background:${color};color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit">Записатись</button>
     </div>`,
   });
   marker.addListener("click", () => info.open(gmap, marker));

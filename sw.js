@@ -33,7 +33,7 @@ self.addEventListener('notificationclick', e => {
 });
 
 // --- Caching ---
-const CACHE = 'finddrive-v11';
+const CACHE = 'finddrive-v12';
 
 const PRECACHE = [
   '/favicon.png',
