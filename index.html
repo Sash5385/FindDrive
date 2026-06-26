@@ -152,7 +152,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .cab-title{font-size:15px;font-weight:600;color:var(--text)}
 .cab-close{background:none;border:none;cursor:pointer;color:var(--text-hint);font-size:20px;display:flex;align-items:center;padding:2px}
 .cab-close:hover{color:var(--text)}
-.cab-body{flex:1;overflow-y:auto;padding-bottom:8px}
+.cab-body{flex:1;overflow-y:auto;padding-bottom:8px;overscroll-behavior:contain}
 .cab-profile{display:flex;align-items:center;gap:14px;padding:20px 20px 16px}
 .cab-photo{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--border)}
 .cab-fullname{font-size:15px;font-weight:600;color:var(--text)}
@@ -443,7 +443,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.65</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.66</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1703,7 +1703,7 @@ async function getBusySlots(instrId, dateStr) {
   } catch(e) { return []; }
 }
 
-window._openBooking = function(instrId) {
+window._openBooking = async function(instrId) {
   const profD = (window._instrProfiles||{})[instrId];
   const box = document.getElementById('prof-booking');
   if (!profD || !box) return;
@@ -1721,7 +1721,15 @@ window._openBooking = function(instrId) {
     box.innerHTML = `<div class="booking-login-prompt"><p style="color:var(--text-muted)"><i class="ti ti-info-circle"></i> Це ваш власний профіль</p></div>`;
     return;
   }
-  renderBookingDates(box, instrId, profD);
+  box.innerHTML = '<div class="slot-loading"><i class="ti ti-loader"></i></div>';
+  try {
+    const snap = await getDoc(doc(db, 'instructors', instrId));
+    if (snap.exists()) {
+      const fresh = snap.data();
+      window._instrProfiles[instrId] = { ...profD, availability: fresh.availability || {} };
+    }
+  } catch(e) {}
+  renderBookingDates(box, instrId, window._instrProfiles[instrId]);
 };
 
 const DAY_UA_FULL = ['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
