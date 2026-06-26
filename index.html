@@ -111,7 +111,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .badge-dist{display:inline-flex;align-items:center;gap:5px;background:var(--green-light);border-radius:20px;padding:4px 10px;font-size:11px;color:#1a6a3a;margin-bottom:12px}
 .instr-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
 .tag{font-size:11px;padding:3px 10px;border-radius:20px;border:.5px solid transparent}
-.tag-filter-bar{display:flex;gap:8px;overflow-x:auto;padding:0 0 14px;scrollbar-width:none;margin:0 0 8px}
+.tag-filter-bar{display:none}
 .tag-filter-bar::-webkit-scrollbar{display:none}
 .tag-filter-chip{flex-shrink:0;padding:6px 16px;border-radius:20px;border:.5px solid var(--border);background:var(--white);color:var(--text-muted);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:opacity .15s,box-shadow .15s,border-width .1s}
 .tag-filter-chip[data-tag=""],.tag-filter-chip:not([style]){background:var(--white);color:var(--text-muted)}
@@ -460,7 +460,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.77</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.78</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -2927,13 +2927,17 @@ function locateMe(fromSearch = false) {
     span.className = 'tc-tag';
     span.style.cssText = `background:${c.bg};color:${c.tx};border-color:${c.bd}`;
     span.textContent = t;
+    const item = {span, ox:Math.cos(th)*r0, oy:y0, oz:Math.sin(th)*r0, on:false};
     span.onclick = () => {
       const chip = document.querySelector('.tag-filter-chip[data-tag="'+t+'"]');
-      if (chip && window._filterByTag) window._filterByTag(chip);
-      document.getElementById('instructors')?.scrollIntoView({behavior:'smooth'});
+      if (chip && window._filterByTag) {
+        window._filterByTag(chip);
+        item.on = chip.classList.contains('active');
+        span.style.filter = item.on ? 'saturate(1.8) brightness(1.05)' : '';
+      }
     };
     el.appendChild(span);
-    return {span, ox:Math.cos(th)*r0, oy:y0, oz:Math.sin(th)*r0};
+    return item;
   });
 
   let rotY = 0;
@@ -2946,7 +2950,7 @@ function locateMe(fromSearch = false) {
       const y1 = p.oy*cosX - z1*sinX;
       const z2 = p.oy*sinX + z1*cosX;
       const sc = focal/(focal-z2*R);
-      const op = Math.max(0.22, (z2*0.38+0.62)).toFixed(2);
+      const op = p.on ? '1' : Math.max(0.22, (z2*0.38+0.62)).toFixed(2);
       const fs = (z2*2+11).toFixed(1);
       const s = p.span.style;
       s.left = (cx+x1*R*sc).toFixed(1)+'px';
@@ -2954,7 +2958,7 @@ function locateMe(fromSearch = false) {
       s.transform = 'translate(-50%,-50%) scale('+sc.toFixed(3)+')';
       s.opacity = op;
       s.fontSize = fs+'px';
-      s.zIndex = (z2*R+R+1)|0;
+      s.zIndex = p.on ? 9999 : (z2*R+R+1)|0;
     });
     raf = requestAnimationFrame(frame);
   }
