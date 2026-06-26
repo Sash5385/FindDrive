@@ -185,7 +185,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .instr-set-group{margin-bottom:14px}
 .instr-set-label{font-size:11px;color:var(--text-muted);margin-bottom:6px;display:block;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
 .toggle-row{display:flex;gap:4px}
-.toggle-btn{flex:1;padding:7px 0;border:.5px solid var(--border);border-radius:7px;font-size:12px;background:var(--bg);color:var(--text-muted);cursor:pointer;font-family:inherit;transition:all .15s;text-align:center}
+.toggle-btn{flex:1;padding:5px 0;border:.5px solid var(--border);border-radius:7px;font-size:12px;background:var(--bg);color:var(--text-muted);cursor:pointer;font-family:inherit;transition:all .15s;text-align:center}
 .toggle-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
 .mp-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
 .mp-chip{display:inline-flex;align-items:center;gap:6px;background:var(--green-light);color:var(--green);border:.5px solid #b8ddc8;border-radius:20px;padding:4px 12px;font-size:12px}
@@ -226,9 +226,12 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .bk-mp-filter-chip.active{background:var(--green);color:#fff;border-color:var(--green)}
 .mp-add-row input{flex:1;border:.5px solid var(--border);border-radius:7px;padding:6px 10px;font-size:12px;font-family:inherit;background:var(--white);outline:none;transition:border-color .2s}
 .mp-add-row input:focus{border-color:var(--green)}
-.mp-sel-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
-.mp-sel-chip{padding:5px 12px;border:.5px solid var(--border);border-radius:20px;font-size:11px;background:var(--bg);color:var(--text-muted);cursor:pointer;transition:all .15s;font-family:inherit}
+.mp-sel-list{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
+.mp-sel-chip{display:flex;align-items:center;width:100%;padding:6px 10px;border:.5px solid var(--border);border-radius:9px;font-size:12px;background:var(--bg);color:var(--text-muted);cursor:pointer;transition:all .15s;font-family:inherit;text-align:left;box-sizing:border-box}
 .mp-sel-chip:hover{border-color:var(--green);color:var(--green);background:var(--green-light)}
+.mp-sel-chip.active{background:var(--green-light);border-color:var(--green);color:var(--green)}
+.mp-sel-chip-del{background:none;border:none;padding:0 0 0 8px;font-size:14px;cursor:pointer;color:inherit;opacity:.5;line-height:1;display:flex;align-items:center;flex-shrink:0;transition:opacity .15s}
+.mp-sel-chip-del:hover{opacity:1;color:#cc3333}
 /* INSTRUCTOR FORM PANEL */
 .instr-wide{width:380px}
 .instr-intro{font-size:13px;color:var(--text-muted);line-height:1.6;padding:14px 20px 0}
@@ -284,7 +287,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .prof-booking-section{padding:0 0 4px}
 .booking-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-hint);margin-bottom:10px;font-weight:500}
 .date-grid{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:4px}
-.date-chip{background:var(--bg);border:.5px solid var(--border);border-radius:10px;padding:8px 10px;cursor:pointer;font-size:11px;font-family:inherit;text-align:center;min-width:52px;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--text)}
+.date-chip{background:var(--bg);border:.5px solid var(--border);border-radius:10px;padding:6px 8px;cursor:pointer;font-size:11px;font-family:inherit;text-align:center;min-width:46px;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:1px;color:var(--text)}
 .date-chip-day{font-size:10px;color:var(--text-hint);text-transform:uppercase;transition:color .15s}
 .date-chip-num{font-size:12px;font-weight:500;white-space:nowrap;transition:color .15s}
 .date-chip:hover{border-color:var(--green);background:var(--green-light)}
@@ -344,12 +347,12 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .slot-crm-badge{font-size:10px;font-weight:500}
 .slot-crm-free-label{font-size:11px;color:var(--text-hint)}
 .slot-crm-actions{display:flex;gap:4px;margin-left:auto}
-.slot-hr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
-.slot-hr-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:40px;border-radius:7px;border:.5px solid var(--border);background:var(--bg);cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s;padding:0}
+.slot-hr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:8px 0}
+.slot-hr-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:34px;border-radius:6px;border:.5px solid var(--border);background:var(--bg);cursor:pointer;font-family:inherit;transition:background .15s,border-color .15s;padding:0}
 .slot-hr-btn:disabled{cursor:default;opacity:.7}
-.slot-hr-time{font-size:12px;font-weight:600;color:var(--text-muted)}
-.slot-hr-lbl{font-size:9px;color:var(--text-hint);margin-top:1px}
-.slot-hr-nm{font-size:9px;color:var(--text);margin-top:1px;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slot-hr-time{font-size:11px;font-weight:600;color:var(--text-muted)}
+.slot-hr-lbl{font-size:8px;color:var(--text-hint);margin-top:1px}
+.slot-hr-nm{font-size:8px;color:var(--text);margin-top:1px;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .slot-hr-dot{width:6px;height:6px;border-radius:50%;margin-top:2px}
 .slot-hr-open{background:var(--green-light);border-color:var(--green)}
 .slot-hr-open .slot-hr-time{color:var(--green)}
@@ -446,7 +449,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.72</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.73</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1121,6 +1124,8 @@ async function renderProfileScreen(user) {
   }
 }
 
+let _mpMapObj = null, _mpMarker = null, _mpLatLng = null;
+
 async function loadInstrSettings(instr, container) {
   if (!container) return;
   let lessonDur  = [60,120].includes(instr.lessonDuration) ? instr.lessonDuration : 60;
@@ -1163,7 +1168,6 @@ async function loadInstrSettings(instr, container) {
   }
 
   window._setLessonDur = (d) => { lessonDur = d; renderAll(); };
-  let _mpMapObj = null, _mpMarker = null, _mpLatLng = null;
   function _initMpMapNow() {
     const inp = document.getElementById('mp-new-input');
     _mpMapObj = L.map('mp-map-el', {zoomControl:true}).setView([50.4501,30.5234],12);
@@ -1199,12 +1203,14 @@ async function loadInstrSettings(instr, container) {
     if (!wrap) return;
     const isOpen = wrap.classList.toggle('open');
     if (!isOpen) return;
-    if (_mpMapObj) { _mpMapObj.invalidateSize(); return; }
-    _loadLeaflet(_initMpMapNow);
+    requestAnimationFrame(() => {
+      if (_mpMapObj) { _mpMapObj.invalidateSize(); return; }
+      _loadLeaflet(_initMpMapNow);
+    });
   };
   window._mpGeoSearch = (q) => {
     if (!_mpMapObj || !q) return;
-    fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=ua&accept-language=uk`)
+    fetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(q)}`)
       .then(r=>r.json()).then(results=>{
         if (!results.length) return;
         const {lat,lon,display_name} = results[0];
@@ -2352,7 +2358,7 @@ async function loadInstrCombined(instr, container) {
         <div class="avail-loc-row" style="margin-top:10px">
           <label>Місце зустрічі</label>
           ${pts.length
-            ? `<div class="mp-sel-list">${pts.map((pt,pi)=>{ const lbl=typeof pt==='string'?pt:pt.label; const hasCoords=typeof pt==='object'&&pt.lat; return `<button class="mp-sel-chip${pi===savedMpIdx?' active':''}" onclick="window._selectMpChip(this,'${pi}')">${hasCoords?'<i class=\'ti ti-map-pin\' style=\'font-size:9px;margin-right:2px\'></i>':''}${esc(lbl)}</button>`; }).join('')}</div>
+            ? `<div class="mp-sel-list">${pts.map((pt,pi)=>{ const lbl=typeof pt==='string'?pt:pt.label; const hasCoords=typeof pt==='object'&&pt.lat; return `<button class="mp-sel-chip${pi===savedMpIdx?' active':''}" onclick="window._selectMpChip(this,'${pi}')"><span style="flex:1;text-align:left">${hasCoords?'<i class=\'ti ti-map-pin\' style=\'font-size:9px;margin-right:3px\'></i>':'<i class=\'ti ti-map-pin-off\' style=\'font-size:9px;margin-right:3px;opacity:.4\'></i>'}${esc(lbl)}</span><span class="mp-sel-chip-del" onclick="event.stopPropagation();window._deleteMpPoint('${instr.id}',${pi})" title="Видалити">×</span></button>`; }).join('')}</div>
               <div id="comb-mp-preview"${savedMpIdx < 0 ? ' style="display:none"' : ''}>${previewHtml}</div>
               <div class="avail-save-row" style="margin-top:8px">
                 <button class="btn-bk-action" style="font-size:11px;padding:5px 12px" onclick="window._combSaveLoc('${instr.id}','${editDate}')"><i class="ti ti-map-pin"></i> Зберегти місце</button>
@@ -2509,6 +2515,17 @@ async function loadInstrCombined(instr, container) {
         if (window._instrProfiles?.[instrId]?.availability) delete window._instrProfiles[instrId].availability[date];
         editDate=null; renderAll();
       } catch(e) { alert('Помилка скидання.'); }
+    };
+    window._deleteMpPoint = async (instrId, idx) => {
+      const pts = [...(window._instrProfiles?.[instrId]?.meetingPoints || instr.meetingPoints || [])];
+      pts.splice(idx, 1);
+      try {
+        await updateDoc(doc(db,'instructors',instrId), { meetingPoints: pts });
+        if (window._instrProfiles?.[instrId]) window._instrProfiles[instrId].meetingPoints = pts;
+        instr.meetingPoints = pts;
+        renderAll();
+        showToast('Точку видалено', '', 'success');
+      } catch(e) { alert('Помилка.'); }
     };
 
     renderAll();
