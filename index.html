@@ -173,6 +173,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 #map{height:360px;border-radius:18px;border:.5px solid var(--border);overflow:hidden}
 .btn-locate{background:var(--green);color:#fff;border:none;border-radius:9px;padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;font-family:inherit}
 .btn-locate:hover{background:var(--green-dark)}
+.btn-pick-loc{background:var(--white);color:var(--green);border:.5px solid var(--green);border-radius:9px;padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s;font-family:inherit}
+.btn-pick-loc:hover,.btn-pick-loc.active{background:var(--green);color:#fff}
+#map.picking-mode{cursor:crosshair!important}
+#map.picking-mode *{cursor:crosshair!important}
 @media(max-width:600px){#map{height:320px}.map-section{padding-left:20px;padding-right:20px}}
 
 /* FOOTER */
@@ -560,7 +564,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.110</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.111</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -625,6 +629,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <div class="section-top">
     <span class="section-label">Інструктори на карті</span>
     <button class="btn-locate" onclick="locateMe()"><i class="ti ti-current-location"></i> Моє місце</button>
+    <button class="btn-pick-loc" id="btn-pick-loc" onclick="window._startPickLocation()" title="Вказати своє місце кліком по карті"><i class="ti ti-map-pin-plus"></i> Вручну</button>
   </div>
   <div id="map"></div>
 </section>
@@ -3602,6 +3607,16 @@ function initLeafletMap() {
   }).addTo(_mainMap);
   window._mapReady = true;
   window._onMapReady?.();
+  _mainMap.on('click', function(e) {
+    if (!_pickingLocation) return;
+    _pickingLocation = false;
+    const btn = document.getElementById('btn-pick-loc');
+    const mapEl = document.getElementById('map');
+    if (btn) btn.classList.remove('active');
+    if (mapEl) mapEl.classList.remove('picking-mode');
+    _setUserLocation(e.latlng.lat, e.latlng.lng, null);
+    showToast('Місце встановлено', 'Відстані до інструкторів оновлено', 'success');
+  });
 }
 
 window._addInstrMarker = function(inst, id) {
@@ -3660,41 +3675,67 @@ window.initInstrMap = function() {
   syncLatLng();
 };
 
+let _userAccCircle = null;
+function _setUserLocation(lat, lng, accuracy) {
+  window._userLat = lat; window._userLng = lng;
+  if (!_mainMap) return;
+  if (_userMarker) _mainMap.removeLayer(_userMarker);
+  if (_userAccCircle) _mainMap.removeLayer(_userAccCircle);
+  const dotIcon = L.divIcon({
+    className: '',
+    html: '<div class="user-location-dot"></div>',
+    iconSize: [16, 16], iconAnchor: [8, 8],
+  });
+  _userMarker = L.marker([lat, lng], {icon: dotIcon, zIndexOffset: 9000})
+    .addTo(_mainMap)
+    .bindTooltip('Ваше місце', {permanent: false, direction: 'top', offset: [0, -10]});
+  if (accuracy && accuracy > 80) {
+    _userAccCircle = L.circle([lat, lng], {
+      radius: accuracy, color: '#185fa5', fillColor: '#185fa5',
+      fillOpacity: 0.08, weight: 1, dashArray: '4 4',
+    }).addTo(_mainMap);
+  }
+  _updateDistanceBadges();
+  if (_activeSort === 'distance') _applyAllFilters();
+}
+
 function locateMe(fromSearch = false) {
-  if (!navigator.geolocation) { alert("Геолокація не підтримується вашим браузером"); return; }
+  if (!navigator.geolocation) { showToast('Геолокація недоступна', 'Використайте кнопку «Вручну» щоб вказати місце на карті', 'error'); return; }
   const btns = document.querySelectorAll('.btn-locate, .search-loc');
   btns.forEach(b => { b._orig = b.innerHTML; b.innerHTML = '<i class="ti ti-loader"></i> …'; b.style.opacity = '.7'; b.style.pointerEvents = 'none'; });
   const restore = () => btns.forEach(b => { b.innerHTML = b._orig; b.style.opacity = ''; b.style.pointerEvents = ''; });
   navigator.geolocation.getCurrentPosition(pos => {
     restore();
     const lat = pos.coords.latitude, lng = pos.coords.longitude;
-    window._userLat = lat; window._userLng = lng;
-    if (_mainMap) {
-      _mainMap.setView([lat,lng], 15);
-      if (_userMarker) _mainMap.removeLayer(_userMarker);
-      const dotIcon = L.divIcon({
-        className: '',
-        html: '<div class="user-location-dot"></div>',
-        iconSize: [16, 16],
-        iconAnchor: [8, 8],
-      });
-      _userMarker = L.marker([lat,lng], {icon: dotIcon, zIndexOffset: 9000})
-        .addTo(_mainMap)
-        .bindTooltip('Ваше місце', {permanent:false, direction:'top', offset:[0,-10]});
-    }
+    const acc = Math.round(pos.coords.accuracy);
+    if (_mainMap) _mainMap.setView([lat, lng], acc < 200 ? 15 : 13);
     if (fromSearch) scrollToMap();
-    _updateDistanceBadges();
-    if (_activeSort === 'distance') _applyAllFilters();
+    _setUserLocation(lat, lng, pos.coords.accuracy);
+    showToast('Місце визначено', `Точність: ~${acc < 1000 ? acc + ' м' : (acc/1000).toFixed(1) + ' км'}${acc > 500 ? ' — спробуйте «Вручну» для точнішого місця' : ''}`, acc > 500 ? 'info' : 'success');
   }, err => {
     restore();
-    const msgs = {
-      1: "Доступ до геолокації заборонено.\nДозвольте доступ у налаштуваннях браузера.",
-      2: "Не вдалося визначити місцезнаходження.\nПеревірте GPS або підключення.",
-      3: "Час очікування вичерпано. Спробуйте ще раз.",
-    };
-    alert(msgs[err.code] || "Помилка геолокації");
+    const msgs = { 1: 'Доступ до геолокації заборонено', 2: 'Не вдалося визначити місцезнаходження', 3: 'Час очікування вичерпано' };
+    showToast(msgs[err.code] || 'Помилка геолокації', 'Використайте кнопку «Вручну»', 'error');
   }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
 }
+
+let _pickingLocation = false;
+window._startPickLocation = function() {
+  if (!_mainMap) { scrollToMap(); setTimeout(window._startPickLocation, 400); return; }
+  scrollToMap();
+  _pickingLocation = !_pickingLocation;
+  const btn = document.getElementById('btn-pick-loc');
+  const mapEl = document.getElementById('map');
+  if (_pickingLocation) {
+    if (btn) btn.classList.add('active');
+    if (mapEl) mapEl.classList.add('picking-mode');
+    showToast('Режим вибору місця', 'Клікніть по карті де ви знаходитесь', 'info');
+  } else {
+    if (btn) btn.classList.remove('active');
+    if (mapEl) mapEl.classList.remove('picking-mode');
+  }
+};
+
 
 // 3D rotating tag cloud
 (function(){
