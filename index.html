@@ -564,7 +564,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.112</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.113</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -2412,7 +2412,7 @@ function updateActiveTagsBar(activeTags) {
   bar.style.display = 'flex';
   bar.innerHTML = activeTags.map(tag => {
     const c = (window.TAG_COLORS || {})[tag] || {bg:'#f0f5f0',bd:'#dde8dd',tx:'#4a6a5a'};
-    return `<span class="atag-chip" style="background:${c.bg};color:${c.tx};border-color:${c.bd}">${esc(tag)}<button class="atag-chip-x" onclick="window._removeActiveTag(${JSON.stringify(tag)})">×</button></span>`;
+    return `<span class="atag-chip" style="background:${c.bg};color:${c.tx};border-color:${c.bd}">${esc(tag)}<button class="atag-chip-x" onclick='window._removeActiveTag(${JSON.stringify(tag)})'>×</button></span>`;
   }).join('');
 }
 window._removeActiveTag = function(tag) {
