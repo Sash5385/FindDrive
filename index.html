@@ -76,7 +76,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
   .hero-badge{justify-content:center}
   .search-box{max-width:100%;box-sizing:border-box}
   .search-loc span,.btn-search span{display:none}
-  .hints{justify-content:center;flex-wrap:wrap}
   .hero-cloud-col{order:2;width:100%}
   .hero-map-col{display:none}
   .hero-cloud-wrap{width:min(92vw,340px);height:240px;margin:0 auto}
@@ -102,9 +101,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .search-loc{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--green);cursor:pointer;white-space:nowrap;flex-shrink:0}
 .btn-search{background:var(--green);color:#fff;border:none;border-radius:9px;padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0;transition:background .2s;font-family:inherit}
 .btn-search:hover{background:var(--green-dark)}
-.hints{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap}
-.hint-tag{font-size:12px;color:var(--text-hint);display:flex;align-items:center;gap:4px;cursor:pointer;transition:color .2s}
-.hint-tag:hover{color:var(--green)}
 .pac-container{font-family:'Inter',sans-serif;border-radius:12px;border:.5px solid #dde8dd;box-shadow:0 4px 20px rgba(26,122,74,.1);margin-top:6px;padding:4px 0}
 .pac-item{padding:8px 14px;font-size:13px;color:#0d2a1a;cursor:pointer;border:none}
 .pac-item:hover,.pac-item-selected{background:#e8f4ee}
@@ -189,14 +185,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 
 
 /* TRUST BAR */
-.trust-bar{background:var(--white);border-top:.5px solid var(--border);border-bottom:.5px solid var(--border);padding:20px 48px;display:flex;justify-content:space-around;align-items:center;gap:16px}
-.trust-item{display:flex;align-items:center;gap:12px}
-.trust-item i{font-size:24px;color:var(--green);flex-shrink:0}
-.trust-val{font-size:18px;font-weight:700;color:var(--text);line-height:1.1}
-.trust-label{font-size:11px;color:var(--text-muted);font-weight:400;margin-top:2px}
-@media(max-width:700px){.trust-bar{padding:16px 20px;flex-wrap:wrap;gap:14px}.trust-item{min-width:calc(50% - 14px)}}
-@media(max-width:360px){.trust-item{min-width:100%}}
-
 /* TESTIMONIALS */
 .reviews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 @media(max-width:900px){.reviews-grid{grid-template-columns:1fr 1fr}}
@@ -674,7 +662,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.126</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.127</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -726,12 +714,6 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
         <button class="btn-search" onclick="doSearch()"><i class="ti ti-search"></i><span> Знайти</span></button>
         <ul id="search-suggest" class="search-suggest"></ul>
       </div>
-      <div class="hints">
-        <span class="hint-tag" onclick="searchQuery('Шевченківський район, Київ')"><i class="ti ti-trending-up"></i> Шевченківський</span>
-        <span class="hint-tag" onclick="searchQuery('Оболонь, Київ')"><i class="ti ti-trending-up"></i> Оболонь</span>
-        <span class="hint-tag" onclick="searchQuery('Позняки, Київ')"><i class="ti ti-trending-up"></i> Позняки</span>
-        <span class="hint-tag" onclick="searchQuery('Відрадний, Київ')"><i class="ti ti-trending-up"></i> Відрадний</span>
-      </div>
     </div>
     <div class="hero-cloud-col">
       <div id="tag-cloud-3d" class="hero-cloud-wrap" aria-hidden="true"></div>
@@ -739,12 +721,6 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   </div>
 </section>
 
-<div class="trust-bar">
-  <div class="trust-item"><i class="ti ti-users"></i><div><div class="trust-val" data-count="50" data-suffix="+">50+</div><div class="trust-label">інструкторів</div></div></div>
-  <div class="trust-item"><i class="ti ti-map-2"></i><div><div class="trust-val">Київ</div><div class="trust-label">та область</div></div></div>
-  <div class="trust-item"><i class="ti ti-star-filled"></i><div><div class="trust-val" data-count="4.8" data-suffix=" ★">4.8 ★</div><div class="trust-label">середній рейтинг</div></div></div>
-  <div class="trust-item"><i class="ti ti-shield-check"></i><div><div class="trust-val">Безкоштовно</div><div class="trust-label">для учнів</div></div></div>
-</div>
 
 <section class="section" id="how-it-works" style="padding-bottom:44px">
   <div class="section-top">
@@ -841,16 +817,6 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       <button class="ifilter-chip" data-pmax="500" onclick="window._filterPrice(this)">до 500</button>
       <button class="ifilter-chip" data-pmax="800" onclick="window._filterPrice(this)">до 800</button>
       <button class="ifilter-chip" data-pmax="1000" onclick="window._filterPrice(this)">до 1000</button>
-    </div>
-    <div class="ifilter-sep"></div>
-    <div class="ifilter-group">
-      <span class="ifilter-label">Район</span>
-      <button class="ifilter-chip active" data-area="" onclick="window._filterArea(this)">Всі</button>
-      <button class="ifilter-chip" data-area="шевченківський" onclick="window._filterArea(this)">Шевченківськ.</button>
-      <button class="ifilter-chip" data-area="оболонь" onclick="window._filterArea(this)">Оболонь</button>
-      <button class="ifilter-chip" data-area="позняки" onclick="window._filterArea(this)">Позняки</button>
-      <button class="ifilter-chip" data-area="відрадний" onclick="window._filterArea(this)">Відрадний</button>
-      <button class="ifilter-chip" data-area="голосіїво" onclick="window._filterArea(this)">Голосіїво</button>
     </div>
     <div class="ifilter-sep"></div>
     <div class="ifilter-group">
@@ -2522,7 +2488,6 @@ function populateTagFilterBar() {
 let _activeGb         = '';
 let _activePmax       = 0;
 let _activeSort       = '';
-let _activeArea       = '';
 let _showFavsOnly     = false;
 let _activeNameFilter = '';
 
@@ -2620,10 +2585,9 @@ function _applyAllFilters() {
       activeGbTags.some(t => gearbox === t || gearbox === 'Обидва');
     const otherOk  = !activeOtherTags.length || activeOtherTags.some(t => ct.includes(t));
     const priceOk  = !maxP || !price || price <= maxP;
-    const areaOk   = !_activeArea || area.includes(_activeArea);
     const favOk    = !_showFavsOnly || window._favs.has(card.dataset.instrId || '');
     const nameOk   = !_activeNameFilter || (card.dataset.name || '').includes(_activeNameFilter);
-    const show = typeOk && otherOk && priceOk && areaOk && favOk && nameOk;
+    const show = typeOk && otherOk && priceOk && favOk && nameOk;
     card.style.display = show ? '' : 'none';
     if (show) visible++;
   });
@@ -2667,13 +2631,12 @@ window._removeActiveTag = function(tag) {
 function _applyTagFilters() { _applyAllFilters(); }
 
 window._resetAllFilters = function() {
-  _activeGb = ''; _activePmax = 0; _activeSort = ''; _activeArea = '';
+  _activeGb = ''; _activePmax = 0; _activeSort = '';
   _showFavsOnly = false; _activeNameFilter = '';
   document.querySelectorAll('.tag-filter-chip').forEach(b => b.classList.toggle('active', b.dataset.tag === ''));
   document.querySelectorAll('[data-gb]').forEach(b => b.classList.toggle('active', b.dataset.gb === ''));
   document.querySelectorAll('[data-pmax]').forEach(b => b.classList.toggle('active', !b.dataset.pmax));
   document.querySelectorAll('[data-sort]').forEach(b => b.classList.toggle('active', b.dataset.sort === ''));
-  document.querySelectorAll('[data-area]').forEach(b => b.classList.toggle('active', b.dataset.area === ''));
   document.getElementById('fav-filter-chip')?.classList.remove('active');
   const inp = document.getElementById('search-input'); if (inp) inp.value = '';
   _GB_TAGS.forEach(tag => window._syncCloudTag?.(tag, false));
@@ -2730,36 +2693,12 @@ document.addEventListener('keydown', function(e) {
   }
 });
 
-// Animated counters in trust bar
-(function initCounters() {
-  const els = document.querySelectorAll('.trust-val[data-count]');
-  if (!els.length) return;
-  const obs = new IntersectionObserver(([e]) => {
-    if (!e.isIntersecting) return;
-    obs.disconnect();
-    els.forEach(el => {
-      const target = parseFloat(el.dataset.count);
-      const suffix = el.dataset.suffix || '';
-      const isDecimal = target % 1 !== 0;
-      const dur = 1200;
-      const start = performance.now();
-      (function tick(now) {
-        const p = Math.min((now - start) / dur, 1);
-        const eased = 1 - Math.pow(1 - p, 3);
-        el.textContent = (isDecimal ? (eased * target).toFixed(1) : Math.round(eased * target)) + suffix;
-        if (p < 1) requestAnimationFrame(tick);
-      })(start);
-    });
-  }, { threshold: 0.5 });
-  obs.observe(document.querySelector('.trust-bar'));
-})();
-
 // Scroll reveal
 (function initReveal() {
   const obs = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
   }, { threshold: 0.12 });
-  document.querySelectorAll('.how-card, .review-card, .cta-inner, .trust-item').forEach((el, i) => {
+  document.querySelectorAll('.how-card, .review-card, .cta-inner').forEach((el, i) => {
     el.classList.add('reveal');
     el.style.transitionDelay = (i % 4 * 80) + 'ms';
     obs.observe(el);
@@ -2825,13 +2764,6 @@ window._filterSort = function(btn) {
   _activeSort = btn.dataset.sort;
   _applyAllFilters();
 };
-window._filterArea = function(btn) {
-  document.querySelectorAll('[data-area]').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  _activeArea = btn.dataset.area;
-  _applyAllFilters();
-};
-
 window._filterByTag = function(btn) {
   const tag = btn.dataset.tag || '';
   if (!tag) {
@@ -3938,12 +3870,6 @@ function showPhone(phone, col) {
 
 let _mainMap, _userMarker, _instrPickMap, _instrPickMarker;
 
-const DISTRICT_COORDS = {
-  'Шевченківський район, Київ': { lat:50.4564, lng:30.5131 },
-  'Оболонь, Київ':              { lat:50.5019, lng:30.4989 },
-  'Позняки, Київ':              { lat:50.3958, lng:30.6322 },
-  'Відрадний, Київ':            { lat:50.4341, lng:30.4108 },
-};
 
 const KYIV_VIEWBOX = '30.20,50.20,30.90,50.60';
 const NOM_BASE = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=ua&accept-language=uk&viewbox=${KYIV_VIEWBOX}&bounded=0`;
@@ -3983,19 +3909,13 @@ function doSearch() {
   const query = document.getElementById("search-input").value.trim();
   if (!query) return;
   scrollToMap();
-  if (DISTRICT_COORDS[query]) { _mainMap?.setView([DISTRICT_COORDS[query].lat, DISTRICT_COORDS[query].lng], 13); return; }
   fetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(query)}`)
     .then(r=>r.json()).then(data => { if (data.length) focusMap({lat:+data[0].lat, lng:+data[0].lon}); }).catch(()=>{});
 }
 
 function searchQuery(query) {
   document.getElementById("search-input").value = query;
-  // Activate district filter chip if query contains a known district keyword
-  const q = query.toLowerCase();
-  const chip = [...document.querySelectorAll('[data-area]:not([data-area=""])')].find(b => q.includes(b.dataset.area));
-  if (chip) window._filterArea?.(chip);
   scrollToMap();
-  if (DISTRICT_COORDS[query]) { _mainMap?.setView([DISTRICT_COORDS[query].lat, DISTRICT_COORDS[query].lng], 13); return; }
   fetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(query)}`)
     .then(r=>r.json()).then(data => { if (data.length) focusMap({lat:+data[0].lat, lng:+data[0].lon}); }).catch(()=>{});
 }
