@@ -137,6 +137,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .ifilter-chip.active{background:var(--green);color:#fff;border-color:var(--green);font-weight:600}
 .ifilter-count{font-size:11px;color:var(--text-hint);margin-left:auto;white-space:nowrap;padding:4px 0}
 @media(max-width:600px){.ifilter-sep{display:none}.instr-filters{gap:6px}}
+#active-tags-bar{display:none;flex-wrap:wrap;gap:5px;align-items:center;padding:6px 0 0;border-top:.5px solid var(--border);width:100%}
+.atag-chip{display:inline-flex;align-items:center;gap:3px;padding:3px 6px 3px 10px;border-radius:20px;border:1px solid;font-size:11px;font-weight:600;line-height:1.4}
+.atag-chip-x{cursor:pointer;opacity:.55;font-size:13px;line-height:1;padding:0 1px;background:none;border:none;color:inherit;font-family:inherit;transition:opacity .1s}
+.atag-chip-x:hover{opacity:1}
 .tag-filter-chip{flex-shrink:0;padding:6px 16px;border-radius:20px;border:.5px solid var(--border);background:var(--white);color:var(--text-muted);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:opacity .15s,box-shadow .15s,border-width .1s}
 .tag-filter-chip[data-tag=""],.tag-filter-chip:not([style]){background:var(--white);color:var(--text-muted)}
 .tag-filter-chip[data-tag=""].active{background:var(--green)!important;color:#fff!important;border-color:var(--green)!important;box-shadow:none}
@@ -551,7 +555,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.104</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.105</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -658,6 +662,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
       <button class="ifilter-chip" data-sort="price_desc" onclick="window._filterSort(this)">↓ Ціна</button>
     </div>
     <span id="ifilter-count" class="ifilter-count"></span>
+    <div id="active-tags-bar"></div>
   </div>
   <div id="tag-filter-bar" class="tag-filter-bar">
     <button class="tag-filter-chip active" data-tag="" onclick="window._filterByTag(this)">Всі</button>
@@ -2317,7 +2322,28 @@ function _applyAllFilters() {
   const cnt = document.getElementById('ifilter-count');
   if (cnt) cnt.textContent = visible < cards.length ? `${visible} з ${cards.length}` : '';
   window._filterMapMarkers?.(activeTags);
+  updateActiveTagsBar(activeTags);
 }
+
+function updateActiveTagsBar(activeTags) {
+  const bar = document.getElementById('active-tags-bar');
+  if (!bar) return;
+  if (!activeTags || !activeTags.length) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
+  bar.style.display = 'flex';
+  bar.innerHTML = activeTags.map(tag => {
+    const c = (window.TAG_COLORS || {})[tag] || {bg:'#f0f5f0',bd:'#dde8dd',tx:'#4a6a5a'};
+    return `<span class="atag-chip" style="background:${c.bg};color:${c.tx};border-color:${c.bd}">${esc(tag)}<button class="atag-chip-x" onclick="window._removeActiveTag(${JSON.stringify(tag)})">×</button></span>`;
+  }).join('');
+}
+window._removeActiveTag = function(tag) {
+  const chip = document.querySelector('.tag-filter-chip[data-tag="'+tag+'"]');
+  if (!chip) return;
+  chip.classList.remove('active');
+  const anyActive = [...document.querySelectorAll('.tag-filter-chip[data-tag]')].some(b => b.classList.contains('active'));
+  if (!anyActive) document.querySelector('.tag-filter-chip[data-tag=""]')?.classList.add('active');
+  _applyAllFilters();
+  window._syncCloudTag?.(tag, false);
+};
 
 function _applyTagFilters() { _applyAllFilters(); }
 
@@ -3652,6 +3678,17 @@ function locateMe(fromSearch = false) {
     el.appendChild(span);
     return item;
   });
+
+  window._syncCloudTag = function(tag, on) {
+    const idx = TAGS.indexOf(tag);
+    if (idx < 0) return;
+    const p = items[idx]; const c2 = TC[tag];
+    p.on = !!on;
+    p.span.style.filter     = p.on ? 'saturate(2.8) brightness(1.12)' : '';
+    p.span.style.boxShadow  = p.on ? `0 0 14px 3px ${c2.bd}` : '';
+    p.span.style.fontWeight = p.on ? '700' : '500';
+    p.span.style.borderWidth= p.on ? '1.5px' : '';
+  };
 
   let rotY = 0;
   function frame(){
