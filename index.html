@@ -283,11 +283,23 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 @media(max-width:600px){#map{height:320px}.map-section{padding-left:20px;padding-right:20px}}
 
 /* FOOTER */
-footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
-.footer-logo{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
-.footer-links{display:flex;gap:24px}
-.footer-link{font-size:12px;color:var(--text-hint);text-decoration:none}
+footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 48px 32px}
+.footer-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+@media(max-width:900px){.footer-grid{grid-template-columns:1fr 1fr;gap:32px}}
+@media(max-width:600px){.footer-grid{grid-template-columns:1fr 1fr;gap:24px}.footer{padding:36px 20px 24px}}
+.footer-brand{display:flex;flex-direction:column;gap:10px}
+.footer-brand-logo{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:700;color:var(--text)}
+.footer-brand-logo img{width:30px;height:30px;border-radius:8px;object-fit:cover}
+.footer-tagline{font-size:12.5px;color:var(--text-muted);line-height:1.6;max-width:200px}
+.footer-col-title{font-size:11px;letter-spacing:1.8px;text-transform:uppercase;color:var(--text-hint);font-weight:600;margin-bottom:14px}
+.footer-col-links{display:flex;flex-direction:column;gap:10px}
+.footer-link{font-size:13px;color:var(--text-muted);text-decoration:none;transition:color .15s;display:inline-flex;align-items:center;gap:5px}
 .footer-link:hover{color:var(--green)}
+.footer-bottom{display:flex;align-items:center;justify-content:space-between;padding-top:24px;border-top:.5px solid var(--border);flex-wrap:wrap;gap:12px}
+.footer-copy{font-size:12px;color:var(--text-hint)}
+.footer-id4drive{font-size:12px;color:var(--text-hint);display:flex;align-items:center;gap:5px}
+.footer-id4drive a{color:var(--green);text-decoration:none;font-weight:500}
+.footer-id4drive a:hover{color:var(--green-dark)}
 .footer-copy{font-size:12px;color:var(--text-hint)}
 
 /* CABINET */
@@ -667,7 +679,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.122</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.123</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -739,9 +751,9 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 </section>
 
 <div class="trust-bar">
-  <div class="trust-item"><i class="ti ti-users"></i><div><div class="trust-val">50+</div><div class="trust-label">інструкторів</div></div></div>
+  <div class="trust-item"><i class="ti ti-users"></i><div><div class="trust-val" data-count="50" data-suffix="+">50+</div><div class="trust-label">інструкторів</div></div></div>
   <div class="trust-item"><i class="ti ti-map-2"></i><div><div class="trust-val">Київ</div><div class="trust-label">та область</div></div></div>
-  <div class="trust-item"><i class="ti ti-star-filled"></i><div><div class="trust-val">4.8 ★</div><div class="trust-label">середній рейтинг</div></div></div>
+  <div class="trust-item"><i class="ti ti-star-filled"></i><div><div class="trust-val" data-count="4.8" data-suffix=" ★">4.8 ★</div><div class="trust-label">середній рейтинг</div></div></div>
   <div class="trust-item"><i class="ti ti-shield-check"></i><div><div class="trust-val">Безкоштовно</div><div class="trust-label">для учнів</div></div></div>
 </div>
 
@@ -889,17 +901,45 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 </section>
 
 <footer>
-  <div class="footer-logo">
-    <img src="logo192.png" alt="" style="width:28px;height:28px;border-radius:50%;object-fit:cover">
-    FindDrive
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="footer-brand-logo">
+        <img src="logo192.png" alt="FindDrive">
+        FindDrive
+      </div>
+      <div class="footer-tagline">Маркетплейс пошуку інструкторів з водіння за геолокацією. Знайди інструктора поряд.</div>
+    </div>
+    <div>
+      <div class="footer-col-title">Учням</div>
+      <div class="footer-col-links">
+        <a class="footer-link" href="#instructors"><i class="ti ti-search"></i> Знайти інструктора</a>
+        <a class="footer-link" href="#how-it-works"><i class="ti ti-list-check"></i> Як це працює</a>
+        <a class="footer-link" href="#reviews"><i class="ti ti-star"></i> Відгуки</a>
+        <a class="footer-link" href="#map-anchor"><i class="ti ti-map"></i> Карта</a>
+      </div>
+    </div>
+    <div>
+      <div class="footer-col-title">Інструкторам</div>
+      <div class="footer-col-links">
+        <a class="footer-link" href="#" onclick="document.getElementById('btn-instr')?.click();return false"><i class="ti ti-steering-wheel"></i> Стати інструктором</a>
+        <a class="footer-link" href="#"><i class="ti ti-file-text"></i> Умови партнерства</a>
+        <a class="footer-link" href="#"><i class="ti ti-help-circle"></i> FAQ</a>
+      </div>
+    </div>
+    <div>
+      <div class="footer-col-title">Компанія</div>
+      <div class="footer-col-links">
+        <a class="footer-link" href="#"><i class="ti ti-info-circle"></i> Про нас</a>
+        <a class="footer-link" href="#"><i class="ti ti-mail"></i> Контакти</a>
+        <a class="footer-link" href="#"><i class="ti ti-lock"></i> Конфіденційність</a>
+        <a class="footer-link" href="#"><i class="ti ti-file-certificate"></i> Умови</a>
+      </div>
+    </div>
   </div>
-  <div class="footer-links">
-    <a class="footer-link" href="#">Про нас</a>
-    <a class="footer-link" href="#">Умови</a>
-    <a class="footer-link" href="#">Конфіденційність</a>
-    <a class="footer-link" href="#">Контакти</a>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено.</div>
+    <div class="footer-id4drive"><i class="ti ti-link"></i> Частина екосистеми <a href="https://id4drive.pro" target="_blank" rel="noopener">ID4Drive</a></div>
   </div>
-  <div class="footer-copy">© 2025 FindDrive</div>
 </footer>
 
 <aside id="instr-profile" class="cabinet instr-profile-panel">
@@ -2661,6 +2701,30 @@ window.addEventListener('scroll', function() {
     ([e]) => document.getElementById('filters-sticky-wrap')?.classList.toggle('stuck', !e.isIntersecting),
     { rootMargin: '-60px 0px 0px 0px', threshold: 0 }
   ).observe(stub);
+})();
+
+// Animated counters in trust bar
+(function initCounters() {
+  const els = document.querySelectorAll('.trust-val[data-count]');
+  if (!els.length) return;
+  const obs = new IntersectionObserver(([e]) => {
+    if (!e.isIntersecting) return;
+    obs.disconnect();
+    els.forEach(el => {
+      const target = parseFloat(el.dataset.count);
+      const suffix = el.dataset.suffix || '';
+      const isDecimal = target % 1 !== 0;
+      const dur = 1200;
+      const start = performance.now();
+      (function tick(now) {
+        const p = Math.min((now - start) / dur, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = (isDecimal ? (eased * target).toFixed(1) : Math.round(eased * target)) + suffix;
+        if (p < 1) requestAnimationFrame(tick);
+      })(start);
+    });
+  }, { threshold: 0.5 });
+  obs.observe(document.querySelector('.trust-bar'));
 })();
 
 // Scroll reveal
