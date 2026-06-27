@@ -26,7 +26,7 @@
   --bg:#f0f2f0;--white:#ffffff;--text:#0d2a1a;--text-muted:#5a7a6a;--text-hint:#7a9a8a;
   --border:#dde8dd;--pink:#993556;--pink-light:#fbeaf0;--blue:#185fa5;--blue-light:#e6f1fb;
 }
-body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
+body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg);background-image:radial-gradient(circle 580px at 8% 7%, rgba(168,240,192,.42), transparent 70%),radial-gradient(circle 500px at 88% 12%, rgba(240,224,96,.36), transparent 70%),radial-gradient(circle 520px at 6% 50%, rgba(240,168,208,.34), transparent 70%),radial-gradient(circle 560px at 94% 58%, rgba(160,216,248,.38), transparent 70%),radial-gradient(circle 540px at 48% 90%, rgba(192,184,248,.32), transparent 70%),radial-gradient(circle 420px at 65% 30%, rgba(168,240,192,.20), transparent 70%);background-attachment:fixed}
 
 /* NAV */
 .nav{background:var(--white);border-bottom:.5px solid var(--border);padding:0 48px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
@@ -54,13 +54,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .nav-mobile-cta:hover{background:var(--green-dark)}
 
 /* HERO */
-.hero{position:relative;padding:48px 48px 44px;overflow:hidden}
-.blob{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none}
-.b1{width:320px;height:260px;background:#a8f0c0;opacity:.5;top:-60px;right:40px}
-.b2{width:220px;height:200px;background:#f0e060;opacity:.32;top:-20px;left:50%;transform:translateX(-50%)}
-.b3{width:180px;height:160px;background:#f0a8d0;opacity:.28;top:-20px;left:40px}
-.b4{width:200px;height:170px;background:#a0d8f8;opacity:.32;bottom:-10px;right:80px}
-.b5{width:150px;height:130px;background:#c0b8f8;opacity:.28;bottom:20px;left:50%;transform:translateX(-50%)}
+.hero{position:relative;padding:48px 48px 44px}
 .hero-3col{position:relative;z-index:2;display:grid;grid-template-columns:1fr 2fr 1fr;gap:28px;align-items:center;min-height:360px}
 .hero-map-col,.hero-cloud-col{display:flex;justify-content:center;align-items:center}
 .hero-left-emblem{width:260px;height:260px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.88);box-shadow:0 8px 32px rgba(26,122,74,.18),0 0 0 8px rgba(255,255,255,.28);flex-shrink:0;background:var(--white)}
@@ -676,7 +670,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.129</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.130</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -706,11 +700,6 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 </div>
 
 <section class="hero">
-  <div class="blob b1"></div>
-  <div class="blob b2"></div>
-  <div class="blob b3"></div>
-  <div class="blob b4"></div>
-  <div class="blob b5"></div>
   <div class="hero-3col">
     <div class="hero-map-col">
       <img src="logo.png" alt="" class="hero-left-emblem">
