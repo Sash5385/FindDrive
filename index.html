@@ -564,7 +564,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.113</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.114</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -2250,7 +2250,7 @@ function buildCard(d, i, id) {
   const validTags = instrTags.filter(t => INSTR_TAGS.includes(t));
   const tags = validTags.length ? validTags : [d.gearbox, (d.car||'').split(' ')[0]].filter(Boolean);
   const isFav = window._favs?.has(id||'');
-  return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}' data-price="${d.price||0}" data-rating="${d.rating||0}" data-gearbox="${esc(d.gearbox||'')}" data-area="${esc((d.area||'').toLowerCase())}" data-instr-id="${esc(id||'')}" data-lat="${d.lat||''}" data-lng="${d.lng||''}" data-dist="">
+  return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}' data-price="${d.price||0}" data-rating="${d.rating||0}" data-gearbox="${esc(d.gearbox||'')}" data-area="${esc((d.area||'').toLowerCase())}" data-instr-id="${esc(id||'')}" data-lat="${d.lat||''}" data-lng="${d.lng||''}" data-dist="" data-name="${esc((d.name||'').toLowerCase())}">
     <div class="card-blob" style="background:${th.blob}"></div>
     <button class="card-fav${isFav?' on':''}" data-fav-id="${esc(id||'')}" onclick="window._toggleFav(this)" title="До обраних"><i class="ti ti-heart${isFav?'-filled':''}"></i></button>
     <div class="instr-top">
@@ -2292,11 +2292,12 @@ function populateTagFilterBar() {
   });
 }
 
-let _activeGb   = '';
-let _activePmax = 0;
-let _activeSort = '';
-let _activeArea = '';
-let _showFavsOnly = false;
+let _activeGb         = '';
+let _activePmax       = 0;
+let _activeSort       = '';
+let _activeArea       = '';
+let _showFavsOnly     = false;
+let _activeNameFilter = '';
 
 window._favs = new Set(JSON.parse(localStorage.getItem('fd_fav') || '[]'));
 function _saveFavs() { localStorage.setItem('fd_fav', JSON.stringify([...window._favs])); }
@@ -2394,7 +2395,8 @@ function _applyAllFilters() {
     const priceOk  = !maxP || !price || price <= maxP;
     const areaOk   = !_activeArea || area.includes(_activeArea);
     const favOk    = !_showFavsOnly || window._favs.has(card.dataset.instrId || '');
-    const show = typeOk && otherOk && priceOk && areaOk && favOk;
+    const nameOk   = !_activeNameFilter || (card.dataset.name || '').includes(_activeNameFilter);
+    const show = typeOk && otherOk && priceOk && areaOk && favOk && nameOk;
     card.style.display = show ? '' : 'none';
     if (show) visible++;
   });
@@ -3600,27 +3602,71 @@ function searchQuery(query) {
     .then(r=>r.json()).then(data => { if (data.length) focusMap({lat:+data[0].lat, lng:+data[0].lon}); }).catch(()=>{});
 }
 
+window._filterByName = function(name, instrId) {
+  _activeNameFilter = name ? name.toLowerCase() : '';
+  const inp = document.getElementById('search-input');
+  if (inp) inp.value = name || '';
+  const ul = document.getElementById('search-suggest');
+  if (ul) ul.style.display = 'none';
+  _applyAllFilters();
+  if (_activeNameFilter) {
+    document.getElementById('instructors')?.scrollIntoView({behavior:'smooth', block:'start'});
+    if (instrId) setTimeout(() => {
+      const card = document.querySelector(`.instr-card[data-instr-id="${instrId}"]`);
+      card?.scrollIntoView({behavior:'smooth', block:'center'});
+    }, 400);
+  }
+};
+
 let _searchAcTimer = null;
 function _showSearchSuggest(q) {
   clearTimeout(_searchAcTimer);
   const ul = document.getElementById('search-suggest');
-  if (!q || q.length < 2) { if (ul) ul.style.display='none'; return; }
+  if (!q || q.length < 2) {
+    if (ul) ul.style.display = 'none';
+    if (!q) { _activeNameFilter = ''; _applyAllFilters(); }
+    return;
+  }
+  const qLow = q.toLowerCase();
+  // Instructor name matches (instant, no network)
+  const instrMatches = Object.entries(window._instrProfiles || {})
+    .filter(([, d]) => (d.name || '').toLowerCase().includes(qLow))
+    .slice(0, 3);
+  const instrHtml = instrMatches.map(([id, d]) => {
+    const color = d.color || '#1a7a4a';
+    const initials = (d.name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const avatar = d.photo
+      ? `<img src="${_esc(d.photo)}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0">`
+      : `<div style="width:28px;height:28px;border-radius:50%;background:${color};color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0">${_esc(initials)}</div>`;
+    return `<li style="display:flex;align-items:center;gap:8px" data-instr-id="${_esc(id)}" data-instr-name="${_esc(d.name||'')}" onmousedown="window._filterByName(this.dataset.instrName,this.dataset.instrId)">${avatar}<span>${_esc(d.name||'')}</span><span style="margin-left:auto;font-size:10px;color:var(--text-hint)">${_esc(d.area||'')}</span></li>`;
+  }).join('');
+
   _searchAcTimer = setTimeout(() => {
-    fetch(`${NOM_BASE}&limit=6&q=${encodeURIComponent(q)}`)
-      .then(r=>r.json()).then(results => {
+    fetch(`${NOM_BASE}&limit=5&q=${encodeURIComponent(q)}`)
+      .then(r => r.json()).then(results => {
         const ul2 = document.getElementById('search-suggest');
         if (!ul2) return;
-        if (!results.length) { ul2.style.display='none'; return; }
-        ul2.innerHTML = results.map(r => {
+        const addrHtml = results.map(r => {
           const short = r.display_name.split(',').slice(0,3).join(', ');
           return `<li data-name="${_esc(r.display_name)}" data-lat="${r.lat}" data-lon="${r.lon}" onmousedown="window._searchPickSuggest(this)">${_esc(short)}</li>`;
         }).join('');
+        const sep = instrHtml && addrHtml ? `<li style="padding:4px 14px;font-size:10px;color:var(--text-hint);background:var(--bg);cursor:default;pointer-events:none">Адреси</li>` : '';
+        const all = instrHtml + sep + addrHtml;
+        if (!all) { ul2.style.display = 'none'; return; }
+        ul2.innerHTML = all;
         ul2.style.display = '';
-      }).catch(()=>{});
+      }).catch(() => {
+        const ul2 = document.getElementById('search-suggest');
+        if (ul2 && instrHtml) { ul2.innerHTML = instrHtml; ul2.style.display = ''; }
+      });
   }, 200);
+
+  // Show instructor matches immediately without waiting for network
+  if (instrHtml && ul) { ul.innerHTML = instrHtml; ul.style.display = ''; }
 }
 window._searchPickSuggest = function(el) {
   const name = el.dataset.name, lat = el.dataset.lat, lon = el.dataset.lon;
+  _activeNameFilter = '';
   const inp = document.getElementById('search-input');
   if (inp) inp.value = name.split(',').slice(0,3).join(', ');
   const ul = document.getElementById('search-suggest');
