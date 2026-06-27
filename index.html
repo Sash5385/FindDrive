@@ -564,7 +564,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.111</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.112</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -2342,10 +2342,18 @@ function _updateDistanceBadges() {
   });
 }
 
+const _GB_TAGS = ['Автомат', 'Механіка'];
+
+function _syncKppChips() {
+  const activeGbTag = [...document.querySelectorAll('.tag-filter-chip.active[data-tag]')]
+    .map(b => b.dataset.tag).find(t => _GB_TAGS.includes(t)) || '';
+  _activeGb = activeGbTag;
+  document.querySelectorAll('[data-gb]').forEach(b => b.classList.toggle('active', b.dataset.gb === _activeGb));
+}
+
 function _applyAllFilters() {
   const activeTags = [...document.querySelectorAll('.tag-filter-chip.active[data-tag]')]
     .map(b => b.dataset.tag).filter(Boolean);
-  const gb   = _activeGb;
   const maxP = _activePmax;
   const grid = document.getElementById('instr-grid');
   if (!grid) return;
@@ -2377,12 +2385,16 @@ function _applyAllFilters() {
     const price   = parseFloat(card.dataset.price) || 0;
     const gearbox = card.dataset.gearbox || '';
     const area    = card.dataset.area || '';
-    const tagOk   = !activeTags.length || activeTags.some(t => ct.includes(t));
-    const gbOk    = !gb || gearbox === gb || gearbox === 'Обидва';
-    const priceOk = !maxP || !price || price <= maxP;
-    const areaOk  = !_activeArea || area.includes(_activeArea);
-    const favOk   = !_showFavsOnly || window._favs.has(card.dataset.instrId || '');
-    const show = tagOk && gbOk && priceOk && areaOk && favOk;
+    const activeGbTags    = activeTags.filter(t => _GB_TAGS.includes(t));
+    const activeOtherTags = activeTags.filter(t => !_GB_TAGS.includes(t));
+    const typeOk   = !activeGbTags.length ||
+      activeGbTags.some(t => ct.includes(t)) ||
+      activeGbTags.some(t => gearbox === t || gearbox === 'Обидва');
+    const otherOk  = !activeOtherTags.length || activeOtherTags.some(t => ct.includes(t));
+    const priceOk  = !maxP || !price || price <= maxP;
+    const areaOk   = !_activeArea || area.includes(_activeArea);
+    const favOk    = !_showFavsOnly || window._favs.has(card.dataset.instrId || '');
+    const show = typeOk && otherOk && priceOk && areaOk && favOk;
     card.style.display = show ? '' : 'none';
     if (show) visible++;
   });
@@ -2409,6 +2421,7 @@ window._removeActiveTag = function(tag) {
   chip.classList.remove('active');
   const anyActive = [...document.querySelectorAll('.tag-filter-chip[data-tag]')].some(b => b.classList.contains('active'));
   if (!anyActive) document.querySelector('.tag-filter-chip[data-tag=""]')?.classList.add('active');
+  _syncKppChips();
   _applyAllFilters();
   window._syncCloudTag?.(tag, false);
 };
@@ -2419,6 +2432,21 @@ window._filterGb = function(btn) {
   document.querySelectorAll('[data-gb]').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   _activeGb = btn.dataset.gb;
+  // Sync cloud tag chips for Автомат/Механіка
+  _GB_TAGS.forEach(tag => {
+    const chip = document.querySelector(`.tag-filter-chip[data-tag="${tag}"]`);
+    if (!chip) return;
+    const on = tag === _activeGb;
+    chip.classList.toggle('active', on);
+    window._syncCloudTag?.(tag, on);
+  });
+  const allChip = document.querySelector('.tag-filter-chip[data-tag=""]');
+  if (_activeGb) {
+    allChip?.classList.remove('active');
+  } else {
+    const anyOn = [...document.querySelectorAll('.tag-filter-chip[data-tag]')].some(b => b.classList.contains('active'));
+    allChip?.classList.toggle('active', !anyOn);
+  }
   _applyAllFilters();
 };
 window._filterPrice = function(btn) {
@@ -2450,6 +2478,7 @@ window._filterByTag = function(btn) {
     const anyActive = [...document.querySelectorAll('.tag-filter-chip[data-tag]')].some(b => b.classList.contains('active'));
     if (!anyActive) document.querySelector('.tag-filter-chip[data-tag=""]')?.classList.add('active');
   }
+  _syncKppChips();
   _applyTagFilters();
 };
 
