@@ -190,6 +190,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .how-mini-title{font-size:11px;font-weight:500;color:var(--text);line-height:1.3}
 @media(max-width:600px){.how-mini{gap:6px}.how-mini-step{min-width:calc(50% - 3px);flex:0 0 calc(50% - 3px)}}
 
+/* FILTER EMPTY STATE */
+.filter-empty{grid-column:1/-1;text-align:center;padding:52px 20px;color:var(--text-hint)}
+.filter-empty i{font-size:42px;display:block;margin-bottom:14px;color:var(--border)}
+.btn-reset-filters{background:var(--green-light);color:var(--green);border:.5px solid #b8d8c8;border-radius:9px;padding:10px 22px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:16px;display:inline-flex;align-items:center;gap:7px;transition:background .2s}
+.btn-reset-filters:hover{background:#d0ecdc}
+
+/* SCROLL TO TOP */
+.scroll-top{position:fixed;bottom:26px;right:26px;width:44px;height:44px;background:var(--green);color:#fff;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;z-index:500;opacity:0;pointer-events:none;transform:translateY(10px);transition:opacity .22s,transform .22s;box-shadow:0 4px 18px rgba(26,122,74,.38)}
+.scroll-top.visible{opacity:1;pointer-events:all;transform:translateY(0)}
+.scroll-top:hover{background:var(--green-dark)}
+
 /* MAP */
 .map-section{padding:24px 48px 24px}
 #map{height:360px;border-radius:18px;border:.5px solid var(--border);overflow:hidden}
@@ -586,7 +597,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.116</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.117</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -2428,6 +2439,15 @@ function _applyAllFilters() {
   if (cnt) cnt.textContent = visible < cards.length ? `${visible} з ${cards.length}` : '';
   window._filterMapMarkers?.(activeTags);
   updateActiveTagsBar(activeTags);
+
+  let emptyEl = document.getElementById('filter-empty');
+  if (visible === 0 && cards.length > 0) {
+    if (!emptyEl) {
+      grid.insertAdjacentHTML('beforeend', `<div id="filter-empty" class="filter-empty"><i class="ti ti-filter-off"></i>Жоден інструктор не відповідає обраним фільтрам<br><button class="btn-reset-filters" onclick="window._resetAllFilters()"><i class="ti ti-refresh"></i> Скинути фільтри</button></div>`);
+    }
+  } else {
+    emptyEl?.remove();
+  }
 }
 
 function updateActiveTagsBar(activeTags) {
@@ -2452,6 +2472,24 @@ window._removeActiveTag = function(tag) {
 };
 
 function _applyTagFilters() { _applyAllFilters(); }
+
+window._resetAllFilters = function() {
+  _activeGb = ''; _activePmax = 0; _activeSort = ''; _activeArea = '';
+  _showFavsOnly = false; _activeNameFilter = '';
+  document.querySelectorAll('.tag-filter-chip').forEach(b => b.classList.toggle('active', b.dataset.tag === ''));
+  document.querySelectorAll('[data-gb]').forEach(b => b.classList.toggle('active', b.dataset.gb === ''));
+  document.querySelectorAll('[data-pmax]').forEach(b => b.classList.toggle('active', !b.dataset.pmax));
+  document.querySelectorAll('[data-sort]').forEach(b => b.classList.toggle('active', b.dataset.sort === ''));
+  document.querySelectorAll('[data-area]').forEach(b => b.classList.toggle('active', b.dataset.area === ''));
+  document.getElementById('fav-filter-chip')?.classList.remove('active');
+  const inp = document.getElementById('search-input'); if (inp) inp.value = '';
+  _GB_TAGS.forEach(tag => window._syncCloudTag?.(tag, false));
+  _applyAllFilters();
+};
+
+window.addEventListener('scroll', function() {
+  document.getElementById('scroll-top-btn')?.classList.toggle('visible', window.scrollY > 400);
+}, {passive: true});
 
 window._filterGb = function(btn) {
   document.querySelectorAll('[data-gb]').forEach(b => b.classList.remove('active'));
@@ -4012,5 +4050,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 </script>
+<button class="scroll-top" id="scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Нагору" aria-label="Нагору"><i class="ti ti-arrow-up"></i></button>
 </body>
 </html>
