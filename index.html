@@ -117,6 +117,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 @media(max-width:600px){.instr-grid{grid-template-columns:1fr}.nav-links{display:none}.section,.map-section{padding-left:20px;padding-right:20px}.nav{padding:0 20px}.hero-h1{font-size:26px}}
 .instr-card{background:var(--white);border-radius:18px;padding:20px 18px;border:.5px solid var(--border);position:relative;overflow:hidden;transition:border-color .2s,transform .2s}
 .instr-card:hover{border-color:#aad0aa;transform:translateY(-2px)}
+.card-fav{position:absolute;top:11px;right:11px;z-index:3;background:none;border:none;cursor:pointer;padding:4px;line-height:1;font-size:17px;color:#c8d8c8;transition:color .15s,transform .15s}
+.card-fav:hover{color:#e0607a;transform:scale(1.2)}
+.card-fav.on{color:#cc3355}
 .card-blob{position:absolute;width:110px;height:90px;border-radius:50%;filter:blur(35px);opacity:.4;top:-20px;right:-10px;pointer-events:none}
 .instr-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;position:relative;z-index:1}
 .avatar{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;flex-shrink:0}
@@ -557,7 +560,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.109</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.110</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -631,6 +634,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
     <a class="section-link" href="#">Усі інструктори <i class="ti ti-arrow-right"></i></a>
   </div>
   <div id="instr-filters" class="instr-filters" style="display:none">
+    <button id="fav-filter-chip" class="ifilter-chip" onclick="window._filterFavs(this)" title="Показати тільки обраних"><i class="ti ti-heart"></i> <span id="fav-chip-label">Обрані</span></button>
+    <div class="ifilter-sep"></div>
     <div class="ifilter-group">
       <span class="ifilter-label">КПП</span>
       <button class="ifilter-chip active" data-gb="" onclick="window._filterGb(this)">Всі</button>
@@ -2239,8 +2244,10 @@ function buildCard(d, i, id) {
   const instrTags = Array.isArray(d.tags) ? d.tags : [];
   const validTags = instrTags.filter(t => INSTR_TAGS.includes(t));
   const tags = validTags.length ? validTags : [d.gearbox, (d.car||'').split(' ')[0]].filter(Boolean);
+  const isFav = window._favs?.has(id||'');
   return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}' data-price="${d.price||0}" data-rating="${d.rating||0}" data-gearbox="${esc(d.gearbox||'')}" data-area="${esc((d.area||'').toLowerCase())}" data-instr-id="${esc(id||'')}" data-lat="${d.lat||''}" data-lng="${d.lng||''}" data-dist="">
     <div class="card-blob" style="background:${th.blob}"></div>
+    <button class="card-fav${isFav?' on':''}" data-fav-id="${esc(id||'')}" onclick="window._toggleFav(this)" title="До обраних"><i class="ti ti-heart${isFav?'-filled':''}"></i></button>
     <div class="instr-top">
       ${d.photo
         ? `<img class="avatar" src="${esc(d.photo)}" style="object-fit:cover" alt="">`
@@ -2284,6 +2291,32 @@ let _activeGb   = '';
 let _activePmax = 0;
 let _activeSort = '';
 let _activeArea = '';
+let _showFavsOnly = false;
+
+window._favs = new Set(JSON.parse(localStorage.getItem('fd_fav') || '[]'));
+function _saveFavs() { localStorage.setItem('fd_fav', JSON.stringify([...window._favs])); }
+function _updateFavChip() {
+  const lbl = document.getElementById('fav-chip-label');
+  const chip = document.getElementById('fav-filter-chip');
+  if (!lbl || !chip) return;
+  const n = window._favs.size;
+  lbl.textContent = n ? `Обрані (${n})` : 'Обрані';
+  chip.innerHTML = `<i class="ti ti-heart${_showFavsOnly?'-filled':''}"></i> ${lbl.outerHTML}`;
+}
+window._toggleFav = function(btn) {
+  const id = btn.dataset.favId;
+  if (window._favs.has(id)) { window._favs.delete(id); btn.classList.remove('on'); btn.innerHTML = '<i class="ti ti-heart"></i>'; }
+  else { window._favs.add(id); btn.classList.add('on'); btn.innerHTML = '<i class="ti ti-heart-filled"></i>'; }
+  _saveFavs();
+  _updateFavChip();
+  if (_showFavsOnly) _applyAllFilters();
+};
+window._filterFavs = function(btn) {
+  _showFavsOnly = !_showFavsOnly;
+  btn.classList.toggle('active', _showFavsOnly);
+  _updateFavChip();
+  _applyAllFilters();
+};
 
 function _haversineKm(lat1, lng1, lat2, lng2) {
   const R = 6371, toRad = x => x * Math.PI / 180;
@@ -2343,7 +2376,8 @@ function _applyAllFilters() {
     const gbOk    = !gb || gearbox === gb || gearbox === 'Обидва';
     const priceOk = !maxP || !price || price <= maxP;
     const areaOk  = !_activeArea || area.includes(_activeArea);
-    const show = tagOk && gbOk && priceOk && areaOk;
+    const favOk   = !_showFavsOnly || window._favs.has(card.dataset.instrId || '');
+    const show = tagOk && gbOk && priceOk && areaOk && favOk;
     card.style.display = show ? '' : 'none';
     if (show) visible++;
   });
@@ -2443,6 +2477,7 @@ async function loadInstructors() {
     const filtersEl = document.getElementById('instr-filters');
     if (filtersEl) filtersEl.style.display = '';
     _updateDistanceBadges();
+    _updateFavChip();
 
     function addMarkers() {
       snap.docs.forEach((docSnap, i) => {
