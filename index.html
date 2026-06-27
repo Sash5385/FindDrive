@@ -99,6 +99,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .search-input::placeholder{color:#9ab0a0}
 .search-divider{width:.5px;height:28px;background:var(--border);flex-shrink:0}
 .search-loc{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--green);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.city-select{border:none;outline:none;font-size:13px;font-weight:500;color:var(--green);background:transparent;font-family:inherit;cursor:pointer;max-width:110px;padding:0;appearance:none;-webkit-appearance:none}
+.city-select:focus{outline:none}
+@media(max-width:600px){.city-select{display:none}.city-divider{display:none}}
 .btn-search{background:var(--green);color:#fff;border:none;border-radius:9px;padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0;transition:background .2s;font-family:inherit}
 .btn-search:hover{background:var(--green-dark)}
 .pac-container{font-family:'Inter',sans-serif;border-radius:12px;border:.5px solid #dde8dd;box-shadow:0 4px 20px rgba(26,122,74,.1);margin-top:6px;padding:4px 0}
@@ -662,7 +665,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.127</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.128</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -704,11 +707,43 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     <div class="hero-content">
       <div class="hero-badge"><i class="ti ti-map-pin"></i> Знайдемо інструктора поряд з вами</div>
       <h1 class="hero-h1">Знайдіть свого<br><span>інструктора</span> з водіння</h1>
-      <p class="hero-sub">Порівнюйте інструкторів за районом, ціною та рейтингом. Записуйтесь онлайн за 2 хвилини.</p>
+      <p class="hero-sub">Порівнюйте інструкторів за містом, ціною та рейтингом. Записуйтесь онлайн за 2 хвилини.</p>
       <p class="hero-cloud-hint"><i class="ti ti-tag" style="font-size:12px;margin-right:4px;opacity:.7"></i>Не знаєте з чого почати? Клацніть тег у хмарі — наприклад «Автомат» або «Ранкові заняття» — і побачите підходящих інструкторів.</p>
       <div class="search-box">
-        <i class="ti ti-search"></i>
-        <input id="search-input" class="search-input" type="text" placeholder="Район, метро або адреса..." onkeydown="if(event.key==='Enter'){doSearch();document.getElementById('search-suggest').style.display='none'}" oninput="_showSearchSuggest(this.value)" onblur="setTimeout(()=>{const s=document.getElementById('search-suggest');if(s)s.style.display='none'},200)">
+        <i class="ti ti-map-pin" style="font-size:18px;color:#9ab0a0;flex-shrink:0"></i>
+        <select id="city-select" class="city-select" onchange="window._selectCity(this.value)" title="Оберіть місто">
+          <option value="">Все міста</option>
+          <option>Київ</option>
+          <option>Харків</option>
+          <option>Одеса</option>
+          <option>Дніпро</option>
+          <option>Запоріжжя</option>
+          <option>Львів</option>
+          <option>Кривий Ріг</option>
+          <option>Миколаїв</option>
+          <option>Херсон</option>
+          <option>Полтава</option>
+          <option>Чернігів</option>
+          <option>Черкаси</option>
+          <option>Суми</option>
+          <option>Житомир</option>
+          <option>Хмельницький</option>
+          <option>Рівне</option>
+          <option>Вінниця</option>
+          <option>Івано-Франківськ</option>
+          <option>Тернопіль</option>
+          <option>Луцьк</option>
+          <option>Ужгород</option>
+          <option>Кропивницький</option>
+          <option>Чернівці</option>
+          <option>Кременчук</option>
+          <option>Мелітополь</option>
+          <option>Нікополь</option>
+          <option>Краматорськ</option>
+          <option>Бердянськ</option>
+        </select>
+        <div class="search-divider city-divider"></div>
+        <input id="search-input" class="search-input" type="text" placeholder="Вулиця, метро або адреса..." onkeydown="if(event.key==='Enter'){doSearch();document.getElementById('search-suggest').style.display='none'}" oninput="_showSearchSuggest(this.value)" onblur="setTimeout(()=>{const s=document.getElementById('search-suggest');if(s)s.style.display='none'},200)">
         <div class="search-divider"></div>
         <div class="search-loc" onclick="locateMe(true)"><i class="ti ti-current-location"></i><span> Моє місце</span></div>
         <button class="btn-search" onclick="doSearch()"><i class="ti ti-search"></i><span> Знайти</span></button>
@@ -2490,6 +2525,7 @@ let _activePmax       = 0;
 let _activeSort       = '';
 let _showFavsOnly     = false;
 let _activeNameFilter = '';
+let _activeCity       = '';
 
 window._favs = new Set(JSON.parse(localStorage.getItem('fd_fav') || '[]'));
 function _saveFavs() { localStorage.setItem('fd_fav', JSON.stringify([...window._favs])); }
@@ -2587,7 +2623,8 @@ function _applyAllFilters() {
     const priceOk  = !maxP || !price || price <= maxP;
     const favOk    = !_showFavsOnly || window._favs.has(card.dataset.instrId || '');
     const nameOk   = !_activeNameFilter || (card.dataset.name || '').includes(_activeNameFilter);
-    const show = typeOk && otherOk && priceOk && favOk && nameOk;
+    const cityOk   = !_activeCity || (area + ' ' + (card.dataset.city || '')).toLowerCase().includes(_activeCity.toLowerCase());
+    const show = typeOk && otherOk && priceOk && favOk && nameOk && cityOk;
     card.style.display = show ? '' : 'none';
     if (show) visible++;
   });
@@ -2632,7 +2669,8 @@ function _applyTagFilters() { _applyAllFilters(); }
 
 window._resetAllFilters = function() {
   _activeGb = ''; _activePmax = 0; _activeSort = '';
-  _showFavsOnly = false; _activeNameFilter = '';
+  _showFavsOnly = false; _activeNameFilter = ''; _activeCity = '';
+  const cs = document.getElementById('city-select'); if (cs) cs.value = '';
   document.querySelectorAll('.tag-filter-chip').forEach(b => b.classList.toggle('active', b.dataset.tag === ''));
   document.querySelectorAll('[data-gb]').forEach(b => b.classList.toggle('active', b.dataset.gb === ''));
   document.querySelectorAll('[data-pmax]').forEach(b => b.classList.toggle('active', !b.dataset.pmax));
@@ -3871,8 +3909,48 @@ function showPhone(phone, col) {
 let _mainMap, _userMarker, _instrPickMap, _instrPickMarker;
 
 
-const KYIV_VIEWBOX = '30.20,50.20,30.90,50.60';
-const NOM_BASE = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=ua&accept-language=uk&viewbox=${KYIV_VIEWBOX}&bounded=0`;
+const NOM_BASE = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=ua&accept-language=uk&bounded=0`;
+
+const UKRAINE_CITIES = {
+  'Київ':            {lat:50.4501, lng:30.5234},
+  'Харків':          {lat:49.9935, lng:36.2304},
+  'Одеса':           {lat:46.4825, lng:30.7233},
+  'Дніпро':          {lat:48.4647, lng:35.0462},
+  'Запоріжжя':       {lat:47.8388, lng:35.1396},
+  'Львів':           {lat:49.8397, lng:24.0297},
+  'Кривий Ріг':      {lat:47.9105, lng:33.3918},
+  'Миколаїв':        {lat:46.9750, lng:31.9946},
+  'Херсон':          {lat:46.6354, lng:32.6169},
+  'Полтава':         {lat:49.5883, lng:34.5514},
+  'Чернігів':        {lat:51.4982, lng:31.2893},
+  'Черкаси':         {lat:49.4285, lng:32.0614},
+  'Суми':            {lat:50.9077, lng:34.7981},
+  'Житомир':         {lat:50.2544, lng:28.6578},
+  'Хмельницький':    {lat:49.4216, lng:26.9987},
+  'Рівне':           {lat:50.6197, lng:26.2516},
+  'Вінниця':         {lat:49.2331, lng:28.4682},
+  'Івано-Франківськ':{lat:48.9226, lng:24.7111},
+  'Тернопіль':       {lat:49.5535, lng:25.5948},
+  'Луцьк':           {lat:50.7472, lng:25.3254},
+  'Ужгород':         {lat:48.6208, lng:22.2879},
+  'Кропивницький':   {lat:48.5132, lng:32.2597},
+  'Чернівці':        {lat:48.2921, lng:25.9358},
+  'Кременчук':       {lat:49.0675, lng:33.4154},
+  'Мелітополь':      {lat:46.8493, lng:35.3654},
+  'Нікополь':        {lat:47.5748, lng:34.3981},
+  'Краматорськ':     {lat:48.7233, lng:37.5478},
+  'Бердянськ':       {lat:46.7646, lng:36.7972},
+};
+
+window._selectCity = function(city) {
+  _activeCity = city;
+  const coords = city && UKRAINE_CITIES[city];
+  if (coords && _mainMap) {
+    _mainMap.setView([coords.lat, coords.lng], 12);
+    scrollToMap();
+  }
+  _applyAllFilters();
+};
 
 function scrollToMap() {
   document.getElementById("map").scrollIntoView({ behavior:"smooth", block:"center" });
