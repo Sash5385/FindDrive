@@ -195,6 +195,21 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .how-mini-title{font-size:11px;font-weight:500;color:var(--text);line-height:1.3}
 @media(max-width:600px){.how-mini{gap:6px}.how-mini-step{min-width:calc(50% - 3px);flex:0 0 calc(50% - 3px)}}
 
+/* HOW IT WORKS SECTION */
+.how-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:900px){.how-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.how-grid{grid-template-columns:1fr 1fr;gap:12px}}
+.how-card{border-radius:18px;padding:26px 22px;position:relative;overflow:hidden;color:#fff}
+.how-num{position:absolute;top:14px;right:18px;font-size:42px;font-weight:700;opacity:.18;line-height:1;pointer-events:none}
+.how-icon{font-size:30px;margin-bottom:14px;display:block;line-height:1}
+.how-title{font-size:15px;font-weight:600;margin-bottom:8px;line-height:1.3}
+.how-desc{font-size:12.5px;line-height:1.65;opacity:.88}
+.how-green{background:#1a7a4a}
+.how-pink{background:#993556}
+.how-blue{background:#185fa5}
+.how-olive{background:#4a7a1a}
+@media(max-width:480px){.how-title{font-size:13px}.how-icon{font-size:24px;margin-bottom:10px}.how-card{padding:18px 16px}.how-num{font-size:34px}}
+
 /* FILTER EMPTY STATE */
 .filter-empty{grid-column:1/-1;text-align:center;padding:52px 20px;color:var(--text-hint)}
 .filter-empty i{font-size:42px;display:block;margin-bottom:14px;color:var(--border)}
@@ -615,11 +630,12 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.119</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.120</span>
   </a>
   <div class="nav-links">
+    <a class="nav-link" href="#how-it-works">Як це працює</a>
     <a class="nav-link" href="#instructors">Інструктори</a>
-    <a class="nav-link" href="#map-anchor">Відгуки</a>
+    <a class="nav-link" href="#map-anchor">Карта</a>
   </div>
   <div class="nav-right">
     <button id="btn-login" class="btn-login"><i class="ti ti-user-circle"></i> Увійти</button>
@@ -635,8 +651,9 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   </div>
 </nav>
 <div id="nav-mobile" class="nav-mobile" role="dialog" aria-modal="false" aria-label="Навігаційне меню">
+  <a class="nav-mobile-link" href="#how-it-works" onclick="closeMobileMenu()"><i class="ti ti-list-check"></i> Як це працює</a>
   <a class="nav-mobile-link" href="#instructors" onclick="closeMobileMenu()"><i class="ti ti-users"></i> Інструктори</a>
-  <a class="nav-mobile-link" href="#map-anchor" onclick="closeMobileMenu()"><i class="ti ti-map"></i> Відгуки</a>
+  <a class="nav-mobile-link" href="#map-anchor" onclick="closeMobileMenu()"><i class="ti ti-map"></i> Карта</a>
   <button class="nav-mobile-cta" onclick="closeMobileMenu();setTimeout(()=>document.getElementById('btn-instr')&&document.getElementById('btn-instr').click(),100)"><i class="ti ti-steering-wheel"></i> Ви інструктор?</button>
 </div>
 
@@ -678,6 +695,38 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
     </div>
     <div class="hero-cloud-col">
       <div id="tag-cloud-3d" class="hero-cloud-wrap" aria-hidden="true"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="how-it-works" style="padding-bottom:44px">
+  <div class="section-top">
+    <span class="section-label">Як це працює</span>
+  </div>
+  <div class="how-grid">
+    <div class="how-card how-green">
+      <span class="how-num">1</span>
+      <i class="ti ti-map-pin how-icon"></i>
+      <div class="how-title">Вкажіть район</div>
+      <div class="how-desc">Введіть адресу або натисніть «Моє місце» — покажемо інструкторів поблизу вас</div>
+    </div>
+    <div class="how-card how-pink">
+      <span class="how-num">2</span>
+      <i class="ti ti-users how-icon"></i>
+      <div class="how-title">Оберіть інструктора</div>
+      <div class="how-desc">Порівнюйте за рейтингом, ціною та відгуками. Дивіться точки зустрічі на карті</div>
+    </div>
+    <div class="how-card how-blue">
+      <span class="how-num">3</span>
+      <i class="ti ti-calendar-event how-icon"></i>
+      <div class="how-title">Забронюйте час</div>
+      <div class="how-desc">Оберіть зручну дату і вільний слот прямо на сайті — підтвердження одразу</div>
+    </div>
+    <div class="how-card how-olive">
+      <span class="how-num">4</span>
+      <i class="ti ti-steering-wheel how-icon"></i>
+      <div class="how-title">Їдьте на урок</div>
+      <div class="how-desc">Доїжджайте до інструктора самі — він працює з фіксованої зручної точки</div>
     </div>
   </div>
 </section>
