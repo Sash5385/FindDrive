@@ -551,7 +551,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.103</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.104</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1765,6 +1765,7 @@ async function registerFcmToken() {
 }
 
 let _unsubInstr = null;
+let _unsubInstrAll = null;
 let _unsubClient = null;
 
 function updateNavBadge(count) {
@@ -1780,16 +1781,39 @@ function updateNavBadge(count) {
 
 function listenInstrBookings(uid) {
   if (_unsubInstr) { _unsubInstr(); _unsubInstr = null; }
-  let ready = false;
-  const q = query(collection(db, 'bookings'), where('instructorUserId', '==', uid), where('status', '==', 'pending'));
-  _unsubInstr = onSnapshot(q, snap => {
+  if (_unsubInstrAll) { _unsubInstrAll(); _unsubInstrAll = null; }
+  // Badge: count of pending bookings
+  let readyPending = false;
+  const qPending = query(collection(db, 'bookings'), where('instructorUserId', '==', uid), where('status', '==', 'pending'));
+  _unsubInstr = onSnapshot(qPending, snap => {
     updateNavBadge(snap.size);
-    if (!ready) { ready = true; return; }
+    if (!readyPending) { readyPending = true; return; }
     snap.docChanges().forEach(ch => {
       if (ch.type !== 'added') return;
       const d = ch.doc.data();
       showToast('Новий запис!', `${d.clientName || 'Учень'} — ${d.date} о ${d.time}`, 'success');
       showBrowserNotif('Новий запис на заняття', `${d.clientName || 'Учень'} — ${d.date} о ${d.time}`);
+    });
+  }, () => {});
+  // Cancellations of confirmed bookings by client
+  const _knownStatuses = {};
+  let readyAll = false;
+  const today = new Date().toISOString().slice(0,10);
+  const qAll = query(collection(db, 'bookings'), where('instructorUserId', '==', uid), where('date', '>=', today));
+  _unsubInstrAll = onSnapshot(qAll, snap => {
+    if (!readyAll) {
+      snap.docs.forEach(d => { _knownStatuses[d.id] = d.data().status; });
+      readyAll = true; return;
+    }
+    snap.docChanges().forEach(ch => {
+      if (ch.type !== 'modified') return;
+      const d = ch.doc.data();
+      const prev = _knownStatuses[ch.doc.id];
+      _knownStatuses[ch.doc.id] = d.status;
+      if (prev === 'confirmed' && d.status === 'cancelled') {
+        showToast('Заняття скасовано', `${d.clientName || 'Учень'} — ${d.date} о ${d.time}`, 'error');
+        showBrowserNotif('Заняття скасовано клієнтом', `${d.clientName || 'Учень'} — ${d.date} о ${d.time}`);
+      }
     });
   }, () => {});
 }
