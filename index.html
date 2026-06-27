@@ -551,7 +551,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.101</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.102</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1551,7 +1551,8 @@ async function loadInstrSettings(instr, container) {
         <div style="font-size:11px;color:var(--text-hint);margin-bottom:4px">Про себе</div>
         <textarea id="set-about" rows="4" maxlength="500" placeholder="Підхід до навчання, спеціалізація, особливості…" style="width:100%;border:.5px solid var(--border);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;resize:none;background:var(--bg);color:var(--text);box-sizing:border-box;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''"></textarea>
       </div>
-      <button class="btn-bk-action" style="width:100%;font-size:12px;padding:9px" onclick="window._saveInstrSettings('${instr.id}')"><i class="ti ti-device-floppy"></i> Зберегти налаштування</button>`;
+      <button class="btn-bk-action" style="width:100%;font-size:12px;padding:9px" onclick="window._saveInstrSettings('${instr.id}')"><i class="ti ti-device-floppy"></i> Зберегти налаштування</button>
+      <button onclick="window._previewInstrProfile('${instr.id}')" style="width:100%;margin-top:8px;font-size:12px;padding:8px;background:var(--green-light);color:var(--green);border:.5px solid #b8ddc8;border-radius:9px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px"><i class="ti ti-eye"></i> Переглянути профіль</button>`;
     // set textarea value separately to avoid HTML escaping issues
     const aboutEl = container.querySelector('#set-about');
     if (aboutEl) aboutEl.value = instr.about || '';
@@ -1688,8 +1689,23 @@ async function loadInstrSettings(instr, container) {
       if (window._instrProfiles?.[instrId]) {
         Object.assign(window._instrProfiles[instrId], { lessonDuration:lessonDur, meetingPoints:meetingPts, tags:instrTags, price, area, about });
       }
+      // Update card in DOM if visible
+      const card = document.querySelector(`.instr-card[data-instr-id="${instrId}"]`);
+      if (card) {
+        card.dataset.price = price;
+        card.dataset.area  = (area||'').toLowerCase();
+        const priceEl = card.querySelector('.price');
+        if (priceEl) priceEl.innerHTML = (price ? price+' грн' : '—') + ' <span>/ год</span>';
+        const distEl = card.querySelector('.badge-dist');
+        if (distEl) distEl.innerHTML = `<i class="ti ti-map-pin"></i> ${esc(area||'Київ')}`;
+      }
       showToast('Налаштування збережено!', '', 'success');
     } catch(e) { alert('Помилка збереження.'); }
+  };
+  window._previewInstrProfile = (instrId) => {
+    if (!window._instrProfiles) window._instrProfiles = {};
+    if (!window._instrProfiles[instrId]) window._instrProfiles[instrId] = { ...instr };
+    openInstrProfile(instrId);
   };
 
   renderAll();
@@ -2191,7 +2207,7 @@ function buildCard(d, i, id) {
   const instrTags = Array.isArray(d.tags) ? d.tags : [];
   const validTags = instrTags.filter(t => INSTR_TAGS.includes(t));
   const tags = validTags.length ? validTags : [d.gearbox, (d.car||'').split(' ')[0]].filter(Boolean);
-  return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}' data-price="${d.price||0}" data-rating="${d.rating||0}" data-gearbox="${esc(d.gearbox||'')}" data-area="${esc((d.area||'').toLowerCase())}">
+  return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}' data-price="${d.price||0}" data-rating="${d.rating||0}" data-gearbox="${esc(d.gearbox||'')}" data-area="${esc((d.area||'').toLowerCase())}" data-instr-id="${esc(id||'')}">
     <div class="card-blob" style="background:${th.blob}"></div>
     <div class="instr-top">
       ${d.photo
