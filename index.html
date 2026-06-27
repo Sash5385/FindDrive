@@ -300,6 +300,17 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .cab-share{background:none;border:none;cursor:pointer;color:var(--text-hint);font-size:19px;display:flex;align-items:center;padding:4px;border-radius:7px;transition:background .15s,color .15s;margin-right:4px}
 .cab-share:hover{color:var(--green);background:var(--green-light)}
 .cab-body{flex:1;overflow-y:auto;padding-bottom:8px;overscroll-behavior:contain}
+.instr-welcome-body{padding:24px 20px}
+.instr-welcome-hero{text-align:center;padding-bottom:20px;border-bottom:.5px solid var(--border);margin-bottom:20px}
+.instr-welcome-hero i{font-size:48px;color:var(--green)}
+.instr-welcome-hero h3{margin:12px 0 6px;font-size:18px;font-weight:700;color:var(--text)}
+.instr-welcome-hero p{font-size:13px;color:var(--text-muted);margin:0;line-height:1.55}
+.instr-benefits{display:flex;flex-direction:column;gap:16px;margin-bottom:24px}
+.instr-benefit{display:flex;align-items:flex-start;gap:13px;font-size:13px;color:var(--text);line-height:1.5}
+.instr-benefit-icon{width:36px;height:36px;border-radius:10px;background:var(--green-light);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.instr-benefit-icon i{font-size:18px;color:var(--green)}
+.instr-benefit b{display:block;font-weight:600;margin-bottom:2px;color:var(--text)}
+.instr-welcome-note{text-align:center;margin-top:14px;font-size:13px;color:var(--text-muted)}
 .cab-profile{display:flex;align-items:center;gap:14px;padding:20px 20px 16px}
 .cab-photo{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--border)}
 .cab-photo-edit{position:relative;cursor:pointer;flex-shrink:0;display:inline-block}
@@ -665,7 +676,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.128</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.129</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -682,7 +693,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       </div>
       <span id="nav-name" class="nav-name"></span>
     </div>
-    <button id="btn-instr" class="btn-cta">Ви інструктор?</button>
+    <button id="btn-instr" class="btn-cta">Стати інструктором</button>
     <button class="nav-burger" id="nav-burger" onclick="toggleMobileMenu()" aria-label="Меню"><i class="ti ti-menu-2"></i></button>
   </div>
 </nav>
@@ -943,6 +954,44 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 
 <div id="cab-overlay" class="cab-overlay"></div>
 
+<aside id="instr-welcome" class="cabinet">
+  <div class="cab-header">
+    <span class="cab-title">Стати інструктором</span>
+    <button class="cab-close" onclick="closeAll()"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="instr-welcome-body">
+    <div class="instr-welcome-hero">
+      <i class="ti ti-steering-wheel"></i>
+      <h3>Знайдіть своїх учнів на FindDrive</h3>
+      <p>Безкоштовна реєстрація. Учні знаходять вас на карті і записуються самостійно.</p>
+    </div>
+    <div class="instr-benefits">
+      <div class="instr-benefit">
+        <div class="instr-benefit-icon"><i class="ti ti-map-pin"></i></div>
+        <div><b>Ваша локація на карті</b>Учні бачать вас поряд і доїжджають самі — ви не витрачаєте час на роз'їзди</div>
+      </div>
+      <div class="instr-benefit">
+        <div class="instr-benefit-icon"><i class="ti ti-calendar-check"></i></div>
+        <div><b>Онлайн-записи 24/7</b>Учні обирають зручний час без дзвінків і повідомлень</div>
+      </div>
+      <div class="instr-benefit">
+        <div class="instr-benefit-icon"><i class="ti ti-star"></i></div>
+        <div><b>Рейтинг та відгуки</b>Зростайте в рейтингу — чим більше відгуків, тим вище ви у видачі</div>
+      </div>
+      <div class="instr-benefit">
+        <div class="instr-benefit-icon"><i class="ti ti-shield-check"></i></div>
+        <div><b>Зараз безкоштовно</b>Платформа безкоштовна на старті — платна підписка тільки після набору аудиторії</div>
+      </div>
+    </div>
+    <button class="btn-submit-instr" onclick="window._openInstrForm()">
+      <i class="ti ti-user-plus"></i> Зареєструватись як інструктор
+    </button>
+    <p class="instr-welcome-note">
+      Вже є акаунт? <a href="#" onclick="closeAll();setTimeout(()=>{renderAuthScreen();openPanel('cabinet')},180);return false" style="color:var(--green);font-weight:500">Увійти</a>
+    </p>
+  </div>
+</aside>
+
 <aside id="instr-panel" class="cabinet instr-wide">
   <div class="cab-header">
     <span class="cab-title">Анкета інструктора</span>
@@ -987,8 +1036,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 
       <div class="form-divider">Умови роботи</div>
       <div class="form-group">
-        <label class="form-label">Район(и) роботи</label>
-        <input class="form-input" name="area" type="text" placeholder="Шевченківський, Оболонь…">
+        <label class="form-label">Місто та район роботи</label>
+        <input class="form-input" name="area" type="text" placeholder="Харків, Центр; або Київ, Оболонь…">
       </div>
       <div class="form-group">
         <label class="form-label">Місце роботи на карті</label>
@@ -2114,16 +2163,24 @@ onAuthStateChanged(auth, async user => {
 });
 
 // --- Instructor panel ---
+function _openInstrPanelDirect() {
+  closeAll();
+  setTimeout(() => {
+    openPanel("instr-panel");
+    populateInstrTscSelect();
+    setTimeout(() => window.initInstrMap?.(), 150);
+    const passGroup = document.getElementById('instr-pass-group');
+    if (passGroup) passGroup.style.display = auth.currentUser ? 'none' : '';
+    if (auth.currentUser) {
+      const emailEl = instrForm?.querySelector('[name="email"]');
+      if (emailEl && !emailEl.value) emailEl.value = auth.currentUser.email || '';
+    }
+  }, 180);
+}
+window._openInstrForm = _openInstrPanelDirect;
+
 document.getElementById("btn-instr").addEventListener("click", () => {
-  openPanel("instr-panel");
-  populateInstrTscSelect();
-  setTimeout(() => window.initInstrMap?.(), 150);
-  const passGroup = document.getElementById('instr-pass-group');
-  if (passGroup) passGroup.style.display = auth.currentUser ? 'none' : '';
-  if (auth.currentUser) {
-    const emailEl = instrForm?.querySelector('[name="email"]');
-    if (emailEl && !emailEl.value) emailEl.value = auth.currentUser.email || '';
-  }
+  openPanel("instr-welcome");
 });
 document.getElementById("instr-close").addEventListener("click", closeAll);
 
