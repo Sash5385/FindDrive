@@ -555,7 +555,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.105</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.106</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -660,6 +660,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
       <button class="ifilter-chip" data-sort="rating" onclick="window._filterSort(this)"><i class="ti ti-star"></i> Рейтинг</button>
       <button class="ifilter-chip" data-sort="price_asc" onclick="window._filterSort(this)">↑ Ціна</button>
       <button class="ifilter-chip" data-sort="price_desc" onclick="window._filterSort(this)">↓ Ціна</button>
+      <button class="ifilter-chip" data-sort="distance" onclick="window._filterSort(this)"><i class="ti ti-current-location"></i> Відстань</button>
     </div>
     <span id="ifilter-count" class="ifilter-count"></span>
     <div id="active-tags-bar"></div>
@@ -2236,7 +2237,7 @@ function buildCard(d, i, id) {
   const instrTags = Array.isArray(d.tags) ? d.tags : [];
   const validTags = instrTags.filter(t => INSTR_TAGS.includes(t));
   const tags = validTags.length ? validTags : [d.gearbox, (d.car||'').split(' ')[0]].filter(Boolean);
-  return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}' data-price="${d.price||0}" data-rating="${d.rating||0}" data-gearbox="${esc(d.gearbox||'')}" data-area="${esc((d.area||'').toLowerCase())}" data-instr-id="${esc(id||'')}">
+  return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}' data-price="${d.price||0}" data-rating="${d.rating||0}" data-gearbox="${esc(d.gearbox||'')}" data-area="${esc((d.area||'').toLowerCase())}" data-instr-id="${esc(id||'')}" data-lat="${d.lat||''}" data-lng="${d.lng||''}" data-dist="">
     <div class="card-blob" style="background:${th.blob}"></div>
     <div class="instr-top">
       ${d.photo
@@ -2247,7 +2248,7 @@ function buildCard(d, i, id) {
         <div class="instr-meta"><i class="ti ti-star"></i>${d.rating ? ' '+d.rating+' · '+d.reviews+' відгуків' : ' Новий інструктор'}</div>
       </div>
     </div>
-    <div class="badge-dist"><i class="ti ti-map-pin"></i> ${esc(d.area||'Київ')}</div>
+    <div class="badge-dist"><i class="ti ti-map-pin"></i> ${esc(d.area||'Київ')}<span class="badge-km"></span></div>
     <div class="instr-tags">${tags.map(t=>`<span class="tag" style="${tagStyle(t)}">${esc(t)}</span>`).join('')}</div>
     <div class="instr-footer">
       <div class="price">${d.price?d.price+' грн':'—'} <span>/ год</span></div>
@@ -2282,6 +2283,25 @@ let _activePmax = 0;
 let _activeSort = '';
 let _activeArea = '';
 
+function _haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371, toRad = x => x * Math.PI / 180;
+  const dLat = toRad(lat2 - lat1), dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function _updateDistanceBadges() {
+  const uLat = window._userLat, uLng = window._userLng;
+  document.querySelectorAll('.instr-card').forEach(card => {
+    const lat = parseFloat(card.dataset.lat), lng = parseFloat(card.dataset.lng);
+    const kmEl = card.querySelector('.badge-km');
+    if (!uLat || !uLng || !lat || !lng) { if (kmEl) kmEl.textContent = ''; card.dataset.dist = ''; return; }
+    const km = _haversineKm(uLat, uLng, lat, lng);
+    card.dataset.dist = km;
+    if (kmEl) kmEl.textContent = ' · ' + (km < 1 ? Math.round(km * 1000) + ' м' : km.toFixed(1) + ' км');
+  });
+}
+
 function _applyAllFilters() {
   const activeTags = [...document.querySelectorAll('.tag-filter-chip.active[data-tag]')]
     .map(b => b.dataset.tag).filter(Boolean);
@@ -2292,6 +2312,9 @@ function _applyAllFilters() {
   let cards = [...grid.querySelectorAll('.instr-card')];
 
   if (_activeSort) {
+    if (_activeSort === 'distance' && (!window._userLat || !window._userLng)) {
+      showToast('Увімкніть геолокацію', 'Натисніть «Моє місце» щоб визначити позицію', 'info');
+    }
     cards.sort((a, b) => {
       if (_activeSort === 'rating')     return (parseFloat(b.dataset.rating)||0) - (parseFloat(a.dataset.rating)||0);
       if (_activeSort === 'price_asc') {
@@ -2299,6 +2322,10 @@ function _applyAllFilters() {
         return pa - pb;
       }
       if (_activeSort === 'price_desc') return (parseFloat(b.dataset.price)||0) - (parseFloat(a.dataset.price)||0);
+      if (_activeSort === 'distance') {
+        const da = parseFloat(a.dataset.dist)||Infinity, db = parseFloat(b.dataset.dist)||Infinity;
+        return da - db;
+      }
       return 0;
     });
     cards.forEach(c => grid.appendChild(c));
@@ -2413,6 +2440,7 @@ async function loadInstructors() {
     populateTagFilterBar();
     const filtersEl = document.getElementById('instr-filters');
     if (filtersEl) filtersEl.style.display = '';
+    _updateDistanceBadges();
 
     function addMarkers() {
       snap.docs.forEach((docSnap, i) => {
@@ -3598,12 +3626,15 @@ function locateMe(fromSearch = false) {
   navigator.geolocation.getCurrentPosition(pos => {
     restore();
     const lat = pos.coords.latitude, lng = pos.coords.longitude;
+    window._userLat = lat; window._userLng = lng;
     if (_mainMap) _mainMap.setView([lat,lng], 14);
     if (fromSearch) scrollToMap();
     if (_userMarker) _mainMap.removeLayer(_userMarker);
     _userMarker = L.circleMarker([lat,lng], {
       radius:9, fillColor:'#1a7a4a', fillOpacity:0.9, color:'#fff', weight:3,
     }).addTo(_mainMap);
+    _updateDistanceBadges();
+    if (window._activeSort === 'distance' || _activeSort === 'distance') _applyAllFilters();
   }, err => {
     restore();
     const msgs = {
