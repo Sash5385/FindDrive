@@ -221,8 +221,10 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .chip-opt-c:has(input:checked){background:var(--tc-bg,var(--green))!important;border-color:var(--tc-bd,var(--green))!important;color:var(--tc-tx,#fff)!important;border-width:1.5px;font-weight:600}
 .chip-opt-c:hover:not(:has(input:checked)){background:var(--tc-bg,var(--green-light))!important;border-color:var(--tc-bd,#b8d8c8)!important;color:var(--tc-tx,var(--green))!important;opacity:.85}
 .weak-chip{background:var(--pink-light);color:var(--pink);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:500}
-.nav-user{display:flex;align-items:center;gap:8px;cursor:pointer}
-.nav-avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;border:1.5px solid var(--border)}
+.nav-user{display:flex;align-items:center;gap:8px;cursor:pointer;position:relative}
+.nav-avatar-wrap{position:relative;flex-shrink:0}
+.nav-avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;border:1.5px solid var(--border);display:block}
+.nav-notif-badge{position:absolute;top:-3px;right:-5px;min-width:16px;height:16px;border-radius:8px;background:#cc3333;color:#fff;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 3px;border:1.5px solid var(--white);line-height:1;pointer-events:none}
 .nav-name{font-size:13px;color:var(--text);font-weight:500}
 
 /* INSTRUCTOR SETTINGS */
@@ -549,7 +551,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.97</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.98</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -558,7 +560,10 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <div class="nav-right">
     <button id="btn-login" class="btn-login"><i class="ti ti-user-circle"></i> Увійти</button>
     <div id="nav-user" class="nav-user" style="display:none" role="button" aria-label="Відкрити кабінет">
-      <img id="nav-avatar" class="nav-avatar" src="" alt="">
+      <div class="nav-avatar-wrap">
+        <img id="nav-avatar" class="nav-avatar" src="" alt="">
+        <span id="nav-notif-badge" class="nav-notif-badge"></span>
+      </div>
       <span id="nav-name" class="nav-name"></span>
     </div>
     <button id="btn-instr" class="btn-cta">Ви інструктор?</button>
@@ -1713,11 +1718,23 @@ async function registerFcmToken() {
 let _unsubInstr = null;
 let _unsubClient = null;
 
+function updateNavBadge(count) {
+  const b = document.getElementById('nav-notif-badge');
+  if (!b) return;
+  if (count > 0) {
+    b.textContent = count > 9 ? '9+' : count;
+    b.style.display = 'flex';
+  } else {
+    b.style.display = 'none';
+  }
+}
+
 function listenInstrBookings(uid) {
   if (_unsubInstr) { _unsubInstr(); _unsubInstr = null; }
   let ready = false;
   const q = query(collection(db, 'bookings'), where('instructorUserId', '==', uid), where('status', '==', 'pending'));
   _unsubInstr = onSnapshot(q, snap => {
+    updateNavBadge(snap.size);
     if (!ready) { ready = true; return; }
     snap.docChanges().forEach(ch => {
       if (ch.type !== 'added') return;
