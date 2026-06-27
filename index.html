@@ -74,7 +74,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
   .hero-content{order:1;text-align:center;min-width:0}
   .hero-sub,.hero-cloud-hint{max-width:100%;text-align:center;box-sizing:border-box}
   .hero-badge{justify-content:center}
-  .how-mini{justify-content:center;flex-wrap:wrap}
   .search-box{max-width:100%;box-sizing:border-box}
   .search-loc span,.btn-search span{display:none}
   .hints{justify-content:center;flex-wrap:wrap}
@@ -188,12 +187,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .btn-book{background:var(--green);color:#fff;border:none;border-radius:9px;padding:7px 16px;font-size:12px;font-weight:500;cursor:pointer;transition:background .2s;font-family:inherit}
 .btn-book:hover{background:var(--green-dark)}
 
-/* HOW */
-.how-mini{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
-.how-mini-step{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.55);border-radius:10px;padding:7px 12px;flex:1;min-width:120px;border:.5px solid rgba(26,122,74,.12)}
-.how-mini-num{width:18px;height:18px;border-radius:50%;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.how-mini-title{font-size:11px;font-weight:500;color:var(--text);line-height:1.3}
-@media(max-width:600px){.how-mini{gap:6px}.how-mini-step{min-width:calc(50% - 3px);flex:0 0 calc(50% - 3px)}}
 
 /* TRUST BAR */
 .trust-bar{background:var(--white);border-top:.5px solid var(--border);border-bottom:.5px solid var(--border);padding:20px 48px;display:flex;justify-content:space-around;align-items:center;gap:16px}
@@ -681,7 +674,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.125</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.126</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -725,12 +718,6 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       <h1 class="hero-h1">Знайдіть свого<br><span>інструктора</span> з водіння</h1>
       <p class="hero-sub">Порівнюйте інструкторів за районом, ціною та рейтингом. Записуйтесь онлайн за 2 хвилини.</p>
       <p class="hero-cloud-hint"><i class="ti ti-tag" style="font-size:12px;margin-right:4px;opacity:.7"></i>Не знаєте з чого почати? Клацніть тег у хмарі — наприклад «Автомат» або «Ранкові заняття» — і побачите підходящих інструкторів.</p>
-      <div class="how-mini">
-        <div class="how-mini-step"><div class="how-mini-num" style="background:#1a7a4a">1</div><span class="how-mini-title">Вкажіть район</span></div>
-        <div class="how-mini-step"><div class="how-mini-num" style="background:#993556">2</div><span class="how-mini-title">Оберіть інструктора</span></div>
-        <div class="how-mini-step"><div class="how-mini-num" style="background:#185fa5">3</div><span class="how-mini-title">Забронюйте час</span></div>
-        <div class="how-mini-step"><div class="how-mini-num" style="background:#3b6d11">4</div><span class="how-mini-title">Їдьте на урок</span></div>
-      </div>
       <div class="search-box">
         <i class="ti ti-search"></i>
         <input id="search-input" class="search-input" type="text" placeholder="Район, метро або адреса..." onkeydown="if(event.key==='Enter'){doSearch();document.getElementById('search-suggest').style.display='none'}" oninput="_showSearchSuggest(this.value)" onblur="setTimeout(()=>{const s=document.getElementById('search-suggest');if(s)s.style.display='none'},200)">
