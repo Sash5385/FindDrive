@@ -127,6 +127,16 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .tag{font-size:11px;padding:3px 10px;border-radius:20px;border:.5px solid transparent}
 .tag-filter-bar{display:none}
 .tag-filter-bar::-webkit-scrollbar{display:none}
+/* SEARCH FILTERS */
+.instr-filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+.ifilter-group{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.ifilter-sep{width:.5px;height:16px;background:var(--border);margin:0 4px;flex-shrink:0}
+.ifilter-label{font-size:11px;color:var(--text-hint);white-space:nowrap;margin-right:2px}
+.ifilter-chip{padding:5px 12px;border-radius:20px;border:.5px solid var(--border);background:var(--white);color:var(--text-muted);font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s}
+.ifilter-chip:hover:not(.active){background:var(--green-light);color:var(--green);border-color:var(--green)}
+.ifilter-chip.active{background:var(--green);color:#fff;border-color:var(--green);font-weight:600}
+.ifilter-count{font-size:11px;color:var(--text-hint);margin-left:auto;white-space:nowrap;padding:4px 0}
+@media(max-width:600px){.ifilter-sep{display:none}.instr-filters{gap:6px}}
 .tag-filter-chip{flex-shrink:0;padding:6px 16px;border-radius:20px;border:.5px solid var(--border);background:var(--white);color:var(--text-muted);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:opacity .15s,box-shadow .15s,border-width .1s}
 .tag-filter-chip[data-tag=""],.tag-filter-chip:not([style]){background:var(--white);color:var(--text-muted)}
 .tag-filter-chip[data-tag=""].active{background:var(--green)!important;color:#fff!important;border-color:var(--green)!important;box-shadow:none}
@@ -534,7 +544,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.95</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.96</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -603,6 +613,31 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <div class="section-top">
     <span class="section-label">Інструктори поруч</span>
     <a class="section-link" href="#">Усі інструктори <i class="ti ti-arrow-right"></i></a>
+  </div>
+  <div id="instr-filters" class="instr-filters" style="display:none">
+    <div class="ifilter-group">
+      <span class="ifilter-label">КПП</span>
+      <button class="ifilter-chip active" data-gb="" onclick="window._filterGb(this)">Всі</button>
+      <button class="ifilter-chip" data-gb="Автомат" onclick="window._filterGb(this)">Автомат</button>
+      <button class="ifilter-chip" data-gb="Механіка" onclick="window._filterGb(this)">Механіка</button>
+    </div>
+    <div class="ifilter-sep"></div>
+    <div class="ifilter-group">
+      <span class="ifilter-label">Ціна</span>
+      <button class="ifilter-chip active" data-pmax="0" onclick="window._filterPrice(this)">Будь-яка</button>
+      <button class="ifilter-chip" data-pmax="500" onclick="window._filterPrice(this)">до 500</button>
+      <button class="ifilter-chip" data-pmax="800" onclick="window._filterPrice(this)">до 800</button>
+      <button class="ifilter-chip" data-pmax="1000" onclick="window._filterPrice(this)">до 1000</button>
+    </div>
+    <div class="ifilter-sep"></div>
+    <div class="ifilter-group">
+      <span class="ifilter-label">Сортування</span>
+      <button class="ifilter-chip active" data-sort="" onclick="window._filterSort(this)">За замовч.</button>
+      <button class="ifilter-chip" data-sort="rating" onclick="window._filterSort(this)"><i class="ti ti-star"></i> Рейтинг</button>
+      <button class="ifilter-chip" data-sort="price_asc" onclick="window._filterSort(this)">↑ Ціна</button>
+      <button class="ifilter-chip" data-sort="price_desc" onclick="window._filterSort(this)">↓ Ціна</button>
+    </div>
+    <span id="ifilter-count" class="ifilter-count"></span>
   </div>
   <div id="tag-filter-bar" class="tag-filter-bar">
     <button class="tag-filter-chip active" data-tag="" onclick="window._filterByTag(this)">Всі</button>
@@ -2063,7 +2098,7 @@ function buildCard(d, i, id) {
   const instrTags = Array.isArray(d.tags) ? d.tags : [];
   const validTags = instrTags.filter(t => INSTR_TAGS.includes(t));
   const tags = validTags.length ? validTags : [d.gearbox, (d.car||'').split(' ')[0]].filter(Boolean);
-  return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}'>
+  return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}' data-price="${d.price||0}" data-rating="${d.rating||0}" data-gearbox="${esc(d.gearbox||'')}">
     <div class="card-blob" style="background:${th.blob}"></div>
     <div class="instr-top">
       ${d.photo
@@ -2104,15 +2139,70 @@ function populateTagFilterBar() {
   });
 }
 
-function _applyTagFilters() {
-  const active = [...document.querySelectorAll('.tag-filter-chip.active[data-tag]')]
+let _activeGb   = '';
+let _activePmax = 0;
+let _activeSort = '';
+
+function _applyAllFilters() {
+  const activeTags = [...document.querySelectorAll('.tag-filter-chip.active[data-tag]')]
     .map(b => b.dataset.tag).filter(Boolean);
-  document.querySelectorAll('#instr-grid .instr-card').forEach(card => {
-    const ct = JSON.parse(card.dataset.tags || '[]');
-    card.style.display = (!active.length || active.some(t => ct.includes(t))) ? '' : 'none';
+  const gb   = _activeGb;
+  const maxP = _activePmax;
+  const grid = document.getElementById('instr-grid');
+  if (!grid) return;
+  let cards = [...grid.querySelectorAll('.instr-card')];
+
+  if (_activeSort) {
+    cards.sort((a, b) => {
+      if (_activeSort === 'rating')     return (parseFloat(b.dataset.rating)||0) - (parseFloat(a.dataset.rating)||0);
+      if (_activeSort === 'price_asc') {
+        const pa = parseFloat(a.dataset.price)||Infinity, pb = parseFloat(b.dataset.price)||Infinity;
+        return pa - pb;
+      }
+      if (_activeSort === 'price_desc') return (parseFloat(b.dataset.price)||0) - (parseFloat(a.dataset.price)||0);
+      return 0;
+    });
+    cards.forEach(c => grid.appendChild(c));
+  }
+
+  let visible = 0;
+  cards.forEach(card => {
+    const ct      = JSON.parse(card.dataset.tags || '[]');
+    const price   = parseFloat(card.dataset.price) || 0;
+    const gearbox = card.dataset.gearbox || '';
+    const tagOk   = !activeTags.length || activeTags.some(t => ct.includes(t));
+    const gbOk    = !gb || gearbox === gb || gearbox === 'Обидва';
+    const priceOk = !maxP || !price || price <= maxP;
+    const show = tagOk && gbOk && priceOk;
+    card.style.display = show ? '' : 'none';
+    if (show) visible++;
   });
-  window._filterMapMarkers?.(active);
+
+  const cnt = document.getElementById('ifilter-count');
+  if (cnt) cnt.textContent = visible < cards.length ? `${visible} з ${cards.length}` : '';
+  window._filterMapMarkers?.(activeTags);
 }
+
+function _applyTagFilters() { _applyAllFilters(); }
+
+window._filterGb = function(btn) {
+  document.querySelectorAll('[data-gb]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _activeGb = btn.dataset.gb;
+  _applyAllFilters();
+};
+window._filterPrice = function(btn) {
+  document.querySelectorAll('[data-pmax]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _activePmax = parseInt(btn.dataset.pmax) || 0;
+  _applyAllFilters();
+};
+window._filterSort = function(btn) {
+  document.querySelectorAll('[data-sort]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _activeSort = btn.dataset.sort;
+  _applyAllFilters();
+};
 
 window._filterByTag = function(btn) {
   const tag = btn.dataset.tag || '';
@@ -2153,6 +2243,8 @@ async function loadInstructors() {
       grid.insertAdjacentHTML("afterbegin", buildCard(d, offset + i, id));
     });
     populateTagFilterBar();
+    const filtersEl = document.getElementById('instr-filters');
+    if (filtersEl) filtersEl.style.display = '';
 
     function addMarkers() {
       snap.docs.forEach((docSnap, i) => {
