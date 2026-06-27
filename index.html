@@ -551,7 +551,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.100</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.101</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -3422,6 +3422,10 @@ function doSearch() {
 
 function searchQuery(query) {
   document.getElementById("search-input").value = query;
+  // Activate district filter chip if query contains a known district keyword
+  const q = query.toLowerCase();
+  const chip = [...document.querySelectorAll('[data-area]:not([data-area=""])')].find(b => q.includes(b.dataset.area));
+  if (chip) window._filterArea?.(chip);
   scrollToMap();
   if (DISTRICT_COORDS[query]) { _mainMap?.setView([DISTRICT_COORDS[query].lat, DISTRICT_COORDS[query].lng], 13); return; }
   fetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(query)}`)
