@@ -311,8 +311,10 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 @media(min-width:1280px){.cabinet{width:720px}.instr-wide{width:780px}.instr-profile-panel{width:960px}}
 .cab-header{display:flex;align-items:center;justify-content:space-between;padding:20px 20px 16px;border-bottom:.5px solid var(--border);flex-shrink:0}
 .cab-title{font-size:15px;font-weight:600;color:var(--text)}
-.cab-close{background:none;border:none;cursor:pointer;color:var(--text-hint);font-size:20px;display:flex;align-items:center;padding:2px}
-.cab-close:hover{color:var(--text)}
+.cab-close{background:none;border:none;cursor:pointer;color:var(--text-hint);font-size:20px;display:flex;align-items:center;padding:4px;border-radius:7px;transition:background .15s,color .15s}
+.cab-close:hover{color:var(--text);background:var(--bg)}
+.cab-share{background:none;border:none;cursor:pointer;color:var(--text-hint);font-size:19px;display:flex;align-items:center;padding:4px;border-radius:7px;transition:background .15s,color .15s;margin-right:4px}
+.cab-share:hover{color:var(--green);background:var(--green-light)}
 .cab-body{flex:1;overflow-y:auto;padding-bottom:8px;overscroll-behavior:contain}
 .cab-profile{display:flex;align-items:center;gap:14px;padding:20px 20px 16px}
 .cab-photo{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--border)}
@@ -679,7 +681,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.123</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.124</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -945,6 +947,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 <aside id="instr-profile" class="cabinet instr-profile-panel">
   <div class="cab-header">
     <div id="prof-head" style="display:flex;align-items:center;gap:14px;flex:1;min-width:0;overflow:hidden"></div>
+    <button class="cab-share" onclick="window._shareInstructor()" title="Поділитися" aria-label="Поділитися"><i class="ti ti-share-2"></i></button>
     <button class="cab-close" onclick="window.closeAll()"><i class="ti ti-x"></i></button>
   </div>
   <div id="prof-body" class="cab-body" style="padding:0 20px 24px"></div>
@@ -2703,6 +2706,30 @@ window.addEventListener('scroll', function() {
   ).observe(stub);
 })();
 
+// Share instructor profile
+window._shareInstructor = async function() {
+  const id = document.getElementById('instr-profile')?.dataset.instrId;
+  const d = id && (window._instrProfiles||{})[id];
+  if (!d) return;
+  const url = location.origin + location.pathname + '?instr=' + encodeURIComponent(id);
+  const shareData = { title: d.name + ' — FindDrive', text: `${d.name} — інструктор з водіння${d.area ? ', ' + d.area : ''}${d.price ? ', ' + d.price + ' грн/год' : ''}`, url };
+  if (navigator.share) {
+    try { await navigator.share(shareData); return; } catch(e) { if (e.name === 'AbortError') return; }
+  }
+  try { await navigator.clipboard.writeText(url); showToast('Посилання скопійовано', 'Відправте другу або збережіть', 'success'); }
+  catch(e) { showToast('Не вдалось скопіювати', '', 'error'); }
+};
+
+// Keyboard shortcuts: ESC → close panels, / → focus search
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') { window.closeAll?.(); closeMobileMenu(); }
+  if (e.key === '/' && !e.ctrlKey && !e.metaKey && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)) {
+    e.preventDefault();
+    const inp = document.getElementById('search-input');
+    inp?.focus(); inp?.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+});
+
 // Animated counters in trust bar
 (function initCounters() {
   const els = document.querySelectorAll('.trust-val[data-count]');
@@ -3848,6 +3875,7 @@ function openInstrProfile(id, mpIdx) {
   const instrTags = Array.isArray(d.tags) ? d.tags.filter(t=>(window.INSTR_TAGS||[]).includes(t)) : [];
   const mps = (d.meetingPoints||[]).filter(pt=>typeof pt==='object'&&pt.lat);
 
+  document.getElementById('instr-profile').dataset.instrId = id;
   document.getElementById('prof-head').innerHTML = `
     ${d.photo
       ? `<img class="prof-avatar-lg" src="${_esc(d.photo)}" alt="">`
