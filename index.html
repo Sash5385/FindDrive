@@ -681,7 +681,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.124</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.125</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2706,6 +2706,19 @@ window.addEventListener('scroll', function() {
   ).observe(stub);
 })();
 
+// Deep-link: open instructor profile from ?instr=ID
+window._checkDeepLink = function() {
+  const id = new URLSearchParams(location.search).get('instr');
+  if (!id) return;
+  const d = (window._instrProfiles||{})[id];
+  if (!d) { showToast('Профіль не знайдено', 'Можливо посилання застаріло', 'error'); return; }
+  history.replaceState(null, '', location.pathname);
+  setTimeout(() => {
+    openInstrProfile(id);
+    document.getElementById('instructors')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 300);
+};
+
 // Share instructor profile
 window._shareInstructor = async function() {
   const id = document.getElementById('instr-profile')?.dataset.instrId;
@@ -2888,6 +2901,7 @@ async function loadInstructors() {
     if (filtersEl) filtersEl.style.display = '';
     _updateDistanceBadges();
     _updateFavChip();
+    window._checkDeepLink?.();
 
     function addMarkers() {
       snap.docs.forEach((docSnap, i) => {
