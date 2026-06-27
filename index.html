@@ -137,6 +137,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .ifilter-chip.active{background:var(--green);color:#fff;border-color:var(--green);font-weight:600}
 .ifilter-count{font-size:11px;color:var(--text-hint);margin-left:auto;white-space:nowrap;padding:4px 0}
 @media(max-width:600px){.ifilter-sep{display:none}.instr-filters{gap:6px}}
+@keyframes userPulse{0%{box-shadow:0 0 0 0 rgba(24,95,165,.45)}70%{box-shadow:0 0 0 10px rgba(24,95,165,0)}100%{box-shadow:0 0 0 0 rgba(24,95,165,0)}}
+.user-location-dot{width:16px;height:16px;border-radius:50%;background:#185fa5;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);animation:userPulse 2s infinite}
 #active-tags-bar{display:none;flex-wrap:wrap;gap:5px;align-items:center;padding:6px 0 0;border-top:.5px solid var(--border);width:100%}
 .atag-chip{display:inline-flex;align-items:center;gap:3px;padding:3px 6px 3px 10px;border-radius:20px;border:1px solid;font-size:11px;font-weight:600;line-height:1.4}
 .atag-chip-x{cursor:pointer;opacity:.55;font-size:13px;line-height:1;padding:0 1px;background:none;border:none;color:inherit;font-family:inherit;transition:opacity .1s}
@@ -555,7 +557,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.106</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.108</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -3571,9 +3573,14 @@ window._addInstrMarker = function(inst, id) {
   if (!_mainMap) return;
   const color = inst.color || '#1a7a4a';
   const mpParam = inst.mpIdx !== undefined ? inst.mpIdx : 'null';
-  const marker = L.circleMarker([inst.lat, inst.lng], {
-    radius:11, fillColor:color, fillOpacity:1, color:'#fff', weight:2.5,
-  }).addTo(_mainMap);
+  const pinIcon = L.divIcon({
+    className: '',
+    html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 40" width="28" height="40"><path d="M14 0C6.27 0 0 6.27 0 14c0 10.5 14 26 14 26S28 24.5 28 14C28 6.27 21.73 0 14 0z" fill="${color}" stroke="white" stroke-width="2"/><circle cx="14" cy="13" r="5.5" fill="white" opacity="0.9"/></svg>`,
+    iconSize: [28, 40],
+    iconAnchor: [14, 40],
+    popupAnchor: [0, -38],
+  });
+  const marker = L.marker([inst.lat, inst.lng], {icon: pinIcon}).addTo(_mainMap);
   marker.bindPopup(`<div style="font-family:Inter,sans-serif;min-width:160px;max-width:200px;padding:2px 0">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
       ${inst.photo ? `<img src="${inst.photo}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid #e0e8e0">` : `<div style="width:36px;height:36px;border-radius:50%;background:${color};color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0">${_esc((inst.name||'?')[0].toUpperCase())}</div>`}
@@ -3627,14 +3634,22 @@ function locateMe(fromSearch = false) {
     restore();
     const lat = pos.coords.latitude, lng = pos.coords.longitude;
     window._userLat = lat; window._userLng = lng;
-    if (_mainMap) _mainMap.setView([lat,lng], 14);
+    if (_mainMap) {
+      _mainMap.setView([lat,lng], 15);
+      if (_userMarker) _mainMap.removeLayer(_userMarker);
+      const dotIcon = L.divIcon({
+        className: '',
+        html: '<div class="user-location-dot"></div>',
+        iconSize: [16, 16],
+        iconAnchor: [8, 8],
+      });
+      _userMarker = L.marker([lat,lng], {icon: dotIcon, zIndexOffset: 9000})
+        .addTo(_mainMap)
+        .bindTooltip('Ваше місце', {permanent:false, direction:'top', offset:[0,-10]});
+    }
     if (fromSearch) scrollToMap();
-    if (_userMarker) _mainMap.removeLayer(_userMarker);
-    _userMarker = L.circleMarker([lat,lng], {
-      radius:9, fillColor:'#1a7a4a', fillOpacity:0.9, color:'#fff', weight:3,
-    }).addTo(_mainMap);
     _updateDistanceBadges();
-    if (window._activeSort === 'distance' || _activeSort === 'distance') _applyAllFilters();
+    if (_activeSort === 'distance') _applyAllFilters();
   }, err => {
     restore();
     const msgs = {
@@ -3643,7 +3658,7 @@ function locateMe(fromSearch = false) {
       3: "Час очікування вичерпано. Спробуйте ще раз.",
     };
     alert(msgs[err.code] || "Помилка геолокації");
-  }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
+  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
 }
 
 // 3D rotating tag cloud
@@ -3762,9 +3777,12 @@ function initHeroMap() {
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(m);
   window._heroMap = m;
   window._addHeroPin = function(lat, lng) {
-    L.circleMarker([lat,lng],{
-      radius:7, fillColor:'#1a7a4a', fillOpacity:.85, color:'#fff', weight:2,
-    }).addTo(m);
+    const pi = L.divIcon({
+      className:'',
+      html:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 26" width="18" height="26"><path d="M9 0C4.03 0 0 4.03 0 9c0 6.75 9 17 9 17S18 15.75 18 9C18 4.03 13.97 0 9 0z" fill="#1a7a4a" stroke="white" stroke-width="1.5"/><circle cx="9" cy="8.5" r="3.5" fill="white" opacity="0.9"/></svg>',
+      iconSize:[18,26],iconAnchor:[9,26],
+    });
+    L.marker([lat,lng],{icon:pi}).addTo(m);
   };
 }
 
