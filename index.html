@@ -551,7 +551,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.102</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.103</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -2673,6 +2673,7 @@ window._bookSlot = async function(instrId, dateStr, time) {
       instructorId:     instrId,
       instructorName:   d?.name || '',
       instructorUserId: d?.userId || null,
+      instructorPhone:  d?.phone || '',
       clientId:         user.uid,
       clientName:       window._clientProfile?.name || user.displayName || '',
       clientPhone:      window._clientProfile?.phone || '',
@@ -2856,12 +2857,14 @@ function renderClientCards(docs) {
              </div>
            </div>`
       : '';
+    const showInstrPhone = b.status === 'confirmed' && b.date >= today && b.instructorPhone;
     return `<div class="bk-card" id="bk-${b.id}">
       <div class="bk-card-head">
         <div class="bk-name">${esc(b.instructorName||'Інструктор')}</div>
         ${bkStatusBadge(b.status)}
       </div>
       <div class="bk-meta"><i class="ti ti-calendar" style="font-size:11px;color:var(--green)"></i>${esc(bkDateStr(b))} о ${esc(b.time||'')} · ${b.duration||90} хв</div>
+      ${showInstrPhone ? `<div class="bk-meta" style="margin-top:3px"><i class="ti ti-phone" style="font-size:11px;color:var(--green)"></i><a href="tel:${esc(b.instructorPhone)}" style="color:var(--text-muted);text-decoration:none">${esc(b.instructorPhone)}</a></div>` : ''}
       ${b.status==='reschedule_requested'&&b.proposedDate?`<div class="bk-reschedule-hint"><i class="ti ti-clock"></i> Запит на перенос: <b>${esc(b.proposedDate.split('-').reverse().join('.'))} о ${esc(b.proposedTime||'')}</b> — очікуємо відповідь інструктора</div>`:''}
       ${showReschedule||showCancel?`
         <div class="btn-row" style="flex-wrap:wrap;align-items:center">
