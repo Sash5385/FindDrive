@@ -206,6 +206,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .scroll-top.visible{opacity:1;pointer-events:all;transform:translateY(0)}
 .scroll-top:hover{background:var(--green-dark)}
 
+/* PWA INSTALL BANNER */
+.pwa-banner{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(140%);background:var(--white);border:.5px solid var(--border);border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:12px;z-index:600;box-shadow:0 8px 36px rgba(0,0,0,.15);transition:transform .35s cubic-bezier(.34,1.56,.64,1);max-width:380px;width:calc(100% - 40px)}
+.pwa-banner.visible{transform:translateX(-50%) translateY(0)}
+.pwa-icon{width:44px;height:44px;border-radius:11px;background:var(--green);display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;flex-shrink:0}
+.pwa-text{flex:1;min-width:0}
+.pwa-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.pwa-sub{font-size:11px;color:var(--text-muted);line-height:1.4}
+.pwa-actions{display:flex;gap:6px;flex-shrink:0}
+.btn-pwa-ok{background:var(--green);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .2s;white-space:nowrap}
+.btn-pwa-ok:hover{background:var(--green-dark)}
+.btn-pwa-no{background:none;border:.5px solid var(--border);border-radius:8px;padding:8px 10px;font-size:12px;color:var(--text-muted);cursor:pointer;font-family:inherit;transition:background .15s;white-space:nowrap}
+.btn-pwa-no:hover{background:var(--bg)}
+
 /* MAP */
 .map-section{padding:24px 48px 24px}
 #map{height:360px;border-radius:18px;border:.5px solid var(--border);overflow:hidden}
@@ -602,7 +615,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.118</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.119</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -2508,6 +2521,32 @@ window.addEventListener('scroll', function() {
   ).observe(stub);
 })();
 
+// PWA install prompt
+let _deferredPrompt = null;
+function _dismissPwaBanner() {
+  localStorage.setItem('fd_pwa_dismissed', Date.now().toString());
+  document.getElementById('pwa-banner')?.classList.remove('visible');
+}
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  _deferredPrompt = e;
+  const ts = Number(localStorage.getItem('fd_pwa_dismissed') || 0);
+  if (Date.now() - ts < 7 * 24 * 3600 * 1000) return;
+  setTimeout(() => document.getElementById('pwa-banner')?.classList.add('visible'), 3000);
+});
+document.getElementById('btn-pwa-install')?.addEventListener('click', async () => {
+  if (!_deferredPrompt) return;
+  _deferredPrompt.prompt();
+  const { outcome } = await _deferredPrompt.userChoice;
+  _deferredPrompt = null;
+  document.getElementById('pwa-banner')?.classList.remove('visible');
+  if (outcome === 'accepted') localStorage.setItem('fd_pwa_dismissed', Date.now().toString());
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwa-banner')?.classList.remove('visible');
+  _deferredPrompt = null;
+});
+
 window._filterGb = function(btn) {
   document.querySelectorAll('[data-gb]').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
@@ -4068,5 +4107,16 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 <button class="scroll-top" id="scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Нагору" aria-label="Нагору"><i class="ti ti-arrow-up"></i></button>
+<div class="pwa-banner" id="pwa-banner" role="dialog" aria-label="Встановити додаток">
+  <div class="pwa-icon"><i class="ti ti-steering-wheel"></i></div>
+  <div class="pwa-text">
+    <div class="pwa-title">Додати FindDrive</div>
+    <div class="pwa-sub">Встановіть як додаток — швидкий доступ без браузера</div>
+  </div>
+  <div class="pwa-actions">
+    <button class="btn-pwa-ok" id="btn-pwa-install">Встановити</button>
+    <button class="btn-pwa-no" onclick="_dismissPwaBanner()">Пізніше</button>
+  </div>
+</div>
 </body>
 </html>
