@@ -152,6 +152,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .tag{font-size:11px;padding:3px 10px;border-radius:20px;border:.5px solid transparent}
 .tag-filter-bar{display:none}
 .tag-filter-bar::-webkit-scrollbar{display:none}
+/* STICKY FILTER WRAP */
+.filters-sticky{position:sticky;top:60px;z-index:50;background:var(--bg);margin:0 -48px;padding:0 48px 4px;transition:box-shadow .2s}
+.filters-sticky.stuck{box-shadow:0 3px 16px rgba(0,0,0,.09);border-bottom:.5px solid var(--border)}
+@media(max-width:600px){.filters-sticky{margin:0 -20px;padding:0 20px 4px}}
+
 /* SEARCH FILTERS */
 .instr-filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
 .ifilter-group{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
@@ -597,7 +602,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.117</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.118</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -677,6 +682,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
     <span class="section-label">Інструктори поруч</span>
     <a class="section-link" href="#">Усі інструктори <i class="ti ti-arrow-right"></i></a>
   </div>
+  <div id="filters-stub" style="height:0;pointer-events:none"></div>
+  <div id="filters-sticky-wrap" class="filters-sticky">
   <div id="instr-filters" class="instr-filters" style="display:none">
     <button id="fav-filter-chip" class="ifilter-chip" onclick="window._filterFavs(this)" title="Показати тільки обраних"><i class="ti ti-heart"></i> <span id="fav-chip-label">Обрані</span></button>
     <div class="ifilter-sep"></div>
@@ -718,6 +725,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   </div>
   <div id="tag-filter-bar" class="tag-filter-bar">
     <button class="tag-filter-chip active" data-tag="" onclick="window._filterByTag(this)">Всі</button>
+  </div>
   </div>
   <div id="instr-grid" class="instr-grid"></div>
 </section>
@@ -2490,6 +2498,15 @@ window._resetAllFilters = function() {
 window.addEventListener('scroll', function() {
   document.getElementById('scroll-top-btn')?.classList.toggle('visible', window.scrollY > 400);
 }, {passive: true});
+
+(function initStickyFilters() {
+  const stub = document.getElementById('filters-stub');
+  if (!stub) return;
+  new IntersectionObserver(
+    ([e]) => document.getElementById('filters-sticky-wrap')?.classList.toggle('stuck', !e.isIntersecting),
+    { rootMargin: '-60px 0px 0px 0px', threshold: 0 }
+  ).observe(stub);
+})();
 
 window._filterGb = function(btn) {
   document.querySelectorAll('[data-gb]').forEach(b => b.classList.remove('active'));
