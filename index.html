@@ -195,6 +195,27 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .how-mini-title{font-size:11px;font-weight:500;color:var(--text);line-height:1.3}
 @media(max-width:600px){.how-mini{gap:6px}.how-mini-step{min-width:calc(50% - 3px);flex:0 0 calc(50% - 3px)}}
 
+/* TRUST BAR */
+.trust-bar{background:var(--white);border-top:.5px solid var(--border);border-bottom:.5px solid var(--border);padding:20px 48px;display:flex;justify-content:space-around;align-items:center;gap:16px}
+.trust-item{display:flex;align-items:center;gap:12px}
+.trust-item i{font-size:24px;color:var(--green);flex-shrink:0}
+.trust-val{font-size:18px;font-weight:700;color:var(--text);line-height:1.1}
+.trust-label{font-size:11px;color:var(--text-muted);font-weight:400;margin-top:2px}
+@media(max-width:700px){.trust-bar{padding:16px 20px;flex-wrap:wrap;gap:14px}.trust-item{min-width:calc(50% - 14px)}}
+@media(max-width:360px){.trust-item{min-width:100%}}
+
+/* TESTIMONIALS */
+.reviews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:900px){.reviews-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.reviews-grid{grid-template-columns:1fr}}
+.review-card{background:var(--white);border-radius:18px;padding:22px 20px;border:.5px solid var(--border)}
+.review-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.review-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.review-name{font-size:14px;font-weight:500;color:var(--text);line-height:1.2}
+.review-date{font-size:11px;color:var(--text-hint);margin-top:2px}
+.review-stars{color:#f59e0b;font-size:14px;margin-bottom:10px;letter-spacing:2px}
+.review-text{font-size:13px;line-height:1.65;color:var(--text-muted)}
+
 /* HOW IT WORKS SECTION */
 .how-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
 @media(max-width:900px){.how-grid{grid-template-columns:1fr 1fr}}
@@ -630,11 +651,12 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.120</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.121</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
     <a class="nav-link" href="#instructors">Інструктори</a>
+    <a class="nav-link" href="#reviews">Відгуки</a>
     <a class="nav-link" href="#map-anchor">Карта</a>
   </div>
   <div class="nav-right">
@@ -653,6 +675,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 <div id="nav-mobile" class="nav-mobile" role="dialog" aria-modal="false" aria-label="Навігаційне меню">
   <a class="nav-mobile-link" href="#how-it-works" onclick="closeMobileMenu()"><i class="ti ti-list-check"></i> Як це працює</a>
   <a class="nav-mobile-link" href="#instructors" onclick="closeMobileMenu()"><i class="ti ti-users"></i> Інструктори</a>
+  <a class="nav-mobile-link" href="#reviews" onclick="closeMobileMenu()"><i class="ti ti-star"></i> Відгуки</a>
   <a class="nav-mobile-link" href="#map-anchor" onclick="closeMobileMenu()"><i class="ti ti-map"></i> Карта</a>
   <button class="nav-mobile-cta" onclick="closeMobileMenu();setTimeout(()=>document.getElementById('btn-instr')&&document.getElementById('btn-instr').click(),100)"><i class="ti ti-steering-wheel"></i> Ви інструктор?</button>
 </div>
@@ -699,6 +722,13 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   </div>
 </section>
 
+<div class="trust-bar">
+  <div class="trust-item"><i class="ti ti-users"></i><div><div class="trust-val">50+</div><div class="trust-label">інструкторів</div></div></div>
+  <div class="trust-item"><i class="ti ti-map-2"></i><div><div class="trust-val">Київ</div><div class="trust-label">та область</div></div></div>
+  <div class="trust-item"><i class="ti ti-star-filled"></i><div><div class="trust-val">4.8 ★</div><div class="trust-label">середній рейтинг</div></div></div>
+  <div class="trust-item"><i class="ti ti-shield-check"></i><div><div class="trust-val">Безкоштовно</div><div class="trust-label">для учнів</div></div></div>
+</div>
+
 <section class="section" id="how-it-works" style="padding-bottom:44px">
   <div class="section-top">
     <span class="section-label">Як це працює</span>
@@ -727,6 +757,38 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
       <i class="ti ti-steering-wheel how-icon"></i>
       <div class="how-title">Їдьте на урок</div>
       <div class="how-desc">Доїжджайте до інструктора самі — він працює з фіксованої зручної точки</div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="reviews" style="padding-bottom:52px">
+  <div class="section-top">
+    <span class="section-label">Відгуки учнів</span>
+  </div>
+  <div class="reviews-grid">
+    <div class="review-card">
+      <div class="review-head">
+        <div class="review-av" style="background:#1a7a4a">АК</div>
+        <div><div class="review-name">Аліна Коваленко</div><div class="review-date">Березень 2025</div></div>
+      </div>
+      <div class="review-stars">★★★★★</div>
+      <div class="review-text">Знайшла інструктора за 5 хвилин! Він поряд з домом, не треба їхати через все місто. Здала з першого разу — дуже задоволена сервісом.</div>
+    </div>
+    <div class="review-card">
+      <div class="review-head">
+        <div class="review-av" style="background:#185fa5">МП</div>
+        <div><div class="review-name">Максим Петренко</div><div class="review-date">Квітень 2025</div></div>
+      </div>
+      <div class="review-stars">★★★★★</div>
+      <div class="review-text">Зручно порівнювати інструкторів за ціною і районом. Записався онлайн, підтвердження прийшло одразу. Рекомендую всім хто хоче навчитися швидко.</div>
+    </div>
+    <div class="review-card">
+      <div class="review-head">
+        <div class="review-av" style="background:#993556">ОС</div>
+        <div><div class="review-name">Олена Савченко</div><div class="review-date">Травень 2025</div></div>
+      </div>
+      <div class="review-stars">★★★★☆</div>
+      <div class="review-text">Дуже зручно що інструктор сам не їде до тебе — значить він знає своє місце і навчить добре. Ціни прозорі, ніяких сюрпризів.</div>
     </div>
   </div>
 </section>
