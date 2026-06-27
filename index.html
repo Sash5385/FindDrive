@@ -551,7 +551,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.99</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.100</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1536,7 +1536,25 @@ async function loadInstrSettings(instr, container) {
           <div class="mp-map-coords" id="mp-map-coords">Натисніть на карту, щоб вибрати точку</div>
         </div>
       </div>
+      <div class="instr-set-group">
+        <span class="instr-set-label">Основна інформація</span>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <div style="flex:1">
+            <div style="font-size:11px;color:var(--text-hint);margin-bottom:4px">Ціна, грн/год</div>
+            <input id="set-price" type="number" min="0" step="50" value="${esc(String(instr.price||''))}" style="width:100%;border:.5px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;box-sizing:border-box;transition:border-color .15s" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
+          </div>
+          <div style="flex:2">
+            <div style="font-size:11px;color:var(--text-hint);margin-bottom:4px">Район(и)</div>
+            <input id="set-area" type="text" value="${esc(instr.area||'')}" placeholder="Шевченківський, Оболонь…" maxlength="100" style="width:100%;border:.5px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;box-sizing:border-box;transition:border-color .15s" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text-hint);margin-bottom:4px">Про себе</div>
+        <textarea id="set-about" rows="4" maxlength="500" placeholder="Підхід до навчання, спеціалізація, особливості…" style="width:100%;border:.5px solid var(--border);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;resize:none;background:var(--bg);color:var(--text);box-sizing:border-box;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''"></textarea>
+      </div>
       <button class="btn-bk-action" style="width:100%;font-size:12px;padding:9px" onclick="window._saveInstrSettings('${instr.id}')"><i class="ti ti-device-floppy"></i> Зберегти налаштування</button>`;
+    // set textarea value separately to avoid HTML escaping issues
+    const aboutEl = container.querySelector('#set-about');
+    if (aboutEl) aboutEl.value = instr.about || '';
   }
 
   window._setLessonDur = (d) => { lessonDur = d; renderAll(); };
@@ -1653,17 +1671,22 @@ async function loadInstrSettings(instr, container) {
     renderAll();
   };
   window._saveInstrSettings = async (instrId) => {
+    const price = parseInt(document.getElementById('set-price')?.value) || instr.price || 0;
+    const area  = document.getElementById('set-area')?.value.trim() || instr.area || '';
+    const about = document.getElementById('set-about')?.value.trim() || '';
     try {
       await updateDoc(doc(db,'instructors',instrId), {
         lessonDuration: lessonDur,
         meetingPoints:  meetingPts,
         tags:           instrTags,
+        price, area, about,
       });
       instr.lessonDuration = lessonDur;
       instr.meetingPoints  = meetingPts;
       instr.tags           = instrTags;
+      instr.price = price; instr.area = area; instr.about = about;
       if (window._instrProfiles?.[instrId]) {
-        Object.assign(window._instrProfiles[instrId], { lessonDuration:lessonDur, meetingPoints:meetingPts, tags:instrTags });
+        Object.assign(window._instrProfiles[instrId], { lessonDuration:lessonDur, meetingPoints:meetingPts, tags:instrTags, price, area, about });
       }
       showToast('Налаштування збережено!', '', 'success');
     } catch(e) { alert('Помилка збереження.'); }
