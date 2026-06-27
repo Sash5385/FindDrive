@@ -557,7 +557,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.108</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.109</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -3575,10 +3575,10 @@ window._addInstrMarker = function(inst, id) {
   const mpParam = inst.mpIdx !== undefined ? inst.mpIdx : 'null';
   const pinIcon = L.divIcon({
     className: '',
-    html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 40" width="28" height="40"><path d="M14 0C6.27 0 0 6.27 0 14c0 10.5 14 26 14 26S28 24.5 28 14C28 6.27 21.73 0 14 0z" fill="${color}" stroke="white" stroke-width="2"/><circle cx="14" cy="13" r="5.5" fill="white" opacity="0.9"/></svg>`,
-    iconSize: [28, 40],
-    iconAnchor: [14, 40],
-    popupAnchor: [0, -38],
+    html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 50" width="26" height="50"><path d="M11.5 24 L13 50 L14.5 24" fill="${color}" stroke="${color}" stroke-width="1" stroke-linejoin="round"/><circle cx="13" cy="13" r="12" fill="${color}" stroke="white" stroke-width="2.5"/><circle cx="10" cy="10" r="4.5" fill="white" opacity="0.3"/></svg>`,
+    iconSize: [26, 50],
+    iconAnchor: [13, 50],
+    popupAnchor: [0, -48],
   });
   const marker = L.marker([inst.lat, inst.lng], {icon: pinIcon}).addTo(_mainMap);
   marker.bindPopup(`<div style="font-family:Inter,sans-serif;min-width:160px;max-width:200px;padding:2px 0">
@@ -3779,8 +3779,8 @@ function initHeroMap() {
   window._addHeroPin = function(lat, lng) {
     const pi = L.divIcon({
       className:'',
-      html:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 26" width="18" height="26"><path d="M9 0C4.03 0 0 4.03 0 9c0 6.75 9 17 9 17S18 15.75 18 9C18 4.03 13.97 0 9 0z" fill="#1a7a4a" stroke="white" stroke-width="1.5"/><circle cx="9" cy="8.5" r="3.5" fill="white" opacity="0.9"/></svg>',
-      iconSize:[18,26],iconAnchor:[9,26],
+      html:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 18 34" width="18" height="34"><path d="M8 17 L9 34 L10 17" fill="#1a7a4a" stroke="#1a7a4a" stroke-width="1"/><circle cx="9" cy="9" r="8.5" fill="#1a7a4a" stroke="white" stroke-width="1.8"/><circle cx="7" cy="7" r="3" fill="white" opacity="0.3"/></svg>',
+      iconSize:[18,34],iconAnchor:[9,34],
     });
     L.marker([lat,lng],{icon:pi}).addTo(m);
   };
