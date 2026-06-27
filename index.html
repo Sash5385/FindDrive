@@ -378,6 +378,13 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
 .bk-empty-tab{text-align:center;padding:20px;color:var(--text-hint);font-size:12px}
 .btn-bk-cancel{background:none;border:.5px solid #e8b0b8;border-radius:7px;padding:6px 12px;font-size:11px;color:#cc3333;cursor:pointer;font-family:inherit;transition:border-color .15s,background .15s}
 .btn-bk-cancel:hover{background:#fff0f0;border-color:#cc3333}
+.bk-review-form{margin-top:8px;background:var(--white);border:.5px solid var(--border);border-radius:10px;padding:12px 14px}
+.bk-review-stars{display:flex;gap:2px;margin-bottom:10px}
+.bk-review-star{font-size:26px;cursor:pointer;color:#dde8dd;transition:color .1s;line-height:1;user-select:none}
+.bk-review-star.lit{color:#f5a623}
+.bk-review-textarea{width:100%;border:.5px solid var(--border);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;resize:none;background:var(--bg);color:var(--text);box-sizing:border-box;margin-bottom:8px;outline:none;transition:border-color .15s}
+.bk-review-textarea:focus{border-color:var(--green)}
+.bk-review-done{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--green);background:var(--green-light);border-radius:20px;padding:3px 10px;margin-top:6px;border:.5px solid #b8d8c8}
 .btn-bk-action{background:var(--green);color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;transition:background .15s}
 .btn-bk-action:hover{background:var(--green-dark)}
 .btn-bk-reject{background:none;border:.5px solid var(--border);border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--text-muted);transition:border-color .15s,color .15s}
@@ -527,7 +534,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.94</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.95</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -1842,6 +1849,56 @@ window._loadProfReviews = async function(instrId) {
   }
 };
 
+// --- Review form handlers ---
+const _reviewRating = {};
+
+window._showReviewForm = function(bkId) {
+  const f = document.getElementById('rev-form-' + bkId);
+  if (f) f.style.display = f.style.display === 'none' ? '' : 'none';
+};
+window._setReviewStar = function(bkId, n) {
+  _reviewRating[bkId] = n;
+  for (let i = 1; i <= 5; i++) {
+    const s = document.getElementById(`rev-star-${bkId}-${i}`);
+    if (s) s.classList.toggle('lit', i <= n);
+  }
+};
+window._submitReview = async function(bkId, instrId, clientName, clientPhoto) {
+  const rating = _reviewRating[bkId];
+  if (!rating) { alert('Оберіть оцінку (зірки)'); return; }
+  const text = document.getElementById('rev-text-' + bkId)?.value?.trim() || '';
+  const btn = document.getElementById('rev-btn-' + bkId);
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> …'; }
+  try {
+    const user = auth.currentUser;
+    await addDoc(collection(db, 'reviews'), {
+      instrId, clientId: user.uid,
+      clientName: clientName || 'Учень',
+      clientPhoto: clientPhoto || null,
+      rating, text, bookingId: bkId,
+      createdAt: serverTimestamp(),
+    });
+    await updateDoc(doc(db, 'bookings', bkId), { reviewed: true });
+    const revSnap = await getDocs(query(collection(db, 'reviews'), where('instrId', '==', instrId)));
+    const ratings = revSnap.docs.map(d => d.data().rating || 0).filter(r => r > 0);
+    if (ratings.length) {
+      const avg = Math.round((ratings.reduce((s, r) => s + r, 0) / ratings.length) * 10) / 10;
+      await updateDoc(doc(db, 'instructors', instrId), { rating: avg, reviews: ratings.length });
+      if (window._instrProfiles?.[instrId]) {
+        window._instrProfiles[instrId].rating = avg;
+        window._instrProfiles[instrId].reviews = ratings.length;
+      }
+    }
+    const rf = document.getElementById('rev-form-' + bkId);
+    const revOpenBtn = document.getElementById('rev-open-' + bkId);
+    if (rf) rf.remove();
+    if (revOpenBtn) revOpenBtn.outerHTML = `<div class="bk-review-done"><i class="ti ti-star-filled"></i> Відгук залишено</div>`;
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-send"></i> Надіслати'; }
+    alert('Помилка: ' + (e.message || e));
+  }
+};
+
 // Form submit → Firestore
 const instrForm = document.getElementById("instr-form");
 instrForm.addEventListener("input", e => { e.target.style.borderColor = ""; });
@@ -2566,10 +2623,28 @@ async function loadClientBookings(user, container) {
 function renderClientCards(docs) {
   if (!docs.length) return '<div class="bk-empty-tab"><i class="ti ti-calendar-off"></i><br>Порожньо</div>';
   const today = new Date().toISOString().slice(0,10);
+  const cp = window._clientProfile || {};
+  const clientName  = cp.name  || '';
+  const clientPhoto = cp.photo || '';
   return docs.map(b => {
     const isActive = (b.status==='pending'||b.status==='confirmed'||b.status==='reschedule_requested') && b.date >= today;
     const showReschedule = isActive && b.status !== 'reschedule_requested' && b.status !== 'cancelled';
     const showCancel     = isActive;
+    const isPastConfirmed = b.date < today && b.status === 'confirmed';
+    const reviewHtml = isPastConfirmed
+      ? b.reviewed
+        ? `<div class="bk-review-done"><i class="ti ti-star-filled"></i> Відгук залишено</div>`
+        : `<button id="rev-open-${b.id}" class="btn-bk-reject" style="font-size:11px;padding:5px 10px;margin-top:6px" onclick="window._showReviewForm('${b.id}')"><i class="ti ti-star"></i> Залишити відгук</button>
+           <div class="bk-review-form" id="rev-form-${b.id}" style="display:none">
+             <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;font-weight:500">Ваша оцінка</div>
+             <div class="bk-review-stars">${[1,2,3,4,5].map(n=>`<span class="bk-review-star" id="rev-star-${b.id}-${n}" onclick="window._setReviewStar('${b.id}',${n})">★</span>`).join('')}</div>
+             <textarea class="bk-review-textarea" id="rev-text-${b.id}" rows="3" placeholder="Ваші враження про заняття…"></textarea>
+             <div class="btn-row">
+               <button id="rev-btn-${b.id}" class="btn-bk-action" style="font-size:12px;padding:8px" onclick="window._submitReview('${b.id}','${esc(b.instructorId||'')}','${esc(clientName)}','${esc(clientPhoto)}')"><i class="ti ti-send"></i> Надіслати</button>
+               <button class="btn-bk-reject" style="font-size:12px;padding:8px" onclick="window._showReviewForm('${b.id}')">Закрити</button>
+             </div>
+           </div>`
+      : '';
     return `<div class="bk-card" id="bk-${b.id}">
       <div class="bk-card-head">
         <div class="bk-name">${esc(b.instructorName||'Інструктор')}</div>
@@ -2592,6 +2667,7 @@ function renderClientCards(docs) {
             <button class="btn-bk-reject" style="font-size:11px;padding:5px 12px" onclick="window._hideReschForm('${b.id}')">Відмінити</button>
           </div>
         </div>` : ''}
+      ${reviewHtml}
     </div>`;
   }).join('');
 }
