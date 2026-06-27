@@ -124,6 +124,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .instr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 @media(max-width:900px){.instr-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:600px){.instr-grid{grid-template-columns:1fr}.nav-links{display:none}.nav-burger{display:flex;align-items:center;justify-content:center}#btn-instr{display:none}.section,.map-section{padding-left:20px;padding-right:20px}.nav{padding:0 20px}.hero-h1{font-size:26px}}
+@keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
+.sk-card{background:var(--white);border-radius:18px;padding:20px 18px;border:.5px solid var(--border)}
+.sk-line{border-radius:6px;background:linear-gradient(90deg,#eaecea 25%,#f5f7f5 50%,#eaecea 75%);background-size:1200px 100%;animation:shimmer 1.6s infinite linear}
+.sk-avatar{width:46px;height:46px;border-radius:50%;flex-shrink:0}
+.sk-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.sk-top-lines{flex:1;display:flex;flex-direction:column;gap:7px}
+.sk-h{height:13px}
+.sk-w80{width:80%}.sk-w55{width:55%}.sk-w70{width:70%}.sk-w40{width:40%}
+.sk-tags{display:flex;gap:6px;margin-bottom:14px}
+.sk-tag{height:22px;width:58px;border-radius:20px}
+.sk-footer{display:flex;justify-content:space-between;align-items:center}
+.sk-price{height:16px;width:80px}
+.sk-btn{height:30px;width:88px;border-radius:9px}
 .instr-card{background:var(--white);border-radius:18px;padding:20px 18px;border:.5px solid var(--border);position:relative;overflow:hidden;transition:border-color .2s,transform .2s}
 .instr-card:hover{border-color:#aad0aa;transform:translateY(-2px)}
 .card-fav{position:absolute;top:11px;right:11px;z-index:3;background:none;border:none;cursor:pointer;padding:4px;line-height:1;font-size:17px;color:#c8d8c8;transition:color .15s,transform .15s}
@@ -573,7 +586,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.115</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.116</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#instructors">Інструктори</a>
@@ -695,12 +708,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:28px 
   <div id="tag-filter-bar" class="tag-filter-bar">
     <button class="tag-filter-chip active" data-tag="" onclick="window._filterByTag(this)">Всі</button>
   </div>
-  <div id="instr-grid" class="instr-grid">
-    <div id="instr-empty" style="grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--text-hint);font-size:14px;line-height:1.9">
-      <i class="ti ti-user-search" style="font-size:40px;display:block;margin-bottom:14px;color:var(--border)"></i>
-      Інструктори з'являться тут після модерації.<br>Якщо ви інструктор — натисніть <strong style="color:var(--text)">«Ви інструктор?»</strong>
-    </div>
-  </div>
+  <div id="instr-grid" class="instr-grid"></div>
 </section>
 
 
@@ -2509,13 +2517,25 @@ window._applyStudentTagFilter = function(tags) {
   _applyTagFilters();
 };
 
+function _skCard() {
+  return `<div class="sk-card sk-item"><div class="sk-top"><div class="sk-line sk-avatar"></div><div class="sk-top-lines"><div class="sk-line sk-h sk-w80"></div><div class="sk-line sk-h sk-w55"></div></div></div><div class="sk-tags"><div class="sk-line sk-tag"></div><div class="sk-line sk-tag"></div><div class="sk-line sk-tag"></div></div><div class="sk-line sk-h sk-w70" style="margin-bottom:6px"></div><div class="sk-line sk-h sk-w40" style="margin-bottom:14px"></div><div class="sk-footer"><div class="sk-line sk-price"></div><div class="sk-line sk-btn"></div></div></div>`;
+}
+(function initSkeletons() {
+  const grid = document.getElementById('instr-grid');
+  if (!grid) return;
+  grid.innerHTML = Array.from({length:6}, _skCard).join('');
+})();
+
 async function loadInstructors() {
   try {
     const snap = await getDocs(query(collection(db, "instructors"), where("status","==","approved")));
-    if (snap.empty) return;
-    document.getElementById('instr-empty')?.remove();
     const grid   = document.getElementById("instr-grid");
-    const offset = grid.children.length;
+    grid.querySelectorAll('.sk-item').forEach(el => el.remove());
+    if (snap.empty) {
+      grid.insertAdjacentHTML('beforeend', `<div id="instr-empty" style="grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--text-hint);font-size:14px;line-height:1.9"><i class="ti ti-user-search" style="font-size:40px;display:block;margin-bottom:14px;color:var(--border)"></i>Інструктори з'являться тут після модерації.<br>Якщо ви інструктор — натисніть <strong style="color:var(--text)">«Ви інструктор?»</strong></div>`);
+      return;
+    }
+    const offset = 0;
     window._instrProfiles = window._instrProfiles || {};
     snap.docs.forEach((docSnap, i) => {
       const d  = docSnap.data();
