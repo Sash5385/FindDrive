@@ -153,7 +153,7 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .card-fav.on{color:#cc3355}
 .card-blob{position:absolute;width:110px;height:90px;border-radius:50%;filter:blur(35px);opacity:.4;top:-20px;right:-10px;pointer-events:none}
 .instr-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;position:relative;z-index:1}
-.avatar{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;flex-shrink:0}
+.avatar{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;flex-shrink:0;border:2px solid rgba(255,255,255,.7)}
 .instr-name{font-size:14px;font-weight:500;color:var(--text)}
 .instr-meta{font-size:12px;color:var(--text-hint);margin-top:2px;display:flex;align-items:center;gap:4px}
 .badge-dist{display:inline-flex;align-items:center;gap:5px;background:var(--green-light);border-radius:20px;padding:4px 10px;font-size:11px;color:#1a6a3a;margin-bottom:12px}
@@ -687,7 +687,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.132</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.133</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1998,7 +1998,7 @@ async function loadInstrSettings(instr, container) {
         const priceEl = card.querySelector('.price');
         if (priceEl) priceEl.innerHTML = (price ? price+' грн' : '—') + ' <span>/ год</span>';
         const distEl = card.querySelector('.badge-dist');
-        if (distEl) distEl.innerHTML = `<i class="ti ti-map-pin"></i> ${esc(area||'Київ')}`;
+        if (distEl) distEl.innerHTML = `<i class="ti ti-map-pin"></i> ${esc(area||'—')}`;
       }
       showToast('Налаштування збережено!', '', 'success');
     } catch(e) { alert('Помилка збереження.'); }
@@ -2546,14 +2546,15 @@ function buildCard(d, i, id) {
     <button class="card-fav${isFav?' on':''}" data-fav-id="${esc(id||'')}" onclick="window._toggleFav(this)" title="До обраних"><i class="ti ti-heart${isFav?'-filled':''}"></i></button>
     <div class="instr-top">
       ${d.photo
-        ? `<img class="avatar" src="${esc(d.photo)}" style="object-fit:cover" alt="">`
+        ? `<img class="avatar" src="${esc(d.photo)}" style="object-fit:cover" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">\
+<div class="avatar" style="background:${th.bg};color:${th.color};display:none">${esc(initials(d.name))}</div>`
         : `<div class="avatar" style="background:${th.bg};color:${th.color}">${esc(initials(d.name))}</div>`}
       <div>
         <div class="instr-name">${esc(d.name)}</div>
         <div class="instr-meta"><i class="ti ti-star"></i>${d.rating ? ' '+d.rating+' · '+d.reviews+' відгуків' : ' Новий інструктор'}</div>
       </div>
     </div>
-    <div class="badge-dist"><i class="ti ti-map-pin"></i> ${esc(d.area||'Київ')}<span class="badge-km"></span></div>
+    <div class="badge-dist"><i class="ti ti-map-pin"></i> ${esc(d.area||'—')}<span class="badge-km"></span></div>
     <div class="instr-tags">${tags.map(t=>`<span class="tag" style="${tagStyle(t)}">${esc(t)}</span>`).join('')}</div>
     <div class="instr-footer">
       <div class="price">${d.price?d.price+' грн':'—'} <span>/ год</span></div>
@@ -3937,7 +3938,7 @@ function openInstrProfile(id, mpIdx) {
   document.getElementById('instr-profile').dataset.instrId = id;
   document.getElementById('prof-head').innerHTML = `
     ${d.photo
-      ? `<img class="prof-avatar-lg" src="${_esc(d.photo)}" alt="">`
+      ? `<img class="prof-avatar-lg" src="${_esc(d.photo)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="prof-avatar-lg" style="background:${d.avbg||'#e0f4ea'};color:${col};display:none">${_esc(ini)}</div>`
       : `<div class="prof-avatar-lg" style="background:${d.avbg||'#e0f4ea'};color:${col}">${_esc(ini)}</div>`}
     <div style="min-width:0">
       <div class="prof-name-lg">${_esc(d.name)}</div>
