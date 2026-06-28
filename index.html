@@ -720,7 +720,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.151</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.152</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -4491,7 +4491,21 @@ function locateMe(fromSearch = false) {
     if (_mainMap) _mainMap.setView([lat, lng], acc < 200 ? 15 : 13);
     if (fromSearch) scrollToMap();
     _setUserLocation(lat, lng, pos.coords.accuracy);
-    showToast('Місце визначено', `Точність: ~${acc < 1000 ? acc + ' м' : (acc/1000).toFixed(1) + ' км'}${acc > 500 ? ' — спробуйте «Вручну» для точнішого місця' : ''}`, acc > 500 ? 'info' : 'success');
+    // auto-activate distance sort
+    if (_activeSort !== 'distance') {
+      document.querySelectorAll('[data-sort]').forEach(b => b.classList.toggle('active', b.dataset.sort === 'distance'));
+      _activeSort = 'distance';
+      _applyAllFilters();
+    }
+    // count nearby instructors within 10km
+    const nearbyCount = Object.values(window._instrProfiles || {}).filter(d => {
+      if (!d.lat || !d.lng) return false;
+      const R = 6371, dLat = (d.lat - lat) * Math.PI / 180, dLng = (d.lng - lng) * Math.PI / 180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(lat*Math.PI/180)*Math.cos(d.lat*Math.PI/180)*Math.sin(dLng/2)**2;
+      return 2*R*Math.asin(Math.sqrt(a)) <= 10;
+    }).length;
+    const nearbyStr = nearbyCount > 0 ? `${nearbyCount} інструктор${nearbyCount===1?'':'ів'} у радіусі 10 км` : 'Інструкторів поруч не знайдено';
+    showToast('Місце визначено', `${nearbyStr}. Точність: ~${acc < 1000 ? acc + ' м' : (acc/1000).toFixed(1) + ' км'}`, acc > 500 ? 'info' : 'success');
   }, err => {
     restore();
     const msgs = { 1: 'Доступ до геолокації заборонено', 2: 'Не вдалося визначити місцезнаходження', 3: 'Час очікування вичерпано' };
