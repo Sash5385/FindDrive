@@ -394,6 +394,10 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .instr-progress-track{height:5px;background:#dde8dd;border-radius:3px;overflow:hidden;margin-bottom:10px}
 .instr-progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width .4s}
 .instr-progress-missing{font-size:11px;color:var(--text-muted);line-height:1.6;display:flex;flex-wrap:wrap;gap:4px 8px}
+.instr-bk-stats{display:flex;gap:8px;margin-bottom:12px}
+.instr-bk-stat{flex:1;background:var(--bg);border-radius:10px;padding:10px 6px;text-align:center;border:.5px solid var(--border)}
+.instr-bk-stat b{display:block;font-size:18px;font-weight:700;color:var(--green);line-height:1}
+.instr-bk-stat span{font-size:10px;color:var(--text-hint);margin-top:3px;display:block;line-height:1.2}
 .toggle-row{display:flex;gap:4px}
 .toggle-btn{flex:1;padding:5px 0;border:.5px solid var(--border);border-radius:7px;font-size:12px;background:var(--bg);color:var(--text-muted);cursor:pointer;font-family:inherit;transition:all .15s;text-align:center}
 .toggle-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
@@ -716,7 +720,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.150</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.151</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -3876,8 +3880,18 @@ async function loadInstrCombined(instr, container) {
       </div>`;
     }
 
+    const _bkConfirmed = allBk.filter(b => b.status === 'confirmed' || b.status === 'done').length;
+    const _bkPending   = allBk.filter(b => b.status === 'pending' || b.status === 'reschedule_requested').length;
+    const _bkStudents  = new Set(allBk.map(b => b.clientId).filter(Boolean)).size;
+    const _statsHtml = `<div class="instr-bk-stats">
+      <div class="instr-bk-stat"><b>${_bkConfirmed}</b><span>підтверджено</span></div>
+      <div class="instr-bk-stat"><b>${_bkPending}</b><span>очікують</span></div>
+      <div class="instr-bk-stat"><b>${_bkStudents}</b><span>учнів</span></div>
+      <div class="instr-bk-stat"><b>${allBk.length}</b><span>всього</span></div>
+    </div>`;
+
     function renderAll() {
-      container.innerHTML = `
+      container.innerHTML = _statsHtml + `
         <div class="av-legend">
           <div class="av-legend-item"><div class="av-legend-dot" style="background:var(--green-light);border:.5px solid var(--green)"></div>Відкрито</div>
           <div class="av-legend-item"><div class="av-legend-dot" style="background:#f0faf4;border:.5px solid #2a8a5a"></div>Щотижня</div>
