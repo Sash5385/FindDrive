@@ -775,7 +775,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.166</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.167</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1648,16 +1648,9 @@ async function renderSetupScreen(user, pre = {}) {
 <p style="font-size:12px;color:var(--text-muted);line-height:1.5;margin:14px 14px 4px">Розкажіть про себе — інструктори підберуть підхід.</p>
 
 <div class="setup-card">
-  <div class="setup-qlabel">Рівень водіння</div>
+  <div class="setup-qlabel">Посвідчення водія</div>
   <div class="setup-grid2">
-    ${btns([['beginner','Починаю з нуля'],['some','Є базові навички'],['licensed','Маю права, немає практики']],'s-level','radio',pre.level||'beginner')}
-  </div>
-</div>
-
-<div class="setup-card">
-  <div class="setup-qlabel">Кількість занять раніше</div>
-  <div class="setup-grid2">
-    ${btns([['0-20','0–20'],['20-40','20–40'],['40-60','40–60'],['60+','60+']],'s-lessons','radio',pre.lessons||'0-20')}
+    ${btns([['yes','Маю посвідчення'],['no','Не маю']],'s-license','radio',pre.license||(pre.level&&pre.level!=='beginner'?'yes':'no'))}
   </div>
 </div>
 
@@ -1681,13 +1674,6 @@ async function renderSetupScreen(user, pre = {}) {
   <div class="setup-qlabel">Зручний час занять</div>
   <div class="setup-grid2">
     ${btns([['morning','Ранок (7–11)'],['day','День (11–17)'],['evening','Вечір (17–21)'],['weekend','Вихідні']],'s-sched','checkbox',pre.schedule||[])}
-  </div>
-</div>
-
-<div class="setup-card">
-  <div class="setup-qlabel">Слабкі місця</div>
-  <div class="setup-grid2">
-    ${btns([['parking','Паркування'],['reverse','Задній хід'],['turns','Розвороти'],['traffic','Інтенсивний трафік'],['crossroads','Перехрестя']],'s-weak','checkbox',pre.weakSpots||[])}
   </div>
 </div>
 
@@ -1719,13 +1705,11 @@ async function renderSetupScreen(user, pre = {}) {
 async function saveSetup(user) {
   const body = document.getElementById('cab-body');
   const data = {
-    level:         body.querySelector('[name="s-level"]:checked')?.value || 'beginner',
-    lessons:       body.querySelector('[name="s-lessons"]:checked')?.value || '0-20',
+    license:       body.querySelector('[name="s-license"]:checked')?.value || 'no',
     gearbox:       body.querySelector('[name="s-gearbox"]:checked')?.value || 'auto',
     budget:        { from: parseInt(body.querySelector('#s-budget-from')?.value)||0, to: parseInt(body.querySelector('#s-budget-to')?.value)||0 },
     schedule:      [...body.querySelectorAll('[name="s-sched"]:checked')].map(c=>c.value),
     tsc:           body.querySelector('[name="s-tsc"]')?.value || '',
-    weakSpots:     [...body.querySelectorAll('[name="s-weak"]:checked')].map(c=>c.value),
     preferredTags: [...body.querySelectorAll('[name="s-ptag"]:checked')].map(c=>c.value),
     setupDone: true,
   };
@@ -1971,12 +1955,10 @@ async function renderProfileScreen(user) {
       <div class="cab-section">
         <div class="cab-section-title">Профіль учня</div>
         <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--text-muted);margin-top:6px">
-          ${ud.level ? `<div><i class="ti ti-school" style="color:var(--green)"></i> ${esc(LEVEL_LABELS[ud.level]||ud.level)}</div>` : ''}
+          ${ud.license ? `<div><i class="ti ti-id" style="color:var(--green)"></i> ${ud.license==='yes'?'Є посвідчення водія':'Без посвідчення'}</div>` : ud.level ? `<div><i class="ti ti-school" style="color:var(--green)"></i> ${esc(LEVEL_LABELS[ud.level]||ud.level)}</div>` : ''}
           ${(() => { const b=ud.budget; if(!b) return ''; const t=typeof b==='object'?(b.from||b.to?`${b.from||0}–${b.to||'∞'} грн/год`:''):(BUDGET_LABELS[b]||b); return t?`<div><i class="ti ti-wallet" style="color:var(--green)"></i> ${esc(t)}</div>`:'';})()}
           ${ud.tsc ? `<div style="display:flex;align-items:flex-start;gap:6px"><i class="ti ti-building" style="color:var(--green);flex-shrink:0;margin-top:1px"></i><span>${esc(ud.tsc)}</span></div>` : ''}
-          ${(ud.goals||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:2px">${ud.goals.map(g=>`<span class="tag">${esc(GOAL_LABELS[g]||g)}</span>`).join('')}</div>` : ''}
           ${(ud.schedule||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${ud.schedule.map(s=>`<span class="tag">${esc(SCHED_LABELS[s]||s)}</span>`).join('')}</div>` : ''}
-          ${(ud.weakSpots||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${ud.weakSpots.map(w=>`<span class="weak-chip">${esc(WEAK_LABELS[w]||w)}</span>`).join('')}</div>` : ''}
           ${(ud.preferredTags||[]).length ? `<div style="margin-top:4px"><div style="font-size:11px;color:var(--text-hint);margin-bottom:4px"><i class="ti ti-filter" style="font-size:10px"></i> Шукаю інструктора:</div><div style="display:flex;flex-wrap:wrap;gap:4px">${ud.preferredTags.map(t=>`<span class="tag" style="background:var(--green-light);color:var(--green);border:.5px solid #b8ddc8">${esc(t)}</span>`).join('')}</div></div>` : ''}
         </div>
         <button id="btn-edit-setup" class="btn-bk-action" style="margin-top:12px;width:100%;font-size:12px;padding:8px"><i class="ti ti-edit"></i> Редагувати профіль</button>
