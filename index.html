@@ -734,7 +734,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.160</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.161</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -910,6 +910,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <div id="instr-filters" class="instr-filters" style="display:none">
     <button id="fav-filter-chip" class="ifilter-chip" onclick="window._filterFavs(this)" title="Показати тільки обраних"><i class="ti ti-heart"></i> <span id="fav-chip-label">Обрані</span></button>
     <button id="verified-filter-chip" class="ifilter-chip" onclick="window._filterVerified(this)" title="Тільки верифіковані інструктори"><i class="ti ti-shield-check"></i> Верифіковані</button>
+    <button id="today-filter-chip" class="ifilter-chip" onclick="window._filterToday(this)" title="Доступні сьогодні"><i class="ti ti-clock-check"></i> Сьогодні</button>
     <div class="ifilter-sep"></div>
     <div class="ifilter-group">
       <span class="ifilter-label">КПП</span>
@@ -2647,7 +2648,7 @@ function buildCard(d, i, id) {
   const isNew = d.createdAt?.toDate && (Date.now() - d.createdAt.toDate().getTime()) < 30*24*60*60*1000;
   const _dayNames = ['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
   const isAvailToday = Array.isArray(d.days) && d.days.includes(_dayNames[new Date().getDay()]);
-  return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}' data-price="${d.price||0}" data-rating="${d.rating||0}" data-gearbox="${esc(d.gearbox||'')}" data-area="${esc((d.area||'').toLowerCase())}" data-instr-id="${esc(id||'')}" data-lat="${d.lat||''}" data-lng="${d.lng||''}" data-dist="" data-name="${esc((d.name||'').toLowerCase())}" data-experience="${d.experience||0}" data-verified="${d.verified?'1':''}">
+  return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}' data-price="${d.price||0}" data-rating="${d.rating||0}" data-gearbox="${esc(d.gearbox||'')}" data-area="${esc((d.area||'').toLowerCase())}" data-instr-id="${esc(id||'')}" data-lat="${d.lat||''}" data-lng="${d.lng||''}" data-dist="" data-name="${esc((d.name||'').toLowerCase())}" data-experience="${d.experience||0}" data-verified="${d.verified?'1':''}" data-today="${isAvailToday?'1':''}">
     <div class="card-blob" style="background:${th.blob}"></div>
     ${isNew ? '<span class="badge-new">Новий</span>' : ''}
     <button class="card-fav${isFav?' on':''}" data-fav-id="${esc(id||'')}" onclick="window._toggleFav(this)" title="До обраних"><i class="ti ti-heart${isFav?'-filled':''}"></i></button>
@@ -2708,6 +2709,7 @@ let _activeExpMin       = 0;
 let _activeSort         = '';
 let _showFavsOnly       = false;
 let _showVerifiedOnly   = false;
+let _showTodayOnly      = false;
 let _activeNameFilter   = '';
 let _activeCity         = '';
 
@@ -2843,17 +2845,18 @@ function _applyAllFilters() {
     const ratingOk   = !_activeRmin || (parseFloat(card.dataset.rating) || 0) >= _activeRmin;
     const expOk      = !_activeExpMin || (parseInt(card.dataset.experience) || 0) >= _activeExpMin;
     const verifiedOk = !_showVerifiedOnly || card.dataset.verified === '1';
+    const todayOk    = !_showTodayOnly   || card.dataset.today === '1';
     const favOk      = !_showFavsOnly || window._favs.has(card.dataset.instrId || '');
     const nameOk     = !_activeNameFilter || (card.dataset.name || '').includes(_activeNameFilter);
     const cityOk     = !_activeCity || (area + ' ' + (card.dataset.city || '')).toLowerCase().includes(_activeCity.toLowerCase());
-    const show = typeOk && otherOk && priceOk && ratingOk && expOk && verifiedOk && favOk && nameOk && cityOk;
+    const show = typeOk && otherOk && priceOk && ratingOk && expOk && verifiedOk && todayOk && favOk && nameOk && cityOk;
     card.style.display = show ? '' : 'none';
     if (show) visible++;
   });
 
   const _activeFilterCount = [
     _activeGb !== '', _activePmax > 0, _activeRmin > 0, _activeExpMin > 0,
-    _activeSort !== '', _showFavsOnly, _showVerifiedOnly,
+    _activeSort !== '', _showFavsOnly, _showVerifiedOnly, _showTodayOnly,
     _activeNameFilter !== '', _activeCity !== '', activeTags.length > 0,
   ].filter(Boolean).length;
   const cnt = document.getElementById('ifilter-count');
@@ -2902,7 +2905,7 @@ function _applyTagFilters() { _applyAllFilters(); }
 
 window._resetAllFilters = function() {
   _activeGb = ''; _activePmax = 0; _activeRmin = 0; _activeExpMin = 0; _activeSort = '';
-  _showFavsOnly = false; _showVerifiedOnly = false; _activeNameFilter = ''; _activeCity = '';
+  _showFavsOnly = false; _showVerifiedOnly = false; _showTodayOnly = false; _activeNameFilter = ''; _activeCity = '';
   const cs = document.getElementById('city-select'); if (cs) cs.value = '';
   document.querySelectorAll('.tag-filter-chip').forEach(b => b.classList.toggle('active', b.dataset.tag === ''));
   document.querySelectorAll('[data-gb]').forEach(b => b.classList.toggle('active', b.dataset.gb === ''));
@@ -2912,6 +2915,7 @@ window._resetAllFilters = function() {
   document.querySelectorAll('[data-sort]').forEach(b => b.classList.toggle('active', b.dataset.sort === ''));
   document.getElementById('fav-filter-chip')?.classList.remove('active');
   document.getElementById('verified-filter-chip')?.classList.remove('active');
+  document.getElementById('today-filter-chip')?.classList.remove('active');
   const inp = document.getElementById('search-input'); if (inp) inp.value = '';
   _GB_TAGS.forEach(tag => window._syncCloudTag?.(tag, false));
   _applyAllFilters();
@@ -3050,6 +3054,11 @@ window._filterExp = function(btn) {
 window._filterVerified = function(btn) {
   _showVerifiedOnly = !_showVerifiedOnly;
   btn.classList.toggle('active', _showVerifiedOnly);
+  _applyAllFilters();
+};
+window._filterToday = function(btn) {
+  _showTodayOnly = !_showTodayOnly;
+  btn.classList.toggle('active', _showTodayOnly);
   _applyAllFilters();
 };
 window._filterSort = function(btn) {
