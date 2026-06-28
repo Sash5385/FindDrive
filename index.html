@@ -182,18 +182,34 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .filters-sticky.stuck{box-shadow:0 3px 16px rgba(0,0,0,.09);border-bottom:.5px solid var(--border)}
 @media(max-width:600px){.filters-sticky{margin:0 -20px;padding:0 20px 4px}}
 
-/* SEARCH FILTERS */
-.instr-filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
-.ifilter-group{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
-.ifilter-sep{width:.5px;height:16px;background:var(--border);margin:0 4px;flex-shrink:0}
-.ifilter-label{font-size:11px;color:var(--text-hint);white-space:nowrap;margin-right:2px}
-.ifilter-chip{padding:5px 12px;border-radius:20px;border:.5px solid var(--border);background:var(--white);color:var(--text-muted);font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s}
+/* FILTER BAR + DRAWER */
+.instr-filters{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 0 4px}
+.ifilter-chip{padding:5px 12px;border-radius:20px;border:.5px solid var(--border);background:var(--white);color:var(--text-muted);font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s;flex-shrink:0}
 .ifilter-chip:hover:not(.active){background:var(--green-light);color:var(--green);border-color:var(--green)}
 .ifilter-chip.active{background:var(--green);color:#fff;border-color:var(--green);font-weight:600}
-.ifilter-count{font-size:11px;color:var(--text-hint);margin-left:auto;white-space:nowrap;padding:4px 0;display:flex;align-items:center;gap:4px}
-.ifilter-reset-btn{background:var(--green);color:#fff;border:none;border-radius:20px;padding:3px 10px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:500;transition:background .15s;display:inline-flex;align-items:center;gap:4px}
-.ifilter-reset-btn:hover{background:var(--green-dark)}
-@media(max-width:600px){.ifilter-sep{display:none}.instr-filters{gap:6px}}
+.filter-open-btn{display:flex;align-items:center;gap:5px;padding:5px 13px;border-radius:20px;border:.5px solid var(--border);background:var(--white);color:var(--text-muted);font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s;flex-shrink:0;margin-left:auto}
+.filter-open-btn:hover{background:var(--green-light);color:var(--green);border-color:var(--green)}
+.filter-open-btn.has-active{background:var(--green);color:#fff;border-color:var(--green);font-weight:600}
+.filter-active-badge{display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.28);border-radius:10px;padding:0 5px;font-size:9px;font-weight:700;line-height:15px;min-width:15px;height:15px}
+.sort-bar{display:none;align-items:center;gap:6px;margin:0 0 14px;flex-wrap:wrap}
+.sort-label{font-size:11px;color:var(--text-hint);white-space:nowrap;margin-right:2px;flex-shrink:0}
+.filter-drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:200;opacity:0;transition:opacity .25s;pointer-events:none}
+.filter-drawer-overlay.open{opacity:1;pointer-events:auto}
+.filter-drawer{position:fixed;left:0;right:0;bottom:0;max-height:82vh;background:#fff;border-radius:20px 20px 0 0;z-index:201;transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);box-shadow:0 -4px 32px rgba(0,0,0,.15);display:flex;flex-direction:column}
+.filter-drawer.open{transform:translateY(0)}
+.filter-drawer-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;border-bottom:.5px solid var(--border);flex-shrink:0}
+.filter-drawer-title{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
+.filter-drawer-close{background:none;border:none;font-size:20px;color:var(--text-muted);cursor:pointer;line-height:1;padding:2px 4px;border-radius:6px;transition:background .15s}
+.filter-drawer-close:hover{background:var(--green-light);color:var(--green)}
+.filter-drawer-body{flex:1;overflow-y:auto;padding:10px 16px 6px;display:flex;flex-direction:column;gap:10px}
+.filter-drawer-card{background:var(--green-light);border-radius:12px;padding:12px 14px;border:1px solid #d8eed8}
+.filter-drawer-label{font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
+.filter-drawer-row{display:flex;gap:6px;flex-wrap:wrap}
+.filter-drawer-foot{display:flex;gap:10px;padding:12px 16px;border-top:.5px solid var(--border);flex-shrink:0}
+.filter-drawer-reset{flex:1;padding:11px;border-radius:9px;border:1.5px solid var(--border);background:#fff;color:var(--text-muted);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:border-color .15s,color .15s}
+.filter-drawer-reset:hover{border-color:var(--green);color:var(--green)}
+.filter-drawer-apply{flex:2;padding:11px;border-radius:9px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
+.filter-drawer-apply:hover{background:var(--green-dark)}
 @keyframes userPulse{0%{box-shadow:0 0 0 0 rgba(24,95,165,.45)}70%{box-shadow:0 0 0 10px rgba(24,95,165,0)}100%{box-shadow:0 0 0 0 rgba(24,95,165,0)}}
 .user-location-dot{width:16px;height:16px;border-radius:50%;background:#185fa5;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);animation:userPulse 2s infinite}
 #active-tags-bar{display:none;flex-wrap:wrap;gap:5px;align-items:center;padding:6px 0 0;border-top:.5px solid var(--border);width:100%}
@@ -775,7 +791,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.168</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.169</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -948,57 +964,73 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   </div>
   <div id="filters-stub" style="height:0;pointer-events:none"></div>
   <div id="filters-sticky-wrap" class="filters-sticky">
-  <div id="instr-filters" class="instr-filters" style="display:none">
-    <button id="fav-filter-chip" class="ifilter-chip" onclick="window._filterFavs(this)" title="Показати тільки обраних"><i class="ti ti-heart"></i> <span id="fav-chip-label">Обрані</span></button>
-    <button id="verified-filter-chip" class="ifilter-chip" onclick="window._filterVerified(this)" title="Тільки верифіковані інструктори"><i class="ti ti-shield-check"></i> Верифіковані</button>
-    <button id="today-filter-chip" class="ifilter-chip" onclick="window._filterToday(this)" title="Доступні сьогодні"><i class="ti ti-clock-check"></i> Сьогодні</button>
-    <div class="ifilter-sep"></div>
-    <div class="ifilter-group">
-      <span class="ifilter-label">КПП</span>
-      <button class="ifilter-chip active" data-gb="" onclick="window._filterGb(this)">Всі</button>
-      <button class="ifilter-chip" data-gb="Автомат" onclick="window._filterGb(this)">Автомат</button>
-      <button class="ifilter-chip" data-gb="Механіка" onclick="window._filterGb(this)">Механіка</button>
+    <div id="instr-filters" class="instr-filters" style="display:none">
+      <button id="fav-filter-chip" class="ifilter-chip" onclick="window._filterFavs(this)" title="Показати тільки обраних"><i class="ti ti-heart"></i> <span id="fav-chip-label">Обрані</span></button>
+      <button id="verified-filter-chip" class="ifilter-chip" onclick="window._filterVerified(this)" title="Тільки верифіковані інструктори"><i class="ti ti-shield-check"></i> Верифіковані</button>
+      <button id="today-filter-chip" class="ifilter-chip" onclick="window._filterToday(this)" title="Доступні сьогодні"><i class="ti ti-clock-check"></i> Сьогодні</button>
+      <button id="filter-open-btn" class="filter-open-btn" onclick="window._openFilterDrawer()"><i class="ti ti-adjustments-horizontal"></i> Фільтри<span id="filter-active-badge" class="filter-active-badge" style="display:none"></span></button>
+      <div id="active-tags-bar"></div>
     </div>
-    <div class="ifilter-sep"></div>
-    <div class="ifilter-group">
-      <span class="ifilter-label">Ціна</span>
-      <button class="ifilter-chip active" data-pmax="0" onclick="window._filterPrice(this)">Будь-яка</button>
-      <button class="ifilter-chip" data-pmax="500" onclick="window._filterPrice(this)">до 500</button>
-      <button class="ifilter-chip" data-pmax="800" onclick="window._filterPrice(this)">до 800</button>
-      <button class="ifilter-chip" data-pmax="1000" onclick="window._filterPrice(this)">до 1000</button>
+    <div id="tag-filter-bar" class="tag-filter-bar">
+      <button class="tag-filter-chip active" data-tag="" onclick="window._filterByTag(this)">Всі</button>
     </div>
-    <div class="ifilter-sep"></div>
-    <div class="ifilter-group">
-      <span class="ifilter-label">Рейтинг</span>
-      <button class="ifilter-chip active" data-rmin="0" onclick="window._filterRating(this)">Будь-який</button>
-      <button class="ifilter-chip" data-rmin="4" onclick="window._filterRating(this)"><i class="ti ti-star" style="font-size:10px"></i> 4.0+</button>
-      <button class="ifilter-chip" data-rmin="4.5" onclick="window._filterRating(this)"><i class="ti ti-star" style="font-size:10px"></i> 4.5+</button>
-    </div>
-    <div class="ifilter-sep"></div>
-    <div class="ifilter-group">
-      <span class="ifilter-label">Стаж</span>
-      <button class="ifilter-chip active" data-expmin="0" onclick="window._filterExp(this)">Будь-який</button>
-      <button class="ifilter-chip" data-expmin="3" onclick="window._filterExp(this)">3+ р.</button>
-      <button class="ifilter-chip" data-expmin="5" onclick="window._filterExp(this)">5+ р.</button>
-      <button class="ifilter-chip" data-expmin="10" onclick="window._filterExp(this)">10+ р.</button>
-    </div>
-    <div class="ifilter-sep"></div>
-    <div class="ifilter-group">
-      <span class="ifilter-label">Сортування</span>
-      <button class="ifilter-chip active" data-sort="" onclick="window._filterSort(this)">За замовч.</button>
-      <button class="ifilter-chip" data-sort="rating" onclick="window._filterSort(this)"><i class="ti ti-star"></i> Рейтинг</button>
-      <button class="ifilter-chip" data-sort="price_asc" onclick="window._filterSort(this)">↑ Ціна</button>
-      <button class="ifilter-chip" data-sort="price_desc" onclick="window._filterSort(this)">↓ Ціна</button>
-      <button class="ifilter-chip" data-sort="distance" onclick="window._filterSort(this)"><i class="ti ti-current-location"></i> Відстань</button>
-    </div>
-    <span id="ifilter-count" class="ifilter-count"></span>
-    <div id="active-tags-bar"></div>
   </div>
-  <div id="tag-filter-bar" class="tag-filter-bar">
-    <button class="tag-filter-chip active" data-tag="" onclick="window._filterByTag(this)">Всі</button>
-  </div>
+  <div id="filter-drawer-overlay" class="filter-drawer-overlay" onclick="window._closeFilterDrawer()"></div>
+  <div id="filter-drawer" class="filter-drawer">
+    <div class="filter-drawer-head">
+      <span class="filter-drawer-title"><i class="ti ti-adjustments-horizontal"></i> Фільтри</span>
+      <button class="filter-drawer-close" onclick="window._closeFilterDrawer()">✕</button>
+    </div>
+    <div class="filter-drawer-body">
+      <div class="filter-drawer-card">
+        <div class="filter-drawer-label">КПП</div>
+        <div class="filter-drawer-row">
+          <button class="ifilter-chip active" data-gb="" onclick="window._filterGb(this)">Всі</button>
+          <button class="ifilter-chip" data-gb="Автомат" onclick="window._filterGb(this)">Автомат</button>
+          <button class="ifilter-chip" data-gb="Механіка" onclick="window._filterGb(this)">Механіка</button>
+        </div>
+      </div>
+      <div class="filter-drawer-card">
+        <div class="filter-drawer-label">Ціна, грн/год</div>
+        <div class="filter-drawer-row">
+          <button class="ifilter-chip active" data-pmax="0" onclick="window._filterPrice(this)">Будь-яка</button>
+          <button class="ifilter-chip" data-pmax="500" onclick="window._filterPrice(this)">до 500</button>
+          <button class="ifilter-chip" data-pmax="800" onclick="window._filterPrice(this)">до 800</button>
+          <button class="ifilter-chip" data-pmax="1000" onclick="window._filterPrice(this)">до 1000</button>
+        </div>
+      </div>
+      <div class="filter-drawer-card">
+        <div class="filter-drawer-label">Рейтинг</div>
+        <div class="filter-drawer-row">
+          <button class="ifilter-chip active" data-rmin="0" onclick="window._filterRating(this)">Будь-який</button>
+          <button class="ifilter-chip" data-rmin="4" onclick="window._filterRating(this)"><i class="ti ti-star" style="font-size:10px"></i> 4.0+</button>
+          <button class="ifilter-chip" data-rmin="4.5" onclick="window._filterRating(this)"><i class="ti ti-star" style="font-size:10px"></i> 4.5+</button>
+        </div>
+      </div>
+      <div class="filter-drawer-card">
+        <div class="filter-drawer-label">Стаж</div>
+        <div class="filter-drawer-row">
+          <button class="ifilter-chip active" data-expmin="0" onclick="window._filterExp(this)">Будь-який</button>
+          <button class="ifilter-chip" data-expmin="3" onclick="window._filterExp(this)">3+ р.</button>
+          <button class="ifilter-chip" data-expmin="5" onclick="window._filterExp(this)">5+ р.</button>
+          <button class="ifilter-chip" data-expmin="10" onclick="window._filterExp(this)">10+ р.</button>
+        </div>
+      </div>
+    </div>
+    <div class="filter-drawer-foot">
+      <button class="filter-drawer-reset" onclick="window._resetAllFilters()">Скинути</button>
+      <button class="filter-drawer-apply" onclick="window._closeFilterDrawer()">Застосувати</button>
+    </div>
   </div>
   <div id="rv-row" class="rv-row"><span class="rv-label"><i class="ti ti-history" style="font-size:12px"></i> Нещодавно:</span><div id="rv-chips" class="rv-chips"></div></div>
+  <div id="sort-bar" class="sort-bar">
+    <span class="sort-label">Сортувати:</span>
+    <button class="ifilter-chip active" data-sort="" onclick="window._filterSort(this)">За замовч.</button>
+    <button class="ifilter-chip" data-sort="rating" onclick="window._filterSort(this)"><i class="ti ti-star" style="font-size:10px"></i> Рейтинг</button>
+    <button class="ifilter-chip" data-sort="price_asc" onclick="window._filterSort(this)">↑ Ціна</button>
+    <button class="ifilter-chip" data-sort="price_desc" onclick="window._filterSort(this)">↓ Ціна</button>
+    <button class="ifilter-chip" data-sort="distance" onclick="window._filterSort(this)"><i class="ti ti-current-location" style="font-size:10px"></i> Відстань</button>
+  </div>
   <div id="instr-grid" class="instr-grid"></div>
 </section>
 
@@ -3015,13 +3047,12 @@ function _applyAllFilters() {
     _activeSort !== '', _showFavsOnly, _showVerifiedOnly, _showTodayOnly,
     _activeNameFilter !== '', _activeCity !== '', activeTags.length > 0,
   ].filter(Boolean).length;
-  const cnt = document.getElementById('ifilter-count');
-  if (cnt) {
-    const countStr = visible < cards.length ? `${visible} з ${cards.length}` : '';
-    const resetBtn = _activeFilterCount > 0
-      ? `${countStr ? ' · ' : ''}<button class="ifilter-reset-btn" onclick="window._resetAllFilters()"><i class="ti ti-x" style="font-size:10px"></i> Скинути (${_activeFilterCount})</button>`
-      : '';
-    cnt.innerHTML = countStr + resetBtn;
+  const _drawerFilterCount = [_activeGb !== '', _activePmax > 0, _activeRmin > 0, _activeExpMin > 0].filter(Boolean).length;
+  const badge = document.getElementById('filter-active-badge');
+  const openBtn = document.getElementById('filter-open-btn');
+  if (badge) {
+    if (_drawerFilterCount > 0) { badge.textContent = _drawerFilterCount; badge.style.display = ''; openBtn?.classList.add('has-active'); }
+    else { badge.style.display = 'none'; openBtn?.classList.remove('has-active'); }
   }
   window._filterMapMarkers?.(activeTags);
   updateActiveTagsBar(activeTags);
@@ -3065,7 +3096,7 @@ window._resetAllFilters = function() {
   const cs = document.getElementById('city-select'); if (cs) cs.value = '';
   document.querySelectorAll('.tag-filter-chip').forEach(b => b.classList.toggle('active', b.dataset.tag === ''));
   document.querySelectorAll('[data-gb]').forEach(b => b.classList.toggle('active', b.dataset.gb === ''));
-  document.querySelectorAll('[data-pmax]').forEach(b => b.classList.toggle('active', !b.dataset.pmax));
+  document.querySelectorAll('[data-pmax]').forEach(b => b.classList.toggle('active', b.dataset.pmax === '0'));
   document.querySelectorAll('[data-rmin]').forEach(b => b.classList.toggle('active', b.dataset.rmin === '0'));
   document.querySelectorAll('[data-expmin]').forEach(b => b.classList.toggle('active', b.dataset.expmin === '0'));
   document.querySelectorAll('[data-sort]').forEach(b => b.classList.toggle('active', b.dataset.sort === ''));
@@ -3075,6 +3106,23 @@ window._resetAllFilters = function() {
   const inp = document.getElementById('search-input'); if (inp) inp.value = '';
   _GB_TAGS.forEach(tag => window._syncCloudTag?.(tag, false));
   _applyAllFilters();
+};
+
+window._openFilterDrawer = function() {
+  const overlay = document.getElementById('filter-drawer-overlay');
+  const drawer  = document.getElementById('filter-drawer');
+  if (!overlay || !drawer) return;
+  overlay.style.pointerEvents = 'auto';
+  requestAnimationFrame(() => { overlay.classList.add('open'); drawer.classList.add('open'); });
+  document.body.style.overflow = 'hidden';
+};
+window._closeFilterDrawer = function() {
+  const overlay = document.getElementById('filter-drawer-overlay');
+  const drawer  = document.getElementById('filter-drawer');
+  if (!overlay || !drawer) return;
+  overlay.classList.remove('open'); drawer.classList.remove('open');
+  document.body.style.overflow = '';
+  setTimeout(() => { overlay.style.pointerEvents = ''; }, 280);
 };
 
 window.addEventListener('scroll', function() {
@@ -3277,6 +3325,8 @@ async function loadInstructors() {
     populateTagFilterBar();
     const filtersEl = document.getElementById('instr-filters');
     if (filtersEl) filtersEl.style.display = '';
+    const sortBarEl = document.getElementById('sort-bar');
+    if (sortBarEl) sortBarEl.style.display = 'flex';
     _updateDistanceBadges();
     _updateFavChip();
     window._checkDeepLink?.();
