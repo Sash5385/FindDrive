@@ -387,6 +387,13 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 /* INSTRUCTOR SETTINGS */
 .instr-set-group{margin-bottom:14px}
 .instr-set-label{font-size:11px;color:var(--text-muted);margin-bottom:6px;display:block;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.instr-progress-wrap{background:var(--bg);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.instr-progress-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.instr-progress-title{font-size:12px;font-weight:600;color:var(--text)}
+.instr-progress-pct{font-size:12px;font-weight:700;color:var(--green)}
+.instr-progress-track{height:5px;background:#dde8dd;border-radius:3px;overflow:hidden;margin-bottom:10px}
+.instr-progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width .4s}
+.instr-progress-missing{font-size:11px;color:var(--text-muted);line-height:1.6;display:flex;flex-wrap:wrap;gap:4px 8px}
 .toggle-row{display:flex;gap:4px}
 .toggle-btn{flex:1;padding:5px 0;border:.5px solid var(--border);border-radius:7px;font-size:12px;background:var(--bg);color:var(--text-muted);cursor:pointer;font-family:inherit;transition:all .15s;text-align:center}
 .toggle-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
@@ -709,7 +716,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.149</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.150</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1847,7 +1854,28 @@ async function loadInstrSettings(instr, container) {
   function renderAll() {
     const faceSrc = pendingFacePhoto || instr.photo || '';
     const carSrc  = pendingCarPhoto  || instr.carPhoto || '';
+    const _cpFields = [
+      { label: 'Фото обличчя',     ok: !!faceSrc },
+      { label: 'Фото авто',        ok: !!carSrc },
+      { label: 'Про себе',         ok: !!(instr.about) },
+      { label: 'Ціна',             ok: !!(instr.price) },
+      { label: 'Район',            ok: !!(instr.area) },
+      { label: 'Стаж',             ok: !!(instr.experience) },
+      { label: 'Точки зустрічі',   ok: meetingPts.length > 0 },
+      { label: 'Спеціалізація',    ok: instrTags.length > 0 },
+    ];
+    const _cpDone = _cpFields.filter(f => f.ok).length;
+    const _cpPct  = Math.round(_cpDone / _cpFields.length * 100);
+    const _cpMissing = _cpFields.filter(f => !f.ok);
     container.innerHTML = `
+      ${_cpPct < 100 ? `<div class="instr-progress-wrap">
+        <div class="instr-progress-header">
+          <span class="instr-progress-title">Профіль заповнено</span>
+          <span class="instr-progress-pct">${_cpPct}%</span>
+        </div>
+        <div class="instr-progress-track"><div class="instr-progress-fill" style="width:${_cpPct}%"></div></div>
+        <div class="instr-progress-missing">${_cpMissing.map(f=>`<span style="display:inline-flex;align-items:center;gap:3px;color:var(--text-hint)"><i class="ti ti-circle-dashed" style="font-size:10px"></i>${esc(f.label)}</span>`).join('')}</div>
+      </div>` : `<div class="instr-progress-wrap" style="text-align:center"><i class="ti ti-circle-check" style="font-size:20px;color:var(--green)"></i><div style="font-size:12px;font-weight:600;color:var(--green);margin-top:4px">Профіль повністю заповнено!</div></div>`}
       <div class="instr-set-group">
         <span class="instr-set-label">Фото</span>
         <div class="photo-uploads" style="justify-content:flex-start;padding:0 0 4px">
