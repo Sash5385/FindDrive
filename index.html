@@ -775,7 +775,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.167</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.168</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1554,7 +1554,7 @@ window.renderAuthModalForm = function(role, mode) {
       <input id="auth-name" class="form-input" type="text" placeholder="Іван Іваненко" autocomplete="name">
     </div>
     <div class="form-group">
-      <label class="form-label">Телефон <span style="font-size:10px;color:var(--text-hint)">(необов'язково)</span></label>
+      <label class="form-label">Телефон <span style="color:#cc3333">*</span></label>
       <input id="auth-phone" class="form-input" type="tel" placeholder="+380XXXXXXXXX">
     </div>` : ''}
     <button id="btn-auth-submit" class="btn-submit-instr" style="margin-top:4px">
@@ -1588,7 +1588,7 @@ window.renderAuthModalForm = function(role, mode) {
   });
   document.getElementById('btn-auth-submit').addEventListener('click', handleAuthSubmit);
   document.getElementById('auth-pass').addEventListener('keydown', e => { if (e.key === 'Enter') handleAuthSubmit(); });
-  ['auth-email','auth-pass','auth-name'].forEach(id => {
+  ['auth-email','auth-pass','auth-name','auth-phone'].forEach(id => {
     document.getElementById(id)?.addEventListener('input', () => clearAuthFieldErr(id));
   });
 };
@@ -1617,6 +1617,10 @@ function validateAuthModal() {
   if (!pass) { setAuthFieldErr('auth-pass', 'Введіть пароль'); ok = false; }
   else if (pass.length < 6) { setAuthFieldErr('auth-pass', 'Мінімум 6 символів'); ok = false; }
   if (authMode === 'register' && !name) { setAuthFieldErr('auth-name', "Введіть ім'я та прізвище"); ok = false; }
+  if (authMode === 'register') {
+    const phone = document.getElementById('auth-phone')?.value.trim() || '';
+    if (!phone) { setAuthFieldErr('auth-phone', 'Введіть номер телефону'); ok = false; }
+  }
   return ok;
 }
 
@@ -1916,7 +1920,6 @@ async function renderProfileScreen(user) {
       </div>
       <button onclick="window._signOut()" title="Вийти з акаунту" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:20px;padding:4px;line-height:1;flex-shrink:0;transition:color .15s" onmouseover="this.style.color='#cc3333'" onmouseout="this.style.color='var(--text-muted)'"><i class="ti ti-logout"></i></button>
     </div>
-    <button id="btn-save-student-photo" onclick="window._saveStudentPhoto()" style="display:none;width:100%;margin-top:10px;padding:9px;background:var(--green);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit"><i class="ti ti-device-floppy"></i> Зберегти фото</button>
     <div class="cab-contacts">
       <div class="cab-contact-row">
         <i class="ti ti-user cab-contact-icon"></i>
@@ -2506,29 +2509,19 @@ window._pendingStudentPhoto = null;
 window._onStudentPhotoChange = async function(input) {
   const file = input.files[0];
   if (!file) return;
+  const user = window._cabUser || auth.currentUser;
+  if (!user) return;
   const data = await resizePhoto(file, 200);
-  window._pendingStudentPhoto = data;
   const el = document.getElementById('student-photo-img');
   if (el) {
     if (el.tagName === 'IMG') { el.src = data; }
     else { el.outerHTML = `<img class="cab-photo" id="student-photo-img" src="${data}" alt="" style="display:block">`; }
   }
-  const btn = document.getElementById('btn-save-student-photo');
-  if (btn) btn.style.display = '';
-};
-window._saveStudentPhoto = async function() {
-  const user = window._cabUser || auth.currentUser;
-  if (!window._pendingStudentPhoto || !user) return;
-  const btn = document.getElementById('btn-save-student-photo');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> …'; }
   try {
-    await setDoc(doc(db, 'users', user.uid), { photo: window._pendingStudentPhoto }, { merge: true });
-    window._pendingStudentPhoto = null;
-    if (btn) btn.style.display = 'none';
+    await setDoc(doc(db, 'users', user.uid), { photo: data }, { merge: true });
   } catch(e) {
     console.error('Student photo save:', e);
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-device-floppy"></i> Зберегти фото'; }
-    alert('Помилка: ' + (e.message || e));
+    alert('Помилка збереження фото. Спробуйте ще раз.');
   }
 };
 
