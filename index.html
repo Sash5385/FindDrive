@@ -196,6 +196,12 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .tag-filter-chip[data-tag=""].active{background:var(--green)!important;color:#fff!important;border-color:var(--green)!important;box-shadow:none}
 .tag-filter-chip.active:not([data-tag=""]){border-width:1.5px;font-weight:600;box-shadow:0 1px 8px rgba(0,0,0,.12)}
 .tag-filter-chip:hover:not(.active){opacity:.72}
+.rv-row{display:none;align-items:center;gap:10px;margin:10px 0 0;flex-wrap:wrap}
+.rv-label{font-size:11px;color:var(--text-hint);display:flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0}
+.rv-chips{display:flex;gap:7px;flex-wrap:wrap}
+.rv-chip{display:flex;align-items:center;gap:6px;background:var(--white);border:.5px solid var(--border);border-radius:20px;padding:4px 10px 4px 4px;cursor:pointer;font-size:12px;color:var(--text-muted);font-family:inherit;transition:border-color .15s,background .15s}
+.rv-chip:hover{border-color:var(--green);color:var(--green);background:var(--green-light)}
+.rv-chip-av{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;flex-shrink:0}
 .tag-sel-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .tag-sel-btn{padding:5px 12px;border-radius:20px;border:.5px solid transparent;font-size:11px;cursor:pointer;font-family:inherit;transition:border-width .1s,box-shadow .15s,opacity .15s}
 .tag-sel-btn.active{border-width:1.5px;font-weight:500;box-shadow:0 1px 5px rgba(0,0,0,.1)}
@@ -696,7 +702,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.138</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.139</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -910,6 +916,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     <button class="tag-filter-chip active" data-tag="" onclick="window._filterByTag(this)">Всі</button>
   </div>
   </div>
+  <div id="rv-row" class="rv-row"><span class="rv-label"><i class="ti ti-history" style="font-size:12px"></i> Нещодавно:</span><div id="rv-chips" class="rv-chips"></div></div>
   <div id="instr-grid" class="instr-grid"></div>
 </section>
 
@@ -2622,6 +2629,30 @@ let _activeCity       = '';
 
 window._favs = new Set(JSON.parse(localStorage.getItem('fd_fav') || '[]'));
 function _saveFavs() { localStorage.setItem('fd_fav', JSON.stringify([...window._favs])); }
+function _rvTheme(id) { let h=0; for(const c of id) h=(h*31+c.charCodeAt(0))&0xff; return THEMES[h%THEMES.length]; }
+function _addToRV(id) {
+  let rv = JSON.parse(localStorage.getItem('fd_rv')||'[]');
+  rv = rv.filter(x=>x!==id); rv.unshift(id); if(rv.length>5) rv=rv.slice(0,5);
+  localStorage.setItem('fd_rv', JSON.stringify(rv)); _renderRV();
+}
+function _renderRV() {
+  const rv = JSON.parse(localStorage.getItem('fd_rv')||'[]');
+  const profiles = window._instrProfiles||{};
+  const valid = rv.filter(id=>profiles[id]);
+  const row = document.getElementById('rv-row'), chips = document.getElementById('rv-chips');
+  if (!row||!chips) return;
+  if (!valid.length) { row.style.display='none'; return; }
+  row.style.display='flex';
+  chips.innerHTML = valid.map(id => {
+    const d = profiles[id], th = _rvTheme(id);
+    const ini = (d.name||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';
+    const nm = (d.name||'').split(' ')[0] || 'Інструктор';
+    const av = d.photo
+      ? `<div class="rv-chip-av" style="background:${th.bg}"><img src="${esc(d.photo)}" style="width:22px;height:22px;border-radius:50%;object-fit:cover" onerror="this.outerHTML='<span style=font-size:8px;font-weight:700;color:${esc(th.color)}>${ini}</span>'"></div>`
+      : `<div class="rv-chip-av" style="background:${th.bg};color:${th.color}">${ini}</div>`;
+    return `<button class="rv-chip" onclick="openInstrProfile('${esc(id)}')">${av}<span>${esc(nm)}</span></button>`;
+  }).join('');
+}
 function _updateFavChip() {
   const lbl = document.getElementById('fav-chip-label');
   const chip = document.getElementById('fav-filter-chip');
@@ -2971,6 +3002,7 @@ async function loadInstructors() {
     _updateDistanceBadges();
     _updateFavChip();
     window._checkDeepLink?.();
+    _renderRV();
 
     function addMarkers() {
       snap.docs.forEach((docSnap, i) => {
@@ -4030,6 +4062,7 @@ function openInstrProfile(id, mpIdx) {
 
   if (window.openPanel) window.openPanel('instr-profile');
   history.pushState({ instrId: id }, '', location.pathname + '?instr=' + encodeURIComponent(id));
+  _addToRV(id);
   window._loadProfReviews?.(id);
   setTimeout(() => {
     window._openBooking?.(id);
