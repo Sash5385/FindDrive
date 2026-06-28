@@ -706,7 +706,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.144</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.145</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -875,7 +875,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 <section class="section" id="instructors">
   <div class="section-top">
     <span class="section-label">Інструктори поруч</span>
-    <a class="section-link" href="#">Усі інструктори <i class="ti ti-arrow-right"></i></a>
+    <a class="section-link" href="#instructors" onclick="window._resetAllFilters?.()">Усі інструктори <i class="ti ti-arrow-right"></i></a>
   </div>
   <div id="filters-stub" style="height:0;pointer-events:none"></div>
   <div id="filters-sticky-wrap" class="filters-sticky">
@@ -4069,6 +4069,7 @@ function openInstrProfile(id, mpIdx) {
     ${d.area ? `<div class="prof-row"><i class="ti ti-map-pin" style="color:${col}"></i> ${_esc(d.area)}</div>` : ''}
     ${instrTags.length ? `<div class="prof-tags-row">${instrTags.map(t=>`<span class="tag" style="${_ts(t)}">${_esc(t)}</span>`).join('')}</div>` : ''}
     ${d.about ? `<div class="prof-about-box">"${_esc(d.about)}"</div>` : ''}
+    ${d.carPhoto ? `<img src="${_esc(d.carPhoto)}" class="prof-car-photo" alt="Авто інструктора" loading="lazy">` : ''}
     ${mps.length ? `
       <div class="prof-divider"></div>
       <div class="prof-section-label"><i class="ti ti-map-pins" style="color:${col}"></i> Точки зустрічі</div>
