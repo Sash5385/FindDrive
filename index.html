@@ -702,7 +702,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.139</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.140</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2585,7 +2585,7 @@ function buildCard(d, i, id) {
         : `<div class="avatar" style="background:${th.bg};color:${th.color}">${esc(initials(d.name))}</div>`}
       <div>
         <div class="instr-name">${esc(d.name)}</div>
-        <div class="instr-meta"><i class="ti ti-star"></i>${d.rating ? ' '+d.rating+' · '+d.reviews+' відгуків' : ' Новий інструктор'}</div>
+        <div class="instr-meta"><i class="ti ti-star"></i>${d.rating ? ' '+d.rating+' · '+d.reviews+' відгуків' : ' Новий інструктор'}${d.experience ? ' · '+d.experience+' р.' : ''}</div>
       </div>
     </div>
     <div class="badge-dist"><i class="ti ti-map-pin"></i> ${esc(d.area||'—')}<span class="badge-km"></span></div>
@@ -4076,7 +4076,11 @@ function showPhone(phone, col) {
   const w = document.getElementById('prof-phone-wrap');
   if (!w) return;
   if (!phone) { w.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-size:13px">Телефон не вказано</p>'; return; }
-  w.innerHTML = `<a href="tel:${_esc(phone)}" class="btn-call" style="background:${col||'var(--green)'}"><i class="ti ti-phone-call"></i> ${_esc(phone)}</a>`;
+  const safePhone = _esc(phone), safePh = _esc(phone.replace(/\s/g,''));
+  w.innerHTML = `<div style="display:flex;gap:8px;align-items:center;justify-content:center">
+    <a href="tel:${safePhone}" class="btn-call" style="background:${col||'var(--green)'}"><i class="ti ti-phone-call"></i> ${safePhone}</a>
+    <button title="Скопіювати" style="background:none;border:.5px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;font-size:16px;color:var(--text-muted);transition:background .15s" onclick="navigator.clipboard.writeText('${safePh}').then(()=>showToast('Телефон скопійовано','','success')).catch(()=>{})" onmouseover="this.style.background='var(--green-light)'" onmouseout="this.style.background='none'"><i class="ti ti-copy"></i></button>
+  </div>`;
 }
 
 let _mainMap, _userMarker, _instrPickMap, _instrPickMarker;
