@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>404 — Сторінка не знайдена · FindDrive</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#1a7a4a;--green-dark:#0d4a2a;--green-light:#e8f4ee;
+  --bg:#f0f2f0;--white:#ffffff;--text:#0d2a1a;--text-muted:#5a7a6a;--border:#dde8dd;
+}
+html,body{height:100%}
+body{
+  font-family:'Inter',sans-serif;color:var(--text);
+  background-color:var(--bg);
+  background-image:
+    radial-gradient(circle 580px at 8% 7%,  rgba(168,240,192,.42), transparent 70%),
+    radial-gradient(circle 500px at 88% 12%, rgba(240,224,96,.36),  transparent 70%),
+    radial-gradient(circle 520px at 6% 50%,  rgba(240,168,208,.34), transparent 70%),
+    radial-gradient(circle 560px at 94% 58%, rgba(160,216,248,.38), transparent 70%),
+    radial-gradient(circle 540px at 48% 90%, rgba(192,184,248,.32), transparent 70%);
+  background-attachment:fixed;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  min-height:100vh;padding:40px 20px;text-align:center;
+}
+.logo{display:inline-flex;align-items:center;gap:8px;margin-bottom:40px;text-decoration:none}
+.logo-icon{width:36px;height:36px;background:var(--green);border-radius:9px;display:flex;align-items:center;justify-content:center}
+.logo-icon i{font-size:20px;color:#fff}
+.logo-text{font-size:18px;font-weight:700;color:var(--text)}
+.logo-text span{color:var(--green)}
+
+.card{background:var(--white);border-radius:24px;padding:48px 40px;max-width:420px;width:100%;border:.5px solid var(--border);box-shadow:0 4px 40px rgba(26,122,74,.07)}
+.code{font-size:80px;font-weight:700;color:var(--green);line-height:1;margin-bottom:8px;letter-spacing:-4px}
+.icon-wrap{font-size:48px;color:var(--green);margin-bottom:16px}
+h1{font-size:20px;font-weight:600;color:var(--text);margin-bottom:10px}
+p{font-size:14px;color:var(--text-muted);line-height:1.6;margin-bottom:28px}
+.btn-home{display:inline-flex;align-items:center;gap:8px;background:var(--green);color:#fff;border:none;border-radius:10px;padding:13px 28px;font-size:14px;font-weight:500;cursor:pointer;text-decoration:none;transition:background .2s;font-family:inherit}
+.btn-home:hover{background:var(--green-dark)}
+.btn-back{display:inline-flex;align-items:center;gap:6px;margin-top:14px;font-size:13px;color:var(--text-muted);cursor:pointer;background:none;border:none;font-family:inherit;transition:color .15s}
+.btn-back:hover{color:var(--green)}
+</style>
+</head>
+<body>
+  <a href="/" class="logo">
+    <div class="logo-icon"><i class="ti ti-steering-wheel"></i></div>
+    <span class="logo-text">Find<span>Drive</span></span>
+  </a>
+
+  <div class="card">
+    <div class="code">404</div>
+    <div class="icon-wrap"><i class="ti ti-map-off"></i></div>
+    <h1>Сторінку не знайдено</h1>
+    <p>Можливо, посилання застаріло або сторінка була переміщена.<br>Поверніться на головну — там знайдете свого інструктора.</p>
+    <a href="/" class="btn-home"><i class="ti ti-home"></i> На головну</a>
+    <br>
+    <button class="btn-back" onclick="history.back()"><i class="ti ti-arrow-left"></i> Назад</button>
+  </div>
+</body>
+</html>
