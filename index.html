@@ -696,7 +696,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.136</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.137</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -885,6 +885,14 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       <button class="ifilter-chip active" data-rmin="0" onclick="window._filterRating(this)">Будь-який</button>
       <button class="ifilter-chip" data-rmin="4" onclick="window._filterRating(this)"><i class="ti ti-star" style="font-size:10px"></i> 4.0+</button>
       <button class="ifilter-chip" data-rmin="4.5" onclick="window._filterRating(this)"><i class="ti ti-star" style="font-size:10px"></i> 4.5+</button>
+    </div>
+    <div class="ifilter-sep"></div>
+    <div class="ifilter-group">
+      <span class="ifilter-label">Стаж</span>
+      <button class="ifilter-chip active" data-expmin="0" onclick="window._filterExp(this)">Будь-який</button>
+      <button class="ifilter-chip" data-expmin="3" onclick="window._filterExp(this)">3+ р.</button>
+      <button class="ifilter-chip" data-expmin="5" onclick="window._filterExp(this)">5+ р.</button>
+      <button class="ifilter-chip" data-expmin="10" onclick="window._filterExp(this)">10+ р.</button>
     </div>
     <div class="ifilter-sep"></div>
     <div class="ifilter-group">
@@ -2557,7 +2565,7 @@ function buildCard(d, i, id) {
   const validTags = instrTags.filter(t => INSTR_TAGS.includes(t));
   const tags = validTags.length ? validTags : [d.gearbox, (d.car||'').split(' ')[0]].filter(Boolean);
   const isFav = window._favs?.has(id||'');
-  return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}' data-price="${d.price||0}" data-rating="${d.rating||0}" data-gearbox="${esc(d.gearbox||'')}" data-area="${esc((d.area||'').toLowerCase())}" data-instr-id="${esc(id||'')}" data-lat="${d.lat||''}" data-lng="${d.lng||''}" data-dist="" data-name="${esc((d.name||'').toLowerCase())}">
+  return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}' data-price="${d.price||0}" data-rating="${d.rating||0}" data-gearbox="${esc(d.gearbox||'')}" data-area="${esc((d.area||'').toLowerCase())}" data-instr-id="${esc(id||'')}" data-lat="${d.lat||''}" data-lng="${d.lng||''}" data-dist="" data-name="${esc((d.name||'').toLowerCase())}" data-experience="${d.experience||0}">
     <div class="card-blob" style="background:${th.blob}"></div>
     <button class="card-fav${isFav?' on':''}" data-fav-id="${esc(id||'')}" onclick="window._toggleFav(this)" title="До обраних"><i class="ti ti-heart${isFav?'-filled':''}"></i></button>
     <div class="instr-top">
@@ -2603,6 +2611,7 @@ function populateTagFilterBar() {
 let _activeGb         = '';
 let _activePmax       = 0;
 let _activeRmin       = 0;
+let _activeExpMin     = 0;
 let _activeSort       = '';
 let _showFavsOnly     = false;
 let _activeNameFilter = '';
@@ -2703,10 +2712,11 @@ function _applyAllFilters() {
     const otherOk  = !activeOtherTags.length || activeOtherTags.some(t => ct.includes(t));
     const priceOk  = !maxP || !price || price <= maxP;
     const ratingOk = !_activeRmin || (parseFloat(card.dataset.rating) || 0) >= _activeRmin;
+    const expOk    = !_activeExpMin || (parseInt(card.dataset.experience) || 0) >= _activeExpMin;
     const favOk    = !_showFavsOnly || window._favs.has(card.dataset.instrId || '');
     const nameOk   = !_activeNameFilter || (card.dataset.name || '').includes(_activeNameFilter);
     const cityOk   = !_activeCity || (area + ' ' + (card.dataset.city || '')).toLowerCase().includes(_activeCity.toLowerCase());
-    const show = typeOk && otherOk && priceOk && ratingOk && favOk && nameOk && cityOk;
+    const show = typeOk && otherOk && priceOk && ratingOk && expOk && favOk && nameOk && cityOk;
     card.style.display = show ? '' : 'none';
     if (show) visible++;
   });
@@ -2750,13 +2760,14 @@ window._removeActiveTag = function(tag) {
 function _applyTagFilters() { _applyAllFilters(); }
 
 window._resetAllFilters = function() {
-  _activeGb = ''; _activePmax = 0; _activeRmin = 0; _activeSort = '';
+  _activeGb = ''; _activePmax = 0; _activeRmin = 0; _activeExpMin = 0; _activeSort = '';
   _showFavsOnly = false; _activeNameFilter = ''; _activeCity = '';
   const cs = document.getElementById('city-select'); if (cs) cs.value = '';
   document.querySelectorAll('.tag-filter-chip').forEach(b => b.classList.toggle('active', b.dataset.tag === ''));
   document.querySelectorAll('[data-gb]').forEach(b => b.classList.toggle('active', b.dataset.gb === ''));
   document.querySelectorAll('[data-pmax]').forEach(b => b.classList.toggle('active', !b.dataset.pmax));
   document.querySelectorAll('[data-rmin]').forEach(b => b.classList.toggle('active', b.dataset.rmin === '0'));
+  document.querySelectorAll('[data-expmin]').forEach(b => b.classList.toggle('active', b.dataset.expmin === '0'));
   document.querySelectorAll('[data-sort]').forEach(b => b.classList.toggle('active', b.dataset.sort === ''));
   document.getElementById('fav-filter-chip')?.classList.remove('active');
   const inp = document.getElementById('search-input'); if (inp) inp.value = '';
@@ -2883,6 +2894,12 @@ window._filterRating = function(btn) {
   document.querySelectorAll('[data-rmin]').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   _activeRmin = parseFloat(btn.dataset.rmin) || 0;
+  _applyAllFilters();
+};
+window._filterExp = function(btn) {
+  document.querySelectorAll('[data-expmin]').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  _activeExpMin = parseInt(btn.dataset.expmin) || 0;
   _applyAllFilters();
 };
 window._filterSort = function(btn) {
