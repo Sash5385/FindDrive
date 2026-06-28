@@ -280,6 +280,35 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .scroll-top.visible{opacity:1;pointer-events:all;transform:translateY(0)}
 .scroll-top:hover{background:var(--green-dark)}
 
+/* AUTH MODAL */
+.auth-modal-overlay{position:fixed;inset:0;background:rgba(13,42,26,.5);z-index:1200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.auth-modal-box{background:var(--white);border-radius:24px;padding:36px 32px 32px;max-width:520px;width:100%;position:relative;box-shadow:0 12px 60px rgba(13,42,26,.22);animation:authBoxIn .28s cubic-bezier(.34,1.56,.64,1)}
+@keyframes authBoxIn{from{opacity:0;transform:scale(.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.auth-modal-close{position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;color:var(--text-hint);font-size:20px;padding:5px;border-radius:8px;transition:color .15s,background .15s;display:flex;align-items:center;line-height:1}
+.auth-modal-close:hover{color:var(--text);background:var(--bg)}
+.auth-modal-logo{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:22px}
+.auth-modal-logo-icon{width:34px;height:34px;background:var(--green);border-radius:9px;display:flex;align-items:center;justify-content:center}
+.auth-modal-logo-icon i{font-size:19px;color:#fff}
+.auth-modal-brand{font-size:16px;font-weight:700;color:var(--text)}
+.auth-modal-brand span{color:var(--green)}
+.auth-roles-title{text-align:center;font-size:17px;font-weight:700;color:var(--text);margin-bottom:5px}
+.auth-roles-sub{text-align:center;font-size:13px;color:var(--text-muted);margin-bottom:22px}
+.auth-roles-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.auth-role-card{border:.5px solid var(--border);border-radius:16px;padding:22px 14px 18px;display:flex;flex-direction:column;align-items:center;transition:border-color .2s,box-shadow .2s}
+.auth-role-card:hover{border-color:var(--green);box-shadow:0 2px 18px rgba(26,122,74,.1)}
+.auth-role-icon-wrap{font-size:30px;margin-bottom:10px;line-height:1}
+.auth-role-name{font-size:13px;font-weight:600;color:var(--text);text-align:center;margin-bottom:4px;line-height:1.3}
+.auth-role-hint{font-size:11px;color:var(--text-hint);text-align:center;margin-bottom:14px;line-height:1.45}
+.auth-role-btns{display:flex;flex-direction:column;gap:7px;width:100%}
+.auth-role-btn-primary{width:100%;background:var(--green);color:#fff;border:none;border-radius:9px;padding:9px 10px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .2s}
+.auth-role-btn-primary:hover{background:var(--green-dark)}
+.auth-role-btn-sec{width:100%;background:var(--green-light);color:var(--green);border:.5px solid #b8d8c8;border-radius:9px;padding:9px 10px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .2s}
+.auth-role-btn-sec:hover{background:#d0ecdc}
+.auth-form-back{display:inline-flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:13px;font-family:inherit;padding:0;margin-bottom:18px;transition:color .15s}
+.auth-form-back:hover{color:var(--green)}
+.auth-form-role-badge{display:inline-flex;align-items:center;gap:6px;background:var(--green-light);color:var(--green);border:.5px solid #b8d8c8;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;margin-bottom:18px}
+@media(max-width:480px){.auth-roles-grid{grid-template-columns:1fr}.auth-modal-box{padding:28px 18px 24px}}
+
 /* PWA INSTALL BANNER */
 .pwa-banner{position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(140%);background:var(--white);border:.5px solid var(--border);border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:12px;z-index:600;box-shadow:0 8px 36px rgba(0,0,0,.15);transition:transform .35s cubic-bezier(.34,1.56,.64,1);max-width:380px;width:calc(100% - 40px)}
 .pwa-banner.visible{transform:translateX(-50%) translateY(0)}
@@ -734,7 +763,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.161</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.162</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1032,6 +1061,17 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 
 <div id="cab-overlay" class="cab-overlay"></div>
 
+<div id="auth-modal" class="auth-modal-overlay" style="display:none" onclick="if(event.target===this)window._closeAuthModal()">
+  <div class="auth-modal-box" role="dialog" aria-modal="true">
+    <button class="auth-modal-close" onclick="window._closeAuthModal()" aria-label="Закрити"><i class="ti ti-x"></i></button>
+    <div class="auth-modal-logo">
+      <div class="auth-modal-logo-icon"><i class="ti ti-steering-wheel"></i></div>
+      <span class="auth-modal-brand">Find<span>Drive</span></span>
+    </div>
+    <div id="auth-modal-inner"></div>
+  </div>
+</div>
+
 <aside id="instr-welcome" class="cabinet">
   <div class="cab-header">
     <span class="cab-title">Стати інструктором</span>
@@ -1065,7 +1105,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       <i class="ti ti-user-plus"></i> Зареєструватись як інструктор
     </button>
     <p class="instr-welcome-note">
-      Вже є акаунт? <a href="#" onclick="closeAll();setTimeout(()=>{renderAuthScreen();openPanel('cabinet')},180);return false" style="color:var(--green);font-weight:500">Увійти</a>
+      Вже є акаунт? <a href="#" onclick="closeAll();setTimeout(()=>window._openAuthModal('instr','login'),180);return false" style="color:var(--green);font-weight:500">Увійти</a>
     </p>
   </div>
 </aside>
@@ -1424,6 +1464,98 @@ async function handleAuthSubmit() {
     btn.disabled = false;
     btn.innerHTML = `<i class="ti ti-login"></i> ${authMode === 'register' ? 'Зареєструватись' : 'Увійти'}`;
   }
+}
+
+// --- New role-selection auth modal ---
+let _authModalActive = false;
+window._openAuthModal = function(role, mode) {
+  const modal = document.getElementById('auth-modal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  _authModalActive = true;
+  if (role) renderAuthModalForm(role, mode || 'login');
+  else renderAuthRoleSelect();
+};
+window._closeAuthModal = function() {
+  const modal = document.getElementById('auth-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
+  _authModalActive = false;
+};
+function renderAuthRoleSelect() {
+  document.getElementById('auth-modal-inner').innerHTML = `
+    <div class="auth-roles-title">Ласкаво просимо</div>
+    <div class="auth-roles-sub">Оберіть, хто ви</div>
+    <div class="auth-roles-grid">
+      <div class="auth-role-card">
+        <div class="auth-role-icon-wrap">🔍</div>
+        <div class="auth-role-name">Шукаю інструктора</div>
+        <div class="auth-role-hint">Знайдіть інструктора поруч та запишіться онлайн</div>
+        <div class="auth-role-btns">
+          <button class="auth-role-btn-primary" onclick="renderAuthModalForm('client','login')"><i class="ti ti-login"></i> Увійти</button>
+          <button class="auth-role-btn-sec" onclick="renderAuthModalForm('client','register')"><i class="ti ti-user-plus"></i> Зареєструватись</button>
+        </div>
+      </div>
+      <div class="auth-role-card">
+        <div class="auth-role-icon-wrap">🚗</div>
+        <div class="auth-role-name">Я інструктор</div>
+        <div class="auth-role-hint">Реєструйтесь і отримуйте учнів через платформу</div>
+        <div class="auth-role-btns">
+          <button class="auth-role-btn-primary" onclick="renderAuthModalForm('instr','login')"><i class="ti ti-login"></i> Увійти</button>
+          <button class="auth-role-btn-sec" onclick="window._closeAuthModal();setTimeout(()=>openPanel('instr-welcome'),200)"><i class="ti ti-user-plus"></i> Зареєструватись</button>
+        </div>
+      </div>
+    </div>`;
+}
+function renderAuthModalForm(role, mode) {
+  authMode = mode;
+  const roleLabel = role === 'instr' ? '🚗 Я інструктор' : '🔍 Шукаю інструктора';
+  document.getElementById('auth-modal-inner').innerHTML = `
+    <button class="auth-form-back" onclick="renderAuthRoleSelect()"><i class="ti ti-arrow-left"></i> Назад</button>
+    <div class="auth-form-role-badge">${roleLabel}</div>
+    <button id="btn-google-cab" class="btn-google-cab">${GICON} ${mode==='register'?'Зареєструватись':'Увійти'} через Google</button>
+    <div class="cab-or"><span>або</span></div>
+    <div id="cab-err" class="cab-err" style="display:none"></div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input id="auth-email" class="form-input" type="email" placeholder="your@email.com" autocomplete="email">
+    </div>
+    <div class="form-group" style="margin-bottom:${mode==='register'?'12px':'4px'}">
+      <label class="form-label">Пароль</label>
+      <input id="auth-pass" class="form-input" type="password" placeholder="Мінімум 6 символів">
+    </div>
+    ${mode === 'register' ? `
+    <div class="form-group">
+      <label class="form-label">Ім'я та прізвище</label>
+      <input id="auth-name" class="form-input" type="text" placeholder="Іван Іваненко" autocomplete="name">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Телефон</label>
+      <input id="auth-phone" class="form-input" type="tel" placeholder="+38 (0__) ___-__-__">
+    </div>` : ''}
+    <button id="btn-auth-submit" class="btn-submit-instr" style="margin-top:4px">
+      <i class="ti ti-login"></i> ${mode === 'register' ? 'Зареєструватись' : 'Увійти'}
+    </button>
+    <p class="auth-toggle">
+      ${mode === 'register'
+        ? 'Вже є акаунт? <a href="#" id="auth-switch">Увійти</a>'
+        : 'Немає акаунту? <a href="#" id="auth-switch">Зареєструватись</a>'}
+    </p>`;
+  document.getElementById('btn-google-cab').addEventListener('click', () => {
+    signInWithPopup(auth, provider).catch(e => {
+      if (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request')
+        showAuthErr('Спливаюче вікно заблоковано. Спробуйте email і пароль.');
+      else if (e.code !== 'auth/popup-closed-by-user') showAuthErr(e.message);
+    });
+  });
+  document.getElementById('auth-switch').addEventListener('click', e => {
+    e.preventDefault();
+    renderAuthModalForm(role, mode === 'login' ? 'register' : 'login');
+  });
+  document.getElementById('btn-auth-submit').addEventListener('click', handleAuthSubmit);
+  document.getElementById('auth-pass').addEventListener('keydown', e => { if (e.key === 'Enter') handleAuthSubmit(); });
 }
 
 const LEVEL_LABELS  = { beginner:'Починаю з нуля', some:'Є базові навички', licensed:'Маю права, без практики', experienced:'Досвідчений водій' };
@@ -2121,7 +2253,7 @@ async function renderInstrSectionIfNeeded(user) {
   return;
 }
 
-document.getElementById("btn-login").addEventListener("click", () => { renderAuthScreen(); openPanel("cabinet"); });
+document.getElementById("btn-login").addEventListener("click", () => { window._openAuthModal(); });
 document.getElementById("nav-user").addEventListener("click", async () => {
   if (auth.currentUser) await renderProfileScreen(auth.currentUser);
   else renderAuthScreen();
@@ -2254,7 +2386,10 @@ onAuthStateChanged(auth, async user => {
     if (user.providerData[0]?.providerId === 'google.com') {
       setDoc(doc(db, 'users', user.uid), { name: user.displayName||'', email: user.email||'', photo: user.photoURL||'' }, { merge: true }).catch(()=>{});
     }
-    if (document.getElementById("cabinet").classList.contains("open")) await renderProfileScreen(user);
+    const _fromModal = _authModalActive;
+    window._closeAuthModal?.();
+    if (_fromModal) { await renderProfileScreen(user); openPanel('cabinet'); }
+    else if (document.getElementById("cabinet").classList.contains("open")) await renderProfileScreen(user);
     registerFcmToken();
     // Запустити слухач для клієнта; слухач інструктора — після визначення профілю
     listenClientBookings(user.uid);
@@ -2268,7 +2403,7 @@ onAuthStateChanged(auth, async user => {
     if (_unsubInstr)  { _unsubInstr();  _unsubInstr  = null; }
     if (_unsubClient) { _unsubClient(); _unsubClient = null; }
     window._clientProfile = null;
-    renderAuthScreen();
+    closeAll();
   }
 });
 
@@ -2966,7 +3101,7 @@ window._shareInstructor = async function() {
 
 // Keyboard shortcuts: ESC → close panels, / → focus search
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') { window.closeAll?.(); closeMobileMenu(); }
+  if (e.key === 'Escape') { window._closeAuthModal?.(); window.closeAll?.(); closeMobileMenu(); }
   if (e.key === '/' && !e.ctrlKey && !e.metaKey && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)) {
     e.preventDefault();
     const inp = document.getElementById('search-input');
