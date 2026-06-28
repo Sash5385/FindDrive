@@ -775,7 +775,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.165</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.166</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1966,21 +1966,13 @@ async function renderProfileScreen(user) {
     }
   } else {
     window._clientProfile = ud;
-    const dur = ud.lessonDuration || 60;
     document.getElementById('cab-body').innerHTML = headerHtml + `
-      <div class="cab-section">
-        <div class="cab-section-title">Тривалість заняття</div>
-        <div class="toggle-row" style="margin-top:8px">
-          <button class="toggle-btn student-dur-btn${dur===60?' active':''}" data-dur="60" onclick="window._setStudentLessonDur(60)"><i class="ti ti-clock"></i> 1 год</button>
-          <button class="toggle-btn student-dur-btn${dur===120?' active':''}" data-dur="120" onclick="window._setStudentLessonDur(120)"><i class="ti ti-clock-2"></i> 2 год</button>
-        </div>
-      </div>
       ${ud.setupDone ? `
       <div class="cab-section">
         <div class="cab-section-title">Профіль учня</div>
         <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--text-muted);margin-top:6px">
           ${ud.level ? `<div><i class="ti ti-school" style="color:var(--green)"></i> ${esc(LEVEL_LABELS[ud.level]||ud.level)}</div>` : ''}
-          ${ud.budget ? `<div><i class="ti ti-wallet" style="color:var(--green)"></i> ${esc(BUDGET_LABELS[ud.budget]||ud.budget)}</div>` : ''}
+          ${(() => { const b=ud.budget; if(!b) return ''; const t=typeof b==='object'?(b.from||b.to?`${b.from||0}–${b.to||'∞'} грн/год`:''):(BUDGET_LABELS[b]||b); return t?`<div><i class="ti ti-wallet" style="color:var(--green)"></i> ${esc(t)}</div>`:'';})()}
           ${ud.tsc ? `<div style="display:flex;align-items:flex-start;gap:6px"><i class="ti ti-building" style="color:var(--green);flex-shrink:0;margin-top:1px"></i><span>${esc(ud.tsc)}</span></div>` : ''}
           ${(ud.goals||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:2px">${ud.goals.map(g=>`<span class="tag">${esc(GOAL_LABELS[g]||g)}</span>`).join('')}</div>` : ''}
           ${(ud.schedule||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${ud.schedule.map(s=>`<span class="tag">${esc(SCHED_LABELS[s]||s)}</span>`).join('')}</div>` : ''}
@@ -2297,7 +2289,10 @@ async function renderInstrSectionIfNeeded(user) {
   return;
 }
 
-document.getElementById("btn-login").addEventListener("click", () => { window._openAuthModal(); });
+document.getElementById("btn-login").addEventListener("click", async () => {
+  if (auth.currentUser) { await renderProfileScreen(auth.currentUser); openPanel('cabinet'); }
+  else { window._openAuthModal(); }
+});
 document.getElementById("nav-user").addEventListener("click", async () => {
   if (auth.currentUser) await renderProfileScreen(auth.currentUser);
   else renderAuthScreen();
