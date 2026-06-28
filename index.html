@@ -189,7 +189,9 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .ifilter-chip{padding:5px 12px;border-radius:20px;border:.5px solid var(--border);background:var(--white);color:var(--text-muted);font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s}
 .ifilter-chip:hover:not(.active){background:var(--green-light);color:var(--green);border-color:var(--green)}
 .ifilter-chip.active{background:var(--green);color:#fff;border-color:var(--green);font-weight:600}
-.ifilter-count{font-size:11px;color:var(--text-hint);margin-left:auto;white-space:nowrap;padding:4px 0}
+.ifilter-count{font-size:11px;color:var(--text-hint);margin-left:auto;white-space:nowrap;padding:4px 0;display:flex;align-items:center;gap:4px}
+.ifilter-reset-btn{background:var(--green);color:#fff;border:none;border-radius:20px;padding:3px 10px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:500;transition:background .15s;display:inline-flex;align-items:center;gap:4px}
+.ifilter-reset-btn:hover{background:var(--green-dark)}
 @media(max-width:600px){.ifilter-sep{display:none}.instr-filters{gap:6px}}
 @keyframes userPulse{0%{box-shadow:0 0 0 0 rgba(24,95,165,.45)}70%{box-shadow:0 0 0 10px rgba(24,95,165,0)}100%{box-shadow:0 0 0 0 rgba(24,95,165,0)}}
 .user-location-dot{width:16px;height:16px;border-radius:50%;background:#185fa5;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);animation:userPulse 2s infinite}
@@ -721,7 +723,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.153</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.154</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2832,8 +2834,19 @@ function _applyAllFilters() {
     if (show) visible++;
   });
 
+  const _activeFilterCount = [
+    _activeGb !== '', _activePmax > 0, _activeRmin > 0, _activeExpMin > 0,
+    _activeSort !== '', _showFavsOnly, _showVerifiedOnly,
+    _activeNameFilter !== '', _activeCity !== '', activeTags.length > 0,
+  ].filter(Boolean).length;
   const cnt = document.getElementById('ifilter-count');
-  if (cnt) cnt.textContent = visible < cards.length ? `${visible} з ${cards.length}` : '';
+  if (cnt) {
+    const countStr = visible < cards.length ? `${visible} з ${cards.length}` : '';
+    const resetBtn = _activeFilterCount > 0
+      ? `${countStr ? ' · ' : ''}<button class="ifilter-reset-btn" onclick="window._resetAllFilters()"><i class="ti ti-x" style="font-size:10px"></i> Скинути (${_activeFilterCount})</button>`
+      : '';
+    cnt.innerHTML = countStr + resetBtn;
+  }
   window._filterMapMarkers?.(activeTags);
   updateActiveTagsBar(activeTags);
 
