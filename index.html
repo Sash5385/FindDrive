@@ -401,6 +401,10 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .instr-bk-stat{flex:1;background:var(--bg);border-radius:10px;padding:10px 6px;text-align:center;border:.5px solid var(--border)}
 .instr-bk-stat b{display:block;font-size:18px;font-weight:700;color:var(--green);line-height:1}
 .instr-bk-stat span{font-size:10px;color:var(--text-hint);margin-top:3px;display:block;line-height:1.2}
+.student-bk-stats{display:flex;gap:8px;margin-bottom:12px}
+.student-bk-stat{flex:1;background:var(--bg);border-radius:10px;padding:10px 6px;text-align:center;border:.5px solid var(--border)}
+.student-bk-stat b{display:block;font-size:18px;font-weight:700;color:var(--green);line-height:1}
+.student-bk-stat span{font-size:10px;color:var(--text-hint);margin-top:3px;display:block;line-height:1.2}
 .toggle-row{display:flex;gap:4px}
 .toggle-btn{flex:1;padding:5px 0;border:.5px solid var(--border);border-radius:7px;font-size:12px;background:var(--bg);color:var(--text-muted);cursor:pointer;font-family:inherit;transition:all .15s;text-align:center}
 .toggle-btn.active{background:var(--green);color:#fff;border-color:var(--green)}
@@ -723,7 +727,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.154</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.155</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -3565,13 +3569,23 @@ async function loadClientBookings(user, container) {
       (b.status==='pending'||b.status==='confirmed'||b.status==='reschedule_requested') && b.date >= today);
     const archive = all.filter(b => b.status==='cancelled' || b.date < today);
 
+    const _stUpcoming  = all.filter(b => b.status==='confirmed' && b.date >= today).length;
+    const _stCompleted = all.filter(b => b.status==='confirmed' && b.date < today).length;
+    const _stTotalMin  = all.filter(b => b.status==='confirmed').reduce((s,b) => s+(b.duration||60), 0);
+    const _stHours     = (_stTotalMin / 60).toFixed(1).replace(/\.0$/, '');
+    const _statsHtml = `<div class="student-bk-stats">
+      <div class="student-bk-stat"><b>${_stUpcoming}</b><span>заплановано</span></div>
+      <div class="student-bk-stat"><b>${_stCompleted}</b><span>завершено</span></div>
+      <div class="student-bk-stat"><b>${_stHours}</b><span>годин</span></div>
+    </div>`;
+
     const now = new Date();
     let calYear = now.getFullYear(), calMonth = now.getMonth(), calSelected = null, viewMode = 'cal';
 
     function renderAll() {
       const calHtml  = renderCalendar(all, calYear, calMonth, calSelected, 'client');
       const filtered = calSelected ? all.filter(b => b.date === calSelected) : null;
-      container.innerHTML = `
+      container.innerHTML = _statsHtml + `
         <div class="bk-view-toggle">
           <button class="bk-view-btn${viewMode==='list'?' active':''}" onclick="window._clientSwitchView('list')"><i class="ti ti-list"></i> Список</button>
           <button class="bk-view-btn${viewMode==='cal'?' active':''}" onclick="window._clientSwitchView('cal')"><i class="ti ti-calendar"></i> Календар</button>
