@@ -765,7 +765,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.163</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.164</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1629,7 +1629,7 @@ async function renderSetupScreen(user, pre = {}) {
   <div class="form-group">
     <label class="form-label">Рівень водіння *</label>
     <div class="radio-group" style="flex-direction:column;gap:8px">
-      ${[['beginner','Починаю з нуля'],['some','Є базові навички'],['licensed','Маю права, але немає практики'],['experienced','Досвідчений — хочу вдосконалитись']].map(([v,l])=>
+      ${[['beginner','Починаю з нуля'],['some','Є базові навички'],['licensed','Маю права, але немає практики']].map(([v,l])=>
         `<label class="radio-opt"><input type="radio" name="s-level" value="${v}"${(pre.level===v||(!pre.level&&v==='beginner'))?' checked':''}> ${l}</label>`
       ).join('')}
     </div>
@@ -1638,17 +1638,8 @@ async function renderSetupScreen(user, pre = {}) {
   <div class="form-group">
     <label class="form-label">Кількість занять раніше</label>
     <div class="radio-group">
-      ${[['0','0'],['1-5','1–5'],['6-15','6–15'],['16+','16+']].map(([v,l])=>
-        `<label class="radio-opt"><input type="radio" name="s-lessons" value="${v}"${(pre.lessons===v||(!pre.lessons&&v==='0'))?' checked':''}> ${l}</label>`
-      ).join('')}
-    </div>
-  </div>
-
-  <div class="form-group">
-    <label class="form-label">Цілі навчання</label>
-    <div class="chip-opts">
-      ${[['exam','Скласти іспит'],['city','Місто'],['parking','Паркування'],['highway','Траса'],['night','Нічне водіння'],['abroad','За кордоном']].map(([v,l])=>
-        `<label class="chip-opt"><input type="checkbox" name="s-goals" value="${v}"${(pre.goals||[]).includes(v)?' checked':''}> ${l}</label>`
+      ${[['0-20','0–20'],['20-40','20–40'],['40-60','40–60'],['60+','60+']].map(([v,l])=>
+        `<label class="radio-opt"><input type="radio" name="s-lessons" value="${v}"${(pre.lessons===v||(!pre.lessons&&v==='0-20'))?' checked':''}> ${l}</label>`
       ).join('')}
     </div>
   </div>
@@ -1656,27 +1647,18 @@ async function renderSetupScreen(user, pre = {}) {
   <div class="form-group">
     <label class="form-label">Тип КПП</label>
     <div class="radio-group">
-      ${[['auto','Автомат'],['manual','Механіка'],['any','Байдуже']].map(([v,l])=>
-        `<label class="radio-opt"><input type="radio" name="s-gearbox" value="${v}"${(pre.gearbox===v||(!pre.gearbox&&v==='any'))?' checked':''}> ${l}</label>`
-      ).join('')}
-    </div>
-  </div>
-
-  <div class="form-group">
-    <label class="form-label">Тривалість заняття</label>
-    <div class="radio-group">
-      ${[[60,'1 год (60 хв)'],[120,'2 год (120 хв)']].map(([v,l])=>
-        `<label class="radio-opt"><input type="radio" name="s-dur" value="${v}"${(pre.lessonDuration===v||(v===60&&!pre.lessonDuration))?' checked':''}> ${l}</label>`
+      ${[['auto','Автомат'],['manual','Механіка']].map(([v,l])=>
+        `<label class="radio-opt"><input type="radio" name="s-gearbox" value="${v}"${(pre.gearbox===v||(!pre.gearbox&&v==='auto'))?' checked':''}> ${l}</label>`
       ).join('')}
     </div>
   </div>
 
   <div class="form-group">
     <label class="form-label">Бюджет (грн / год)</label>
-    <div class="radio-group">
-      ${[['<500','до 500'],['500-700','500–700'],['700-1000','700–1000'],['>1000','понад 1000']].map(([v,l])=>
-        `<label class="radio-opt"><input type="radio" name="s-budget" value="${v}"${(pre.budget===v||(!pre.budget&&v==='500-700'))?' checked':''}> ${l}</label>`
-      ).join('')}
+    <div style="display:flex;gap:10px;align-items:center">
+      <input id="s-budget-from" class="form-input" type="number" placeholder="від" min="0" step="50" style="width:50%" value="${pre.budget?.from||''}">
+      <span style="color:var(--text-muted)">—</span>
+      <input id="s-budget-to" class="form-input" type="number" placeholder="до" min="0" step="50" style="width:50%" value="${pre.budget?.to||''}">
     </div>
   </div>
 
@@ -1700,7 +1682,7 @@ async function renderSetupScreen(user, pre = {}) {
   <div class="form-group">
     <label class="form-label">Слабкі місця (що хочете покращити)</label>
     <div class="chip-opts">
-      ${[['parking','Паркування'],['reverse','Задній хід'],['turns','Розвороти'],['traffic','Інтенсивний трафік'],['crossroads','Перехрестя'],['night','Нічне водіння'],['highway','Траса'],['distance','Дистанція']].map(([v,l])=>
+      ${[['parking','Паркування'],['reverse','Задній хід'],['turns','Розвороти'],['traffic','Інтенсивний трафік'],['crossroads','Перехрестя']].map(([v,l])=>
         `<label class="chip-opt"><input type="checkbox" name="s-weak" value="${v}"${(pre.weakSpots||[]).includes(v)?' checked':''}> ${l}</label>`
       ).join('')}
     </div>
@@ -1709,7 +1691,7 @@ async function renderSetupScreen(user, pre = {}) {
   <div class="form-group" style="margin-bottom:20px">
     <label class="form-label">Що шукаю в інструктора <span style="font-size:10px;color:var(--text-hint);font-weight:400">(фільтрує список)</span></label>
     <div class="chip-opts">
-      ${INSTR_TAGS.map(tag => {
+      ${INSTR_TAGS.filter(t => t !== 'Автомат' && t !== 'Механіка').map(tag => {
         const c = TAG_COLORS[tag]||{};
         const cv = c.bg ? `--tc-bg:${c.bg};--tc-bd:${c.bd};--tc-tx:${c.tx}` : '';
         return `<label class="chip-opt chip-opt-c" style="${cv}"><input type="checkbox" name="s-ptag" value="${_esc(tag)}"${(pre.preferredTags||[]).includes(tag)?' checked':''}> ${_esc(tag)}</label>`;
@@ -1726,14 +1708,12 @@ async function renderSetupScreen(user, pre = {}) {
 async function saveSetup(user) {
   const body = document.getElementById('cab-body');
   const data = {
-    level:     body.querySelector('[name="s-level"]:checked')?.value || 'beginner',
-    lessons:   body.querySelector('[name="s-lessons"]:checked')?.value || '0',
-    goals:     [...body.querySelectorAll('[name="s-goals"]:checked')].map(c=>c.value),
-    gearbox:       body.querySelector('[name="s-gearbox"]:checked')?.value || 'any',
-    lessonDuration: parseInt(body.querySelector('[name="s-dur"]:checked')?.value || '60'),
-    budget:        body.querySelector('[name="s-budget"]:checked')?.value || '500-700',
-    schedule:  [...body.querySelectorAll('[name="s-sched"]:checked')].map(c=>c.value),
-    tsc:       body.querySelector('[name="s-tsc"]')?.value || '',
+    level:         body.querySelector('[name="s-level"]:checked')?.value || 'beginner',
+    lessons:       body.querySelector('[name="s-lessons"]:checked')?.value || '0-20',
+    gearbox:       body.querySelector('[name="s-gearbox"]:checked')?.value || 'auto',
+    budget:        { from: parseInt(body.querySelector('#s-budget-from')?.value)||0, to: parseInt(body.querySelector('#s-budget-to')?.value)||0 },
+    schedule:      [...body.querySelectorAll('[name="s-sched"]:checked')].map(c=>c.value),
+    tsc:           body.querySelector('[name="s-tsc"]')?.value || '',
     weakSpots:     [...body.querySelectorAll('[name="s-weak"]:checked')].map(c=>c.value),
     preferredTags: [...body.querySelectorAll('[name="s-ptag"]:checked')].map(c=>c.value),
     setupDone: true,
