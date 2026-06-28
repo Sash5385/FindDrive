@@ -687,7 +687,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.131</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.132</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2982,8 +2982,26 @@ async function getBusySlots(instrId, dateStr) {
       where('instructorId','==',instrId),
       where('date','==',dateStr)
     ));
-    return snap.docs.filter(d => ['pending','confirmed'].includes(d.data().status)).map(d => d.data().time);
+    return snap.docs
+      .filter(d => ['pending','confirmed'].includes(d.data().status))
+      .map(d => ({ time: d.data().time, duration: d.data().duration || 60 }));
   } catch(e) { return []; }
+}
+
+// Returns false if booking at startMin for lessonMin minutes creates a gap
+// smaller than lessonMin on either side of an existing booking.
+function _noGapConflict(startMin, lessonMin, busyBookings) {
+  const endMin = startMin + lessonMin;
+  for (const bk of busyBookings) {
+    const [bh, bm] = bk.time.split(':').map(Number);
+    const bkStart = bh * 60 + bm;
+    const bkEnd   = bkStart + bk.duration;
+    const gapBefore = startMin - bkEnd;
+    const gapAfter  = bkStart - endMin;
+    if (gapBefore > 0 && gapBefore < lessonMin) return false;
+    if (gapAfter  > 0 && gapAfter  < lessonMin) return false;
+  }
+  return true;
 }
 
 window._openBooking = async function(instrId) {
@@ -3139,22 +3157,24 @@ window._pickDate = async function(instrId, dateStr) {
   window._bkActiveDur = lessonMin;
   window._bkPickedDur = null;
   const busy = await getBusySlots(instrId, dateStr);
+  const busyTimes = busy.map(b => b.time);
   const slotsPerLesson = Math.max(1, Math.round(lessonMin / 30));
-  const busyExpanded = new Set(busy);
-  if (slotsPerLesson > 1) {
-    busy.forEach(t => {
-      const [h,m] = t.split(':').map(Number);
-      const _bt = h*60+m;
-      for (let i = 1; i < slotsPerLesson; i++) {
-        const nx = _bt+i*30;
-        busyExpanded.add(`${String(Math.floor(nx/60)).padStart(2,'0')}:${String(nx%60).padStart(2,'0')}`);
-      }
-    });
-  }
+  // Expand busy set using each booking's actual duration (not assumed lessonMin)
+  const busyExpanded = new Set(busyTimes);
+  busy.forEach(bk => {
+    const [h,m] = bk.time.split(':').map(Number);
+    const bkStart = h*60+m;
+    const bkSlots = Math.ceil(bk.duration / 30);
+    for (let i = 1; i < bkSlots; i++) {
+      const nx = bkStart+i*30;
+      busyExpanded.add(`${String(Math.floor(nx/60)).padStart(2,'0')}:${String(nx%60).padStart(2,'0')}`);
+    }
+  });
   let slots;
   if (avail.openSlots) {
     const avSet = new Set(avail.openSlots);
     let av = avail.openSlots.slice().sort();
+    // Filter out slots where consecutive blocks are busy/unavailable
     if (slotsPerLesson > 1) {
       av = av.filter(s => {
         const [h,m] = s.split(':').map(Number);
@@ -3169,6 +3189,11 @@ window._pickDate = async function(instrId, dateStr) {
     } else {
       av = av.filter(s => !busyExpanded.has(s));
     }
+    // Gap-prevention filter: hide slots that would leave a gap < lessonMin
+    av = av.filter(s => {
+      const [h,m] = s.split(':').map(Number);
+      return _noGapConflict(h*60+m, lessonMin, busy);
+    });
     slots = av;
   } else {
     const dayBreak = avail.breakMin != null ? avail.breakMin : (d.breakMin || 0);
@@ -3186,7 +3211,7 @@ window._pickDate = async function(instrId, dateStr) {
     <div class="booking-label" style="margin-top:${dayHours || avail.location ? 8 : 16}px">Оберіть час</div>
     <div class="slot-grid">
       ${slots.map(t => {
-        const taken = busy.includes(t);
+        const taken = busyTimes.includes(t);
         return `<button class="slot-chip${taken?' is-busy':''}" ${taken?'disabled':''}
           onclick="window._selectSlot('${esc(instrId)}','${esc(dateStr)}','${esc(t)}',this)">${t}</button>`;
       }).join('')}
