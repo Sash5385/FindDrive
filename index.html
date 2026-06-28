@@ -220,6 +220,8 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .price span{font-size:12px;color:var(--text-hint);font-weight:400}
 .btn-book{background:var(--green);color:#fff;border:none;border-radius:9px;padding:7px 16px;font-size:12px;font-weight:500;cursor:pointer;transition:background .2s;font-family:inherit}
 .btn-book:hover{background:var(--green-dark)}
+.btn-map-pin{background:none;border:.5px solid var(--border);border-radius:9px;padding:7px 10px;font-size:14px;color:var(--text-muted);cursor:pointer;transition:border-color .15s,color .15s,background .15s;line-height:1;display:inline-flex;align-items:center;justify-content:center}
+.btn-map-pin:hover{color:var(--green);border-color:var(--green);background:var(--green-light)}
 
 
 /* TRUST BAR */
@@ -729,7 +731,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.157</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.158</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2659,7 +2661,10 @@ function buildCard(d, i, id) {
     <div class="instr-tags">${tags.map(t=>`<span class="tag" style="${tagStyle(t)}">${esc(t)}</span>`).join('')}</div>
     <div class="instr-footer">
       <div class="price">${d.price?d.price+' грн':'—'} <span>/ год</span></div>
-      <button class="btn-book" onclick="openInstrProfile('${esc(id||'')}')">Записатись</button>
+      <div style="display:flex;gap:6px;align-items:center">
+        ${(d.lat && d.lng) ? `<button class="btn-map-pin" onclick="window._focusInstrMarker('${esc(id||'')}',event)" title="Показати на карті"><i class="ti ti-map-pin"></i></button>` : ''}
+        <button class="btn-book" onclick="openInstrProfile('${esc(id||'')}')">Записатись</button>
+      </div>
     </div>
   </div>`;
 }
@@ -4312,6 +4317,20 @@ window._selectCity = function(city) {
 function scrollToMap() {
   document.getElementById("map").scrollIntoView({ behavior:"smooth", block:"center" });
 }
+
+window._focusInstrMarker = function(id, evt) {
+  if (evt) evt.stopPropagation();
+  const list = window._instrMarkers && window._instrMarkers[id];
+  const entry = list && list[0];
+  if (!entry || !_mainMap) { scrollToMap(); return; }
+  const ll = entry.marker.getLatLng();
+  _mainMap.setView([ll.lat, ll.lng], 15);
+  entry.marker.openPopup();
+  scrollToMap();
+  document.querySelectorAll('.instr-card.map-highlight').forEach(c => c.classList.remove('map-highlight'));
+  const card = document.querySelector(`.instr-card[data-instr-id="${id}"]`);
+  if (card) card.classList.add('map-highlight');
+};
 
 function focusMap(latlng) {
   if (!_mainMap) return;
