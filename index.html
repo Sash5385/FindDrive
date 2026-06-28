@@ -22,6 +22,15 @@
 <meta name="twitter:title" content="FindDrive — Знайди інструктора з водіння поряд">
 <meta name="twitter:description" content="Маркетплейс інструкторів з водіння по всій Україні. Обирай за містом, ціною та рейтингом.">
 <meta name="twitter:image" content="https://finddrive.id4drive.pro/og-image.png">
+<!-- Google Analytics GA4 — замініть G-XXXXXXXXXX на свій Measurement ID з analytics.google.com -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-XXXXXXXXXX', { page_location: location.href, page_title: document.title });
+  window._ga = function(event, params) { if (typeof gtag === 'function') gtag('event', event, params || {}); };
+</script>
 <meta name="theme-color" content="#1a7a4a">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -687,7 +696,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.134</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.135</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -3009,6 +3018,7 @@ window._openBooking = async function(instrId) {
   const profD = (window._instrProfiles||{})[instrId];
   const box = document.getElementById('prof-booking');
   if (!profD || !box) return;
+  window._ga('booking_started', { instructor_id: instrId, instructor_name: profD.name||'', city: profD.area||'' });
   const user = auth.currentUser;
   if (!user) {
     box.innerHTML = `<div class="booking-login-prompt">
@@ -3927,6 +3937,7 @@ function _esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'
 function openInstrProfile(id, mpIdx) {
   const d = (window._instrProfiles||{})[id];
   if (!d) return;
+  window._ga('instructor_profile_open', { instructor_id: id, instructor_name: d.name||'', city: d.area||'' });
   const ini = (d.name||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';
   const col = d.color||'#1a7a4a';
   const MP_COLORS = ['#1a7a4a','#185fa5','#993556','#b07000'];
@@ -4033,6 +4044,7 @@ const UKRAINE_CITIES = {
 
 window._selectCity = function(city) {
   _activeCity = city;
+  window._ga('search_city', { city: city || 'all' });
   const coords = city && UKRAINE_CITIES[city];
   if (coords && _mainMap) {
     _mainMap.setView([coords.lat, coords.lng], 12);
@@ -4075,6 +4087,7 @@ document.addEventListener('click', function(e) {
 function doSearch() {
   const query = document.getElementById("search-input").value.trim();
   if (!query) return;
+  window._ga('search', { search_term: query });
   scrollToMap();
   fetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(query)}`)
     .then(r=>r.json()).then(data => { if (data.length) focusMap({lat:+data[0].lat, lng:+data[0].lon}); }).catch(()=>{});
