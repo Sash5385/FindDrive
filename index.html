@@ -356,9 +356,9 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .footer-copy{font-size:12px;color:var(--text-hint)}
 
 /* CABINET */
-.cab-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:900;opacity:0;pointer-events:none;transition:opacity .3s}
+.cab-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:1049;opacity:0;pointer-events:none;transition:opacity .3s}
 .cab-overlay.open{opacity:1;pointer-events:all}
-.cabinet{position:fixed;top:0;right:0;width:320px;height:100vh;background:var(--green-light);z-index:901;display:flex;flex-direction:column;box-shadow:-4px 0 32px rgba(0,0,0,.14);opacity:0;pointer-events:none;transform:scale(.82);transform-origin:right center;transition:opacity .18s ease,transform .45s cubic-bezier(.34,1.56,.64,1)}
+.cabinet{position:fixed;top:0;right:0;width:320px;height:100vh;background:var(--green-light);z-index:1050;display:flex;flex-direction:column;box-shadow:-4px 0 32px rgba(0,0,0,.14);opacity:0;pointer-events:none;transform:scale(.82);transform-origin:right center;transition:opacity .18s ease,transform .45s cubic-bezier(.34,1.56,.64,1)}
 .cabinet.open{opacity:1;pointer-events:all;transform:scale(1)}
 @media(min-width:900px){.cabinet{width:560px}.instr-wide{width:620px}.instr-profile-panel{width:720px}}
 @media(min-width:1280px){.cabinet{width:720px}.instr-wide{width:780px}.instr-profile-panel{width:960px}}
@@ -414,6 +414,16 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .chip-opt:hover:not(:has(input:checked)){background:var(--green-light);border-color:#b8d8c8;color:var(--green)}
 .chip-opt-c:has(input:checked){background:var(--tc-bg,var(--green))!important;border-color:var(--tc-bd,var(--green))!important;color:var(--tc-tx,#fff)!important;border-width:1.5px;font-weight:600}
 .chip-opt-c:hover:not(:has(input:checked)){background:var(--tc-bg,var(--green-light))!important;border-color:var(--tc-bd,#b8d8c8)!important;color:var(--tc-tx,var(--green))!important;opacity:.85}
+/* Setup screen cards */
+.setup-card{background:#fff;border-radius:14px;margin:12px 14px 0;padding:14px 16px;border:1px solid #e8f0e8;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.setup-card:last-child{margin-bottom:14px}
+.setup-qlabel{font-size:11px;font-weight:700;color:#1a7a4a;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+.setup-grid2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.setup-btn{border-radius:9px;border:1.5px solid #c8e0c8;padding:9px 8px;font-size:13px;font-weight:500;color:#1a4a2a;cursor:pointer;transition:background .15s,border-color .15s,color .15s;user-select:none;background:#f0f7f0;text-align:center;display:flex;align-items:center;justify-content:center;position:relative}
+.setup-btn input{position:absolute;opacity:0;width:0;height:0}
+.setup-btn:has(input:checked){background:#1a7a4a;border-color:#1a7a4a;color:#fff;font-weight:600}
+.setup-btn-full{grid-column:1/-1}
+.setup-grid2 .chip-opt{border-radius:9px;padding:9px 6px;text-align:center;display:flex;align-items:center;justify-content:center;width:100%;font-size:12px;box-sizing:border-box}
 .weak-chip{background:var(--pink-light);color:var(--pink);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:500}
 .nav-user{display:flex;align-items:center;gap:8px;cursor:pointer;position:relative}
 .nav-avatar-wrap{position:relative;flex-shrink:0}
@@ -765,7 +775,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.164</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.165</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1617,91 +1627,92 @@ const SCHED_LABELS  = { morning:'Ранок', day:'День', evening:'Вечі�
 const BUDGET_LABELS = { '<500':'до 500 грн', '500-700':'500–700 грн', '700-1000':'700–1000 грн', '>1000':'понад 1000 грн' };
 
 async function renderSetupScreen(user, pre = {}) {
-  document.getElementById('cab-foot').style.display = 'none';
+  const foot = document.getElementById('cab-foot');
+  const body = document.getElementById('cab-body');
+  foot.style.display = 'none';
+  body.style.padding = '0';
+
   const tscOpts = TSC_LIST.map(([region, centers]) =>
     `<optgroup label="${esc(region)}">${centers.map(c=>`<option value="${esc(c)}"${pre.tsc===c?' selected':''}>${esc(c)}</option>`).join('')}</optgroup>`
   ).join('');
 
-  document.getElementById('cab-body').innerHTML = `
-<div style="padding:16px 20px 8px">
-  <p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:16px">Розкажіть про себе — інструктори підберуть підхід до навчання.</p>
+  function btns(items, name, type, sel) {
+    return items.map(([v, l], i) => {
+      const on = type === 'radio' ? sel === v : (sel||[]).includes(v);
+      const full = items.length % 2 !== 0 && i === items.length - 1;
+      return `<label class="setup-btn${on?' active':''}${full?' setup-btn-full':''}"><input type="${type}" name="${name}" value="${v}"${on?' checked':''}>${l}</label>`;
+    }).join('');
+  }
 
-  <div class="form-group">
-    <label class="form-label">Рівень водіння *</label>
-    <div class="radio-group" style="flex-direction:column;gap:8px">
-      ${[['beginner','Починаю з нуля'],['some','Є базові навички'],['licensed','Маю права, але немає практики']].map(([v,l])=>
-        `<label class="radio-opt"><input type="radio" name="s-level" value="${v}"${(pre.level===v||(!pre.level&&v==='beginner'))?' checked':''}> ${l}</label>`
-      ).join('')}
-    </div>
-  </div>
+  body.innerHTML = `
+<p style="font-size:12px;color:var(--text-muted);line-height:1.5;margin:14px 14px 4px">Розкажіть про себе — інструктори підберуть підхід.</p>
 
-  <div class="form-group">
-    <label class="form-label">Кількість занять раніше</label>
-    <div class="radio-group">
-      ${[['0-20','0–20'],['20-40','20–40'],['40-60','40–60'],['60+','60+']].map(([v,l])=>
-        `<label class="radio-opt"><input type="radio" name="s-lessons" value="${v}"${(pre.lessons===v||(!pre.lessons&&v==='0-20'))?' checked':''}> ${l}</label>`
-      ).join('')}
-    </div>
+<div class="setup-card">
+  <div class="setup-qlabel">Рівень водіння</div>
+  <div class="setup-grid2">
+    ${btns([['beginner','Починаю з нуля'],['some','Є базові навички'],['licensed','Маю права, немає практики']],'s-level','radio',pre.level||'beginner')}
   </div>
+</div>
 
-  <div class="form-group">
-    <label class="form-label">Тип КПП</label>
-    <div class="radio-group">
-      ${[['auto','Автомат'],['manual','Механіка']].map(([v,l])=>
-        `<label class="radio-opt"><input type="radio" name="s-gearbox" value="${v}"${(pre.gearbox===v||(!pre.gearbox&&v==='auto'))?' checked':''}> ${l}</label>`
-      ).join('')}
-    </div>
+<div class="setup-card">
+  <div class="setup-qlabel">Кількість занять раніше</div>
+  <div class="setup-grid2">
+    ${btns([['0-20','0–20'],['20-40','20–40'],['40-60','40–60'],['60+','60+']],'s-lessons','radio',pre.lessons||'0-20')}
   </div>
+</div>
 
-  <div class="form-group">
-    <label class="form-label">Бюджет (грн / год)</label>
-    <div style="display:flex;gap:10px;align-items:center">
-      <input id="s-budget-from" class="form-input" type="number" placeholder="від" min="0" step="50" style="width:50%" value="${pre.budget?.from||''}">
-      <span style="color:var(--text-muted)">—</span>
-      <input id="s-budget-to" class="form-input" type="number" placeholder="до" min="0" step="50" style="width:50%" value="${pre.budget?.to||''}">
-    </div>
+<div class="setup-card">
+  <div class="setup-qlabel">Тип КПП</div>
+  <div class="setup-grid2">
+    ${btns([['auto','Автомат'],['manual','Механіка']],'s-gearbox','radio',pre.gearbox||'auto')}
   </div>
+</div>
 
-  <div class="form-group">
-    <label class="form-label">Зручний час занять</label>
-    <div class="chip-opts">
-      ${[['morning','Ранок (7–11)'],['day','День (11–17)'],['evening','Вечір (17–21)'],['weekend','Вихідні']].map(([v,l])=>
-        `<label class="chip-opt"><input type="checkbox" name="s-sched" value="${v}"${(pre.schedule||[]).includes(v)?' checked':''}> ${l}</label>`
-      ).join('')}
-    </div>
+<div class="setup-card">
+  <div class="setup-qlabel">Бюджет (грн / год)</div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <input id="s-budget-from" class="form-input" type="number" placeholder="від" min="0" step="50" style="flex:1" value="${pre.budget?.from||''}">
+    <span style="color:var(--text-muted);font-weight:600;flex-shrink:0">—</span>
+    <input id="s-budget-to" class="form-input" type="number" placeholder="до" min="0" step="50" style="flex:1" value="${pre.budget?.to||''}">
   </div>
+</div>
 
-  <div class="form-group">
-    <label class="form-label">Сервісний центр МВС для іспиту</label>
-    <select name="s-tsc" class="form-input" style="appearance:auto">
-      <option value="">— не обрано —</option>
-      ${tscOpts}
-    </select>
+<div class="setup-card">
+  <div class="setup-qlabel">Зручний час занять</div>
+  <div class="setup-grid2">
+    ${btns([['morning','Ранок (7–11)'],['day','День (11–17)'],['evening','Вечір (17–21)'],['weekend','Вихідні']],'s-sched','checkbox',pre.schedule||[])}
   </div>
+</div>
 
-  <div class="form-group">
-    <label class="form-label">Слабкі місця (що хочете покращити)</label>
-    <div class="chip-opts">
-      ${[['parking','Паркування'],['reverse','Задній хід'],['turns','Розвороти'],['traffic','Інтенсивний трафік'],['crossroads','Перехрестя']].map(([v,l])=>
-        `<label class="chip-opt"><input type="checkbox" name="s-weak" value="${v}"${(pre.weakSpots||[]).includes(v)?' checked':''}> ${l}</label>`
-      ).join('')}
-    </div>
+<div class="setup-card">
+  <div class="setup-qlabel">Слабкі місця</div>
+  <div class="setup-grid2">
+    ${btns([['parking','Паркування'],['reverse','Задній хід'],['turns','Розвороти'],['traffic','Інтенсивний трафік'],['crossroads','Перехрестя']],'s-weak','checkbox',pre.weakSpots||[])}
   </div>
+</div>
 
-  <div class="form-group" style="margin-bottom:20px">
-    <label class="form-label">Що шукаю в інструктора <span style="font-size:10px;color:var(--text-hint);font-weight:400">(фільтрує список)</span></label>
-    <div class="chip-opts">
-      ${INSTR_TAGS.filter(t => t !== 'Автомат' && t !== 'Механіка').map(tag => {
-        const c = TAG_COLORS[tag]||{};
-        const cv = c.bg ? `--tc-bg:${c.bg};--tc-bd:${c.bd};--tc-tx:${c.tx}` : '';
-        return `<label class="chip-opt chip-opt-c" style="${cv}"><input type="checkbox" name="s-ptag" value="${_esc(tag)}"${(pre.preferredTags||[]).includes(tag)?' checked':''}> ${_esc(tag)}</label>`;
-      }).join('')}
-    </div>
+<div class="setup-card">
+  <div class="setup-qlabel">Що шукаю в інструктора <span style="font-size:10px;color:var(--text-hint);font-weight:400;text-transform:none;letter-spacing:0">(фільтрує список)</span></div>
+  <div class="setup-grid2">
+    ${INSTR_TAGS.filter(t => t !== 'Автомат' && t !== 'Механіка').map(tag => {
+      const c = TAG_COLORS[tag]||{};
+      const cv = c.bg ? `--tc-bg:${c.bg};--tc-bd:${c.bd};--tc-tx:${c.tx}` : '';
+      const checked = (pre.preferredTags||[]).includes(tag);
+      return `<label class="chip-opt chip-opt-c"${cv?` style="${cv}"`:''}><input type="checkbox" name="s-ptag" value="${_esc(tag)}"${checked?' checked':''}> ${_esc(tag)}</label>`;
+    }).join('')}
   </div>
+</div>
+
+<div class="setup-card" style="margin-bottom:14px">
+  <div class="setup-qlabel">ТСЦ для іспиту</div>
+  <select name="s-tsc" class="form-input" style="appearance:auto">
+    <option value="">— не обрано —</option>
+    ${tscOpts}
+  </select>
 </div>`;
 
-  document.getElementById('cab-foot').innerHTML = `<button id="btn-setup-save" class="btn-submit-instr"><i class="ti ti-check"></i> Зберегти профіль</button>`;
-  document.getElementById('cab-foot').style.display = '';
+  foot.innerHTML = `<button id="btn-setup-save" class="btn-submit-instr"><i class="ti ti-check"></i> Зберегти профіль</button>`;
+  foot.style.display = '';
   document.getElementById('btn-setup-save').addEventListener('click', () => saveSetup(user));
 }
 
@@ -1877,6 +1888,7 @@ window._adminToggleVerify = async (id, value) => {
 
 async function renderProfileScreen(user) {
   if (user.email === ADMIN_EMAIL) { await renderAdminScreen(user); return; }
+  document.getElementById('cab-body').style.padding = '20px';
   window._cabUser = user;
   document.getElementById('cab-foot').innerHTML = `<button id="btn-signout" class="btn-signout"><i class="ti ti-logout"></i> Вийти з акаунту</button>`;
   document.getElementById('cab-foot').style.display = '';
