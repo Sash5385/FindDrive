@@ -166,6 +166,7 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .card-fav.on{color:#cc3355}
 .card-blob{position:absolute;width:110px;height:90px;border-radius:50%;filter:blur(35px);opacity:.4;top:-20px;right:-10px;pointer-events:none}
 .badge-new{position:absolute;top:10px;left:10px;background:var(--green);color:#fff;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:600;letter-spacing:.3px;z-index:3;pointer-events:none}
+.badge-verified{display:inline-flex;align-items:center;gap:3px;background:#e6f1fb;color:#185fa5;border:.5px solid #a4c4e4;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:600;letter-spacing:.3px}
 .instr-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;position:relative;z-index:1}
 .avatar{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;flex-shrink:0;border:2px solid rgba(255,255,255,.7)}
 .instr-name{font-size:14px;font-weight:500;color:var(--text)}
@@ -707,7 +708,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.146</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.147</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1612,12 +1613,14 @@ async function renderAdminScreen(user) {
         ${instr.carPhoto ? `<div><img class="admin-photo" src="${esc(instr.carPhoto)}" alt=""><div class="admin-photo-label">Авто</div></div>` : ''}
       </div>` : '';
 
+    const verifyBtn = instr.status === 'approved' ? `<button class="admin-btn ${instr.verified?'reject':'approve'}" onclick="window._adminToggleVerify('${id}',${!instr.verified})" style="flex:0;white-space:nowrap"><i class="ti ti-${instr.verified?'shield-off':'shield-check'}"></i> ${instr.verified?'Зняти верифікацію':'Верифікувати'}</button>` : '';
     const actionsHtml = instr.status === 'pending' ? `
       <div class="admin-actions">
         <button class="admin-btn approve" onclick="window._adminApprove('${id}')"><i class="ti ti-check"></i> Підтвердити</button>
         <button class="admin-btn reject"  onclick="window._adminReject('${id}')"><i class="ti ti-x"></i> Відхилити</button>
       </div>` : instr.status === 'approved' ? `
       <div class="admin-actions">
+        ${verifyBtn}
         <button class="admin-btn reject" onclick="window._adminReject('${id}')"><i class="ti ti-ban"></i> Деактивувати</button>
       </div>` : `
       <div class="admin-actions">
@@ -1670,6 +1673,12 @@ window._adminApprove = async (id) => {
 window._adminReject = async (id) => {
   try {
     await updateDoc(doc(db, 'instructors', id), { status: 'rejected' });
+    window._adminReload?.();
+  } catch(e) { alert('Помилка: ' + (e.message||e)); }
+};
+window._adminToggleVerify = async (id, value) => {
+  try {
+    await updateDoc(doc(db, 'instructors', id), { verified: value });
     window._adminReload?.();
   } catch(e) { alert('Помилка: ' + (e.message||e)); }
 };
@@ -2600,6 +2609,7 @@ function buildCard(d, i, id) {
       <div>
         <div class="instr-name">${esc(d.name)}</div>
         <div class="instr-meta"><i class="ti ti-star"></i>${d.rating ? ' '+d.rating+' · '+d.reviews+' відгуків' : ' Новий інструктор'}${d.experience ? ' · '+d.experience+' р.' : ''}</div>
+        ${d.verified ? '<span class="badge-verified"><i class="ti ti-shield-check" style="font-size:9px"></i> Верифіковано</span>' : ''}
       </div>
     </div>
     <div class="badge-dist"><i class="ti ti-map-pin"></i> ${esc(d.area||'—')}<span class="badge-km"></span></div>
@@ -4068,6 +4078,7 @@ function openInstrProfile(id, mpIdx) {
     <div class="prof-price-row">
       ${d.price ? `<span class="prof-price-big">${_esc(String(d.price))} грн<span class="prof-price-per"> / год</span></span>` : ''}
       ${d.experience ? `<span class="prof-exp-chip">${_esc(String(d.experience))} р. стажу</span>` : ''}
+      ${d.verified ? `<span class="badge-verified"><i class="ti ti-shield-check" style="font-size:10px"></i> Верифіковано</span>` : ''}
     </div>
     ${d.area ? `<div class="prof-row"><i class="ti ti-map-pin" style="color:${col}"></i> ${_esc(d.area)}</div>` : ''}
     ${instrTags.length ? `<div class="prof-tags-row">${instrTags.map(t=>`<span class="tag" style="${_ts(t)}">${_esc(t)}</span>`).join('')}</div>` : ''}
