@@ -706,7 +706,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.142</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.143</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -3357,6 +3357,10 @@ window._bookSlot = async function(instrId, dateStr, time) {
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> …'; }
   if (errEl) errEl.style.display = 'none';
   const d = (window._instrProfiles||{})[instrId];
+  const mps = (d?.meetingPoints||[]).filter(pt=>typeof pt==='object'&&pt.lat);
+  const mpIdx = window._bkActiveMp;
+  const mp = (mpIdx !== null && mpIdx !== undefined && mps[mpIdx]) ? mps[mpIdx] : null;
+  const dur = window._bkActiveDur || window._clientProfile?.lessonDuration || d?.lessonDuration || 60;
   try {
     await addDoc(collection(db, 'bookings'), {
       instructorId:     instrId,
@@ -3369,17 +3373,20 @@ window._bookSlot = async function(instrId, dateStr, time) {
       clientEmail:      user.email || '',
       date:             dateStr,
       time:             time,
-      duration:         window._bkActiveDur || window._clientProfile?.lessonDuration || d?.lessonDuration || 60,
+      duration:         dur,
+      meetingPoint:     mp ? { label: mp.label, lat: mp.lat, lng: mp.lng } : null,
       status:           'pending',
       createdAt:        serverTimestamp(),
     });
+    window._ga('booking_confirmed', { instructor_id: instrId, instructor_name: d?.name||'', date: dateStr, duration: dur });
     const box = document.getElementById('prof-booking');
     if (box) {
       const [y,m,day] = dateStr.split('-');
+      const mpHtml = mp ? `<br><i class="ti ti-map-pin" style="font-size:11px;color:var(--green)"></i> ${esc(mp.label)}` : '';
       box.innerHTML = `<div class="booking-done">
         <div class="booking-done-icon"><i class="ti ti-circle-check"></i></div>
         <div class="booking-done-text">Запис надіслано!</div>
-        <div class="booking-done-sub">${esc(day)}.${esc(m)}.${esc(y)} о ${esc(time)}<br>Інструктор підтвердить найближчим часом</div>
+        <div class="booking-done-sub">${esc(day)}.${esc(m)}.${esc(y)} о ${esc(time)}${mpHtml}<br>Інструктор підтвердить найближчим часом</div>
       </div>`;
     }
   } catch(e) {
@@ -3553,6 +3560,7 @@ function renderClientCards(docs) {
         ${bkStatusBadge(b.status)}
       </div>
       <div class="bk-meta"><i class="ti ti-calendar" style="font-size:11px;color:var(--green)"></i>${esc(bkDateStr(b))} о ${esc(b.time||'')} · ${b.duration||90} хв</div>
+      ${b.meetingPoint?.label?`<div class="bk-meta" style="margin-top:2px"><i class="ti ti-map-pin" style="font-size:11px;color:var(--green)"></i>${esc(b.meetingPoint.label)}</div>`:''}
       ${showInstrPhone ? `<div class="bk-meta" style="margin-top:3px"><i class="ti ti-phone" style="font-size:11px;color:var(--green)"></i><a href="tel:${esc(b.instructorPhone)}" style="color:var(--text-muted);text-decoration:none">${esc(b.instructorPhone)}</a></div>` : ''}
       ${b.status==='reschedule_requested'&&b.proposedDate?`<div class="bk-reschedule-hint"><i class="ti ti-clock"></i> Запит на перенос: <b>${esc(b.proposedDate.split('-').reverse().join('.'))} о ${esc(b.proposedTime||'')}</b> — очікуємо відповідь інструктора</div>`:''}
       ${showReschedule||showCancel?`
@@ -3962,6 +3970,7 @@ function renderInstrCards(docs, showActions) {
       ${bkStatusBadge(b.status)}
     </div>
     <div class="bk-meta"><i class="ti ti-calendar" style="font-size:11px;color:var(--green)"></i>${esc(bkDateStr(b))} о ${esc(b.time||'')} · ${b.duration||90} хв</div>
+    ${b.meetingPoint?.label?`<div class="bk-meta" style="margin-top:2px"><i class="ti ti-map-pin" style="font-size:11px;color:var(--green)"></i>${esc(b.meetingPoint.label)}</div>`:''}
     ${b.clientEmail?`<div class="bk-meta"><i class="ti ti-mail" style="font-size:11px;color:var(--text-hint)"></i>${esc(b.clientEmail)}</div>`:''}
     ${b.status==='reschedule_requested'&&b.proposedDate?`
       <div class="bk-reschedule-hint"><i class="ti ti-calendar-time"></i> Учень просить перенести на <b>${esc(b.proposedDate.split('-').reverse().join('.'))} о ${esc(b.proposedTime||'')}</b></div>
