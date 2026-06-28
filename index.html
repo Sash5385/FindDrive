@@ -696,7 +696,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.137</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.138</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1267,6 +1267,9 @@ function openPanel(id) {
 function closeAll() {
   document.querySelectorAll(".cabinet.open").forEach(el => el.classList.remove("open"));
   document.getElementById("cab-overlay").classList.remove("open");
+  if (new URLSearchParams(location.search).has('instr')) {
+    history.replaceState(null, '', location.pathname);
+  }
 }
 document.getElementById("cab-overlay").addEventListener("click", closeAll);
 window.openPanel = openPanel;
@@ -2778,6 +2781,9 @@ window._resetAllFilters = function() {
 window.addEventListener('scroll', function() {
   document.getElementById('scroll-top-btn')?.classList.toggle('visible', window.scrollY > 400);
 }, {passive: true});
+window.addEventListener('popstate', function() {
+  if (document.querySelector('.cabinet.open')) closeAll();
+});
 
 (function initStickyFilters() {
   const stub = document.getElementById('filters-stub');
@@ -4023,6 +4029,7 @@ function openInstrProfile(id, mpIdx) {
     </div>`;
 
   if (window.openPanel) window.openPanel('instr-profile');
+  history.pushState({ instrId: id }, '', location.pathname + '?instr=' + encodeURIComponent(id));
   window._loadProfReviews?.(id);
   setTimeout(() => {
     window._openBooking?.(id);
