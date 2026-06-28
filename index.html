@@ -706,7 +706,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.143</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.144</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -3763,6 +3763,7 @@ async function loadInstrCombined(instr, container) {
         <div style="font-weight:600;margin-bottom:4px">${esc(selBk.clientName||selBk.clientEmail||'Учень')}</div>
         ${selBk.clientPhone?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px"><i class="ti ti-phone" style="font-size:10px;color:var(--green)"></i> <a href="tel:${esc(selBk.clientPhone)}" style="color:var(--text-muted);text-decoration:none">${esc(selBk.clientPhone)}</a></div>`:''}
         ${selBk.clientEmail?`<div style="font-size:11px;color:var(--text-muted);margin-top:1px"><i class="ti ti-mail" style="font-size:10px"></i> ${esc(selBk.clientEmail)}</div>`:''}
+        ${selBk.meetingPoint?.label?`<div style="font-size:11px;color:var(--text-muted);margin-top:1px"><i class="ti ti-map-pin" style="font-size:10px;color:var(--green)"></i> ${esc(selBk.meetingPoint.label)}</div>`:''}
         <div style="margin-top:6px">${bkStatusBadge(selBk.status)}</div>
         ${selBk.status==='pending'?`<div class="btn-row"><button class="btn-bk-action" style="font-size:11px;padding:4px 10px" onclick="window._confirmBk('${selBk.id}')"><i class="ti ti-check"></i> Підтвердити</button><button class="btn-bk-reject" style="font-size:11px;padding:4px 10px" onclick="window._rejectBk('${selBk.id}')">Відхилити</button></div>`:''}
         ${selBk.status==='confirmed'&&selBk.date>=(new Date().toISOString().slice(0,10))?`<div class="btn-row"><button class="btn-bk-cancel" style="font-size:11px;padding:5px 10px" onclick="window._instrCancelBk('${selBk.id}')"><i class="ti ti-x"></i> Скасувати заняття</button></div>`:''}
