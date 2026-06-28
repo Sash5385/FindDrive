@@ -307,6 +307,8 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .auth-form-back{display:inline-flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:13px;font-family:inherit;padding:0;margin-bottom:18px;transition:color .15s}
 .auth-form-back:hover{color:var(--green)}
 .auth-form-role-badge{display:inline-flex;align-items:center;gap:6px;background:var(--green-light);color:var(--green);border:.5px solid #b8d8c8;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;margin-bottom:18px}
+.field-err{font-size:11px;color:#cc3333;margin-top:4px;line-height:1.4}
+.form-input.err{border-color:#cc3333 !important;background:#fff5f5}
 @media(max-width:480px){.auth-roles-grid{grid-template-columns:1fr}.auth-modal-box{padding:28px 18px 24px}}
 
 /* PWA INSTALL BANNER */
@@ -763,7 +765,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.162</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.163</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1247,7 +1249,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
-         signOut, onAuthStateChanged,
+         signOut, onAuthStateChanged, getAdditionalUserInfo,
          createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp,
@@ -1444,15 +1446,17 @@ function showAuthErr(msg) {
 }
 
 async function handleAuthSubmit() {
-  const email = document.getElementById('auth-email')?.value.trim();
-  const pass  = document.getElementById('auth-pass')?.value;
-  if (!email || !pass) { showAuthErr('Заповніть email і пароль'); return; }
-  const btn = document.getElementById('btn-auth-submit');
-  btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> …';
+  if (!validateAuthModal()) return;
+  const email = document.getElementById('auth-email').value.trim();
+  const pass  = document.getElementById('auth-pass').value;
+  const btn   = document.getElementById('btn-auth-submit');
+  const label = authMode === 'register' ? 'Зареєструватись' : 'Увійти';
+  btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> Зачекайте…';
   try {
     if (authMode === 'register') {
       const name  = document.getElementById('auth-name')?.value.trim() || '';
       const phone = document.getElementById('auth-phone')?.value.trim() || '';
+      _isNewClientReg = _authModalRole === 'client';
       const cred  = await createUserWithEmailAndPassword(auth, email, pass);
       if (name) await updateProfile(cred.user, { displayName: name });
       await setDoc(doc(db, 'users', cred.user.uid), { name, phone, email, createdAt: serverTimestamp() });
@@ -1460,22 +1464,26 @@ async function handleAuthSubmit() {
       await signInWithEmailAndPassword(auth, email, pass);
     }
   } catch(e) {
+    _isNewClientReg = false;
     showAuthErr(e.message);
     btn.disabled = false;
-    btn.innerHTML = `<i class="ti ti-login"></i> ${authMode === 'register' ? 'Зареєструватись' : 'Увійти'}`;
+    btn.innerHTML = `<i class="ti ti-login"></i> ${label}`;
   }
 }
 
-// --- New role-selection auth modal ---
+// --- Auth modal (role-selection) ---
 let _authModalActive = false;
+let _isNewClientReg  = false;
+let _authModalRole   = 'client';
+
 window._openAuthModal = function(role, mode) {
   const modal = document.getElementById('auth-modal');
   if (!modal) return;
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
   _authModalActive = true;
-  if (role) renderAuthModalForm(role, mode || 'login');
-  else renderAuthRoleSelect();
+  if (role) window.renderAuthModalForm(role, mode || 'login');
+  else window.renderAuthRoleSelect();
 };
 window._closeAuthModal = function() {
   const modal = document.getElementById('auth-modal');
@@ -1484,7 +1492,8 @@ window._closeAuthModal = function() {
   document.body.style.overflow = '';
   _authModalActive = false;
 };
-function renderAuthRoleSelect() {
+
+window.renderAuthRoleSelect = function() {
   document.getElementById('auth-modal-inner').innerHTML = `
     <div class="auth-roles-title">Ласкаво просимо</div>
     <div class="auth-roles-sub">Оберіть, хто ви</div>
@@ -1494,8 +1503,8 @@ function renderAuthRoleSelect() {
         <div class="auth-role-name">Шукаю інструктора</div>
         <div class="auth-role-hint">Знайдіть інструктора поруч та запишіться онлайн</div>
         <div class="auth-role-btns">
-          <button class="auth-role-btn-primary" onclick="renderAuthModalForm('client','login')"><i class="ti ti-login"></i> Увійти</button>
-          <button class="auth-role-btn-sec" onclick="renderAuthModalForm('client','register')"><i class="ti ti-user-plus"></i> Зареєструватись</button>
+          <button class="auth-role-btn-primary" onclick="window.renderAuthModalForm('client','login')"><i class="ti ti-login"></i> Увійти</button>
+          <button class="auth-role-btn-sec" onclick="window.renderAuthModalForm('client','register')"><i class="ti ti-user-plus"></i> Зареєструватись</button>
         </div>
       </div>
       <div class="auth-role-card">
@@ -1503,37 +1512,40 @@ function renderAuthRoleSelect() {
         <div class="auth-role-name">Я інструктор</div>
         <div class="auth-role-hint">Реєструйтесь і отримуйте учнів через платформу</div>
         <div class="auth-role-btns">
-          <button class="auth-role-btn-primary" onclick="renderAuthModalForm('instr','login')"><i class="ti ti-login"></i> Увійти</button>
+          <button class="auth-role-btn-primary" onclick="window.renderAuthModalForm('instr','login')"><i class="ti ti-login"></i> Увійти</button>
           <button class="auth-role-btn-sec" onclick="window._closeAuthModal();setTimeout(()=>openPanel('instr-welcome'),200)"><i class="ti ti-user-plus"></i> Зареєструватись</button>
         </div>
       </div>
     </div>`;
-}
-function renderAuthModalForm(role, mode) {
+};
+
+window.renderAuthModalForm = function(role, mode) {
   authMode = mode;
+  _authModalRole = role;
   const roleLabel = role === 'instr' ? '🚗 Я інструктор' : '🔍 Шукаю інструктора';
+  const gLabel = mode === 'register' ? 'Зареєструватись' : 'Увійти';
   document.getElementById('auth-modal-inner').innerHTML = `
-    <button class="auth-form-back" onclick="renderAuthRoleSelect()"><i class="ti ti-arrow-left"></i> Назад</button>
+    <button class="auth-form-back" onclick="window.renderAuthRoleSelect()"><i class="ti ti-arrow-left"></i> Назад</button>
     <div class="auth-form-role-badge">${roleLabel}</div>
-    <button id="btn-google-cab" class="btn-google-cab">${GICON} ${mode==='register'?'Зареєструватись':'Увійти'} через Google</button>
+    <button id="btn-google-cab" class="btn-google-cab">${GICON} ${gLabel} через Google</button>
     <div class="cab-or"><span>або</span></div>
     <div id="cab-err" class="cab-err" style="display:none"></div>
     <div class="form-group">
       <label class="form-label">Email</label>
       <input id="auth-email" class="form-input" type="email" placeholder="your@email.com" autocomplete="email">
     </div>
-    <div class="form-group" style="margin-bottom:${mode==='register'?'12px':'4px'}">
+    <div class="form-group">
       <label class="form-label">Пароль</label>
       <input id="auth-pass" class="form-input" type="password" placeholder="Мінімум 6 символів">
     </div>
     ${mode === 'register' ? `
     <div class="form-group">
-      <label class="form-label">Ім'я та прізвище</label>
+      <label class="form-label">Ім'я та прізвище <span style="color:#cc3333">*</span></label>
       <input id="auth-name" class="form-input" type="text" placeholder="Іван Іваненко" autocomplete="name">
     </div>
     <div class="form-group">
-      <label class="form-label">Телефон</label>
-      <input id="auth-phone" class="form-input" type="tel" placeholder="+38 (0__) ___-__-__">
+      <label class="form-label">Телефон <span style="font-size:10px;color:var(--text-hint)">(необов'язково)</span></label>
+      <input id="auth-phone" class="form-input" type="tel" placeholder="+380XXXXXXXXX">
     </div>` : ''}
     <button id="btn-auth-submit" class="btn-submit-instr" style="margin-top:4px">
       <i class="ti ti-login"></i> ${mode === 'register' ? 'Зареєструватись' : 'Увійти'}
@@ -1543,19 +1555,59 @@ function renderAuthModalForm(role, mode) {
         ? 'Вже є акаунт? <a href="#" id="auth-switch">Увійти</a>'
         : 'Немає акаунту? <a href="#" id="auth-switch">Зареєструватись</a>'}
     </p>`;
-  document.getElementById('btn-google-cab').addEventListener('click', () => {
-    signInWithPopup(auth, provider).catch(e => {
+
+  const googleBtn = document.getElementById('btn-google-cab');
+  googleBtn.addEventListener('click', async () => {
+    googleBtn.disabled = true;
+    googleBtn.innerHTML = `<i class="ti ti-loader"></i> Зачекайте…`;
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const info = getAdditionalUserInfo(result);
+      if (info?.isNewUser && _authModalRole === 'client') _isNewClientReg = true;
+    } catch(e) {
+      googleBtn.disabled = false;
+      googleBtn.innerHTML = `${GICON} ${gLabel} через Google`;
       if (e.code === 'auth/popup-blocked' || e.code === 'auth/cancelled-popup-request')
         showAuthErr('Спливаюче вікно заблоковано. Спробуйте email і пароль.');
       else if (e.code !== 'auth/popup-closed-by-user') showAuthErr(e.message);
-    });
+    }
   });
   document.getElementById('auth-switch').addEventListener('click', e => {
     e.preventDefault();
-    renderAuthModalForm(role, mode === 'login' ? 'register' : 'login');
+    window.renderAuthModalForm(role, mode === 'login' ? 'register' : 'login');
   });
   document.getElementById('btn-auth-submit').addEventListener('click', handleAuthSubmit);
   document.getElementById('auth-pass').addEventListener('keydown', e => { if (e.key === 'Enter') handleAuthSubmit(); });
+  ['auth-email','auth-pass','auth-name'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => clearAuthFieldErr(id));
+  });
+};
+
+function setAuthFieldErr(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('err');
+  let errEl = el.parentNode.querySelector('.field-err');
+  if (!errEl) { errEl = document.createElement('div'); errEl.className = 'field-err'; el.parentNode.appendChild(errEl); }
+  errEl.textContent = msg;
+}
+function clearAuthFieldErr(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('err');
+  el.parentNode.querySelector('.field-err')?.remove();
+}
+function validateAuthModal() {
+  const email = document.getElementById('auth-email')?.value.trim() || '';
+  const pass  = document.getElementById('auth-pass')?.value || '';
+  const name  = document.getElementById('auth-name')?.value.trim() || '';
+  let ok = true;
+  if (!email) { setAuthFieldErr('auth-email', 'Введіть email'); ok = false; }
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setAuthFieldErr('auth-email', 'Невірний формат email'); ok = false; }
+  if (!pass) { setAuthFieldErr('auth-pass', 'Введіть пароль'); ok = false; }
+  else if (pass.length < 6) { setAuthFieldErr('auth-pass', 'Мінімум 6 символів'); ok = false; }
+  if (authMode === 'register' && !name) { setAuthFieldErr('auth-name', "Введіть ім'я та прізвище"); ok = false; }
+  return ok;
 }
 
 const LEVEL_LABELS  = { beginner:'Починаю з нуля', some:'Є базові навички', licensed:'Маю права, без практики', experienced:'Досвідчений водій' };
@@ -2387,9 +2439,16 @@ onAuthStateChanged(auth, async user => {
       setDoc(doc(db, 'users', user.uid), { name: user.displayName||'', email: user.email||'', photo: user.photoURL||'' }, { merge: true }).catch(()=>{});
     }
     const _fromModal = _authModalActive;
+    const _wasNewReg = _isNewClientReg;
+    _isNewClientReg  = false;
     window._closeAuthModal?.();
-    if (_fromModal) { await renderProfileScreen(user); openPanel('cabinet'); }
-    else if (document.getElementById("cabinet").classList.contains("open")) await renderProfileScreen(user);
+    if (_fromModal) {
+      openPanel('cabinet');
+      if (_wasNewReg) { await renderSetupScreen(user); }
+      else { await renderProfileScreen(user); }
+    } else if (document.getElementById("cabinet").classList.contains("open")) {
+      await renderProfileScreen(user);
+    }
     registerFcmToken();
     // Запустити слухач для клієнта; слухач інструктора — після визначення профілю
     listenClientBookings(user.uid);
