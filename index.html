@@ -729,7 +729,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.156</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.157</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -3463,10 +3463,12 @@ window._bookSlot = async function(instrId, dateStr, time) {
     if (box) {
       const [y,m,day] = dateStr.split('-');
       const mpHtml = mp ? `<br><i class="ti ti-map-pin" style="font-size:11px;color:var(--green)"></i> ${esc(mp.label)}` : '';
+      const calArgs2 = `'${esc(dateStr)}','${esc(time)}',${dur},'${esc(d?.name||'Інструктор')}','${esc(mp?.label||'')}'`;
       box.innerHTML = `<div class="booking-done">
         <div class="booking-done-icon"><i class="ti ti-circle-check"></i></div>
         <div class="booking-done-text">Запис надіслано!</div>
         <div class="booking-done-sub">${esc(day)}.${esc(m)}.${esc(y)} о ${esc(time)}${mpHtml}<br>Інструктор підтвердить найближчим часом</div>
+        <button class="btn-bk-ical" style="margin-top:12px" onclick="window._addToCalendar(${calArgs2})"><i class="ti ti-calendar-plus"></i> Додати до календаря</button>
       </div>`;
     }
   } catch(e) {
