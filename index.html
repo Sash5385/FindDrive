@@ -743,7 +743,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.170</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.171</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1874,7 +1874,6 @@ async function renderProfileScreen(user) {
       <div class="cab-section">
         <div class="cab-section-title">Профіль учня</div>
         <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--text-muted);margin-top:6px">
-          ${ud.license ? `<div><i class="ti ti-id" style="color:var(--green)"></i> ${ud.license==='yes'?'Є посвідчення водія':'Без посвідчення'}</div>` : ud.level ? `<div><i class="ti ti-school" style="color:var(--green)"></i> ${esc(LEVEL_LABELS[ud.level]||ud.level)}</div>` : ''}
           ${(() => { const b=ud.budget; if(!b) return ''; const t=typeof b==='object'?(b.from||b.to?`${b.from||0}–${b.to||'∞'} грн/год`:''):(BUDGET_LABELS[b]||b); return t?`<div><i class="ti ti-wallet" style="color:var(--green)"></i> ${esc(t)}</div>`:'';})()}
           ${ud.tsc ? `<div style="display:flex;align-items:flex-start;gap:6px"><i class="ti ti-building" style="color:var(--green);flex-shrink:0;margin-top:1px"></i><span>${esc(ud.tsc)}</span></div>` : ''}
           ${(ud.schedule||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${ud.schedule.map(s=>`<span class="tag">${esc(SCHED_LABELS[s]||s)}</span>`).join('')}</div>` : ''}
