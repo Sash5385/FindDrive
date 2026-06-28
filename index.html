@@ -570,6 +570,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .bk-tab.active .bk-badge{background:rgba(255,255,255,.3)}
 .bk-empty-tab{text-align:center;padding:20px;color:var(--text-hint);font-size:12px}
 .btn-bk-cancel{background:none;border:.5px solid #e8b0b8;border-radius:7px;padding:6px 12px;font-size:11px;color:#cc3333;cursor:pointer;font-family:inherit;transition:border-color .15s,background .15s}
+.btn-bk-ical{background:none;border:.5px solid var(--border);border-radius:7px;padding:5px 10px;font-size:11px;color:var(--text-muted);cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:5px;margin-top:6px;transition:border-color .15s,color .15s}
+.btn-bk-ical:hover{color:var(--green);border-color:var(--green)}
 .btn-bk-cancel:hover{background:#fff0f0;border-color:#cc3333}
 .bk-review-form{margin-top:8px;background:var(--white);border:.5px solid var(--border);border-radius:10px;padding:12px 14px}
 .bk-review-stars{display:flex;gap:2px;margin-bottom:10px}
@@ -727,7 +729,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.155</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.156</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -3642,6 +3644,8 @@ function renderClientCards(docs) {
            </div>`
       : '';
     const showInstrPhone = b.status === 'confirmed' && b.date >= today && b.instructorPhone;
+    const showAddCal = b.status === 'confirmed' && b.date >= today && b.date && b.time;
+    const calArgs = showAddCal ? `'${esc(b.date)}','${esc(b.time||'')}',${b.duration||60},'${esc(b.instructorName||'Інструктор')}','${esc(b.meetingPoint?.label||'')}'` : '';
     return `<div class="bk-card" id="bk-${b.id}">
       <div class="bk-card-head">
         <div class="bk-name">${esc(b.instructorName||'Інструктор')}</div>
@@ -3651,6 +3655,7 @@ function renderClientCards(docs) {
       ${b.meetingPoint?.label?`<div class="bk-meta" style="margin-top:2px"><i class="ti ti-map-pin" style="font-size:11px;color:var(--green)"></i>${esc(b.meetingPoint.label)}</div>`:''}
       ${showInstrPhone ? `<div class="bk-meta" style="margin-top:3px"><i class="ti ti-phone" style="font-size:11px;color:var(--green)"></i><a href="tel:${esc(b.instructorPhone)}" style="color:var(--text-muted);text-decoration:none">${esc(b.instructorPhone)}</a></div>` : ''}
       ${b.status==='reschedule_requested'&&b.proposedDate?`<div class="bk-reschedule-hint"><i class="ti ti-clock"></i> Запит на перенос: <b>${esc(b.proposedDate.split('-').reverse().join('.'))} о ${esc(b.proposedTime||'')}</b> — очікуємо відповідь інструктора</div>`:''}
+      ${showAddCal?`<button class="btn-bk-ical" onclick="window._addToCalendar(${calArgs})"><i class="ti ti-calendar-plus"></i> До календаря</button>`:''}
       ${showReschedule||showCancel?`
         <div class="btn-row" style="flex-wrap:wrap;align-items:center">
           ${showReschedule?`<button class="btn-bk-reject" style="font-size:11px;padding:5px 10px" onclick="window._showReschForm('${b.id}')"><i class="ti ti-calendar-time"></i> Перенести</button>`:''}
@@ -3671,6 +3676,22 @@ function renderClientCards(docs) {
   }).join('');
 }
 
+window._addToCalendar = function(date, time, duration, instrName, location) {
+  const [y,m,d] = date.split('-');
+  const [h,mn] = (time||'00:00').split(':');
+  const startDt = `${y}${m}${d}T${h}${mn}00`;
+  const endMs = new Date(Date.UTC(+y,+m-1,+d,+h,+mn,0) + (duration||60)*60000);
+  const endDt = endMs.toISOString().replace(/[-:]/g,'').slice(0,15);
+  const loc = location ? `LOCATION:${instrName}${location ? ' — ' + location : ''}\r\n` : '';
+  const desc = `DESCRIPTION:Інструктор: ${instrName}${location ? '\\nМісце: ' + location : ''}`;
+  const ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//FindDrive//FindDrive//UK\r\nBEGIN:VEVENT\r\nDTSTART:${startDt}\r\nDTEND:${endDt}\r\nSUMMARY:Заняття — ${instrName}\r\n${loc}${desc}\r\nEND:VEVENT\r\nEND:VCALENDAR`;
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `finddrive-${date}.ics`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
+};
 window._showReschForm = function(id) {
   const f = document.getElementById('rf-'+id);
   if (f) { f.style.display = ''; f.querySelector('input[type=date]')?.focus(); }
