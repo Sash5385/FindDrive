@@ -155,7 +155,8 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .sk-footer{display:flex;justify-content:space-between;align-items:center}
 .sk-price{height:16px;width:80px}
 .sk-btn{height:30px;width:88px;border-radius:9px}
-.instr-card{background:var(--white);border-radius:18px;padding:20px 18px;border:.5px solid var(--border);position:relative;overflow:hidden;transition:border-color .2s,transform .2s}
+.instr-card{background:var(--white);border-radius:18px;padding:20px 18px;border:.5px solid var(--border);position:relative;overflow:hidden;transition:border-color .2s,transform .2s,box-shadow .2s}
+.instr-card.map-highlight{border-color:var(--green);box-shadow:0 0 0 2px rgba(26,122,74,.25),0 4px 24px rgba(26,122,74,.15)}
 .instr-card:hover{border-color:#aad0aa;transform:translateY(-2px)}
 .card-fav{position:absolute;top:11px;right:11px;z-index:3;background:none;border:none;cursor:pointer;padding:4px;line-height:1;font-size:17px;color:#c8d8c8;transition:color .15s,transform .15s}
 .card-fav:hover{color:#e0607a;transform:scale(1.2)}
@@ -702,7 +703,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.140</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.141</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -4294,6 +4295,13 @@ window._addInstrMarker = function(inst, id) {
     <button onclick="openInstrProfile('${_esc(id||'')}',${mpParam})" style="width:100%;background:${color};color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit">Записатись</button>
   </div>`);
   marker.on('click', () => marker.openPopup());
+  marker.on('popupopen', () => {
+    document.querySelectorAll('.instr-card.map-highlight').forEach(c => c.classList.remove('map-highlight'));
+    document.querySelector(`.instr-card[data-instr-id="${id}"]`)?.classList.add('map-highlight');
+  });
+  marker.on('popupclose', () => {
+    document.querySelectorAll('.instr-card.map-highlight').forEach(c => c.classList.remove('map-highlight'));
+  });
   window._instrMarkers = window._instrMarkers || {};
   (window._instrMarkers[id] = window._instrMarkers[id] || []).push({marker, tags: inst.tags||[]});
 };
