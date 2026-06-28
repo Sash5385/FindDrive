@@ -107,6 +107,9 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .hero-h1 span{color:var(--green)}
 .hero-sub{font-size:15px;color:var(--text-muted);line-height:1.65;max-width:400px;margin-bottom:16px}
 .hero-cloud-hint{font-size:12.5px;color:var(--text-hint);line-height:1.55;max-width:400px;margin-bottom:28px;padding:8px 12px;background:rgba(255,255,255,.6);border-radius:9px;border:.5px solid var(--border)}
+.hero-stats{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+.hero-stat{font-size:12px;color:var(--text-muted)}.hero-stat b{color:var(--green);font-weight:600}
+.hero-stat-sep{font-size:12px;color:var(--border)}
 
 /* SEARCH */
 .search-box{background:var(--white);border-radius:14px;padding:10px 12px;display:flex;align-items:center;gap:10px;max-width:560px;border:.5px solid #cce0cc;box-shadow:0 2px 16px rgba(26,122,74,.06);position:relative}
@@ -703,7 +706,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.141</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.142</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -781,6 +784,13 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
         <div class="search-loc" onclick="locateMe(true)"><i class="ti ti-current-location"></i><span> Моє місце</span></div>
         <button class="btn-search" onclick="doSearch()"><i class="ti ti-search"></i><span> Знайти</span></button>
         <ul id="search-suggest" class="search-suggest"></ul>
+      </div>
+      <div class="hero-stats" id="hero-stats" style="display:none">
+        <span class="hero-stat"><b id="stat-instructors">—</b> інструктори</span>
+        <span class="hero-stat-sep">·</span>
+        <span class="hero-stat"><b id="stat-cities">—</b> міст</span>
+        <span class="hero-stat-sep">·</span>
+        <span class="hero-stat"><b id="stat-reviews">—</b> відгуків</span>
       </div>
     </div>
     <div class="hero-cloud-col">
@@ -2630,6 +2640,17 @@ let _activeCity       = '';
 
 window._favs = new Set(JSON.parse(localStorage.getItem('fd_fav') || '[]'));
 function _saveFavs() { localStorage.setItem('fd_fav', JSON.stringify([...window._favs])); }
+function _updateHeroStats() {
+  const instrs = Object.values(window._instrProfiles||{});
+  if (!instrs.length) return;
+  const cities = new Set(instrs.map(d=>(d.area||'').split(',')[0].trim()).filter(Boolean)).size;
+  const reviews = instrs.reduce((s,d)=>s+(d.reviews||0),0);
+  const si=document.getElementById('stat-instructors'),sc=document.getElementById('stat-cities'),sr=document.getElementById('stat-reviews');
+  if(si) si.textContent=instrs.length;
+  if(sc) sc.textContent=cities||'—';
+  if(sr) sr.textContent=reviews;
+  const row=document.getElementById('hero-stats'); if(row) row.style.display='flex';
+}
 function _rvTheme(id) { let h=0; for(const c of id) h=(h*31+c.charCodeAt(0))&0xff; return THEMES[h%THEMES.length]; }
 function _addToRV(id) {
   let rv = JSON.parse(localStorage.getItem('fd_rv')||'[]');
@@ -3004,6 +3025,7 @@ async function loadInstructors() {
     _updateFavChip();
     window._checkDeepLink?.();
     _renderRV();
+    _updateHeroStats();
 
     function addMarkers() {
       snap.docs.forEach((docSnap, i) => {
