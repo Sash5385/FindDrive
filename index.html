@@ -708,7 +708,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.147</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.148</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -883,6 +883,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <div id="filters-sticky-wrap" class="filters-sticky">
   <div id="instr-filters" class="instr-filters" style="display:none">
     <button id="fav-filter-chip" class="ifilter-chip" onclick="window._filterFavs(this)" title="Показати тільки обраних"><i class="ti ti-heart"></i> <span id="fav-chip-label">Обрані</span></button>
+    <button id="verified-filter-chip" class="ifilter-chip" onclick="window._filterVerified(this)" title="Тільки верифіковані інструктори"><i class="ti ti-shield-check"></i> Верифіковані</button>
     <div class="ifilter-sep"></div>
     <div class="ifilter-group">
       <span class="ifilter-label">КПП</span>
@@ -2597,7 +2598,7 @@ function buildCard(d, i, id) {
   const tags = validTags.length ? validTags : [d.gearbox, (d.car||'').split(' ')[0]].filter(Boolean);
   const isFav = window._favs?.has(id||'');
   const isNew = d.createdAt?.toDate && (Date.now() - d.createdAt.toDate().getTime()) < 30*24*60*60*1000;
-  return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}' data-price="${d.price||0}" data-rating="${d.rating||0}" data-gearbox="${esc(d.gearbox||'')}" data-area="${esc((d.area||'').toLowerCase())}" data-instr-id="${esc(id||'')}" data-lat="${d.lat||''}" data-lng="${d.lng||''}" data-dist="" data-name="${esc((d.name||'').toLowerCase())}" data-experience="${d.experience||0}">
+  return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}' data-price="${d.price||0}" data-rating="${d.rating||0}" data-gearbox="${esc(d.gearbox||'')}" data-area="${esc((d.area||'').toLowerCase())}" data-instr-id="${esc(id||'')}" data-lat="${d.lat||''}" data-lng="${d.lng||''}" data-dist="" data-name="${esc((d.name||'').toLowerCase())}" data-experience="${d.experience||0}" data-verified="${d.verified?'1':''}">
     <div class="card-blob" style="background:${th.blob}"></div>
     ${isNew ? '<span class="badge-new">Новий</span>' : ''}
     <button class="card-fav${isFav?' on':''}" data-fav-id="${esc(id||'')}" onclick="window._toggleFav(this)" title="До обраних"><i class="ti ti-heart${isFav?'-filled':''}"></i></button>
@@ -2642,14 +2643,15 @@ function populateTagFilterBar() {
   });
 }
 
-let _activeGb         = '';
-let _activePmax       = 0;
-let _activeRmin       = 0;
-let _activeExpMin     = 0;
-let _activeSort       = '';
-let _showFavsOnly     = false;
-let _activeNameFilter = '';
-let _activeCity       = '';
+let _activeGb           = '';
+let _activePmax         = 0;
+let _activeRmin         = 0;
+let _activeExpMin       = 0;
+let _activeSort         = '';
+let _showFavsOnly       = false;
+let _showVerifiedOnly   = false;
+let _activeNameFilter   = '';
+let _activeCity         = '';
 
 window._favs = new Set(JSON.parse(localStorage.getItem('fd_fav') || '[]'));
 function _saveFavs() { localStorage.setItem('fd_fav', JSON.stringify([...window._favs])); }
@@ -2780,12 +2782,13 @@ function _applyAllFilters() {
       activeGbTags.some(t => gearbox === t || gearbox === 'Обидва');
     const otherOk  = !activeOtherTags.length || activeOtherTags.some(t => ct.includes(t));
     const priceOk  = !maxP || !price || price <= maxP;
-    const ratingOk = !_activeRmin || (parseFloat(card.dataset.rating) || 0) >= _activeRmin;
-    const expOk    = !_activeExpMin || (parseInt(card.dataset.experience) || 0) >= _activeExpMin;
-    const favOk    = !_showFavsOnly || window._favs.has(card.dataset.instrId || '');
-    const nameOk   = !_activeNameFilter || (card.dataset.name || '').includes(_activeNameFilter);
-    const cityOk   = !_activeCity || (area + ' ' + (card.dataset.city || '')).toLowerCase().includes(_activeCity.toLowerCase());
-    const show = typeOk && otherOk && priceOk && ratingOk && expOk && favOk && nameOk && cityOk;
+    const ratingOk   = !_activeRmin || (parseFloat(card.dataset.rating) || 0) >= _activeRmin;
+    const expOk      = !_activeExpMin || (parseInt(card.dataset.experience) || 0) >= _activeExpMin;
+    const verifiedOk = !_showVerifiedOnly || card.dataset.verified === '1';
+    const favOk      = !_showFavsOnly || window._favs.has(card.dataset.instrId || '');
+    const nameOk     = !_activeNameFilter || (card.dataset.name || '').includes(_activeNameFilter);
+    const cityOk     = !_activeCity || (area + ' ' + (card.dataset.city || '')).toLowerCase().includes(_activeCity.toLowerCase());
+    const show = typeOk && otherOk && priceOk && ratingOk && expOk && verifiedOk && favOk && nameOk && cityOk;
     card.style.display = show ? '' : 'none';
     if (show) visible++;
   });
@@ -2830,7 +2833,7 @@ function _applyTagFilters() { _applyAllFilters(); }
 
 window._resetAllFilters = function() {
   _activeGb = ''; _activePmax = 0; _activeRmin = 0; _activeExpMin = 0; _activeSort = '';
-  _showFavsOnly = false; _activeNameFilter = ''; _activeCity = '';
+  _showFavsOnly = false; _showVerifiedOnly = false; _activeNameFilter = ''; _activeCity = '';
   const cs = document.getElementById('city-select'); if (cs) cs.value = '';
   document.querySelectorAll('.tag-filter-chip').forEach(b => b.classList.toggle('active', b.dataset.tag === ''));
   document.querySelectorAll('[data-gb]').forEach(b => b.classList.toggle('active', b.dataset.gb === ''));
@@ -2839,6 +2842,7 @@ window._resetAllFilters = function() {
   document.querySelectorAll('[data-expmin]').forEach(b => b.classList.toggle('active', b.dataset.expmin === '0'));
   document.querySelectorAll('[data-sort]').forEach(b => b.classList.toggle('active', b.dataset.sort === ''));
   document.getElementById('fav-filter-chip')?.classList.remove('active');
+  document.getElementById('verified-filter-chip')?.classList.remove('active');
   const inp = document.getElementById('search-input'); if (inp) inp.value = '';
   _GB_TAGS.forEach(tag => window._syncCloudTag?.(tag, false));
   _applyAllFilters();
@@ -2972,6 +2976,11 @@ window._filterExp = function(btn) {
   document.querySelectorAll('[data-expmin]').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   _activeExpMin = parseInt(btn.dataset.expmin) || 0;
+  _applyAllFilters();
+};
+window._filterVerified = function(btn) {
+  _showVerifiedOnly = !_showVerifiedOnly;
+  btn.classList.toggle('active', _showVerifiedOnly);
   _applyAllFilters();
 };
 window._filterSort = function(btn) {
