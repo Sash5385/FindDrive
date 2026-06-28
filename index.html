@@ -743,7 +743,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.171</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.172</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2323,7 +2323,7 @@ onAuthStateChanged(auth, async user => {
     document.getElementById("nav-avatar").src       = user.photoURL || "";
     document.getElementById("nav-name").textContent = (user.displayName || user.email || "").split(" ")[0];
     if (user.providerData[0]?.providerId === 'google.com') {
-      setDoc(doc(db, 'users', user.uid), { name: user.displayName||'', email: user.email||'', photo: user.photoURL||'' }, { merge: true }).catch(()=>{});
+      setDoc(doc(db, 'users', user.uid), { name: user.displayName||'', email: user.email||'' }, { merge: true }).catch(()=>{});
     }
     const _fromModal = _authModalActive;
     const _wasNewReg = _isNewClientReg;
