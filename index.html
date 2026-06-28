@@ -201,6 +201,7 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .tag-filter-chip[data-tag=""],.tag-filter-chip:not([style]){background:var(--white);color:var(--text-muted)}
 .tag-filter-chip[data-tag=""].active{background:var(--green)!important;color:#fff!important;border-color:var(--green)!important;box-shadow:none}
 .tag-filter-chip.active:not([data-tag=""]){border-width:1.5px;font-weight:600;box-shadow:0 1px 8px rgba(0,0,0,.12)}
+.tag-count-badge{display:inline-flex;align-items:center;justify-content:center;background:rgba(0,0,0,.13);border-radius:10px;padding:0 5px;font-size:9px;font-weight:600;margin-left:5px;line-height:16px;min-width:16px;height:16px;vertical-align:middle}
 .tag-filter-chip:hover:not(.active){opacity:.72}
 .rv-row{display:none;align-items:center;gap:10px;margin:10px 0 0;flex-wrap:wrap}
 .rv-label{font-size:11px;color:var(--text-hint);display:flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0}
@@ -720,7 +721,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.152</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.153</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2665,11 +2666,16 @@ function populateTagFilterBar() {
   const bar = document.getElementById('tag-filter-bar');
   if (!bar || bar.dataset.populated) return;
   bar.dataset.populated = '1';
+  const tagCounts = {};
+  Object.values(window._instrProfiles || {}).forEach(d => {
+    (Array.isArray(d.tags) ? d.tags : []).forEach(t => { tagCounts[t] = (tagCounts[t]||0)+1; });
+  });
   INSTR_TAGS.forEach(tag => {
     const btn = document.createElement('button');
     btn.className = 'tag-filter-chip';
     btn.dataset.tag = tag;
-    btn.textContent = tag;
+    const cnt = tagCounts[tag] || 0;
+    btn.innerHTML = esc(tag) + (cnt > 0 ? `<span class="tag-count-badge">${cnt}</span>` : '');
     btn.onclick = () => window._filterByTag(btn);
     btn.setAttribute('style', tagStyle(tag));
     bar.appendChild(btn);
