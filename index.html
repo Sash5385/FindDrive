@@ -175,53 +175,9 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .badge-dist{display:inline-flex;align-items:center;gap:5px;background:var(--green-light);border-radius:20px;padding:4px 10px;font-size:11px;color:#1a6a3a;margin-bottom:12px}
 .instr-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
 .tag{font-size:11px;padding:3px 10px;border-radius:20px;border:.5px solid transparent}
-.tag-filter-bar{display:none}
-.tag-filter-bar::-webkit-scrollbar{display:none}
-/* STICKY FILTER WRAP */
-.filters-sticky{position:sticky;top:60px;z-index:50;background:var(--bg);margin:0 -48px;padding:0 48px 4px;transition:box-shadow .2s}
-.filters-sticky.stuck{box-shadow:0 3px 16px rgba(0,0,0,.09);border-bottom:.5px solid var(--border)}
-@media(max-width:600px){.filters-sticky{margin:0 -20px;padding:0 20px 4px}}
-
-/* FILTER BAR + DRAWER */
-.instr-filters{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 0 4px}
-.ifilter-chip{padding:5px 12px;border-radius:20px;border:.5px solid var(--border);background:var(--white);color:var(--text-muted);font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s;flex-shrink:0}
-.ifilter-chip:hover:not(.active){background:var(--green-light);color:var(--green);border-color:var(--green)}
-.ifilter-chip.active{background:var(--green);color:#fff;border-color:var(--green);font-weight:600}
-.filter-open-btn{display:flex;align-items:center;gap:5px;padding:5px 13px;border-radius:20px;border:.5px solid var(--border);background:var(--white);color:var(--text-muted);font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s;flex-shrink:0;margin-left:auto}
-.filter-open-btn:hover{background:var(--green-light);color:var(--green);border-color:var(--green)}
-.filter-open-btn.has-active{background:var(--green);color:#fff;border-color:var(--green);font-weight:600}
-.filter-active-badge{display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.28);border-radius:10px;padding:0 5px;font-size:9px;font-weight:700;line-height:15px;min-width:15px;height:15px}
-.sort-bar{display:none;align-items:center;gap:6px;margin:0 0 14px;flex-wrap:wrap}
-.sort-label{font-size:11px;color:var(--text-hint);white-space:nowrap;margin-right:2px;flex-shrink:0}
-.filter-drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:200;opacity:0;transition:opacity .25s;pointer-events:none}
-.filter-drawer-overlay.open{opacity:1;pointer-events:auto}
-.filter-drawer{position:fixed;left:0;right:0;bottom:0;max-height:82vh;background:#fff;border-radius:20px 20px 0 0;z-index:201;transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);box-shadow:0 -4px 32px rgba(0,0,0,.15);display:flex;flex-direction:column}
-.filter-drawer.open{transform:translateY(0)}
-.filter-drawer-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;border-bottom:.5px solid var(--border);flex-shrink:0}
-.filter-drawer-title{font-size:15px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
-.filter-drawer-close{background:none;border:none;font-size:20px;color:var(--text-muted);cursor:pointer;line-height:1;padding:2px 4px;border-radius:6px;transition:background .15s}
-.filter-drawer-close:hover{background:var(--green-light);color:var(--green)}
-.filter-drawer-body{flex:1;overflow-y:auto;padding:10px 16px 6px;display:flex;flex-direction:column;gap:10px}
-.filter-drawer-card{background:var(--green-light);border-radius:12px;padding:12px 14px;border:1px solid #d8eed8}
-.filter-drawer-label{font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px}
-.filter-drawer-row{display:flex;gap:6px;flex-wrap:wrap}
-.filter-drawer-foot{display:flex;gap:10px;padding:12px 16px;border-top:.5px solid var(--border);flex-shrink:0}
-.filter-drawer-reset{flex:1;padding:11px;border-radius:9px;border:1.5px solid var(--border);background:#fff;color:var(--text-muted);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:border-color .15s,color .15s}
-.filter-drawer-reset:hover{border-color:var(--green);color:var(--green)}
-.filter-drawer-apply{flex:2;padding:11px;border-radius:9px;border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s}
-.filter-drawer-apply:hover{background:var(--green-dark)}
 @keyframes userPulse{0%{box-shadow:0 0 0 0 rgba(24,95,165,.45)}70%{box-shadow:0 0 0 10px rgba(24,95,165,0)}100%{box-shadow:0 0 0 0 rgba(24,95,165,0)}}
 .user-location-dot{width:16px;height:16px;border-radius:50%;background:#185fa5;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);animation:userPulse 2s infinite}
-#active-tags-bar{display:none;flex-wrap:wrap;gap:5px;align-items:center;padding:6px 0 0;border-top:.5px solid var(--border);width:100%}
-.atag-chip{display:inline-flex;align-items:center;gap:3px;padding:3px 6px 3px 10px;border-radius:20px;border:1px solid;font-size:11px;font-weight:600;line-height:1.4}
-.atag-chip-x{cursor:pointer;opacity:.55;font-size:13px;line-height:1;padding:0 1px;background:none;border:none;color:inherit;font-family:inherit;transition:opacity .1s}
-.atag-chip-x:hover{opacity:1}
-.tag-filter-chip{flex-shrink:0;padding:6px 16px;border-radius:20px;border:.5px solid var(--border);background:var(--white);color:var(--text-muted);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:opacity .15s,box-shadow .15s,border-width .1s}
-.tag-filter-chip[data-tag=""],.tag-filter-chip:not([style]){background:var(--white);color:var(--text-muted)}
-.tag-filter-chip[data-tag=""].active{background:var(--green)!important;color:#fff!important;border-color:var(--green)!important;box-shadow:none}
-.tag-filter-chip.active:not([data-tag=""]){border-width:1.5px;font-weight:600;box-shadow:0 1px 8px rgba(0,0,0,.12)}
-.tag-count-badge{display:inline-flex;align-items:center;justify-content:center;background:rgba(0,0,0,.13);border-radius:10px;padding:0 5px;font-size:9px;font-weight:600;margin-left:5px;line-height:16px;min-width:16px;height:16px;vertical-align:middle}
-.tag-filter-chip:hover:not(.active){opacity:.72}
+
 .rv-row{display:none;align-items:center;gap:10px;margin:10px 0 0;flex-wrap:wrap}
 .rv-label{font-size:11px;color:var(--text-hint);display:flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0}
 .rv-chips{display:flex;gap:7px;flex-wrap:wrap}
@@ -270,10 +226,6 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 @media(max-width:480px){.how-title{font-size:13px}.how-icon{font-size:24px;margin-bottom:10px}.how-card{padding:18px 16px}.how-num{font-size:34px}}
 
 /* FILTER EMPTY STATE */
-.filter-empty{grid-column:1/-1;text-align:center;padding:52px 20px;color:var(--text-hint)}
-.filter-empty i{font-size:42px;display:block;margin-bottom:14px;color:var(--border)}
-.btn-reset-filters{background:var(--green-light);color:var(--green);border:.5px solid #b8d8c8;border-radius:9px;padding:10px 22px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:16px;display:inline-flex;align-items:center;gap:7px;transition:background .2s}
-.btn-reset-filters:hover{background:#d0ecdc}
 
 /* INSTRUCTOR CTA SECTION */
 .cta-section{background:var(--green);padding:56px 48px;display:flex;justify-content:center}
@@ -791,7 +743,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.169</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.170</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -960,77 +912,9 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 <section class="section" id="instructors">
   <div class="section-top">
     <span class="section-label">Інструктори поруч</span>
-    <a class="section-link" href="#instructors" onclick="window._resetAllFilters?.()">Усі інструктори <i class="ti ti-arrow-right"></i></a>
-  </div>
-  <div id="filters-stub" style="height:0;pointer-events:none"></div>
-  <div id="filters-sticky-wrap" class="filters-sticky">
-    <div id="instr-filters" class="instr-filters" style="display:none">
-      <button id="fav-filter-chip" class="ifilter-chip" onclick="window._filterFavs(this)" title="Показати тільки обраних"><i class="ti ti-heart"></i> <span id="fav-chip-label">Обрані</span></button>
-      <button id="verified-filter-chip" class="ifilter-chip" onclick="window._filterVerified(this)" title="Тільки верифіковані інструктори"><i class="ti ti-shield-check"></i> Верифіковані</button>
-      <button id="today-filter-chip" class="ifilter-chip" onclick="window._filterToday(this)" title="Доступні сьогодні"><i class="ti ti-clock-check"></i> Сьогодні</button>
-      <button id="filter-open-btn" class="filter-open-btn" onclick="window._openFilterDrawer()"><i class="ti ti-adjustments-horizontal"></i> Фільтри<span id="filter-active-badge" class="filter-active-badge" style="display:none"></span></button>
-      <div id="active-tags-bar"></div>
-    </div>
-    <div id="tag-filter-bar" class="tag-filter-bar">
-      <button class="tag-filter-chip active" data-tag="" onclick="window._filterByTag(this)">Всі</button>
-    </div>
-  </div>
-  <div id="filter-drawer-overlay" class="filter-drawer-overlay" onclick="window._closeFilterDrawer()"></div>
-  <div id="filter-drawer" class="filter-drawer">
-    <div class="filter-drawer-head">
-      <span class="filter-drawer-title"><i class="ti ti-adjustments-horizontal"></i> Фільтри</span>
-      <button class="filter-drawer-close" onclick="window._closeFilterDrawer()">✕</button>
-    </div>
-    <div class="filter-drawer-body">
-      <div class="filter-drawer-card">
-        <div class="filter-drawer-label">КПП</div>
-        <div class="filter-drawer-row">
-          <button class="ifilter-chip active" data-gb="" onclick="window._filterGb(this)">Всі</button>
-          <button class="ifilter-chip" data-gb="Автомат" onclick="window._filterGb(this)">Автомат</button>
-          <button class="ifilter-chip" data-gb="Механіка" onclick="window._filterGb(this)">Механіка</button>
-        </div>
-      </div>
-      <div class="filter-drawer-card">
-        <div class="filter-drawer-label">Ціна, грн/год</div>
-        <div class="filter-drawer-row">
-          <button class="ifilter-chip active" data-pmax="0" onclick="window._filterPrice(this)">Будь-яка</button>
-          <button class="ifilter-chip" data-pmax="500" onclick="window._filterPrice(this)">до 500</button>
-          <button class="ifilter-chip" data-pmax="800" onclick="window._filterPrice(this)">до 800</button>
-          <button class="ifilter-chip" data-pmax="1000" onclick="window._filterPrice(this)">до 1000</button>
-        </div>
-      </div>
-      <div class="filter-drawer-card">
-        <div class="filter-drawer-label">Рейтинг</div>
-        <div class="filter-drawer-row">
-          <button class="ifilter-chip active" data-rmin="0" onclick="window._filterRating(this)">Будь-який</button>
-          <button class="ifilter-chip" data-rmin="4" onclick="window._filterRating(this)"><i class="ti ti-star" style="font-size:10px"></i> 4.0+</button>
-          <button class="ifilter-chip" data-rmin="4.5" onclick="window._filterRating(this)"><i class="ti ti-star" style="font-size:10px"></i> 4.5+</button>
-        </div>
-      </div>
-      <div class="filter-drawer-card">
-        <div class="filter-drawer-label">Стаж</div>
-        <div class="filter-drawer-row">
-          <button class="ifilter-chip active" data-expmin="0" onclick="window._filterExp(this)">Будь-який</button>
-          <button class="ifilter-chip" data-expmin="3" onclick="window._filterExp(this)">3+ р.</button>
-          <button class="ifilter-chip" data-expmin="5" onclick="window._filterExp(this)">5+ р.</button>
-          <button class="ifilter-chip" data-expmin="10" onclick="window._filterExp(this)">10+ р.</button>
-        </div>
-      </div>
-    </div>
-    <div class="filter-drawer-foot">
-      <button class="filter-drawer-reset" onclick="window._resetAllFilters()">Скинути</button>
-      <button class="filter-drawer-apply" onclick="window._closeFilterDrawer()">Застосувати</button>
-    </div>
+    <a class="section-link" href="#instructors">Усі інструктори <i class="ti ti-arrow-right"></i></a>
   </div>
   <div id="rv-row" class="rv-row"><span class="rv-label"><i class="ti ti-history" style="font-size:12px"></i> Нещодавно:</span><div id="rv-chips" class="rv-chips"></div></div>
-  <div id="sort-bar" class="sort-bar">
-    <span class="sort-label">Сортувати:</span>
-    <button class="ifilter-chip active" data-sort="" onclick="window._filterSort(this)">За замовч.</button>
-    <button class="ifilter-chip" data-sort="rating" onclick="window._filterSort(this)"><i class="ti ti-star" style="font-size:10px"></i> Рейтинг</button>
-    <button class="ifilter-chip" data-sort="price_asc" onclick="window._filterSort(this)">↑ Ціна</button>
-    <button class="ifilter-chip" data-sort="price_desc" onclick="window._filterSort(this)">↓ Ціна</button>
-    <button class="ifilter-chip" data-sort="distance" onclick="window._filterSort(this)"><i class="ti ti-current-location" style="font-size:10px"></i> Відстань</button>
-  </div>
   <div id="instr-grid" class="instr-grid"></div>
 </section>
 
@@ -2870,36 +2754,8 @@ function appendInstructorCard(d) {
   grid.insertAdjacentHTML("afterbegin", buildCard(d, idx));
 }
 
-function populateTagFilterBar() {
-  const bar = document.getElementById('tag-filter-bar');
-  if (!bar || bar.dataset.populated) return;
-  bar.dataset.populated = '1';
-  const tagCounts = {};
-  Object.values(window._instrProfiles || {}).forEach(d => {
-    (Array.isArray(d.tags) ? d.tags : []).forEach(t => { tagCounts[t] = (tagCounts[t]||0)+1; });
-  });
-  INSTR_TAGS.forEach(tag => {
-    const btn = document.createElement('button');
-    btn.className = 'tag-filter-chip';
-    btn.dataset.tag = tag;
-    const cnt = tagCounts[tag] || 0;
-    btn.innerHTML = esc(tag) + (cnt > 0 ? `<span class="tag-count-badge">${cnt}</span>` : '');
-    btn.onclick = () => window._filterByTag(btn);
-    btn.setAttribute('style', tagStyle(tag));
-    bar.appendChild(btn);
-  });
-}
-
-let _activeGb           = '';
-let _activePmax         = 0;
-let _activeRmin         = 0;
-let _activeExpMin       = 0;
-let _activeSort         = '';
-let _showFavsOnly       = false;
-let _showVerifiedOnly   = false;
-let _showTodayOnly      = false;
-let _activeNameFilter   = '';
-let _activeCity         = '';
+let _activeNameFilter = '';
+let _activeCity       = '';
 
 window._favs = new Set(JSON.parse(localStorage.getItem('fd_fav') || '[]'));
 function _saveFavs() { localStorage.setItem('fd_fav', JSON.stringify([...window._favs])); }
@@ -2938,27 +2794,11 @@ function _renderRV() {
     return `<button class="rv-chip" onclick="openInstrProfile('${esc(id)}')">${av}<span>${esc(nm)}</span></button>`;
   }).join('');
 }
-function _updateFavChip() {
-  const lbl = document.getElementById('fav-chip-label');
-  const chip = document.getElementById('fav-filter-chip');
-  if (!lbl || !chip) return;
-  const n = window._favs.size;
-  lbl.textContent = n ? `Обрані (${n})` : 'Обрані';
-  chip.innerHTML = `<i class="ti ti-heart${_showFavsOnly?'-filled':''}"></i> ${lbl.outerHTML}`;
-}
 window._toggleFav = function(btn) {
   const id = btn.dataset.favId;
   if (window._favs.has(id)) { window._favs.delete(id); btn.classList.remove('on'); btn.innerHTML = '<i class="ti ti-heart"></i>'; }
   else { window._favs.add(id); btn.classList.add('on'); btn.innerHTML = '<i class="ti ti-heart-filled"></i>'; }
   _saveFavs();
-  _updateFavChip();
-  if (_showFavsOnly) _applyAllFilters();
-};
-window._filterFavs = function(btn) {
-  _showFavsOnly = !_showFavsOnly;
-  btn.classList.toggle('active', _showFavsOnly);
-  _updateFavChip();
-  _applyAllFilters();
 };
 
 function _haversineKm(lat1, lng1, lat2, lng2) {
@@ -2980,150 +2820,16 @@ function _updateDistanceBadges() {
   });
 }
 
-const _GB_TAGS = ['Автомат', 'Механіка'];
-
-function _syncKppChips() {
-  const activeGbTag = [...document.querySelectorAll('.tag-filter-chip.active[data-tag]')]
-    .map(b => b.dataset.tag).find(t => _GB_TAGS.includes(t)) || '';
-  _activeGb = activeGbTag;
-  document.querySelectorAll('[data-gb]').forEach(b => b.classList.toggle('active', b.dataset.gb === _activeGb));
-}
-
 function _applyAllFilters() {
-  const activeTags = [...document.querySelectorAll('.tag-filter-chip.active[data-tag]')]
-    .map(b => b.dataset.tag).filter(Boolean);
-  const maxP = _activePmax;
   const grid = document.getElementById('instr-grid');
   if (!grid) return;
-  let cards = [...grid.querySelectorAll('.instr-card')];
-
-  if (_activeSort) {
-    if (_activeSort === 'distance' && (!window._userLat || !window._userLng)) {
-      showToast('Увімкніть геолокацію', 'Натисніть «Моє місце» щоб визначити позицію', 'info');
-    }
-    cards.sort((a, b) => {
-      if (_activeSort === 'rating')     return (parseFloat(b.dataset.rating)||0) - (parseFloat(a.dataset.rating)||0);
-      if (_activeSort === 'price_asc') {
-        const pa = parseFloat(a.dataset.price)||Infinity, pb = parseFloat(b.dataset.price)||Infinity;
-        return pa - pb;
-      }
-      if (_activeSort === 'price_desc') return (parseFloat(b.dataset.price)||0) - (parseFloat(a.dataset.price)||0);
-      if (_activeSort === 'distance') {
-        const da = parseFloat(a.dataset.dist)||Infinity, db = parseFloat(b.dataset.dist)||Infinity;
-        return da - db;
-      }
-      return 0;
-    });
-    cards.forEach(c => grid.appendChild(c));
-  }
-
-  let visible = 0;
-  cards.forEach(card => {
-    const ct      = JSON.parse(card.dataset.tags || '[]');
-    const price   = parseFloat(card.dataset.price) || 0;
-    const gearbox = card.dataset.gearbox || '';
-    const area    = card.dataset.area || '';
-    const activeGbTags    = activeTags.filter(t => _GB_TAGS.includes(t));
-    const activeOtherTags = activeTags.filter(t => !_GB_TAGS.includes(t));
-    const typeOk   = !activeGbTags.length ||
-      activeGbTags.some(t => ct.includes(t)) ||
-      activeGbTags.some(t => gearbox === t || gearbox === 'Обидва');
-    const otherOk  = !activeOtherTags.length || activeOtherTags.some(t => ct.includes(t));
-    const priceOk  = !maxP || !price || price <= maxP;
-    const ratingOk   = !_activeRmin || (parseFloat(card.dataset.rating) || 0) >= _activeRmin;
-    const expOk      = !_activeExpMin || (parseInt(card.dataset.experience) || 0) >= _activeExpMin;
-    const verifiedOk = !_showVerifiedOnly || card.dataset.verified === '1';
-    const todayOk    = !_showTodayOnly   || card.dataset.today === '1';
-    const favOk      = !_showFavsOnly || window._favs.has(card.dataset.instrId || '');
-    const nameOk     = !_activeNameFilter || (card.dataset.name || '').includes(_activeNameFilter);
-    const cityOk     = !_activeCity || (area + ' ' + (card.dataset.city || '')).toLowerCase().includes(_activeCity.toLowerCase());
-    const show = typeOk && otherOk && priceOk && ratingOk && expOk && verifiedOk && todayOk && favOk && nameOk && cityOk;
-    card.style.display = show ? '' : 'none';
-    if (show) visible++;
+  grid.querySelectorAll('.instr-card').forEach(card => {
+    const nameOk = !_activeNameFilter || (card.dataset.name || '').includes(_activeNameFilter);
+    const area = (card.dataset.area || '').toLowerCase();
+    const cityOk = !_activeCity || (area + ' ' + (card.dataset.city || '')).toLowerCase().includes(_activeCity.toLowerCase());
+    card.style.display = nameOk && cityOk ? '' : 'none';
   });
-
-  const _activeFilterCount = [
-    _activeGb !== '', _activePmax > 0, _activeRmin > 0, _activeExpMin > 0,
-    _activeSort !== '', _showFavsOnly, _showVerifiedOnly, _showTodayOnly,
-    _activeNameFilter !== '', _activeCity !== '', activeTags.length > 0,
-  ].filter(Boolean).length;
-  const _drawerFilterCount = [_activeGb !== '', _activePmax > 0, _activeRmin > 0, _activeExpMin > 0].filter(Boolean).length;
-  const badge = document.getElementById('filter-active-badge');
-  const openBtn = document.getElementById('filter-open-btn');
-  if (badge) {
-    if (_drawerFilterCount > 0) { badge.textContent = _drawerFilterCount; badge.style.display = ''; openBtn?.classList.add('has-active'); }
-    else { badge.style.display = 'none'; openBtn?.classList.remove('has-active'); }
-  }
-  window._filterMapMarkers?.(activeTags);
-  updateActiveTagsBar(activeTags);
-
-  let emptyEl = document.getElementById('filter-empty');
-  if (visible === 0 && cards.length > 0) {
-    if (!emptyEl) {
-      grid.insertAdjacentHTML('beforeend', `<div id="filter-empty" class="filter-empty"><i class="ti ti-filter-off"></i>Жоден інструктор не відповідає обраним фільтрам<br><button class="btn-reset-filters" onclick="window._resetAllFilters()"><i class="ti ti-refresh"></i> Скинути фільтри</button></div>`);
-    }
-  } else {
-    emptyEl?.remove();
-  }
 }
-
-function updateActiveTagsBar(activeTags) {
-  const bar = document.getElementById('active-tags-bar');
-  if (!bar) return;
-  if (!activeTags || !activeTags.length) { bar.style.display = 'none'; bar.innerHTML = ''; return; }
-  bar.style.display = 'flex';
-  bar.innerHTML = activeTags.map(tag => {
-    const c = (window.TAG_COLORS || {})[tag] || {bg:'#f0f5f0',bd:'#dde8dd',tx:'#4a6a5a'};
-    return `<span class="atag-chip" style="background:${c.bg};color:${c.tx};border-color:${c.bd}">${esc(tag)}<button class="atag-chip-x" onclick='window._removeActiveTag(${JSON.stringify(tag)})'>×</button></span>`;
-  }).join('');
-}
-window._removeActiveTag = function(tag) {
-  const chip = document.querySelector('.tag-filter-chip[data-tag="'+tag+'"]');
-  if (!chip) return;
-  chip.classList.remove('active');
-  const anyActive = [...document.querySelectorAll('.tag-filter-chip[data-tag]')].some(b => b.classList.contains('active'));
-  if (!anyActive) document.querySelector('.tag-filter-chip[data-tag=""]')?.classList.add('active');
-  _syncKppChips();
-  _applyAllFilters();
-  window._syncCloudTag?.(tag, false);
-};
-
-function _applyTagFilters() { _applyAllFilters(); }
-
-window._resetAllFilters = function() {
-  _activeGb = ''; _activePmax = 0; _activeRmin = 0; _activeExpMin = 0; _activeSort = '';
-  _showFavsOnly = false; _showVerifiedOnly = false; _showTodayOnly = false; _activeNameFilter = ''; _activeCity = '';
-  const cs = document.getElementById('city-select'); if (cs) cs.value = '';
-  document.querySelectorAll('.tag-filter-chip').forEach(b => b.classList.toggle('active', b.dataset.tag === ''));
-  document.querySelectorAll('[data-gb]').forEach(b => b.classList.toggle('active', b.dataset.gb === ''));
-  document.querySelectorAll('[data-pmax]').forEach(b => b.classList.toggle('active', b.dataset.pmax === '0'));
-  document.querySelectorAll('[data-rmin]').forEach(b => b.classList.toggle('active', b.dataset.rmin === '0'));
-  document.querySelectorAll('[data-expmin]').forEach(b => b.classList.toggle('active', b.dataset.expmin === '0'));
-  document.querySelectorAll('[data-sort]').forEach(b => b.classList.toggle('active', b.dataset.sort === ''));
-  document.getElementById('fav-filter-chip')?.classList.remove('active');
-  document.getElementById('verified-filter-chip')?.classList.remove('active');
-  document.getElementById('today-filter-chip')?.classList.remove('active');
-  const inp = document.getElementById('search-input'); if (inp) inp.value = '';
-  _GB_TAGS.forEach(tag => window._syncCloudTag?.(tag, false));
-  _applyAllFilters();
-};
-
-window._openFilterDrawer = function() {
-  const overlay = document.getElementById('filter-drawer-overlay');
-  const drawer  = document.getElementById('filter-drawer');
-  if (!overlay || !drawer) return;
-  overlay.style.pointerEvents = 'auto';
-  requestAnimationFrame(() => { overlay.classList.add('open'); drawer.classList.add('open'); });
-  document.body.style.overflow = 'hidden';
-};
-window._closeFilterDrawer = function() {
-  const overlay = document.getElementById('filter-drawer-overlay');
-  const drawer  = document.getElementById('filter-drawer');
-  if (!overlay || !drawer) return;
-  overlay.classList.remove('open'); drawer.classList.remove('open');
-  document.body.style.overflow = '';
-  setTimeout(() => { overlay.style.pointerEvents = ''; }, 280);
-};
 
 window.addEventListener('scroll', function() {
   document.getElementById('scroll-top-btn')?.classList.toggle('visible', window.scrollY > 400);
@@ -3131,15 +2837,6 @@ window.addEventListener('scroll', function() {
 window.addEventListener('popstate', function() {
   if (document.querySelector('.cabinet.open')) closeAll();
 });
-
-(function initStickyFilters() {
-  const stub = document.getElementById('filters-stub');
-  if (!stub) return;
-  new IntersectionObserver(
-    ([e]) => document.getElementById('filters-sticky-wrap')?.classList.toggle('stuck', !e.isIntersecting),
-    { rootMargin: '-60px 0px 0px 0px', threshold: 0 }
-  ).observe(stub);
-})();
 
 // Deep-link: open instructor profile from ?instr=ID
 window._checkDeepLink = function() {
@@ -3216,84 +2913,6 @@ window.addEventListener('appinstalled', () => {
   _deferredPrompt = null;
 });
 
-window._filterGb = function(btn) {
-  document.querySelectorAll('[data-gb]').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  _activeGb = btn.dataset.gb;
-  // Sync cloud tag chips for Автомат/Механіка
-  _GB_TAGS.forEach(tag => {
-    const chip = document.querySelector(`.tag-filter-chip[data-tag="${tag}"]`);
-    if (!chip) return;
-    const on = tag === _activeGb;
-    chip.classList.toggle('active', on);
-    window._syncCloudTag?.(tag, on);
-  });
-  const allChip = document.querySelector('.tag-filter-chip[data-tag=""]');
-  if (_activeGb) {
-    allChip?.classList.remove('active');
-  } else {
-    const anyOn = [...document.querySelectorAll('.tag-filter-chip[data-tag]')].some(b => b.classList.contains('active'));
-    allChip?.classList.toggle('active', !anyOn);
-  }
-  _applyAllFilters();
-};
-window._filterPrice = function(btn) {
-  document.querySelectorAll('[data-pmax]').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  _activePmax = parseInt(btn.dataset.pmax) || 0;
-  _applyAllFilters();
-};
-window._filterRating = function(btn) {
-  document.querySelectorAll('[data-rmin]').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  _activeRmin = parseFloat(btn.dataset.rmin) || 0;
-  _applyAllFilters();
-};
-window._filterExp = function(btn) {
-  document.querySelectorAll('[data-expmin]').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  _activeExpMin = parseInt(btn.dataset.expmin) || 0;
-  _applyAllFilters();
-};
-window._filterVerified = function(btn) {
-  _showVerifiedOnly = !_showVerifiedOnly;
-  btn.classList.toggle('active', _showVerifiedOnly);
-  _applyAllFilters();
-};
-window._filterToday = function(btn) {
-  _showTodayOnly = !_showTodayOnly;
-  btn.classList.toggle('active', _showTodayOnly);
-  _applyAllFilters();
-};
-window._filterSort = function(btn) {
-  document.querySelectorAll('[data-sort]').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  _activeSort = btn.dataset.sort;
-  _applyAllFilters();
-};
-window._filterByTag = function(btn) {
-  const tag = btn.dataset.tag || '';
-  if (!tag) {
-    document.querySelectorAll('.tag-filter-chip').forEach(b => b.classList.toggle('active', b === btn));
-  } else {
-    document.querySelector('.tag-filter-chip[data-tag=""]')?.classList.remove('active');
-    btn.classList.toggle('active');
-    const anyActive = [...document.querySelectorAll('.tag-filter-chip[data-tag]')].some(b => b.classList.contains('active'));
-    if (!anyActive) document.querySelector('.tag-filter-chip[data-tag=""]')?.classList.add('active');
-  }
-  _syncKppChips();
-  _applyTagFilters();
-};
-
-window._applyStudentTagFilter = function(tags) {
-  if (!tags?.length) return;
-  populateTagFilterBar();
-  const allChips = document.querySelectorAll('.tag-filter-chip');
-  allChips.forEach(b => b.classList.toggle('active', tags.includes(b.dataset.tag)));
-  const anyActive = [...allChips].some(b => b.classList.contains('active') && b.dataset.tag);
-  document.querySelector('.tag-filter-chip[data-tag=""]')?.classList.toggle('active', !anyActive);
-  _applyTagFilters();
-};
 
 function _skCard() {
   return `<div class="sk-card sk-item"><div class="sk-top"><div class="sk-line sk-avatar"></div><div class="sk-top-lines"><div class="sk-line sk-h sk-w80"></div><div class="sk-line sk-h sk-w55"></div></div></div><div class="sk-tags"><div class="sk-line sk-tag"></div><div class="sk-line sk-tag"></div><div class="sk-line sk-tag"></div></div><div class="sk-line sk-h sk-w70" style="margin-bottom:6px"></div><div class="sk-line sk-h sk-w40" style="margin-bottom:14px"></div><div class="sk-footer"><div class="sk-line sk-price"></div><div class="sk-line sk-btn"></div></div></div>`;
@@ -3322,13 +2941,7 @@ async function loadInstructors() {
       window._instrProfiles[id] = { ...d, color: th.color, avbg: th.bg };
       grid.insertAdjacentHTML("afterbegin", buildCard(d, offset + i, id));
     });
-    populateTagFilterBar();
-    const filtersEl = document.getElementById('instr-filters');
-    if (filtersEl) filtersEl.style.display = '';
-    const sortBarEl = document.getElementById('sort-bar');
-    if (sortBarEl) sortBarEl.style.display = 'flex';
     _updateDistanceBadges();
-    _updateFavChip();
     window._checkDeepLink?.();
     _renderRV();
     _updateHeroStats();
@@ -4776,7 +4389,6 @@ function _setUserLocation(lat, lng, accuracy) {
     }).addTo(_mainMap);
   }
   _updateDistanceBadges();
-  if (_activeSort === 'distance') _applyAllFilters();
 }
 
 function locateMe(fromSearch = false) {
@@ -4791,12 +4403,6 @@ function locateMe(fromSearch = false) {
     if (_mainMap) _mainMap.setView([lat, lng], acc < 200 ? 15 : 13);
     if (fromSearch) scrollToMap();
     _setUserLocation(lat, lng, pos.coords.accuracy);
-    // auto-activate distance sort
-    if (_activeSort !== 'distance') {
-      document.querySelectorAll('[data-sort]').forEach(b => b.classList.toggle('active', b.dataset.sort === 'distance'));
-      _activeSort = 'distance';
-      _applyAllFilters();
-    }
     // count nearby instructors within 10km
     const nearbyCount = Object.values(window._instrProfiles || {}).filter(d => {
       if (!d.lat || !d.lng) return false;
