@@ -84,10 +84,10 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .hero-3col{position:relative;z-index:2;display:grid;grid-template-columns:1fr 2fr 1fr;gap:28px;align-items:center;min-height:360px}
 .hero-map-col,.hero-cloud-col{display:flex;justify-content:center;align-items:center}
 .hero-left-emblem{width:260px;height:260px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.88);box-shadow:0 8px 32px rgba(26,122,74,.18),0 0 0 8px rgba(255,255,255,.28);flex-shrink:0;background:var(--white)}
-.hero-cloud-wrap{width:260px;height:260px;position:relative;overflow:visible;flex-shrink:0}
+.hero-cloud-wrap{width:338px;height:338px;position:relative;overflow:visible;flex-shrink:0}
 .hero-content{position:relative;z-index:2}
-@media(max-width:1100px){.hero-3col{gap:20px}.hero-left-emblem,.hero-cloud-wrap{width:210px;height:210px}}
-@media(max-width:900px){.hero-3col{grid-template-columns:1fr 1.6fr 1fr;gap:14px}.hero-left-emblem,.hero-cloud-wrap{width:168px;height:168px}}
+@media(max-width:1100px){.hero-3col{gap:20px}.hero-left-emblem,.hero-cloud-wrap{width:273px;height:273px}}
+@media(max-width:900px){.hero-3col{grid-template-columns:1fr 1.6fr 1fr;gap:14px}.hero-left-emblem,.hero-cloud-wrap{width:218px;height:218px}}
 @media(max-width:700px){
   .hero{padding:28px 16px 24px}
   .hero-3col{grid-template-columns:1fr;gap:14px;overflow:hidden}
@@ -98,7 +98,7 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
   .search-loc span,.btn-search span{display:none}
   .hero-cloud-col{order:2;width:100%}
   .hero-map-col{display:none}
-  .hero-cloud-wrap{width:min(92vw,340px);height:240px;margin:0 auto}
+  .hero-cloud-wrap{width:min(92vw,442px);height:312px;margin:0 auto}
 }
 .tc-tag{position:absolute;white-space:nowrap;cursor:pointer;border-radius:20px;padding:4px 11px;font-weight:500;font-family:inherit;user-select:none;will-change:opacity,transform;pointer-events:auto;transition:filter .15s;border:.5px solid transparent}
 .tc-tag:hover{filter:brightness(.88)}
@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.196</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.197</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1318,7 +1318,7 @@ function closeAll() {
 document.getElementById("cab-overlay").addEventListener("click", closeAll);
 window.openPanel = openPanel;
 window.closeAll  = closeAll;
-window._signOut  = async () => { try { await signOut(auth); } catch(e) {} closeAll(); };
+window._signOut  = async () => { try { await signOut(auth); } catch(e) {} window._myInstrId = null; closeAll(); };
 window._setStudentLessonDur = async (dur) => {
   document.querySelectorAll('.student-dur-btn').forEach(b =>
     b.classList.toggle('active', parseInt(b.dataset.dur) === dur));
@@ -3760,34 +3760,39 @@ window._submitReschedule = async function(bookingId) {
 };
 
 async function getMyInstrProfile(user) {
-  // Query 1: by userId (fastest path)
+  // Fast path: direct doc get using cached ID (works even for pending status)
+  if (window._myInstrId) {
+    try {
+      const cached = await getDoc(doc(db, 'instructors', window._myInstrId));
+      if (cached.exists()) return { id: cached.id, ...cached.data() };
+    } catch(e) { window._myInstrId = null; }
+  }
+
+  function _cacheAndReturn(d) {
+    window._myInstrId = d.id;
+    if (!d.data().userId) updateDoc(doc(db,'instructors',d.id),{userId:user.uid}).catch(()=>{});
+    return { id:d.id, ...d.data() };
+  }
+
+  // Query 1: by userId (works after rules fix — instructor can read own doc)
   try {
     const s1 = await getDocs(query(collection(db,'instructors'),where('userId','==',user.uid)));
-    if (!s1.empty) return { id:s1.docs[0].id, ...s1.docs[0].data() };
+    if (!s1.empty) { window._myInstrId = s1.docs[0].id; return { id:s1.docs[0].id, ...s1.docs[0].data() }; }
   } catch(e) { console.warn('getMyInstrProfile userId query failed:', e?.code||e); }
 
-  // Query 2: by email fallback (handles userId=null or case where uid changed)
+  // Query 2: by email fallback
   if (!user.email) return null;
   const emailLower = user.email.toLowerCase();
   try {
     const s2 = await getDocs(query(collection(db,'instructors'),where('email','==',user.email)));
-    if (!s2.empty) {
-      const d = s2.docs[0];
-      // Patch userId if it was missing or wrong
-      if (!d.data().userId) updateDoc(doc(db,'instructors',d.id),{userId:user.uid}).catch(()=>{});
-      return { id:d.id, ...d.data() };
-    }
+    if (!s2.empty) return _cacheAndReturn(s2.docs[0]);
   } catch(e) { console.warn('getMyInstrProfile email query failed:', e?.code||e); }
 
-  // Query 3: lowercase email fallback (handles mixed-case mismatch on registration)
+  // Query 3: lowercase email fallback
   if (emailLower === user.email) return null;
   try {
     const s3 = await getDocs(query(collection(db,'instructors'),where('email','==',emailLower)));
-    if (!s3.empty) {
-      const d = s3.docs[0];
-      if (!d.data().userId) updateDoc(doc(db,'instructors',d.id),{userId:user.uid}).catch(()=>{});
-      return { id:d.id, ...d.data() };
-    }
+    if (!s3.empty) return _cacheAndReturn(s3.docs[0]);
   } catch(e) {}
   return null;
 }

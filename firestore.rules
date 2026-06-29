@@ -9,7 +9,9 @@ service cloud.firestore {
 
     // Інструктори
     match /instructors/{docId} {
-      allow read: if isAdmin() || resource.data.status == 'approved';
+      allow read: if isAdmin()
+               || resource.data.status == 'approved'
+               || (request.auth != null && resource.data.userId == request.auth.uid);
       // Анкету може надіслати будь-хто (auth необов'язковий), статус тільки pending
       allow create: if request.resource.data.status == 'pending';
       allow update, delete: if isAdmin();
