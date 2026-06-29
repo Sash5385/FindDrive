@@ -138,10 +138,16 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .section-label{font-size:11px;letter-spacing:2.5px;color:var(--text-hint);text-transform:uppercase}
 .section-link{font-size:13px;color:var(--green);display:flex;align-items:center;gap:4px;text-decoration:none}
 
-/* INSTRUCTOR CARDS */
-.instr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-@media(max-width:900px){.instr-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:600px){.instr-grid{grid-template-columns:1fr}.nav-links{display:none}.nav-burger{display:flex;align-items:center;justify-content:center}.section,.map-section{padding-left:20px;padding-right:20px}.nav{padding:0 20px}.hero-h1{font-size:26px}}
+/* INSTRUCTOR CARDS SLIDER */
+.instr-slider-wrap{position:relative}
+.instr-grid{display:flex;flex-direction:row;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:none;-ms-overflow-style:none}
+.instr-grid::-webkit-scrollbar{display:none}
+.instr-slider-btn{position:absolute;top:50%;transform:translateY(-50%);z-index:10;width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--white);color:var(--green);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:background .15s,color .15s;flex-shrink:0}
+.instr-slider-btn:hover{background:var(--green);color:#fff}
+.instr-slider-btn.prev{left:-18px}
+.instr-slider-btn.next{right:-18px}
+.instr-slider-btn:disabled{opacity:.3;cursor:default;pointer-events:none}
+@media(max-width:600px){.instr-slider-btn{display:none}.nav-links{display:none}.nav-burger{display:flex;align-items:center;justify-content:center}.section,.map-section{padding-left:20px;padding-right:20px}.nav{padding:0 20px}.hero-h1{font-size:26px}}
 @keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
 .sk-card{background:var(--white);border-radius:18px;padding:20px 18px;border:.5px solid var(--border)}
 .sk-line{border-radius:6px;background:linear-gradient(90deg,#eaecea 25%,#f5f7f5 50%,#eaecea 75%);background-size:1200px 100%;animation:shimmer 1.6s infinite linear}
@@ -155,7 +161,8 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .sk-footer{display:flex;justify-content:space-between;align-items:center}
 .sk-price{height:16px;width:80px}
 .sk-btn{height:30px;width:88px;border-radius:9px}
-.instr-card{background:var(--white);border-radius:18px;padding:20px 18px;border:.5px solid var(--border);position:relative;overflow:hidden;transition:border-color .2s,transform .2s,box-shadow .2s}
+.instr-card{background:var(--white);border-radius:18px;padding:20px 18px;border:.5px solid var(--border);position:relative;overflow:hidden;transition:border-color .2s,transform .2s,box-shadow .2s;flex-shrink:0;width:300px;scroll-snap-align:start}
+@media(max-width:600px){.instr-card{width:calc(100vw - 56px)}}
 .instr-card.map-highlight{border-color:var(--green);box-shadow:0 0 0 2px rgba(26,122,74,.25),0 4px 24px rgba(26,122,74,.15)}
 .instr-card:hover{border-color:#aad0aa;transform:translateY(-2px)}
 .card-fav{position:absolute;top:11px;right:11px;z-index:3;background:none;border:none;cursor:pointer;padding:4px;line-height:1;font-size:17px;color:#c8d8c8;transition:color .15s,transform .15s}
@@ -728,7 +735,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.176</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.177</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -859,7 +866,11 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     <a class="section-link" href="#instructors">Усі інструктори <i class="ti ti-arrow-right"></i></a>
   </div>
   <div id="rv-row" class="rv-row"><span class="rv-label"><i class="ti ti-history" style="font-size:12px"></i> Нещодавно:</span><div id="rv-chips" class="rv-chips"></div></div>
-  <div id="instr-grid" class="instr-grid"></div>
+  <div class="instr-slider-wrap">
+    <button class="instr-slider-btn prev" id="instr-prev" onclick="window._instrSlide(-1)" aria-label="Назад"><i class="ti ti-chevron-left"></i></button>
+    <div id="instr-grid" class="instr-grid"></div>
+    <button class="instr-slider-btn next" id="instr-next" onclick="window._instrSlide(1)" aria-label="Вперед"><i class="ti ti-chevron-right"></i></button>
+  </div>
 </section>
 
 
@@ -2775,7 +2786,24 @@ function _applyAllFilters() {
     const cityOk = !_activeCity || (area + ' ' + (card.dataset.city || '')).toLowerCase().includes(_activeCity.toLowerCase());
     card.style.display = nameOk && cityOk ? '' : 'none';
   });
+  _instrSliderSync();
 }
+
+window._instrSlide = function(dir) {
+  const grid = document.getElementById('instr-grid');
+  if (!grid) return;
+  const cardW = grid.querySelector('.instr-card')?.offsetWidth || 314;
+  grid.scrollBy({ left: dir * (cardW + 14), behavior: 'smooth' });
+};
+function _instrSliderSync() {
+  const grid = document.getElementById('instr-grid');
+  const prev = document.getElementById('instr-prev');
+  const next = document.getElementById('instr-next');
+  if (!grid || !prev || !next) return;
+  prev.disabled = grid.scrollLeft <= 4;
+  next.disabled = grid.scrollLeft + grid.clientWidth >= grid.scrollWidth - 4;
+}
+document.getElementById('instr-grid')?.addEventListener('scroll', _instrSliderSync, { passive: true });
 
 window.addEventListener('scroll', function() {
   document.getElementById('scroll-top-btn')?.classList.toggle('visible', window.scrollY > 400);
@@ -2865,6 +2893,7 @@ async function loadInstructors() {
     _updateDistanceBadges();
     window._checkDeepLink?.();
     _renderRV();
+    setTimeout(_instrSliderSync, 100);
 
     function addMarkers() {
       snap.docs.forEach((docSnap, i) => {
