@@ -125,6 +125,10 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .btn-search{background:var(--green);color:#fff;border:none;border-radius:9px;padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0;transition:background .2s;font-family:inherit}
 .btn-search:hover{background:var(--green-dark)}
 .pac-container{font-family:'Inter',sans-serif;border-radius:12px;border:.5px solid #dde8dd;box-shadow:0 4px 20px rgba(26,122,74,.1);margin-top:6px;padding:4px 0}
+.leaflet-popup-content-wrapper{border:1px solid #000!important;border-radius:14px!important;padding:0!important;overflow:hidden!important;box-shadow:0 8px 32px rgba(0,0,0,.18)!important}
+.leaflet-popup-content{margin:0!important}
+.leaflet-popup-tip-container{filter:drop-shadow(0 1px 0 #000)}
+.leaflet-popup-close-button{display:none!important}
 .pac-item{padding:8px 14px;font-size:13px;color:#0d2a1a;cursor:pointer;border:none}
 .pac-item:hover,.pac-item-selected{background:#e8f4ee}
 .pac-item-query{font-size:13px;color:#0d2a1a}
@@ -736,7 +740,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.181</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.182</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -4280,17 +4284,19 @@ window._addInstrMarker = function(inst, id) {
     popupAnchor: [0, -48],
   });
   const marker = L.marker([inst.lat, inst.lng], {icon: pinIcon}).addTo(_mainMap);
-  marker.bindPopup(`<div style="font-family:Inter,sans-serif;min-width:160px;max-width:200px;padding:2px 0">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
-      ${inst.photo ? `<img src="${inst.photo}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1.5px solid #e0e8e0">` : `<div style="width:36px;height:36px;border-radius:50%;background:${color};color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0">${_esc((inst.name||'?')[0].toUpperCase())}</div>`}
-      <div>
-        <div style="font-weight:600;color:#0d2a1a;font-size:13px;line-height:1.2">${_esc(inst.name)}</div>
-        ${inst.mpLabel ? `<div style="color:${color};font-size:10px;margin-top:1px"><i class="ti ti-map-pin" style="font-size:9px"></i> ${_esc(inst.mpLabel)}</div>` : ''}
+  marker.bindPopup(`<div style="font-family:Inter,sans-serif;min-width:190px;max-width:220px">
+    <div style="background:#1a7a4a;padding:10px 12px;display:flex;align-items:center;gap:8px">
+      ${inst.photo ? `<img src="${inst.photo}" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid rgba(255,255,255,.4)">` : `<div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600;flex-shrink:0">${_esc((inst.name||'?')[0].toUpperCase())}</div>`}
+      <div style="min-width:0">
+        <div style="font-weight:600;color:#fff;font-size:13px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(inst.name)}</div>
+        ${inst.mpLabel ? `<div style="color:rgba(255,255,255,.75);font-size:10px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><i class="ti ti-map-pin" style="font-size:9px"></i> ${_esc(inst.mpLabel)}</div>` : ''}
       </div>
     </div>
-    ${inst.carPhoto ? `<img src="${inst.carPhoto}" style="width:100%;height:72px;border-radius:7px;object-fit:cover;margin-bottom:7px;display:block">` : ''}
-    <div style="color:#5a7a6a;font-size:12px;margin-bottom:8px">⭐ ${inst.rating||'—'} · ${inst.price ? inst.price+' грн/год' : '—'}</div>
-    <button onclick="openInstrProfile('${_esc(id||'')}',${mpParam})" style="width:100%;background:${color};color:#fff;border:none;border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit">Записатись</button>
+    <div style="padding:10px 12px;background:#fff">
+      ${inst.carPhoto ? `<img src="${inst.carPhoto}" style="width:100%;height:68px;border-radius:7px;object-fit:cover;margin-bottom:8px;display:block">` : ''}
+      <div style="color:#5a7a6a;font-size:12px;margin-bottom:9px">⭐ ${inst.rating||'—'} · ${inst.price ? inst.price+' грн/год' : '—'}</div>
+      <button onclick="openInstrProfile('${_esc(id||'')}',${mpParam})" style="width:100%;background:#1a7a4a;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:500">Записатись</button>
+    </div>
   </div>`);
   marker.on('click', () => marker.openPopup());
   marker.on('popupopen', () => {
