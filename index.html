@@ -735,7 +735,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.179</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.180</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -4452,9 +4452,6 @@ window._startPickLocation = function() {
       span.style.fontWeight = item.on ? '700' : '500';
       span.style.borderWidth= item.on ? '1.5px' : '';
       window._applyAllFilters?.();
-      if (window._activeTagFilters.size > 0) {
-        document.getElementById('instructors')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
     };
     el.appendChild(span);
     return item;
