@@ -735,7 +735,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.178</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.179</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -776,34 +776,34 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
         <i class="ti ti-map-pin" style="font-size:18px;color:#9ab0a0;flex-shrink:0"></i>
         <select id="city-select" class="city-select" onchange="window._selectCity(this.value)" title="Оберіть місто">
           <option value="">Все міста</option>
-          <option>Київ</option>
-          <option>Харків</option>
-          <option>Одеса</option>
-          <option>Дніпро</option>
-          <option>Запоріжжя</option>
-          <option>Львів</option>
-          <option>Кривий Ріг</option>
-          <option>Миколаїв</option>
-          <option>Херсон</option>
-          <option>Полтава</option>
-          <option>Чернігів</option>
-          <option>Черкаси</option>
-          <option>Суми</option>
-          <option>Житомир</option>
-          <option>Хмельницький</option>
-          <option>Рівне</option>
-          <option>Вінниця</option>
-          <option>Івано-Франківськ</option>
-          <option>Тернопіль</option>
-          <option>Луцьк</option>
-          <option>Ужгород</option>
-          <option>Кропивницький</option>
-          <option>Чернівці</option>
-          <option>Кременчук</option>
-          <option>Мелітополь</option>
-          <option>Нікополь</option>
-          <option>Краматорськ</option>
           <option>Бердянськ</option>
+          <option>Вінниця</option>
+          <option>Дніпро</option>
+          <option>Житомир</option>
+          <option>Запоріжжя</option>
+          <option>Івано-Франківськ</option>
+          <option>Київ</option>
+          <option>Краматорськ</option>
+          <option>Кременчук</option>
+          <option>Кривий Ріг</option>
+          <option>Кропивницький</option>
+          <option>Луцьк</option>
+          <option>Львів</option>
+          <option>Мелітополь</option>
+          <option>Миколаїв</option>
+          <option>Нікополь</option>
+          <option>Одеса</option>
+          <option>Полтава</option>
+          <option>Рівне</option>
+          <option>Суми</option>
+          <option>Тернопіль</option>
+          <option>Ужгород</option>
+          <option>Харків</option>
+          <option>Херсон</option>
+          <option>Хмельницький</option>
+          <option>Черкаси</option>
+          <option>Чернігів</option>
+          <option>Чернівці</option>
         </select>
         <div class="search-divider city-divider"></div>
         <input id="search-input" class="search-input" type="text" placeholder="Вулиця, метро або адреса..." onkeydown="if(event.key==='Enter'){doSearch();document.getElementById('search-suggest').style.display='none'}" oninput="_showSearchSuggest(this.value)" onblur="setTimeout(()=>{const s=document.getElementById('search-suggest');if(s)s.style.display='none'},200)">
@@ -2724,7 +2724,7 @@ function appendInstructorCard(d) {
 
 let _activeNameFilter = '';
 let _activeCity       = '';
-let _activeTagFilters = new Set();
+window._activeTagFilters = new Set();
 
 window._favs = new Set(JSON.parse(localStorage.getItem('fd_fav') || '[]'));
 function _saveFavs() { localStorage.setItem('fd_fav', JSON.stringify([...window._favs])); }
@@ -2786,16 +2786,17 @@ function _applyAllFilters() {
     const area = (card.dataset.area || '').toLowerCase();
     const cityOk = !_activeCity || (area + ' ' + (card.dataset.city || '')).toLowerCase().includes(_activeCity.toLowerCase());
     let tagOk = true;
-    if (_activeTagFilters.size > 0) {
+    if (window._activeTagFilters.size > 0) {
       try {
         const cardTags = JSON.parse(card.dataset.tags || '[]');
-        tagOk = [..._activeTagFilters].every(t => cardTags.includes(t));
+        tagOk = [...window._activeTagFilters].every(t => cardTags.includes(t));
       } catch { tagOk = false; }
     }
     card.style.display = nameOk && cityOk && tagOk ? '' : 'none';
   });
   _instrSliderSync();
 }
+window._applyAllFilters = _applyAllFilters;
 
 window._instrSlide = function(dir) {
   const grid = document.getElementById('instr-grid');
@@ -4445,13 +4446,13 @@ window._startPickLocation = function() {
     const item = {span, ox:Math.cos(th)*r0, oy:y0, oz:Math.sin(th)*r0, on:false};
     span.onclick = () => {
       item.on = !item.on;
-      if (item.on) _activeTagFilters.add(t); else _activeTagFilters.delete(t);
+      if (item.on) window._activeTagFilters.add(t); else window._activeTagFilters.delete(t);
       span.style.filter     = item.on ? 'saturate(2.8) brightness(1.12)' : '';
       span.style.boxShadow  = item.on ? `0 0 14px 3px ${c.bd}` : '';
       span.style.fontWeight = item.on ? '700' : '500';
       span.style.borderWidth= item.on ? '1.5px' : '';
-      _applyAllFilters();
-      if (_activeTagFilters.size > 0) {
+      window._applyAllFilters?.();
+      if (window._activeTagFilters.size > 0) {
         document.getElementById('instructors')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     };
