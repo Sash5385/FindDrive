@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.195</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.196</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1665,6 +1665,8 @@ async function saveSetup(user) {
   btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> …';
   try {
     await setDoc(doc(db, 'users', user.uid), data, { merge: true });
+    // Pass saved data directly to avoid stale Firestore cache read
+    window._clientProfile = { ...(window._clientProfile||{}), ...data };
     await renderProfileScreen(user);
   } catch(e) {
     btn.disabled = false;
@@ -1888,6 +1890,7 @@ async function renderProfileScreen(user) {
   ]);
   let ud = {};
   if (snap?.exists()) ud = snap.data();
+  else if (window._clientProfile) ud = window._clientProfile; // fallback to in-memory cache
   const name  = ud.name || user.displayName || '';
   const phone = ud.phone || '';
   const ini   = name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || (user.email||'?')[0].toUpperCase();
@@ -2433,7 +2436,13 @@ onAuthStateChanged(auth, async user => {
     document.getElementById("nav-avatar").src       = user.photoURL || "";
     document.getElementById("nav-name").textContent = (user.displayName || user.email || "").split(" ")[0];
     if (user.providerData[0]?.providerId === 'google.com') {
-      setDoc(doc(db, 'users', user.uid), { name: user.displayName||'', email: user.email||'' }, { merge: true }).catch(()=>{});
+      // Only store email; do NOT overwrite name — user may have set a custom name in contacts
+      getDoc(doc(db, 'users', user.uid)).then(s => {
+        const existing = s.exists() ? s.data() : {};
+        const upd = { email: user.email||'' };
+        if (!existing.name) upd.name = user.displayName||''; // set name only if never set
+        setDoc(doc(db, 'users', user.uid), upd, { merge: true }).catch(()=>{});
+      }).catch(()=>{});
     }
     const _fromModal = _authModalActive;
     const _wasNewReg = _isNewClientReg;
