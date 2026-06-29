@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.192</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.193</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -4481,7 +4481,10 @@ window._addInstrMarker = function(inst, id) {
     </div>
     <div style="padding:28px 12px 12px 64px;background:#1a7a4a">
       <div style="color:rgba(255,255,255,.8);font-size:12px;margin-bottom:9px">⭐ ${inst.rating||'—'} · ${inst.price ? inst.price+' грн/год' : '—'}</div>
-      <button onclick="openInstrProfile('${_esc(id||'')}',${mpParam})" style="width:100%;background:#fff;color:#1a7a4a;border:none;border-radius:7px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">Записатись</button>
+      <div style="display:flex;gap:6px">
+        <button onclick="openInstrProfile('${_esc(id||'')}',${mpParam})" style="flex:1;background:#fff;color:#1a7a4a;border:none;border-radius:7px;padding:7px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">Записатись</button>
+        <a href="https://www.google.com/maps/dir/?api=1&destination=${inst.lat},${inst.lng}" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:4px;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:7px;padding:7px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:500;text-decoration:none;white-space:nowrap"><i class="ti ti-route" style="font-size:14px"></i> Маршрут</a>
+      </div>
     </div>
   </div>`);
   marker.on('click', () => marker.openPopup());
