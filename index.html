@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.199</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.200</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -3395,7 +3395,7 @@ window._pickDate = async function(instrId, dateStr) {
   if (avail.openSlots) {
     const avSet = new Set(avail.openSlots);
     let av = avail.openSlots.slice().sort();
-    // Filter out slots where consecutive blocks are busy/unavailable
+    // Filter out slots that conflict with existing bookings
     if (slotsPerLesson > 1) {
       av = av.filter(s => {
         const [h,m] = s.split(':').map(Number);
@@ -3403,7 +3403,7 @@ window._pickDate = async function(instrId, dateStr) {
         for (let i = 0; i < slotsPerLesson; i++) {
           const nx = _bt+i*30;
           const si = `${String(Math.floor(nx/60)).padStart(2,'0')}:${String(nx%60).padStart(2,'0')}`;
-          if (busyExpanded.has(si) || !avSet.has(si)) return false;
+          if (busyExpanded.has(si)) return false;
         }
         return true;
       });
