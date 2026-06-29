@@ -254,15 +254,16 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 
 /* AUTH MODAL */
 .auth-modal-overlay{position:fixed;inset:0;background:rgba(13,42,26,.5);z-index:1200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
-.auth-modal-box{background:var(--white);border-radius:24px;padding:36px 32px 32px;max-width:520px;width:100%;position:relative;box-shadow:0 12px 60px rgba(13,42,26,.22);animation:authBoxIn .28s cubic-bezier(.34,1.56,.64,1)}
+.auth-modal-box{background:var(--white);border-radius:18px;padding:0;max-width:480px;width:100%;position:relative;box-shadow:0 12px 60px rgba(13,42,26,.22);animation:authBoxIn .28s cubic-bezier(.34,1.56,.64,1);border:1px solid #000;overflow:hidden}
+.auth-modal-head{background:var(--green);padding:18px 20px 16px;display:flex;align-items:center;justify-content:space-between}
+.auth-modal-body{padding:28px 28px 24px;background:var(--white)}
 @keyframes authBoxIn{from{opacity:0;transform:scale(.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
-.auth-modal-close{position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;color:var(--text-hint);font-size:20px;padding:5px;border-radius:8px;transition:color .15s,background .15s;display:flex;align-items:center;line-height:1}
-.auth-modal-close:hover{color:var(--text);background:var(--bg)}
-.auth-modal-logo{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:22px}
-.auth-modal-logo-icon{width:34px;height:34px;background:var(--green);border-radius:9px;display:flex;align-items:center;justify-content:center}
-.auth-modal-logo-icon i{font-size:19px;color:#fff}
-.auth-modal-brand{font-size:16px;font-weight:700;color:var(--text)}
-.auth-modal-brand span{color:var(--green)}
+.auth-modal-close{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.75);font-size:20px;padding:4px;border-radius:7px;transition:color .15s,background .15s;display:flex;align-items:center;line-height:1;flex-shrink:0}
+.auth-modal-close:hover{color:#fff;background:rgba(255,255,255,.15)}
+.auth-modal-logo{display:flex;align-items:center;gap:9px}
+.auth-modal-logo-icon{width:30px;height:30px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center}
+.auth-modal-logo-icon i{font-size:17px;color:#fff}
+.auth-modal-brand{font-size:15px;font-weight:700;color:#fff}
 .auth-roles-title{text-align:center;font-size:17px;font-weight:700;color:var(--text);margin-bottom:5px}
 .auth-roles-sub{text-align:center;font-size:13px;color:var(--text-muted);margin-bottom:22px}
 .auth-roles-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -735,7 +736,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.180</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.181</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -963,12 +964,16 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 
 <div id="auth-modal" class="auth-modal-overlay" style="display:none" onclick="if(event.target===this)window._closeAuthModal()">
   <div class="auth-modal-box" role="dialog" aria-modal="true">
-    <button class="auth-modal-close" onclick="window._closeAuthModal()" aria-label="Закрити"><i class="ti ti-x"></i></button>
-    <div class="auth-modal-logo">
-      <div class="auth-modal-logo-icon"><i class="ti ti-steering-wheel"></i></div>
-      <span class="auth-modal-brand">Find<span>Drive</span></span>
+    <div class="auth-modal-head">
+      <div class="auth-modal-logo">
+        <div class="auth-modal-logo-icon"><i class="ti ti-steering-wheel"></i></div>
+        <span class="auth-modal-brand">FindDrive</span>
+      </div>
+      <button class="auth-modal-close" onclick="window._closeAuthModal()" aria-label="Закрити"><i class="ti ti-x"></i></button>
     </div>
-    <div id="auth-modal-inner"></div>
+    <div class="auth-modal-body">
+      <div id="auth-modal-inner"></div>
+    </div>
   </div>
 </div>
 
