@@ -735,7 +735,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.177</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.178</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2724,6 +2724,7 @@ function appendInstructorCard(d) {
 
 let _activeNameFilter = '';
 let _activeCity       = '';
+let _activeTagFilters = new Set();
 
 window._favs = new Set(JSON.parse(localStorage.getItem('fd_fav') || '[]'));
 function _saveFavs() { localStorage.setItem('fd_fav', JSON.stringify([...window._favs])); }
@@ -2784,7 +2785,14 @@ function _applyAllFilters() {
     const nameOk = !_activeNameFilter || (card.dataset.name || '').includes(_activeNameFilter);
     const area = (card.dataset.area || '').toLowerCase();
     const cityOk = !_activeCity || (area + ' ' + (card.dataset.city || '')).toLowerCase().includes(_activeCity.toLowerCase());
-    card.style.display = nameOk && cityOk ? '' : 'none';
+    let tagOk = true;
+    if (_activeTagFilters.size > 0) {
+      try {
+        const cardTags = JSON.parse(card.dataset.tags || '[]');
+        tagOk = [..._activeTagFilters].every(t => cardTags.includes(t));
+      } catch { tagOk = false; }
+    }
+    card.style.display = nameOk && cityOk && tagOk ? '' : 'none';
   });
   _instrSliderSync();
 }
@@ -4436,14 +4444,15 @@ window._startPickLocation = function() {
     span.textContent = t;
     const item = {span, ox:Math.cos(th)*r0, oy:y0, oz:Math.sin(th)*r0, on:false};
     span.onclick = () => {
-      const chip = document.querySelector('.tag-filter-chip[data-tag="'+t+'"]');
-      if (chip && window._filterByTag) {
-        window._filterByTag(chip);
-        item.on = chip.classList.contains('active');
-        span.style.filter = item.on ? 'saturate(2.8) brightness(1.12)' : '';
-        span.style.boxShadow = item.on ? `0 0 14px 3px ${c.bd}` : '';
-        span.style.fontWeight = item.on ? '700' : '500';
-        span.style.borderWidth = item.on ? '1.5px' : '';
+      item.on = !item.on;
+      if (item.on) _activeTagFilters.add(t); else _activeTagFilters.delete(t);
+      span.style.filter     = item.on ? 'saturate(2.8) brightness(1.12)' : '';
+      span.style.boxShadow  = item.on ? `0 0 14px 3px ${c.bd}` : '';
+      span.style.fontWeight = item.on ? '700' : '500';
+      span.style.borderWidth= item.on ? '1.5px' : '';
+      _applyAllFilters();
+      if (_activeTagFilters.size > 0) {
+        document.getElementById('instructors')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     };
     el.appendChild(span);
