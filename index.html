@@ -726,6 +726,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .admin-btn.approve{background:var(--green);color:#fff}
 .admin-btn.reject{background:#fde8e8;color:#8a2020;border:.5px solid #e0a8a8}
 .admin-btn.open-map{background:var(--bg);color:var(--text-muted);border:.5px solid var(--border)}
+.admin-btn.delete{background:#fde8e8;color:#8a2020;border:.5px solid #e0a8a8;flex:0;white-space:nowrap}
 .admin-tag{display:inline-flex;align-items:center;border-radius:20px;border:.5px solid;font-size:10px;padding:2px 8px;margin:2px 2px 0 0}
 /* TOAST */
 #toast-wrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
@@ -748,7 +749,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.189</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.190</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1193,7 +1194,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRe
          createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp,
-         setDoc, getDoc, doc, updateDoc, onSnapshot, deleteField, orderBy, limit }
+         setDoc, getDoc, doc, updateDoc, onSnapshot, deleteField, orderBy, limit, deleteDoc }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -1690,12 +1691,38 @@ async function renderAdminScreen(user) {
       const approved = all.filter(i => i.status === 'approved');
       const rejected = all.filter(i => i.status === 'rejected');
 
-      const html = [
+      const instrHtml = [
         renderAdminGroup('На розгляді', pending,  'pending'),
         renderAdminGroup('Активні',      approved, 'approved'),
         renderAdminGroup('Відхилені',    rejected, 'rejected'),
       ].join('');
-      el.innerHTML = html || '<div class="cab-empty">Інструкторів немає</div>';
+
+      // Load users
+      let usersSnap;
+      try { usersSnap = await getDocs(query(collection(db, 'users'), orderBy('createdAt', 'desc'))); }
+      catch { usersSnap = await getDocs(collection(db, 'users')); }
+      const users = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const usersHtml = users.length ? `
+        <div class="admin-header">Учні <span style="font-size:11px;color:var(--text-muted)">${users.length}</span></div>
+        ${users.map(u => `
+          <div class="admin-card" id="adm-u-${u.id}">
+            <div class="admin-card-head" onclick="document.getElementById('adm-u-${u.id}').classList.toggle('open')">
+              ${u.photo ? `<img class="admin-card-avatar" src="${esc(u.photo)}" alt="">` : `<div class="admin-card-avatar">${esc(((u.name||u.email||'?')[0]).toUpperCase())}</div>`}
+              <div class="admin-card-main">
+                <div class="admin-card-name">${esc(u.name||'Без імені')}</div>
+                <div class="admin-card-sub">${esc(u.email||u.id)}</div>
+              </div>
+              <i class="ti ti-chevron-down admin-card-arrow"></i>
+            </div>
+            <div class="admin-card-body">
+              <div class="admin-field"><div class="admin-field-label">Email</div><div class="admin-field-val">${esc(u.email||'—')}</div></div>
+              <div class="admin-field"><div class="admin-field-label">Телефон</div><div class="admin-field-val">${esc(u.phone||'—')}</div></div>
+              <div class="admin-field"><div class="admin-field-label">UID</div><div class="admin-field-val" style="font-size:10px;color:var(--text-hint);word-break:break-all">${esc(u.id)}</div></div>
+              <div class="admin-actions"><button class="admin-btn delete" onclick="window._adminDeleteUser('${u.id}','${esc((u.name||u.email||'').replace(/'/g,''))}')"><i class="ti ti-trash"></i> Видалити учня</button></div>
+            </div>
+          </div>`).join('')}` : '';
+
+      el.innerHTML = (instrHtml + usersHtml) || '<div class="cab-empty">Даних немає</div>';
     } catch(e) {
       if (el) el.innerHTML = `<div class="cab-empty" style="color:#cc3333">Помилка: ${esc(e.message||e)}</div>`;
     }
@@ -1735,17 +1762,21 @@ async function renderAdminScreen(user) {
       </div>` : '';
 
     const verifyBtn = instr.status === 'approved' ? `<button class="admin-btn ${instr.verified?'reject':'approve'}" onclick="window._adminToggleVerify('${id}',${!instr.verified})" style="flex:0;white-space:nowrap"><i class="ti ti-${instr.verified?'shield-off':'shield-check'}"></i> ${instr.verified?'Зняти верифікацію':'Верифікувати'}</button>` : '';
+    const deleteBtn = `<button class="admin-btn delete" onclick="window._adminDeleteInstr('${id}','${esc((instr.name||'').replace(/'/g,''))}')"><i class="ti ti-trash"></i> Видалити</button>`;
     const actionsHtml = instr.status === 'pending' ? `
       <div class="admin-actions">
         <button class="admin-btn approve" onclick="window._adminApprove('${id}')"><i class="ti ti-check"></i> Підтвердити</button>
         <button class="admin-btn reject"  onclick="window._adminReject('${id}')"><i class="ti ti-x"></i> Відхилити</button>
-      </div>` : instr.status === 'approved' ? `
+      </div>
+      <div class="admin-actions" style="margin-top:4px">${deleteBtn}</div>` : instr.status === 'approved' ? `
       <div class="admin-actions">
         ${verifyBtn}
         <button class="admin-btn reject" onclick="window._adminReject('${id}')"><i class="ti ti-ban"></i> Деактивувати</button>
-      </div>` : `
+      </div>
+      <div class="admin-actions" style="margin-top:4px">${deleteBtn}</div>` : `
       <div class="admin-actions">
         <button class="admin-btn approve" onclick="window._adminApprove('${id}')"><i class="ti ti-rotate-clockwise"></i> Відновити</button>
+        ${deleteBtn}
       </div>`;
 
     return `
@@ -1800,6 +1831,20 @@ window._adminReject = async (id) => {
 window._adminToggleVerify = async (id, value) => {
   try {
     await updateDoc(doc(db, 'instructors', id), { verified: value });
+    window._adminReload?.();
+  } catch(e) { alert('Помилка: ' + (e.message||e)); }
+};
+window._adminDeleteInstr = async (id, name) => {
+  if (!confirm(`Видалити інструктора «${name}»? Дію не можна скасувати.`)) return;
+  try {
+    await deleteDoc(doc(db, 'instructors', id));
+    window._adminReload?.();
+  } catch(e) { alert('Помилка: ' + (e.message||e)); }
+};
+window._adminDeleteUser = async (id, name) => {
+  if (!confirm(`Видалити учня «${name}»? Дію не можна скасувати.`)) return;
+  try {
+    await deleteDoc(doc(db, 'users', id));
     window._adminReload?.();
   } catch(e) { alert('Помилка: ' + (e.message||e)); }
 };
@@ -4128,7 +4173,7 @@ function openInstrProfile(id, mpIdx) {
     ` : ''}
     ${(d.lat && d.lng) || mps.length ? `
       <div class="prof-divider"></div>
-      <div class="prof-section-label"><i class="ti ti-map" style="color:${col}"></i> На карті</div>
+      <div class="prof-section-label"><i class="ti ti-map" style="color:${col}"></i> На мапі</div>
       <div id="prof-mini-map" class="prof-mini-map"></div>
     ` : ''}
     ${(d.tscKnown||[]).length ? `
@@ -4177,8 +4222,9 @@ function openInstrProfile(id, mpIdx) {
         .addTo(miniMap).bindTooltip(_esc(mp.label||'Точка '+(i+1)));
     });
     window._profMiniMap = miniMap;
-    setTimeout(() => miniMap.invalidateSize(), 320);
-  }, 120);
+    setTimeout(() => miniMap.invalidateSize(), 480);
+    setTimeout(() => miniMap.invalidateSize(), 750);
+  }, 200);
 }
 
 function showPhone(phone, col) {
