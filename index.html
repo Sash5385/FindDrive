@@ -727,6 +727,13 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .admin-btn.reject{background:#fde8e8;color:#8a2020;border:.5px solid #e0a8a8}
 .admin-btn.open-map{background:var(--bg);color:var(--text-muted);border:.5px solid var(--border)}
 .admin-btn.delete{background:#fde8e8;color:#8a2020;border:.5px solid #e0a8a8;flex:0;white-space:nowrap}
+.addr-search-wrap{position:relative;margin-bottom:6px}
+.addr-results{position:absolute;top:calc(100% + 2px);left:0;right:0;background:var(--white);border:1px solid var(--border);border-radius:9px;max-height:200px;overflow-y:auto;z-index:1200;display:none;box-shadow:0 4px 16px rgba(0,0,0,.12)}
+.addr-results.open{display:block}
+.addr-result-item{padding:9px 12px;cursor:pointer;font-size:12px;color:var(--text);border-bottom:.5px solid var(--border);line-height:1.4}
+.addr-result-item:last-child{border-bottom:none}
+.addr-result-item:hover,.addr-result-item:focus{background:var(--green-light);outline:none}
+.addr-search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:14px;pointer-events:none}
 .admin-tag{display:inline-flex;align-items:center;border-radius:20px;border:.5px solid;font-size:10px;padding:2px 8px;margin:2px 2px 0 0}
 /* TOAST */
 #toast-wrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
@@ -749,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.191</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.192</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1102,8 +1109,13 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       </div>
       <div class="form-group">
         <label class="form-label">Місце роботи на карті</label>
+        <div class="addr-search-wrap">
+          <i class="ti ti-search addr-search-icon"></i>
+          <input id="instr-addr-search" class="form-input" type="text" placeholder="Знайти адресу або вулицю…" autocomplete="off" style="padding-left:32px">
+          <div id="instr-addr-results" class="addr-results"></div>
+        </div>
         <div id="instr-map-pick" style="height:180px;border-radius:9px;overflow:hidden;border:.5px solid var(--border)"></div>
-        <p style="font-size:11px;color:var(--text-hint);margin-top:5px;display:flex;align-items:center;gap:4px"><i class="ti ti-info-circle"></i> Перетягніть маркер на ваше місце роботи</p>
+        <p style="font-size:11px;color:var(--text-hint);margin-top:5px;display:flex;align-items:center;gap:4px"><i class="ti ti-info-circle"></i> Введіть адресу або перетягніть маркер на місце роботи</p>
       </div>
       <input type="hidden" name="lat">
       <input type="hidden" name="lng">
@@ -4509,6 +4521,55 @@ window.initInstrMap = function() {
   }
   _instrPickMarker.on('dragend', syncLatLng);
   syncLatLng();
+
+  // Address autocomplete
+  const addrInput = document.getElementById('instr-addr-search');
+  const addrBox   = document.getElementById('instr-addr-results');
+  if (!addrInput || !addrBox) return;
+  let _addrTimer;
+  function _closeAddr() { addrBox.innerHTML = ''; addrBox.classList.remove('open'); }
+  function _placePin(lat, lon, label) {
+    _instrPickMarker.setLatLng([lat, lon]);
+    _instrPickMap.setView([lat, lon], 16);
+    document.querySelector('#instr-form [name="lat"]').value = (+lat).toFixed(6);
+    document.querySelector('#instr-form [name="lng"]').value = (+lon).toFixed(6);
+    addrInput.value = label;
+    _closeAddr();
+  }
+  addrInput.addEventListener('input', () => {
+    clearTimeout(_addrTimer);
+    const q = addrInput.value.trim();
+    if (q.length < 3) { _closeAddr(); return; }
+    _addrTimer = setTimeout(async () => {
+      try {
+        const r = await fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=7&addressdetails=1&accept-language=uk&countrycodes=ua`,
+          { headers: { 'Accept-Language': 'uk' } }
+        );
+        const data = await r.json();
+        if (!data.length) {
+          addrBox.innerHTML = '<div class="addr-result-item" style="color:var(--text-muted)">Нічого не знайдено</div>';
+          addrBox.classList.add('open');
+          return;
+        }
+        addrBox.innerHTML = data.map(d =>
+          `<div class="addr-result-item" tabindex="0" data-lat="${d.lat}" data-lon="${d.lon}">${d.display_name}</div>`
+        ).join('');
+        addrBox.classList.add('open');
+        addrBox.querySelectorAll('.addr-result-item[data-lat]').forEach(item => {
+          item.addEventListener('click', () => _placePin(item.dataset.lat, item.dataset.lon, item.textContent));
+          item.addEventListener('keydown', e => { if (e.key === 'Enter') _placePin(item.dataset.lat, item.dataset.lon, item.textContent); });
+        });
+      } catch { _closeAddr(); }
+    }, 420);
+  });
+  addrInput.addEventListener('keydown', e => {
+    if (e.key === 'Escape') _closeAddr();
+    if (e.key === 'ArrowDown') { e.preventDefault(); addrBox.querySelector('.addr-result-item')?.focus(); }
+  });
+  document.addEventListener('click', e => {
+    if (!addrInput.contains(e.target) && !addrBox.contains(e.target)) _closeAddr();
+  }, { passive: true });
 };
 
 let _userAccCircle = null;
