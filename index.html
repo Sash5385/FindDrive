@@ -261,6 +261,7 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .auth-modal-box{background:var(--white);border-radius:18px;padding:0;max-width:480px;width:100%;position:relative;box-shadow:0 12px 60px rgba(13,42,26,.22);animation:authBoxIn .28s cubic-bezier(.34,1.56,.64,1);border:1px solid #000;overflow:hidden}
 .auth-modal-head{background:var(--green);padding:18px 20px 16px;display:flex;align-items:center;justify-content:space-between}
 .auth-modal-body{padding:28px 28px 24px;background:var(--bg) radial-gradient(circle 220px at 15% 20%,rgba(168,240,192,.55),transparent 70%),radial-gradient(circle 180px at 85% 15%,rgba(240,224,96,.42),transparent 70%),radial-gradient(circle 200px at 10% 80%,rgba(240,168,208,.42),transparent 70%),radial-gradient(circle 220px at 88% 85%,rgba(160,216,248,.48),transparent 70%)}
+.crop-wrap{width:240px;height:240px;border-radius:50%;overflow:hidden;border:2px solid var(--green);margin:0 auto;box-shadow:0 4px 20px rgba(26,122,74,.2)}
 @keyframes authBoxIn{from{opacity:0;transform:scale(.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .auth-modal-close{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.75);font-size:20px;padding:4px;border-radius:7px;transition:color .15s,background .15s;display:flex;align-items:center;line-height:1;flex-shrink:0}
 .auth-modal-close:hover{color:#fff;background:rgba(255,255,255,.15)}
@@ -740,7 +741,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.184</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.185</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -977,6 +978,31 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
     <div class="auth-modal-body">
       <div id="auth-modal-inner"></div>
+    </div>
+  </div>
+</div>
+
+<div id="crop-modal" class="auth-modal-overlay" style="display:none" onclick="if(event.target===this)document.getElementById('crop-modal').style.display='none'">
+  <div class="auth-modal-box" style="max-width:320px">
+    <div class="auth-modal-head">
+      <div class="auth-modal-logo">
+        <div class="auth-modal-logo-icon"><i class="ti ti-crop"></i></div>
+        <span class="auth-modal-brand">Налаштування фото</span>
+      </div>
+      <button class="auth-modal-close" onclick="document.getElementById('crop-modal').style.display='none'" aria-label="Закрити"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="auth-modal-body" style="text-align:center;padding:20px 20px 22px">
+      <div class="crop-wrap"><canvas id="crop-canvas" width="240" height="240" style="border-radius:50%;cursor:grab;touch-action:none"></canvas></div>
+      <div style="display:flex;align-items:center;gap:10px;margin:14px 0 6px">
+        <i class="ti ti-zoom-out" style="color:var(--text-muted);font-size:18px"></i>
+        <input type="range" id="crop-zoom" min="50" max="300" value="100" style="flex:1;accent-color:var(--green)">
+        <i class="ti ti-zoom-in" style="color:var(--text-muted);font-size:18px"></i>
+      </div>
+      <p style="font-size:11px;color:var(--text-hint);margin-bottom:18px">Перетягніть або масштабуйте фото</p>
+      <div style="display:flex;gap:10px">
+        <button onclick="document.getElementById('crop-modal').style.display='none'" style="flex:1;padding:11px;border:1px solid var(--border);border-radius:9px;background:transparent;cursor:pointer;font-family:inherit;font-size:14px;color:var(--text)">Скасувати</button>
+        <button id="crop-confirm-btn" style="flex:1;padding:11px;background:var(--green);color:#fff;border:none;border-radius:9px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:600">Зберегти</button>
+      </div>
     </div>
   </div>
 </div>
@@ -2399,24 +2425,90 @@ carPhotoInput.addEventListener("change", async e => {
 // Student photo upload
 window._cabUser = null;
 window._pendingStudentPhoto = null;
-window._onStudentPhotoChange = async function(input) {
+window._onStudentPhotoChange = function(input) {
   const file = input.files[0];
   if (!file) return;
+  input.value = '';
   const user = window._cabUser || auth.currentUser;
   if (!user) return;
-  const data = await resizePhoto(file, 200);
-  const el = document.getElementById('student-photo-img');
-  if (el) {
-    if (el.tagName === 'IMG') { el.src = data; }
-    else { el.outerHTML = `<img class="cab-photo" id="student-photo-img" src="${data}" alt="" style="display:block">`; }
-  }
-  try {
-    await setDoc(doc(db, 'users', user.uid), { photo: data }, { merge: true });
-  } catch(e) {
-    console.error('Student photo save:', e);
-    alert('Помилка збереження фото. Спробуйте ще раз.');
-  }
+  _showPhotoCrop(file, async (data) => {
+    const el = document.getElementById('student-photo-img');
+    if (el) {
+      if (el.tagName === 'IMG') { el.src = data; }
+      else { el.outerHTML = `<img class="cab-photo" id="student-photo-img" src="${data}" alt="" style="display:block">`; }
+    }
+    try {
+      await setDoc(doc(db, 'users', user.uid), { photo: data }, { merge: true });
+    } catch(e) {
+      console.error('Student photo save:', e);
+      alert('Помилка збереження фото. Спробуйте ще раз.');
+    }
+  });
 };
+
+function _showPhotoCrop(file, onConfirm) {
+  const modal = document.getElementById('crop-modal');
+  const canvas = document.getElementById('crop-canvas');
+  const ctx = canvas.getContext('2d');
+  const zoomSlider = document.getElementById('crop-zoom');
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  let scale = 1, ox = 0, oy = 0, dragging = false, lastX = 0, lastY = 0;
+
+  function draw() {
+    ctx.clearRect(0, 0, 240, 240);
+    ctx.drawImage(img, ox, oy, img.width * scale, img.height * scale);
+  }
+
+  img.onload = () => {
+    URL.revokeObjectURL(url);
+    const minScale = Math.max(240 / img.width, 240 / img.height);
+    scale = minScale;
+    ox = (240 - img.width * scale) / 2;
+    oy = (240 - img.height * scale) / 2;
+    zoomSlider.min = Math.round(minScale * 100);
+    zoomSlider.max = Math.round(minScale * 100 * 4);
+    zoomSlider.value = Math.round(scale * 100);
+    draw();
+    modal.style.display = 'flex';
+  };
+
+  zoomSlider.oninput = (e) => {
+    const newScale = e.target.value / 100;
+    ox = 120 - (120 - ox) * newScale / scale;
+    oy = 120 - (120 - oy) * newScale / scale;
+    scale = newScale;
+    draw();
+  };
+
+  function startDrag(x, y) { dragging = true; lastX = x; lastY = y; canvas.style.cursor = 'grabbing'; }
+  function moveDrag(x, y) {
+    if (!dragging) return;
+    ox += x - lastX; oy += y - lastY; lastX = x; lastY = y; draw();
+  }
+  function endDrag() { dragging = false; canvas.style.cursor = 'grab'; }
+
+  canvas.onmousedown  = (e) => startDrag(e.clientX, e.clientY);
+  canvas.onmousemove  = (e) => moveDrag(e.clientX, e.clientY);
+  canvas.onmouseup    = endDrag;
+  canvas.onmouseleave = endDrag;
+  canvas.ontouchstart = (e) => { e.preventDefault(); startDrag(e.touches[0].clientX, e.touches[0].clientY); };
+  canvas.ontouchmove  = (e) => { e.preventDefault(); moveDrag(e.touches[0].clientX, e.touches[0].clientY); };
+  canvas.ontouchend   = endDrag;
+
+  document.getElementById('crop-confirm-btn').onclick = () => {
+    const out = document.createElement('canvas');
+    out.width = out.height = 200;
+    const octx = out.getContext('2d');
+    octx.beginPath(); octx.arc(100, 100, 100, 0, Math.PI * 2); octx.clip();
+    const r = 200 / 240;
+    octx.drawImage(img, ox * r, oy * r, img.width * scale * r, img.height * scale * r);
+    modal.style.display = 'none';
+    onConfirm(out.toDataURL('image/jpeg', 0.88));
+  };
+
+  img.src = url;
+}
 
 window._contactChanged = function() {
   const btn = document.getElementById('btn-save-contacts');
