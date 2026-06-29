@@ -721,19 +721,20 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 </style>
 </head>
 <body>
+<script>if(location.hash)history.replaceState(null,'',location.pathname+location.search);</script>
 <div id="toast-wrap"></div>
 
 <nav class="nav">
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.174</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.175</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
     <a class="nav-link" href="#instructors">Інструктори</a>
     <a class="nav-link" href="#reviews">Відгуки</a>
-    <a class="nav-link" href="#map-anchor">Карта</a>
+    <a class="nav-link" href="#" onclick="event.preventDefault();document.getElementById('map-anchor').scrollIntoView({behavior:'smooth'})">Карта</a>
   </div>
   <div class="nav-right">
     <button id="btn-login" class="btn-login"><i class="ti ti-user-circle"></i> Увійти</button>
@@ -752,7 +753,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-mobile-link" href="#how-it-works" onclick="closeMobileMenu()"><i class="ti ti-list-check"></i> Як це працює</a>
   <a class="nav-mobile-link" href="#instructors" onclick="closeMobileMenu()"><i class="ti ti-users"></i> Інструктори</a>
   <a class="nav-mobile-link" href="#reviews" onclick="closeMobileMenu()"><i class="ti ti-star"></i> Відгуки</a>
-  <a class="nav-mobile-link" href="#map-anchor" onclick="closeMobileMenu()"><i class="ti ti-map"></i> Карта</a>
+  <a class="nav-mobile-link" href="#" onclick="event.preventDefault();closeMobileMenu();document.getElementById('map-anchor').scrollIntoView({behavior:'smooth'})"><i class="ti ti-map"></i> Карта</a>
   <button class="nav-mobile-cta" onclick="closeMobileMenu();setTimeout(()=>document.getElementById('btn-instr')&&document.getElementById('btn-instr').click(),100)"><i class="ti ti-steering-wheel"></i> Ви інструктор?</button>
 </div>
 
@@ -928,7 +929,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
         <a class="footer-link" href="#instructors"><i class="ti ti-search"></i> Знайти інструктора</a>
         <a class="footer-link" href="#how-it-works"><i class="ti ti-list-check"></i> Як це працює</a>
         <a class="footer-link" href="#reviews"><i class="ti ti-star"></i> Відгуки</a>
-        <a class="footer-link" href="#map-anchor"><i class="ti ti-map"></i> Карта</a>
+        <a class="footer-link" href="#" onclick="event.preventDefault();document.getElementById('map-anchor').scrollIntoView({behavior:'smooth'})"><i class="ti ti-map"></i> Карта</a>
       </div>
     </div>
     <div>
