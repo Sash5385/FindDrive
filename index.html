@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.194</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.195</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1182,6 +1182,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     <div class="success-icon"><i class="ti ti-check"></i></div>
     <div class="success-title">Анкету надіслано!</div>
     <div class="success-sub">Ми перевіримо дані та опублікуємо ваш профіль<br>протягом 1 робочого дня.</div>
+    <button onclick="window._lastOpenedAsInstr=true;closeAll();setTimeout(async()=>{if(window._auth?.currentUser){await window._renderProfileScreen?.(window._auth.currentUser);window.openPanel?.('cabinet');}},200)" style="margin-top:18px;background:var(--green);color:#fff;border:none;border-radius:9px;padding:11px 22px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px"><i class="ti ti-user-circle"></i> Відкрити мій кабінет</button>
   </div>
   <div id="instr-foot" class="cab-foot">
     <button id="btn-submit-instr" class="btn-submit-instr"><i class="ti ti-send"></i> Надіслати анкету</button>
@@ -1919,8 +1920,10 @@ async function renderProfileScreen(user) {
       <button id="btn-save-contacts" onclick="window._saveContacts()" style="display:none;background:var(--green);color:#fff;border:none;border-radius:9px;padding:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;width:100%"><i class="ti ti-device-floppy"></i> Зберегти контакти</button>
     </div>`;
 
-  // If instructor not found but user logged in with instructor role — show helpful notice
-  if (!instr && _authModalRole === 'instr') {
+  // If instructor not found but user came from instructor login path or instr-panel — show helpful notice
+  const _wasInstrLogin = _authModalRole === 'instr' || window._lastOpenedAsInstr;
+  window._lastOpenedAsInstr = false;
+  if (!instr && _wasInstrLogin) {
     document.getElementById('cab-body').innerHTML = headerHtml + `
       <div class="cab-section">
         <div style="background:var(--bg);border-radius:12px;padding:16px;text-align:center">
@@ -1937,13 +1940,32 @@ async function renderProfileScreen(user) {
   }
 
   if (instr) {
-    const statusLabel = { pending: '⏳ На розгляді', approved: '✓ Активний', rejected: '✗ Відхилено' };
+    const statusLabel  = { pending: '⏳ На розгляді', approved: '✓ Активний', rejected: '✗ Відхилено' };
+    const statusColor  = instr.status==='approved'?'var(--green)':instr.status==='pending'?'#856404':'#cc3333';
+    const pendingBlock = instr.status === 'pending' ? `
+      <div style="background:#fffbe6;border:.5px solid #e6c96a;border-radius:12px;padding:14px 16px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:600;color:#856404;margin-bottom:6px"><i class="ti ti-clock-hour-4"></i> Анкета на перевірці</div>
+        <div style="font-size:12px;color:#6b5000;line-height:1.55">Зазвичай це займає до 1 робочого дня. Після підтвердження ви отримаєте доступ до розкладу та записів учнів.</div>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);display:flex;flex-direction:column;gap:5px;margin-bottom:12px">
+        ${instr.phone?`<div><i class="ti ti-phone" style="color:var(--green)"></i> ${esc(instr.phone)}</div>`:''}
+        ${instr.area ?`<div><i class="ti ti-map-pin" style="color:var(--green)"></i> ${esc(instr.area)}</div>`:''}
+        ${instr.price?`<div><i class="ti ti-currency-hryvnia" style="color:var(--green)"></i> ${esc(String(instr.price))} грн/год</div>`:''}
+        ${instr.gearbox?`<div><i class="ti ti-steering-wheel" style="color:var(--green)"></i> ${esc(instr.gearbox)}</div>`:''}
+      </div>` : '';
+    const rejectedBlock = instr.status === 'rejected' ? `
+      <div style="background:#fde8e8;border:.5px solid #e0a8a8;border-radius:12px;padding:14px 16px;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:600;color:#8a2020;margin-bottom:6px"><i class="ti ti-x"></i> Анкету відхилено</div>
+        <div style="font-size:12px;color:#6b1010;line-height:1.55">Зверніться до адміністратора або подайте нову анкету з виправленими даними.</div>
+        <button onclick="closeAll();setTimeout(()=>window._openInstrForm?.(),200)" style="margin-top:10px;background:#cc3333;color:#fff;border:none;border-radius:7px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:500"><i class="ti ti-clipboard-list"></i> Подати нову анкету</button>
+      </div>` : '';
     document.getElementById('cab-body').innerHTML = headerHtml + `
       <div class="cab-section">
-        <div class="cab-section-title">Мій профіль інструктора</div>
-        <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px">
-          ${esc(instr.name)} · <span style="color:${instr.status==='approved'?'var(--green)':instr.status==='pending'?'#856404':'#cc3333'}">${statusLabel[instr.status]||instr.status}</span>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="cab-section-title" style="margin:0">Профіль інструктора</div>
+          <span style="font-size:11px;font-weight:600;color:${statusColor};background:${instr.status==='approved'?'var(--green-light)':instr.status==='pending'?'#fffbe6':'#fde8e8'};padding:3px 9px;border-radius:10px">${statusLabel[instr.status]||instr.status}</span>
         </div>
+        ${pendingBlock}${rejectedBlock}
         ${instr.status === 'approved' ? `
         <div class="cab-section-title" style="margin-top:12px">Налаштування</div>
         <div id="cab-instr-settings"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>
@@ -2457,6 +2479,8 @@ function _openInstrPanelDirect() {
   }, 180);
 }
 window._openInstrForm = _openInstrPanelDirect;
+window._auth = auth;
+window._renderProfileScreen = renderProfileScreen;
 
 document.getElementById("instr-close").addEventListener("click", closeAll);
 
