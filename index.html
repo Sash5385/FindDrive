@@ -141,7 +141,7 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 /* INSTRUCTOR CARDS */
 .instr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 @media(max-width:900px){.instr-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:600px){.instr-grid{grid-template-columns:1fr}.nav-links{display:none}.nav-burger{display:flex;align-items:center;justify-content:center}#btn-instr{display:none}.section,.map-section{padding-left:20px;padding-right:20px}.nav{padding:0 20px}.hero-h1{font-size:26px}}
+@media(max-width:600px){.instr-grid{grid-template-columns:1fr}.nav-links{display:none}.nav-burger{display:flex;align-items:center;justify-content:center}.section,.map-section{padding-left:20px;padding-right:20px}.nav{padding:0 20px}.hero-h1{font-size:26px}}
 @keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
 .sk-card{background:var(--white);border-radius:18px;padding:20px 18px;border:.5px solid var(--border)}
 .sk-line{border-radius:6px;background:linear-gradient(90deg,#eaecea 25%,#f5f7f5 50%,#eaecea 75%);background-size:1200px 100%;animation:shimmer 1.6s infinite linear}
@@ -728,7 +728,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.175</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.176</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -745,7 +745,6 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       </div>
       <span id="nav-name" class="nav-name"></span>
     </div>
-    <button id="btn-instr" class="btn-cta">Стати інструктором</button>
     <button class="nav-burger" id="nav-burger" onclick="toggleMobileMenu()" aria-label="Меню"><i class="ti ti-menu-2"></i></button>
   </div>
 </nav>
@@ -754,7 +753,6 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-mobile-link" href="#instructors" onclick="closeMobileMenu()"><i class="ti ti-users"></i> Інструктори</a>
   <a class="nav-mobile-link" href="#reviews" onclick="closeMobileMenu()"><i class="ti ti-star"></i> Відгуки</a>
   <a class="nav-mobile-link" href="#" onclick="event.preventDefault();closeMobileMenu();document.getElementById('map-anchor').scrollIntoView({behavior:'smooth'})"><i class="ti ti-map"></i> Карта</a>
-  <button class="nav-mobile-cta" onclick="closeMobileMenu();setTimeout(()=>document.getElementById('btn-instr')&&document.getElementById('btn-instr').click(),100)"><i class="ti ti-steering-wheel"></i> Ви інструктор?</button>
 </div>
 
 <section class="hero">
@@ -847,6 +845,27 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   </div>
 </section>
 
+<section class="map-section" id="map-anchor">
+  <div class="section-top">
+    <span class="section-label">Інструктори на карті</span>
+    <button class="btn-locate" onclick="locateMe()"><i class="ti ti-current-location"></i> Моє місце</button>
+    <button class="btn-pick-loc" id="btn-pick-loc" onclick="window._startPickLocation()" title="Вказати своє місце кліком по карті"><i class="ti ti-map-pin-plus"></i> Вручну</button>
+  </div>
+  <div id="map"></div>
+</section>
+<section class="section" id="instructors">
+  <div class="section-top">
+    <span class="section-label">Інструктори поруч</span>
+    <a class="section-link" href="#instructors">Усі інструктори <i class="ti ti-arrow-right"></i></a>
+  </div>
+  <div id="rv-row" class="rv-row"><span class="rv-label"><i class="ti ti-history" style="font-size:12px"></i> Нещодавно:</span><div id="rv-chips" class="rv-chips"></div></div>
+  <div id="instr-grid" class="instr-grid"></div>
+</section>
+
+
+
+
+
 <section class="section" id="reviews" style="padding-bottom:52px">
   <div class="section-top">
     <span class="section-label">Відгуки учнів</span>
@@ -879,41 +898,6 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   </div>
 </section>
 
-<section class="map-section" id="map-anchor">
-  <div class="section-top">
-    <span class="section-label">Інструктори на карті</span>
-    <button class="btn-locate" onclick="locateMe()"><i class="ti ti-current-location"></i> Моє місце</button>
-    <button class="btn-pick-loc" id="btn-pick-loc" onclick="window._startPickLocation()" title="Вказати своє місце кліком по карті"><i class="ti ti-map-pin-plus"></i> Вручну</button>
-  </div>
-  <div id="map"></div>
-</section>
-<section class="section" id="instructors">
-  <div class="section-top">
-    <span class="section-label">Інструктори поруч</span>
-    <a class="section-link" href="#instructors">Усі інструктори <i class="ti ti-arrow-right"></i></a>
-  </div>
-  <div id="rv-row" class="rv-row"><span class="rv-label"><i class="ti ti-history" style="font-size:12px"></i> Нещодавно:</span><div id="rv-chips" class="rv-chips"></div></div>
-  <div id="instr-grid" class="instr-grid"></div>
-</section>
-
-
-
-
-<section class="cta-section">
-  <div class="cta-inner">
-    <div>
-      <h2 class="cta-title">Ви інструктор з водіння?</h2>
-      <p class="cta-sub">Розмістіть свій профіль безкоштовно — учні самі знаходять вас за локацією без реклами і комісій</p>
-      <ul class="cta-list">
-        <li><i class="ti ti-check"></i> Безкоштовне розміщення профілю</li>
-        <li><i class="ti ti-check"></i> Онлайн-бронювання від учнів</li>
-        <li><i class="ti ti-check"></i> Робота з фіксованої зручної точки</li>
-      </ul>
-    </div>
-    <button class="btn-cta-big" onclick="document.getElementById('btn-instr')?.click()"><i class="ti ti-steering-wheel"></i> Стати інструктором</button>
-  </div>
-</section>
-
 <footer>
   <div class="footer-grid">
     <div class="footer-brand">
@@ -935,7 +919,6 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     <div>
       <div class="footer-col-title">Інструкторам</div>
       <div class="footer-col-links">
-        <a class="footer-link" href="#" onclick="document.getElementById('btn-instr')?.click();return false"><i class="ti ti-steering-wheel"></i> Стати інструктором</a>
         <a class="footer-link" href="#"><i class="ti ti-file-text"></i> Умови партнерства</a>
         <a class="footer-link" href="#"><i class="ti ti-help-circle"></i> FAQ</a>
       </div>
@@ -2348,9 +2331,6 @@ function _openInstrPanelDirect() {
 }
 window._openInstrForm = _openInstrPanelDirect;
 
-document.getElementById("btn-instr").addEventListener("click", () => {
-  openPanel("instr-welcome");
-});
 document.getElementById("instr-close").addEventListener("click", closeAll);
 
 // Photo: resize to ≤200px before storing
@@ -2870,7 +2850,7 @@ async function loadInstructors() {
     const grid   = document.getElementById("instr-grid");
     grid.querySelectorAll('.sk-item').forEach(el => el.remove());
     if (snap.empty) {
-      grid.insertAdjacentHTML('beforeend', `<div id="instr-empty" style="grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--text-hint);font-size:14px;line-height:1.9"><i class="ti ti-user-search" style="font-size:40px;display:block;margin-bottom:14px;color:var(--border)"></i>Інструктори з'являться тут після модерації.<br>Якщо ви інструктор — натисніть <strong style="color:var(--text)">«Ви інструктор?»</strong></div>`);
+      grid.insertAdjacentHTML('beforeend', `<div id="instr-empty" style="grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--text-hint);font-size:14px;line-height:1.9"><i class="ti ti-user-search" style="font-size:40px;display:block;margin-bottom:14px;color:var(--border)"></i>Інструктори з'являться тут після модерації.</div>`);
       return;
     }
     const offset = 0;
