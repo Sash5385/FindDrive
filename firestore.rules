@@ -14,7 +14,12 @@ service cloud.firestore {
                || (request.auth != null && resource.data.userId == request.auth.uid);
       // Анкету може надіслати будь-хто (auth необов'язковий), статус тільки pending
       allow create: if request.resource.data.status == 'pending';
-      allow update, delete: if isAdmin();
+      // Інструктор може редагувати власний профіль, але не може змінювати статус
+      allow update: if isAdmin()
+                 || (request.auth != null
+                     && resource.data.userId == request.auth.uid
+                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']));
+      allow delete: if isAdmin();
     }
 
     // Профілі учнів
