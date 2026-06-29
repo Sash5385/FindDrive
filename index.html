@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.193</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.194</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1919,6 +1919,23 @@ async function renderProfileScreen(user) {
       <button id="btn-save-contacts" onclick="window._saveContacts()" style="display:none;background:var(--green);color:#fff;border:none;border-radius:9px;padding:8px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;width:100%"><i class="ti ti-device-floppy"></i> Зберегти контакти</button>
     </div>`;
 
+  // If instructor not found but user logged in with instructor role — show helpful notice
+  if (!instr && _authModalRole === 'instr') {
+    document.getElementById('cab-body').innerHTML = headerHtml + `
+      <div class="cab-section">
+        <div style="background:var(--bg);border-radius:12px;padding:16px;text-align:center">
+          <div style="font-size:28px;color:var(--text-muted)"><i class="ti ti-user-search"></i></div>
+          <p style="margin-top:8px;font-size:13px;color:var(--text);font-weight:500">Профіль інструктора не знайдено</p>
+          <p style="font-size:12px;color:var(--text-muted);margin-top:4px;line-height:1.5">Можливо анкету ще не подано або вона прив'язана до іншого email.<br>Перевірте email або подайте нову анкету.</p>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
+            <button onclick="closeAll();setTimeout(()=>window._openInstrForm?.(),200)" class="btn-submit-instr" style="padding:10px"><i class="ti ti-clipboard-list"></i> Подати анкету інструктора</button>
+            <button onclick="window._signOut?.()" style="background:none;border:.5px solid var(--border);border-radius:9px;padding:9px;font-size:12px;color:var(--text-muted);cursor:pointer;font-family:inherit"><i class="ti ti-logout"></i> Вийти з акаунту</button>
+          </div>
+        </div>
+      </div>`;
+    return;
+  }
+
   if (instr) {
     const statusLabel = { pending: '⏳ На розгляді', approved: '✓ Активний', rejected: '✗ Відхилено' };
     document.getElementById('cab-body').innerHTML = headerHtml + `
@@ -2692,7 +2709,7 @@ instrForm.addEventListener("input", e => { e.target.style.borderColor = ""; });
 document.getElementById("btn-submit-instr").addEventListener("click", async () => {
   const name  = instrForm.querySelector('[name="name"]').value.trim();
   const phone = instrForm.querySelector('[name="phone"]').value.trim();
-  const email = instrForm.querySelector('[name="email"]').value.trim();
+  const email = instrForm.querySelector('[name="email"]').value.trim().toLowerCase();
   const pass  = instrForm.querySelector('[name="instr-pass"]')?.value || '';
   const alreadyLoggedIn = !!auth.currentUser;
 
@@ -2757,6 +2774,9 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
       }
     }
   }
+
+  // Resolve uid one final time in case auth resolved after our initial check
+  uid = uid || auth.currentUser?.uid || null;
 
   try {
     await addDoc(collection(db, "instructors"), {
@@ -3707,12 +3727,33 @@ window._submitReschedule = async function(bookingId) {
 };
 
 async function getMyInstrProfile(user) {
+  // Query 1: by userId (fastest path)
   try {
     const s1 = await getDocs(query(collection(db,'instructors'),where('userId','==',user.uid)));
     if (!s1.empty) return { id:s1.docs[0].id, ...s1.docs[0].data() };
-    if (user.email) {
-      const s2 = await getDocs(query(collection(db,'instructors'),where('email','==',user.email)));
-      if (!s2.empty) return { id:s2.docs[0].id, ...s2.docs[0].data() };
+  } catch(e) { console.warn('getMyInstrProfile userId query failed:', e?.code||e); }
+
+  // Query 2: by email fallback (handles userId=null or case where uid changed)
+  if (!user.email) return null;
+  const emailLower = user.email.toLowerCase();
+  try {
+    const s2 = await getDocs(query(collection(db,'instructors'),where('email','==',user.email)));
+    if (!s2.empty) {
+      const d = s2.docs[0];
+      // Patch userId if it was missing or wrong
+      if (!d.data().userId) updateDoc(doc(db,'instructors',d.id),{userId:user.uid}).catch(()=>{});
+      return { id:d.id, ...d.data() };
+    }
+  } catch(e) { console.warn('getMyInstrProfile email query failed:', e?.code||e); }
+
+  // Query 3: lowercase email fallback (handles mixed-case mismatch on registration)
+  if (emailLower === user.email) return null;
+  try {
+    const s3 = await getDocs(query(collection(db,'instructors'),where('email','==',emailLower)));
+    if (!s3.empty) {
+      const d = s3.docs[0];
+      if (!d.data().userId) updateDoc(doc(db,'instructors',d.id),{userId:user.uid}).catch(()=>{});
+      return { id:d.id, ...d.data() };
     }
   } catch(e) {}
   return null;
