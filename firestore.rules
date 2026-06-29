@@ -11,14 +11,20 @@ service cloud.firestore {
     match /instructors/{docId} {
       allow read: if isAdmin()
                || resource.data.status == 'approved'
-               || (request.auth != null && resource.data.userId == request.auth.uid);
+               || (request.auth != null && resource.data.userId == request.auth.uid)
+               || (request.auth != null && resource.data.email == request.auth.token.email);
       // Анкету може надіслати будь-хто (auth необов'язковий), статус тільки pending
       allow create: if request.resource.data.status == 'pending';
       // Інструктор може редагувати власний профіль, але не може змінювати статус
       allow update: if isAdmin()
                  || (request.auth != null
                      && resource.data.userId == request.auth.uid
-                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']));
+                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']))
+                 // Дозволяє прив'язати userId якщо він порожній і email співпадає
+                 || (request.auth != null
+                     && resource.data.userId == null
+                     && resource.data.email == request.auth.token.email
+                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['userId']));
       allow delete: if isAdmin();
     }
 

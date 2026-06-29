@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.200</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.201</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1318,7 +1318,13 @@ function closeAll() {
 document.getElementById("cab-overlay").addEventListener("click", closeAll);
 window.openPanel = openPanel;
 window.closeAll  = closeAll;
-window._signOut  = async () => { try { await signOut(auth); } catch(e) {} window._myInstrId = null; closeAll(); };
+window._signOut  = async () => {
+  const uid = auth.currentUser?.uid;
+  try { await signOut(auth); } catch(e) {}
+  window._myInstrId = null;
+  if (uid) localStorage.removeItem(`myInstrId_${uid}`);
+  closeAll();
+};
 window._setStudentLessonDur = async (dur) => {
   document.querySelectorAll('.student-dur-btn').forEach(b =>
     b.classList.toggle('active', parseInt(b.dataset.dur) === dur));
@@ -3760,27 +3766,38 @@ window._submitReschedule = async function(bookingId) {
 };
 
 async function getMyInstrProfile(user) {
-  // Fast path: direct doc get using cached ID (works even for pending status)
-  if (window._myInstrId) {
+  const lsKey = `myInstrId_${user.uid}`;
+
+  // Fast path 1: localStorage cache (survives page reloads)
+  const lsId = window._myInstrId || localStorage.getItem(lsKey);
+  if (lsId) {
     try {
-      const cached = await getDoc(doc(db, 'instructors', window._myInstrId));
-      if (cached.exists()) return { id: cached.id, ...cached.data() };
-    } catch(e) { window._myInstrId = null; }
+      const cached = await getDoc(doc(db, 'instructors', lsId));
+      if (cached.exists()) {
+        window._myInstrId = lsId;
+        localStorage.setItem(lsKey, lsId);
+        return { id: lsId, ...cached.data() };
+      } else {
+        localStorage.removeItem(lsKey);
+        window._myInstrId = null;
+      }
+    } catch(e) { /* fall through to queries */ }
   }
 
   function _cacheAndReturn(d) {
     window._myInstrId = d.id;
+    localStorage.setItem(lsKey, d.id);
     if (!d.data().userId) updateDoc(doc(db,'instructors',d.id),{userId:user.uid}).catch(()=>{});
     return { id:d.id, ...d.data() };
   }
 
-  // Query 1: by userId (works after rules fix — instructor can read own doc)
+  // Query 1: by userId
   try {
     const s1 = await getDocs(query(collection(db,'instructors'),where('userId','==',user.uid)));
-    if (!s1.empty) { window._myInstrId = s1.docs[0].id; return { id:s1.docs[0].id, ...s1.docs[0].data() }; }
+    if (!s1.empty) return _cacheAndReturn(s1.docs[0]);
   } catch(e) { console.warn('getMyInstrProfile userId query failed:', e?.code||e); }
 
-  // Query 2: by email fallback
+  // Query 2: by email (works after rules fix — email == token.email is verifiable by Firestore)
   if (!user.email) return null;
   const emailLower = user.email.toLowerCase();
   try {
