@@ -749,7 +749,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.190</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.191</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -4461,15 +4461,15 @@ window._addInstrMarker = function(inst, id) {
         ? `<img src="${inst.carPhoto}" style="width:100%;height:90px;object-fit:cover;display:block">`
         : `<div style="width:100%;height:90px;background:linear-gradient(135deg,#ddeef8,#c8daea);display:flex;align-items:center;justify-content:center;font-size:40px;opacity:.25">🚗</div>`}
       ${inst.gearbox ? `<div style="position:absolute;top:6px;right:6px;background:rgba(13,42,26,.68);color:#fff;border-radius:10px;padding:2px 8px;font-size:10px;font-weight:500;backdrop-filter:blur(4px)">${_esc(inst.gearbox)}</div>` : ''}
-      <div style="position:absolute;bottom:-22px;left:10px;width:46px;height:46px;border-radius:50%;overflow:hidden;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.22);z-index:2">
+      <div style="position:absolute;bottom:-22px;left:10px;width:46px;height:46px;border-radius:50%;overflow:hidden;border:3px solid #1a7a4a;box-shadow:0 2px 8px rgba(0,0,0,.22);z-index:2">
         ${inst.photo
           ? `<img src="${inst.photo}" style="width:100%;height:100%;object-fit:cover">`
-          : `<div style="width:100%;height:100%;background:#e8f4ee;color:#1a7a4a;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">${_esc(_popInitials)}</div>`}
+          : `<div style="width:100%;height:100%;background:#0d4a2a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700">${_esc(_popInitials)}</div>`}
       </div>
     </div>
-    <div style="padding:28px 12px 12px 64px;background-color:#f0f2f0;background-image:radial-gradient(circle 120px at 10% 20%,rgba(168,240,192,.6),transparent 70%),radial-gradient(circle 100px at 90% 80%,rgba(160,216,248,.55),transparent 70%)">
-      <div style="color:#5a7a6a;font-size:12px;margin-bottom:9px">⭐ ${inst.rating||'—'} · ${inst.price ? inst.price+' грн/год' : '—'}</div>
-      <button onclick="openInstrProfile('${_esc(id||'')}',${mpParam})" style="width:100%;background:#1a7a4a;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:500">Записатись</button>
+    <div style="padding:28px 12px 12px 64px;background:#1a7a4a">
+      <div style="color:rgba(255,255,255,.8);font-size:12px;margin-bottom:9px">⭐ ${inst.rating||'—'} · ${inst.price ? inst.price+' грн/год' : '—'}</div>
+      <button onclick="openInstrProfile('${_esc(id||'')}',${mpParam})" style="width:100%;background:#fff;color:#1a7a4a;border:none;border-radius:7px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">Записатись</button>
     </div>
   </div>`);
   marker.on('click', () => marker.openPopup());
