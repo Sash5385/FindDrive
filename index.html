@@ -260,7 +260,7 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .auth-modal-overlay{position:fixed;inset:0;background:rgba(13,42,26,.5);z-index:1200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .auth-modal-box{background:var(--white);border-radius:18px;padding:0;max-width:480px;width:100%;position:relative;box-shadow:0 12px 60px rgba(13,42,26,.22);animation:authBoxIn .28s cubic-bezier(.34,1.56,.64,1);border:1px solid #000;overflow:hidden}
 .auth-modal-head{background:var(--green);padding:18px 20px 16px;display:flex;align-items:center;justify-content:space-between}
-.auth-modal-body{padding:28px 28px 24px;background:var(--bg)}
+.auth-modal-body{padding:28px 28px 24px;background:var(--bg) radial-gradient(circle 220px at 15% 20%,rgba(168,240,192,.55),transparent 70%),radial-gradient(circle 180px at 85% 15%,rgba(240,224,96,.42),transparent 70%),radial-gradient(circle 200px at 10% 80%,rgba(240,168,208,.42),transparent 70%),radial-gradient(circle 220px at 88% 85%,rgba(160,216,248,.48),transparent 70%)}
 @keyframes authBoxIn{from{opacity:0;transform:scale(.9) translateY(20px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .auth-modal-close{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.75);font-size:20px;padding:4px;border-radius:7px;transition:color .15s,background .15s;display:flex;align-items:center;line-height:1;flex-shrink:0}
 .auth-modal-close:hover{color:#fff;background:rgba(255,255,255,.15)}
@@ -322,7 +322,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 /* CABINET */
 .cab-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:1049;opacity:0;pointer-events:none;transition:opacity .3s}
 .cab-overlay.open{opacity:1;pointer-events:all}
-.cabinet{position:fixed;top:0;right:0;width:320px;height:100vh;background:var(--bg);z-index:1050;display:flex;flex-direction:column;box-shadow:-4px 0 32px rgba(0,0,0,.14);opacity:0;pointer-events:none;transform:scale(.82);transform-origin:right center;transition:opacity .18s ease,transform .45s cubic-bezier(.34,1.56,.64,1)}
+.cabinet{position:fixed;top:0;right:0;width:320px;height:100vh;background:var(--bg) radial-gradient(circle 340px at 10% 12%,rgba(168,240,192,.55),transparent 70%),radial-gradient(circle 280px at 88% 22%,rgba(240,224,96,.42),transparent 70%),radial-gradient(circle 300px at 8% 58%,rgba(240,168,208,.42),transparent 70%),radial-gradient(circle 320px at 86% 68%,rgba(160,216,248,.48),transparent 70%),radial-gradient(circle 260px at 50% 92%,rgba(192,184,248,.38),transparent 70%);z-index:1050;display:flex;flex-direction:column;box-shadow:-4px 0 32px rgba(0,0,0,.14);opacity:0;pointer-events:none;transform:scale(.82);transform-origin:right center;transition:opacity .18s ease,transform .45s cubic-bezier(.34,1.56,.64,1)}
 .cabinet.open{opacity:1;pointer-events:all;transform:scale(1)}
 @media(min-width:900px){.cabinet{width:560px}.instr-wide{width:620px}.instr-profile-panel{width:720px}}
 @media(min-width:1280px){.cabinet{width:720px}.instr-wide{width:780px}.instr-profile-panel{width:960px}}
@@ -740,7 +740,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.183</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.184</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -4292,7 +4292,7 @@ window._addInstrMarker = function(inst, id) {
         ${inst.mpLabel ? `<div style="color:rgba(255,255,255,.75);font-size:10px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><i class="ti ti-map-pin" style="font-size:9px"></i> ${_esc(inst.mpLabel)}</div>` : ''}
       </div>
     </div>
-    <div style="padding:10px 12px;background:#f0f2f0">
+    <div style="padding:10px 12px;background:#f0f2f0 radial-gradient(circle 120px at 10% 20%,rgba(168,240,192,.6),transparent 70%),radial-gradient(circle 100px at 90% 80%,rgba(160,216,248,.55),transparent 70%)">
       ${inst.carPhoto ? `<img src="${inst.carPhoto}" style="width:100%;height:68px;border-radius:7px;object-fit:cover;margin-bottom:8px;display:block">` : ''}
       <div style="color:#5a7a6a;font-size:12px;margin-bottom:9px">⭐ ${inst.rating||'—'} · ${inst.price ? inst.price+' грн/год' : '—'}</div>
       <button onclick="openInstrProfile('${_esc(id||'')}',${mpParam})" style="width:100%;background:#1a7a4a;color:#fff;border:none;border-radius:7px;padding:7px 12px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:500">Записатись</button>
