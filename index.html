@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.218</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.219</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -3002,7 +3002,7 @@ window._activeTagFilters = new Set();
 window._favs = new Set(JSON.parse(localStorage.getItem('fd_fav') || '[]'));
 function _saveFavs() { localStorage.setItem('fd_fav', JSON.stringify([...window._favs])); }
 function _rvTheme(id) { let h=0; for(const c of id) h=(h*31+c.charCodeAt(0))&0xff; return THEMES[h%THEMES.length]; }
-function _addToRV(id) {
+window._addToRV = function(id) {
   let rv = JSON.parse(localStorage.getItem('fd_rv')||'[]');
   rv = rv.filter(x=>x!==id); rv.unshift(id); if(rv.length>5) rv=rv.slice(0,5);
   localStorage.setItem('fd_rv', JSON.stringify(rv)); _renderRV();
@@ -4371,7 +4371,7 @@ function openInstrProfile(id, mpIdx) {
 
   if (window.openPanel) window.openPanel('instr-profile');
   history.pushState({ instrId: id }, '', location.pathname + '?instr=' + encodeURIComponent(id));
-  _addToRV(id);
+  window._addToRV?.(id);
   window._loadProfReviews?.(id);
   setTimeout(() => {
     window._openBooking?.(id);
