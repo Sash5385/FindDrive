@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.201</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.202</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2029,10 +2029,13 @@ async function loadInstrSettings(instr, container) {
   let pendingFacePhoto = null;
   let pendingCarPhoto  = null;
 
-  window._onInstrFaceChange = async (input) => {
+  window._onInstrFaceChange = (input) => {
     const file = input.files[0]; if (!file) return;
-    pendingFacePhoto = await resizePhoto(file, 200);
-    renderAll();
+    input.value = '';
+    _showPhotoCrop(file, (data) => {
+      pendingFacePhoto = data;
+      renderAll();
+    });
   };
   window._onInstrCarChange = async (input) => {
     const file = input.files[0]; if (!file) return;
