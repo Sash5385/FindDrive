@@ -7,31 +7,23 @@ service cloud.firestore {
           && request.auth.token.email == 'sash5385@gmail.com';
     }
 
-    // Інструктори
     match /instructors/{docId} {
-      // get (one doc) — broad OR is fine
       allow get: if isAdmin()
               || resource.data.status == 'approved'
               || (request.auth != null && resource.data.userId == request.auth.uid)
               || (request.auth != null && resource.data.email == request.auth.token.email);
-      // list (collection query) — Firestore can verify these filter-matching conditions
       allow list: if isAdmin()
                || resource.data.status == 'approved'
                || (request.auth != null && resource.data.userId == request.auth.uid)
                || (request.auth != null && resource.data.email == request.auth.token.email);
-      // Анкету може надіслати будь-хто (auth необов'язковий), статус тільки pending
       allow create: if request.resource.data.status == 'pending';
-      // Інструктор може редагувати власний профіль, але не може змінювати статус
       allow update: if isAdmin()
-                 // власник по userId
                  || (request.auth != null
                      && resource.data.userId == request.auth.uid
                      && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']))
-                 // власник по email (fallback коли userId ще не прив'язаний)
                  || (request.auth != null
                      && resource.data.email == request.auth.token.email
                      && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']))
-                 // прив'язати userId (тільки цей ключ, email має збігатись)
                  || (request.auth != null
                      && resource.data.userId == null
                      && resource.data.email == request.auth.token.email
@@ -39,41 +31,28 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Профілі учнів
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
       allow read: if isAdmin();
     }
 
-    // Бронювання
     match /bookings/{bookingId} {
-      // Читання відкрите — потрібно для перевірки вільних слотів
       allow read: if true;
-
-      // Клієнт бронює (clientId == своя uid, статус pending)
       allow create: if request.auth != null
                     && request.resource.data.clientId == request.auth.uid
                     && request.resource.data.status == 'pending';
-
-      // Клієнт скасовує свій запис (тільки status → cancelled)
+      allow update: if isAdmin();
       allow update: if request.auth != null
                     && resource.data.clientId == request.auth.uid
                     && request.resource.data.status == 'cancelled'
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
-
-      // Інструктор підтверджує / скасовує (по userId)
       allow update: if request.auth != null
                     && resource.data.instructorUserId == request.auth.uid
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
-
-      // Інструктор підтверджує / скасовує (fallback по email, якщо userId не прив'язаний)
       allow update: if request.auth != null
                     && resource.data.instructorEmail == request.auth.token.email
-                    && resource.data.instructorEmail != ''
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
-
-      // Адмін — повний доступ
-      allow update, delete: if isAdmin();
+      allow delete: if isAdmin();
     }
   }
 }
