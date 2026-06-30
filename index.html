@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.204</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.205</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1007,7 +1007,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       <button class="auth-modal-close" onclick="document.getElementById('crop-modal').style.display='none'" aria-label="Закрити"><i class="ti ti-x"></i></button>
     </div>
     <div class="auth-modal-body" style="text-align:center;padding:20px 20px 22px">
-      <div class="crop-wrap"><canvas id="crop-canvas" width="240" height="240" style="border-radius:50%;cursor:grab;touch-action:none"></canvas></div>
+      <div class="crop-wrap" id="crop-wrap"><canvas id="crop-canvas" width="240" height="240" style="border-radius:50%;cursor:grab;touch-action:none"></canvas></div>
       <div style="display:flex;align-items:center;gap:10px;margin:14px 0 6px">
         <i class="ti ti-zoom-out" style="color:var(--text-muted);font-size:18px"></i>
         <input type="range" id="crop-zoom" min="50" max="300" value="100" style="flex:1;accent-color:var(--green)">
@@ -2585,9 +2585,12 @@ function _showPhotoCrop(file, onConfirm, opts) {
 
   const modal = document.getElementById('crop-modal');
   const canvas = document.getElementById('crop-canvas');
+  const wrap = document.getElementById('crop-wrap');
   canvas.width = CW; canvas.height = CH;
   canvas.style.borderRadius = rect ? '9px' : '50%';
   canvas.style.width = CW + 'px'; canvas.style.height = CH + 'px';
+  wrap.style.width = CW + 'px'; wrap.style.height = CH + 'px';
+  wrap.style.borderRadius = rect ? '9px' : '50%';
 
   const ctx = canvas.getContext('2d');
   const zoomSlider = document.getElementById('crop-zoom');
