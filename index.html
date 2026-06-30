@@ -773,7 +773,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.225</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.226</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2523,21 +2523,14 @@ window.openChat = async function(instrId) {
   window._currentChatRole = 'student';
   document.getElementById('chat-panel-title').textContent = instr.name || 'Інструктор';
   window._closeChatPanel = () => closeAll();
-  try {
-    const chatRef = doc(db, 'chats', chatId);
-    const snap = await getDoc(chatRef);
-    if (!snap.exists()) {
-      await setDoc(chatRef, {
-        instrId, instrName: instr.name || '',
-        instrUserId: instr.userId || null, instrEmail: instr.email || '',
-        studentId: user.uid, studentName: user.displayName || user.email || '',
-        lastMessage: '', lastAt: serverTimestamp(),
-        unreadByInstr: 0, unreadByStudent: 0,
-      });
-    } else if ((snap.data().unreadByStudent || 0) > 0) {
-      updateDoc(chatRef, { unreadByStudent: 0 }).catch(() => {});
-    }
-  } catch(e) { console.warn('openChat init:', e.message); }
+  const chatRef = doc(db, 'chats', chatId);
+  // setDoc+merge: creates doc if new, preserves existing fields (unread counters etc.)
+  setDoc(chatRef, {
+    instrId, instrName: instr.name || '',
+    instrUserId: instr.userId || null, instrEmail: instr.email || '',
+    studentId: user.uid, studentName: user.displayName || user.email || '',
+    unreadByStudent: 0,
+  }, { merge: true }).catch(e => console.warn('openChat setDoc:', e.code, e.message));
   closeAll();
   setTimeout(() => { openPanel('chat-panel'); listenChatMessages(chatId, user.uid, 'student'); }, 150);
 };
@@ -2563,19 +2556,21 @@ window._sendChat = async function() {
   input.value = '';
   const role = window._currentChatRole || 'student';
   const otherUnread = role === 'student' ? 'unreadByInstr' : 'unreadByStudent';
-  const chatRef = doc(db, 'chats', window._currentChatId);
+  const chatId  = window._currentChatId;
+  const chatRef = doc(db, 'chats', chatId);
   try {
     await Promise.all([
-      addDoc(collection(db, 'chats', window._currentChatId, 'messages'), {
+      addDoc(collection(db, 'chats', chatId, 'messages'), {
         text, from: role, uid: user.uid,
         senderName: user.displayName || user.email || '',
         at: serverTimestamp(),
       }),
-      updateDoc(chatRef, { lastMessage: text, lastAt: serverTimestamp(), [otherUnread]: increment(1) }),
+      // setDoc+merge works even if chat doc doesn't exist yet (create fallback)
+      setDoc(chatRef, { lastMessage: text, lastAt: serverTimestamp(), [otherUnread]: increment(1) }, { merge: true }),
     ]);
   } catch(e) {
-    console.error('sendChat:', e);
-    showToast('Помилка', 'Не вдалось надіслати', 'error');
+    console.error('sendChat:', e.code, e.message);
+    showToast('Помилка', (e.code || e.message || 'Не вдалось надіслати'), 'error');
     input.value = text;
   }
 };
