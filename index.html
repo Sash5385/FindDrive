@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.203</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.204</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2037,10 +2037,13 @@ async function loadInstrSettings(instr, container) {
       renderAll();
     });
   };
-  window._onInstrCarChange = async (input) => {
+  window._onInstrCarChange = (input) => {
     const file = input.files[0]; if (!file) return;
-    pendingCarPhoto = await resizePhoto(file, 400);
-    renderAll();
+    input.value = '';
+    _showPhotoCrop(file, (data) => {
+      pendingCarPhoto = data;
+      renderAll();
+    }, { rect: true });
   };
   window._saveInstrPhotos = async (instrId) => {
     const btn = document.getElementById('btn-save-instr-photos');
@@ -2540,12 +2543,15 @@ photoInput.addEventListener("change", e => {
 
 const carPhotoInput = document.getElementById("car-photo-input");
 document.getElementById("car-photo-upload-area").addEventListener("click", () => carPhotoInput.click());
-carPhotoInput.addEventListener("change", async e => {
+carPhotoInput.addEventListener("change", e => {
   const file = e.target.files[0];
   if (!file) return;
-  instrCarPhotoData = await resizePhoto(file, 400);
-  document.getElementById("car-photo-preview").innerHTML =
-    `<img src="${instrCarPhotoData}" style="width:100%;height:100%;object-fit:cover">`;
+  carPhotoInput.value = '';
+  _showPhotoCrop(file, (data) => {
+    instrCarPhotoData = data;
+    document.getElementById("car-photo-preview").innerHTML =
+      `<img src="${instrCarPhotoData}" style="width:100%;height:100%;object-fit:cover">`;
+  }, { rect: true });
 });
 
 // Student photo upload
@@ -2572,9 +2578,17 @@ window._onStudentPhotoChange = function(input) {
   });
 };
 
-function _showPhotoCrop(file, onConfirm) {
+function _showPhotoCrop(file, onConfirm, opts) {
+  const rect = opts && opts.rect;
+  const CW = rect ? 320 : 240, CH = rect ? 213 : 240;
+  const cx = CW / 2, cy = CH / 2;
+
   const modal = document.getElementById('crop-modal');
   const canvas = document.getElementById('crop-canvas');
+  canvas.width = CW; canvas.height = CH;
+  canvas.style.borderRadius = rect ? '9px' : '50%';
+  canvas.style.width = CW + 'px'; canvas.style.height = CH + 'px';
+
   const ctx = canvas.getContext('2d');
   const zoomSlider = document.getElementById('crop-zoom');
   const img = new Image();
@@ -2582,16 +2596,16 @@ function _showPhotoCrop(file, onConfirm) {
   let scale = 1, ox = 0, oy = 0, dragging = false, lastX = 0, lastY = 0;
 
   function draw() {
-    ctx.clearRect(0, 0, 240, 240);
+    ctx.clearRect(0, 0, CW, CH);
     ctx.drawImage(img, ox, oy, img.width * scale, img.height * scale);
   }
 
   img.onload = () => {
     URL.revokeObjectURL(url);
-    const minScale = Math.max(240 / img.width, 240 / img.height);
+    const minScale = Math.max(CW / img.width, CH / img.height);
     scale = minScale;
-    ox = (240 - img.width * scale) / 2;
-    oy = (240 - img.height * scale) / 2;
+    ox = (CW - img.width * scale) / 2;
+    oy = (CH - img.height * scale) / 2;
     zoomSlider.min = Math.round(minScale * 100);
     zoomSlider.max = Math.round(minScale * 100 * 4);
     zoomSlider.value = Math.round(scale * 100);
@@ -2601,8 +2615,8 @@ function _showPhotoCrop(file, onConfirm) {
 
   zoomSlider.oninput = (e) => {
     const newScale = e.target.value / 100;
-    ox = 120 - (120 - ox) * newScale / scale;
-    oy = 120 - (120 - oy) * newScale / scale;
+    ox = cx - (cx - ox) * newScale / scale;
+    oy = cy - (cy - oy) * newScale / scale;
     scale = newScale;
     draw();
   };
@@ -2623,12 +2637,13 @@ function _showPhotoCrop(file, onConfirm) {
   canvas.ontouchend   = endDrag;
 
   document.getElementById('crop-confirm-btn').onclick = () => {
+    const outW = rect ? 400 : 200, outH = rect ? 267 : 200;
     const out = document.createElement('canvas');
-    out.width = out.height = 200;
+    out.width = outW; out.height = outH;
     const octx = out.getContext('2d');
-    octx.beginPath(); octx.arc(100, 100, 100, 0, Math.PI * 2); octx.clip();
-    const r = 200 / 240;
-    octx.drawImage(img, ox * r, oy * r, img.width * scale * r, img.height * scale * r);
+    if (!rect) { octx.beginPath(); octx.arc(100, 100, 100, 0, Math.PI * 2); octx.clip(); }
+    const rw = outW / CW, rh = outH / CH;
+    octx.drawImage(img, ox * rw, oy * rh, img.width * scale * rw, img.height * scale * rh);
     modal.style.display = 'none';
     onConfirm(out.toDataURL('image/jpeg', 0.88));
   };
