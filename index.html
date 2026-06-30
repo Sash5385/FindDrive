@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.216</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.217</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -3266,40 +3266,50 @@ function _noGapConflict(startMin, lessonMin, busyBookings) {
 }
 
 window._openBooking = async function(instrId) {
-  const profD = (window._instrProfiles||{})[instrId];
-  const box = document.getElementById('prof-booking');
-  if (!profD || !box) return;
-  window._ga('booking_started', { instructor_id: instrId, instructor_name: profD.name||'', city: profD.area||'' });
-  box.innerHTML = '<div class="slot-loading"><i class="ti ti-loader"></i></div>';
-  await auth.authStateReady();
-  const userNow = auth.currentUser;
-  if (!userNow) {
-    box.innerHTML = `<div class="booking-login-prompt">
-      <p>Увійдіть, щоб записатись на заняття</p>
-      <button class="btn-book-login" onclick="window.closeAll?.();setTimeout(()=>document.getElementById('btn-login')?.click(),200)">
-        <i class="ti ti-login"></i> Увійти
-      </button>
-    </div>`;
-    return;
-  }
-  if (profD.userId && userNow.uid === profD.userId) {
-    box.innerHTML = `<div class="booking-login-prompt"><p style="color:var(--text-muted)"><i class="ti ti-info-circle"></i> Це ваш власний профіль</p></div>`;
-    return;
-  }
   try {
-    const snap = await getDoc(doc(db, 'instructors', instrId));
-    if (snap.exists()) {
-      const fresh = snap.data();
-      window._instrProfiles[instrId] = {
-        ...profD,
-        availability: fresh.availability || {},
-        days: fresh.days || profD.days || [],
-        time_from: fresh.time_from || profD.time_from || '',
-        time_to: fresh.time_to || profD.time_to || '',
-      };
+    const profD = (window._instrProfiles||{})[instrId];
+    const box = document.getElementById('prof-booking');
+    if (!profD || !box) { console.warn('_openBooking: no profD or box', instrId); return; }
+    window._ga('booking_started', { instructor_id: instrId, instructor_name: profD.name||'', city: profD.area||'' });
+    box.innerHTML = '<div class="slot-loading"><i class="ti ti-loader"></i></div>';
+    // Wait for Firebase Auth to initialize
+    let userNow = auth.currentUser;
+    if (!userNow) {
+      try { await auth.authStateReady(); } catch(_) {}
+      userNow = auth.currentUser;
     }
-  } catch(e) { console.warn('_openBooking getDoc:', e.message); }
-  renderBookingDates(box, instrId, window._instrProfiles[instrId]);
+    if (!userNow) {
+      box.innerHTML = `<div class="booking-login-prompt">
+        <p>Увійдіть, щоб записатись на заняття</p>
+        <button class="btn-book-login" onclick="window.closeAll?.();setTimeout(()=>document.getElementById('btn-login')?.click(),200)">
+          <i class="ti ti-login"></i> Увійти
+        </button>
+      </div>`;
+      return;
+    }
+    if (profD.userId && userNow.uid === profD.userId) {
+      box.innerHTML = `<div class="booking-login-prompt"><p style="color:var(--text-muted)"><i class="ti ti-info-circle"></i> Це ваш власний профіль</p></div>`;
+      return;
+    }
+    try {
+      const snap = await getDoc(doc(db, 'instructors', instrId));
+      if (snap.exists()) {
+        const fresh = snap.data();
+        window._instrProfiles[instrId] = {
+          ...profD,
+          availability: fresh.availability || {},
+          days: fresh.days || profD.days || [],
+          time_from: fresh.time_from || profD.time_from || '',
+          time_to: fresh.time_to || profD.time_to || '',
+        };
+      }
+    } catch(e) { console.warn('_openBooking getDoc:', e.message); }
+    renderBookingDates(box, instrId, window._instrProfiles[instrId]);
+  } catch(e) {
+    console.error('_openBooking error:', e);
+    const box = document.getElementById('prof-booking');
+    if (box) box.innerHTML = `<p class="booking-hint">Помилка завантаження. <button onclick="window._openBooking('${instrId}')" style="background:none;border:none;color:var(--green);cursor:pointer;font-family:inherit;font-size:13px;text-decoration:underline">Спробувати ще</button></p>`;
+  }
 };
 
 const DAY_UA_FULL = ['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
@@ -3336,8 +3346,11 @@ function renderBookingDates(box, instrId, d) {
     if (allDates.length >= 28) break;
   }
   if (!allDates.length) {
-    box.innerHTML = `<p class="booking-hint">Інструктор ще не відкрив слоти для запису. Зверніться до нього напряму або завітайте пізніше.</p>
-      <button onclick="window._openBooking('${esc(instrId)}')" style="margin-top:8px;background:none;border:.5px solid var(--border);border-radius:9px;padding:6px 14px;font-size:12px;color:var(--text-muted);cursor:pointer;font-family:inherit;display:block;width:100%"><i class="ti ti-refresh"></i> Оновити</button>`;
+    box.innerHTML = `<div style="text-align:center;padding:16px 0">
+      <div style="font-size:28px;margin-bottom:8px;opacity:.4">📅</div>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 10px;line-height:1.5">Інструктор ще не відкрив слоти для запису.<br>Зверніться напряму або завітайте пізніше.</p>
+      <button onclick="window._openBooking('${esc(instrId)}')" style="background:var(--green-light);border:.5px solid var(--border);border-radius:9px;padding:7px 18px;font-size:12px;color:var(--green);cursor:pointer;font-family:inherit;font-weight:500"><i class="ti ti-refresh"></i> Оновити</button>
+    </div>`;
     return;
   }
 
@@ -4321,7 +4334,7 @@ function openInstrProfile(id, mpIdx) {
     <div class="prof-divider"></div>
     <div class="prof-booking-section">
       <div class="booking-label">Записатись на заняття</div>
-      <div id="prof-booking"></div>
+      <div id="prof-booking"><div class="slot-loading"><i class="ti ti-loader"></i></div></div>
     </div>
     ${mps.length ? `
       <div class="prof-divider"></div>
