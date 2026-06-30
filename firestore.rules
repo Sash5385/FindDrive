@@ -70,7 +70,8 @@ service cloud.firestore {
                      || resource.data.instrEmail == request.auth.token.email);
       allow list: if request.auth != null
                   && (resource.data.studentId == request.auth.uid
-                      || resource.data.instrUserId == request.auth.uid);
+                      || resource.data.instrUserId == request.auth.uid
+                      || resource.data.instrEmail == request.auth.token.email);
       allow create: if request.auth != null;
       allow update: if request.auth != null
                     && (resource.data.studentId == request.auth.uid

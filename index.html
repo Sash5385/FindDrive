@@ -773,7 +773,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.226</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.227</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2416,10 +2416,13 @@ function _updateNavBadge() { updateNavBadge(_totalPendingBk + _totalUnreadChats)
 
 function listenChatBadge(uid, role) {
   if (_unsubChatBadge) { _unsubChatBadge(); _unsubChatBadge = null; }
-  const userField   = role === 'instructor' ? 'instrUserId' : 'studentId';
   const unreadField = role === 'instructor' ? 'unreadByInstr' : 'unreadByStudent';
+  // instructor: query by email (instrEmail always set); student: query by uid
+  const userField = role === 'instructor' ? 'instrEmail' : 'studentId';
+  const userVal   = role === 'instructor' ? (auth.currentUser?.email || '') : uid;
+  if (!userVal) return;
   _unsubChatBadge = onSnapshot(
-    query(collection(db, 'chats'), where(userField, '==', uid)),
+    query(collection(db, 'chats'), where(userField, '==', userVal)),
     snap => { _totalUnreadChats = snap.docs.reduce((s,d) => s+(d.data()[unreadField]||0), 0); _updateNavBadge(); },
     () => {}
   );
@@ -2600,23 +2603,26 @@ function loadInstrChats(instr, container) {
   if (!container) return;
   if (_unsubInstrChats) { _unsubInstrChats(); _unsubInstrChats = null; }
   container.innerHTML = '<div class="cab-empty"><i class="ti ti-loader"></i></div>';
-  const uid = auth.currentUser?.uid;
-  if (!uid) return;
+  const email = auth.currentUser?.email;
+  if (!email) return;
+  function renderChats(snap) {
+    if (!snap.size) { container.innerHTML = '<div class="cab-empty" style="color:var(--text-muted)"><i class="ti ti-message-circle-off"></i><br>Повідомлень ще немає</div>'; return; }
+    const chats = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.lastAt?.seconds||0)-(a.lastAt?.seconds||0));
+    container.innerHTML = chats.map(c => {
+      const unread = c.unreadByInstr||0;
+      const sName = c.studentName||'Учень';
+      return `<div class="chat-list-item${unread?' has-unread':''}" onclick="window._openInstrChat('${_esc(c.id)}','${_esc(sName)}')">
+        <i class="ti ti-message-circle" style="font-size:22px;color:var(--green);flex-shrink:0"></i>
+        <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text)">${_esc(sName)}</div><div style="font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(c.lastMessage||'—')}</div></div>
+        ${unread?`<div class="chat-unread-dot">${unread>9?'9+':unread}</div>`:''}
+      </div>`;
+    }).join('');
+  }
+  // query by email — always stored in chat doc, works even if instrUserId is null
   _unsubInstrChats = onSnapshot(
-    query(collection(db, 'chats'), where('instrUserId', '==', uid)),
-    snap => {
-      if (!snap.size) { container.innerHTML = '<div class="cab-empty" style="color:var(--text-muted)"><i class="ti ti-message-circle-off"></i><br>Повідомлень ще немає</div>'; return; }
-      const chats = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.lastAt?.seconds||0)-(a.lastAt?.seconds||0));
-      container.innerHTML = chats.map(c => {
-        const unread = c.unreadByInstr||0;
-        const sName = c.studentName||'Учень';
-        return `<div class="chat-list-item${unread?' has-unread':''}" onclick="window._openInstrChat('${_esc(c.id)}','${_esc(sName)}')">
-          <i class="ti ti-message-circle" style="font-size:22px;color:var(--green);flex-shrink:0"></i>
-          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text)">${_esc(sName)}</div><div style="font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(c.lastMessage||'—')}</div></div>
-          ${unread?`<div class="chat-unread-dot">${unread>9?'9+':unread}</div>`:''}
-        </div>`;
-      }).join('');
-    }, () => { container.innerHTML = '<div class="cab-empty" style="color:var(--text-muted)"><i class="ti ti-message-circle-off"></i><br>Повідомлень ще немає</div>'; }
+    query(collection(db, 'chats'), where('instrEmail', '==', email)),
+    renderChats,
+    () => { container.innerHTML = '<div class="cab-empty" style="color:var(--text-muted)"><i class="ti ti-message-circle-off"></i><br>Повідомлень ще немає</div>'; }
   );
 }
 // ===== END CHAT =====
