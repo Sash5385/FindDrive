@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.214</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.215</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -3270,8 +3270,10 @@ window._openBooking = async function(instrId) {
   const box = document.getElementById('prof-booking');
   if (!profD || !box) return;
   window._ga('booking_started', { instructor_id: instrId, instructor_name: profD.name||'', city: profD.area||'' });
-  const user = auth.currentUser;
-  if (!user) {
+  box.innerHTML = '<div class="slot-loading"><i class="ti ti-loader"></i></div>';
+  await auth.authStateReady();
+  const userNow = auth.currentUser;
+  if (!userNow) {
     box.innerHTML = `<div class="booking-login-prompt">
       <p>Увійдіть, щоб записатись на заняття</p>
       <button class="btn-book-login" onclick="window.closeAll?.();setTimeout(()=>document.getElementById('btn-login')?.click(),200)">
@@ -3280,11 +3282,10 @@ window._openBooking = async function(instrId) {
     </div>`;
     return;
   }
-  if (profD.userId && user.uid === profD.userId) {
+  if (profD.userId && userNow.uid === profD.userId) {
     box.innerHTML = `<div class="booking-login-prompt"><p style="color:var(--text-muted)"><i class="ti ti-info-circle"></i> Це ваш власний профіль</p></div>`;
     return;
   }
-  box.innerHTML = '<div class="slot-loading"><i class="ti ti-loader"></i></div>';
   try {
     const snap = await getDoc(doc(db, 'instructors', instrId));
     if (snap.exists()) {
@@ -3335,7 +3336,8 @@ function renderBookingDates(box, instrId, d) {
     if (allDates.length >= 28) break;
   }
   if (!allDates.length) {
-    box.innerHTML = '<p class="booking-hint">Інструктор ще не відкрив слоти для запису. Зверніться до нього напряму або завітайте пізніше.</p>';
+    box.innerHTML = `<p class="booking-hint">Інструктор ще не відкрив слоти для запису. Зверніться до нього напряму або завітайте пізніше.</p>
+      <button onclick="window._openBooking('${esc(instrId)}')" style="margin-top:8px;background:none;border:.5px solid var(--border);border-radius:9px;padding:6px 14px;font-size:12px;color:var(--text-muted);cursor:pointer;font-family:inherit;display:block;width:100%"><i class="ti ti-refresh"></i> Оновити</button>`;
     return;
   }
 
@@ -3355,7 +3357,8 @@ function renderBookingDates(box, instrId, d) {
 
   function dateGridHtml(mpIdx) {
     const dates = getFilteredDates(mpIdx);
-    if (!dates.length) return '<p class="booking-hint" style="margin-top:8px">Немає дат для цієї точки</p><div id="slot-picker"></div>';
+    if (!dates.length) return `<p class="booking-hint" style="margin-top:8px">Немає дат для цієї точки зустрічі</p>${mpIdx!==null?`<button onclick="window._bkSetMp(${mpIdx})" style="margin-top:4px;background:none;border:.5px solid var(--border);border-radius:9px;padding:5px 12px;font-size:12px;color:var(--text-muted);cursor:pointer;font-family:inherit"><i class="ti ti-calendar"></i> Показати всі дати</button>`:''}
+<div id="slot-picker"></div>`;
     return `<div class="date-grid">
       ${dates.map(({ dt, iso }) => `<button class="date-chip" data-date="${iso}" onclick="window._pickDate('${esc(instrId)}','${iso}')">
         <span class="date-chip-day">${DAY_UK_S[dt.getDay()]}</span>
@@ -3913,7 +3916,9 @@ async function loadInstrCombined(instr, container) {
           ? `<span style="position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:var(--green)"></span>`
           : '';
         const click = !past ? `onclick="window._combPickDate('${ds}')"` : '';
-        cells += `<div class="${cls}" style="position:relative" ${click}>${d}${dot}</div>`;
+        const hasLoc = !past && localAvail[ds]?.locationLat;
+        const locDot = hasLoc ? `<span style="position:absolute;top:2px;right:2px;width:5px;height:5px;border-radius:50%;background:#185fa5;opacity:.85"></span>` : '';
+        cells += `<div class="${cls}" style="position:relative" ${click}>${d}${dot}${locDot}</div>`;
       }
       return `<div class="av-cal-wrap">
         <div class="av-cal-header">
@@ -4001,9 +4006,22 @@ async function loadInstrCombined(instr, container) {
       </div>` : '';
 
       const avDurs = Array.isArray(avCurr.durations) && avCurr.durations.length ? avCurr.durations : [60];
+      const mpSectionHtml = pts.length
+        ? `<div class="mp-sel-list" style="margin-bottom:6px">${pts.map((pt,pi)=>{ const lbl=typeof pt==='string'?pt:pt.label; const hasCoords=typeof pt==='object'&&pt.lat; return `<button class="mp-sel-chip${pi===savedMpIdx?' active':''}" onclick="window._selectMpChip(this,'${pi}')"><span style="flex:1;text-align:left">${hasCoords?'<i class=\'ti ti-map-pin\' style=\'font-size:9px;margin-right:3px\'></i>':'<i class=\'ti ti-map-pin-off\' style=\'font-size:9px;margin-right:3px;opacity:.4\'></i>'}${esc(lbl)}</span></button>`; }).join('')}</div>
+          <div id="comb-mp-preview"${savedMpIdx < 0 ? ' style="display:none"' : ''}>${previewHtml}</div>
+          <div class="avail-save-row" style="margin-top:6px">
+            <button class="btn-bk-action" style="font-size:11px;padding:5px 12px" onclick="window._combSaveLoc('${instr.id}','${editDate}')"><i class="ti ti-map-pin"></i> Зберегти точку</button>
+            ${savedMpIdx >= 0 ? `<button class="btn-bk-reject" style="font-size:11px;padding:5px 12px" onclick="window._combClearLoc('${instr.id}','${editDate}')"><i class="ti ti-x"></i> Прибрати</button>` : ''}
+          </div>`
+        : `<p style="font-size:11px;color:var(--text-hint);margin:4px 0 0">Додайте точки зустрічі в налаштуваннях вище</p>`;
+
       const mainContent = isDayOff
         ? `<div style="text-align:center;padding:20px 0;color:var(--text-hint);font-size:12px"><i class="ti ti-moon" style="font-size:20px"></i><br>День позначено як вихідний</div>`
-        : `<div class="slot-hr-grid">${hourBtns}</div>
+        : `<div class="avail-loc-row" style="margin-bottom:10px;padding-bottom:10px;border-bottom:.5px solid var(--border)">
+          <label style="display:flex;align-items:center;gap:5px;margin-bottom:5px"><i class="ti ti-map-pin" style="color:#185fa5;font-size:12px"></i> Точка зустрічі на цей день</label>
+          ${mpSectionHtml}
+        </div>
+        <div class="slot-hr-grid">${hourBtns}</div>
         ${detPanel}
         <div class="avail-loc-row" style="margin-top:10px">
           <label>Тривалість занять</label>
@@ -4013,17 +4031,6 @@ async function loadInstrCombined(instr, container) {
           <div class="avail-save-row" style="margin-top:8px">
             <button class="btn-bk-action" style="font-size:11px;padding:5px 12px" onclick="window._combSaveDurs('${instr.id}','${editDate}')"><i class="ti ti-clock"></i> Зберегти</button>
           </div>
-        </div>
-        <div class="avail-loc-row" style="margin-top:10px">
-          <label>Місце зустрічі</label>
-          ${pts.length
-            ? `<div class="mp-sel-list">${pts.map((pt,pi)=>{ const lbl=typeof pt==='string'?pt:pt.label; const hasCoords=typeof pt==='object'&&pt.lat; return `<button class="mp-sel-chip${pi===savedMpIdx?' active':''}" onclick="window._selectMpChip(this,'${pi}')"><span style="flex:1;text-align:left">${hasCoords?'<i class=\'ti ti-map-pin\' style=\'font-size:9px;margin-right:3px\'></i>':'<i class=\'ti ti-map-pin-off\' style=\'font-size:9px;margin-right:3px;opacity:.4\'></i>'}${esc(lbl)}</span><span class="mp-sel-chip-del" onclick="event.stopPropagation();window._deleteMpPoint('${instr.id}',${pi})" title="Видалити">×</span></button>`; }).join('')}</div>
-              <div id="comb-mp-preview"${savedMpIdx < 0 ? ' style="display:none"' : ''}>${previewHtml}</div>
-              <div class="avail-save-row" style="margin-top:8px">
-                <button class="btn-bk-action" style="font-size:11px;padding:5px 12px" onclick="window._combSaveLoc('${instr.id}','${editDate}')"><i class="ti ti-map-pin"></i> Зберегти місце</button>
-                ${savedMpIdx >= 0 ? `<button class="btn-bk-reject" style="font-size:11px;padding:5px 12px" onclick="window._combClearLoc('${instr.id}','${editDate}')"><i class="ti ti-x"></i> Прибрати</button>` : ''}
-              </div>`
-            : `<p style="font-size:11px;color:var(--text-hint);margin:4px 0 0">Додайте точки зустрічі в налаштуваннях вище</p>`}
         </div>`;
 
       return `<div class="avail-edit-wrap">
