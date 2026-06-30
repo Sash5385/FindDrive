@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.208</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.209</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1182,7 +1182,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     <div class="success-icon"><i class="ti ti-check"></i></div>
     <div class="success-title">Анкету надіслано!</div>
     <div class="success-sub">Ми перевіримо дані та опублікуємо ваш профіль<br>протягом 1 робочого дня.</div>
-    <button onclick="window._lastOpenedAsInstr=true;closeAll();setTimeout(async()=>{if(window._auth?.currentUser){await window._renderProfileScreen?.(window._auth.currentUser);window.openPanel?.('cabinet');}},200)" style="margin-top:18px;background:var(--green);color:#fff;border:none;border-radius:9px;padding:11px 22px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px"><i class="ti ti-user-circle"></i> Відкрити мій кабінет</button>
+    <button onclick="closeAll();setTimeout(async()=>{const u=window._auth?.currentUser;if(u){await window._renderProfileScreen?.(u);window.openPanel?.('cabinet');}else{window.openPanel?.('cabinet');}},200)" style="margin-top:18px;background:var(--green);color:#fff;border:none;border-radius:9px;padding:11px 22px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px"><i class="ti ti-user-circle"></i> Відкрити мій кабінет</button>
   </div>
   <div id="instr-foot" class="cab-foot">
     <button id="btn-submit-instr" class="btn-submit-instr"><i class="ti ti-send"></i> Надіслати анкету</button>
@@ -2845,7 +2845,7 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
   uid = uid || auth.currentUser?.uid || null;
 
   try {
-    await addDoc(collection(db, "instructors"), {
+    const newRef = await addDoc(collection(db, "instructors"), {
       name, phone, email,
       area, gearbox, price, car,
       experience: Number(instrForm.querySelector('[name="experience"]').value) || 0,
@@ -2862,6 +2862,11 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
       reviews:   0,
       createdAt: serverTimestamp(),
     });
+
+    // cache new doc ID so getMyInstrProfile finds it immediately on cabinet open
+    window._myInstrId = newRef.id;
+    if (uid) localStorage.setItem(`myInstrId_${uid}`, newRef.id);
+    window._lastOpenedAsInstr = true;
 
     document.getElementById("instr-form-wrap").style.display = "none";
     document.getElementById("instr-foot").style.display = "none";
