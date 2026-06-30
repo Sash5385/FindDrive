@@ -7,6 +7,18 @@ service cloud.firestore {
           && request.auth.token.email == 'sash5385@gmail.com';
     }
 
+    function instrDoc(instrId) {
+      return get(/databases/$(database)/documents/instructors/$(instrId)).data;
+    }
+
+    function isInstructor(instrId) {
+      return request.auth != null
+          && instrId != null
+          && instrId != ''
+          && (instrDoc(instrId).userId == request.auth.uid
+              || instrDoc(instrId).email == request.auth.token.email);
+    }
+
     match /instructors/{docId} {
       allow get: if isAdmin()
               || resource.data.status == 'approved'
@@ -46,11 +58,7 @@ service cloud.firestore {
                     && resource.data.clientId == request.auth.uid
                     && request.resource.data.status == 'cancelled'
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
-      allow update: if request.auth != null
-                    && resource.data.instructorUserId == request.auth.uid
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
-      allow update: if request.auth != null
-                    && resource.data.instructorEmail == request.auth.token.email
+      allow update: if isInstructor(resource.data.instructorId)
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
       allow delete: if isAdmin();
     }
