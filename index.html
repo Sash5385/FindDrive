@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.210</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.211</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1388,19 +1388,22 @@ function showAuthErr(msg) {
   const el = document.getElementById('cab-err');
   if (!el) return;
   const map = {
-    'auth/wrong-password':        'Неправильний пароль',
-    'auth/user-not-found':        'Користувача з таким email не знайдено',
-    'auth/email-already-in-use':  'Цей email вже зареєстровано',
-    'auth/weak-password':         'Пароль занадто простий (мінімум 6 символів)',
-    'auth/invalid-email':         'Невірний формат email',
-    'auth/invalid-credential':    'Неправильний email або пароль',
-    'auth/popup-blocked':         'Спливаюче вікно заблоковано браузером. Спробуйте ще раз або використайте email/пароль.',
-    'auth/popup-closed-by-user':  'Вікно входу було закрите. Спробуйте ще раз.',
-    'auth/unauthorized-domain':   'Цей домен не авторизований у Firebase. Зверніться до адміністратора.',
-    'auth/network-request-failed':'Немає з\'єднання з інтернетом. Перевірте мережу.',
-    'auth/too-many-requests':     'Забагато спроб. Спробуйте пізніше.',
+    'auth/wrong-password':             'Неправильний пароль',
+    'auth/user-not-found':             'Акаунт з таким email не знайдено. Спочатку заповніть анкету інструктора.',
+    'auth/email-already-in-use':       'Цей email вже зареєстровано',
+    'auth/weak-password':              'Пароль занадто простий (мінімум 6 символів)',
+    'auth/invalid-email':              'Невірний формат email',
+    'auth/invalid-credential':         'Неправильний email або пароль',
+    'auth/invalid-login-credentials':  'Неправильний email або пароль',
+    'auth/missing-password':           'Вкажіть пароль',
+    'auth/popup-blocked':              'Спливаюче вікно заблоковано браузером. Спробуйте ще раз або використайте email/пароль.',
+    'auth/popup-closed-by-user':       'Вікно входу було закрите. Спробуйте ще раз.',
+    'auth/unauthorized-domain':        'Цей домен не авторизований у Firebase. Зверніться до адміністратора.',
+    'auth/network-request-failed':     'Немає з\'єднання з інтернетом. Перевірте мережу.',
+    'auth/too-many-requests':          'Забагато спроб. Спробуйте пізніше.',
   };
-  el.textContent = map[msg.match(/auth\/[\w-]+/)?.[0]] || 'Помилка входу. Спробуйте ще раз.';
+  const code = msg.match(/auth\/[\w-]+/)?.[0];
+  el.textContent = map[code] || `Помилка входу (${code || 'невідома'}). Спробуйте ще раз.`;
   el.style.display = '';
 }
 
