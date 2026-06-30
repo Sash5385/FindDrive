@@ -779,7 +779,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.228</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.229</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2048,34 +2048,47 @@ async function renderProfileScreen(user) {
     }
   } else {
     window._clientProfile = ud;
-    document.getElementById('cab-body').innerHTML = headerHtml + `
-      ${ud.setupDone ? `
-      <div class="cab-section">
-        <div class="cab-section-title">Профіль учня</div>
-        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--text-muted);margin-top:6px">
-          ${(() => { const b=ud.budget; if(!b) return ''; const t=typeof b==='object'?(b.from||b.to?`${b.from||0}–${b.to||'∞'} грн/год`:''):(BUDGET_LABELS[b]||b); return t?`<div><i class="ti ti-wallet" style="color:var(--green)"></i> ${esc(t)}</div>`:'';})()}
-          ${ud.tsc ? `<div style="display:flex;align-items:flex-start;gap:6px"><i class="ti ti-building" style="color:var(--green);flex-shrink:0;margin-top:1px"></i><span>${esc(ud.tsc)}</span></div>` : ''}
-          ${(ud.schedule||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${ud.schedule.map(s=>`<span class="tag">${esc(SCHED_LABELS[s]||s)}</span>`).join('')}</div>` : ''}
-          ${(ud.preferredTags||[]).length ? `<div style="margin-top:4px"><div style="font-size:11px;color:var(--text-hint);margin-bottom:4px"><i class="ti ti-filter" style="font-size:10px"></i> Шукаю інструктора:</div><div style="display:flex;flex-wrap:wrap;gap:4px">${ud.preferredTags.map(t=>`<span class="tag" style="background:var(--green-light);color:var(--green);border:.5px solid #b8ddc8">${esc(t)}</span>`).join('')}</div></div>` : ''}
-        </div>
-        <button id="btn-edit-setup" class="btn-bk-action" style="margin-top:12px;width:100%;font-size:12px;padding:8px"><i class="ti ti-edit"></i> Редагувати профіль</button>
-      </div>` : `
-      <div class="cab-section">
-        <div style="background:var(--bg);border-radius:12px;padding:16px">
-          <div style="font-size:22px;color:var(--green)"><i class="ti ti-user-question"></i></div>
-          <p style="margin-top:8px;font-size:13px;color:var(--text);font-weight:500">Заповніть профіль учня</p>
-          <p style="font-size:12px;color:var(--text-muted);margin-top:4px;line-height:1.5">Інструктори побачать ваші цілі та підберуть підхід.</p>
-          <button id="btn-fill-setup" class="btn-submit-instr" style="margin-top:12px;width:100%;padding:10px"><i class="ti ti-clipboard-list"></i> Заповнити профіль</button>
-        </div>
-      </div>`}
-      <div class="cab-section">
-        <div class="cab-section-title">Мої записи</div>
+    document.getElementById('cab-body').style.padding = '0';
+    document.getElementById('cab-body').innerHTML = `
+      <div style="padding:16px 20px 0">` + headerHtml + `</div>
+      <div class="instr-tab-bar">
+        <button class="instr-tab-btn active" id="ctab-btn-profile" onclick="window._clientTab('profile')"><i class="ti ti-user"></i> Профіль</button>
+        <button class="instr-tab-btn" id="ctab-btn-bookings" onclick="window._clientTab('bookings')"><i class="ti ti-calendar-event"></i> Записи</button>
+        <button class="instr-tab-btn" id="ctab-btn-chat" onclick="window._clientTab('chat')"><i class="ti ti-message-circle"></i> Чат<span id="ctab-chat-badge" style="display:none" class="instr-tab-badge"></span></button>
+      </div>
+      <div id="ctab-profile" style="padding:0 20px 20px">
+        ${ud.setupDone ? `
+        <div class="cab-section">
+          <div class="cab-section-title">Профіль учня</div>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--text-muted);margin-top:6px">
+            ${(() => { const b=ud.budget; if(!b) return ''; const t=typeof b==='object'?(b.from||b.to?`${b.from||0}–${b.to||'∞'} грн/год`:''):(BUDGET_LABELS[b]||b); return t?`<div><i class="ti ti-wallet" style="color:var(--green)"></i> ${esc(t)}</div>`:'';})()}
+            ${ud.tsc ? `<div style="display:flex;align-items:flex-start;gap:6px"><i class="ti ti-building" style="color:var(--green);flex-shrink:0;margin-top:1px"></i><span>${esc(ud.tsc)}</span></div>` : ''}
+            ${(ud.schedule||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${ud.schedule.map(s=>`<span class="tag">${esc(SCHED_LABELS[s]||s)}</span>`).join('')}</div>` : ''}
+            ${(ud.preferredTags||[]).length ? `<div style="margin-top:4px"><div style="font-size:11px;color:var(--text-hint);margin-bottom:4px"><i class="ti ti-filter" style="font-size:10px"></i> Шукаю інструктора:</div><div style="display:flex;flex-wrap:wrap;gap:4px">${ud.preferredTags.map(t=>`<span class="tag" style="background:var(--green-light);color:var(--green);border:.5px solid #b8ddc8">${esc(t)}</span>`).join('')}</div></div>` : ''}
+          </div>
+          <button id="btn-edit-setup" class="btn-bk-action" style="margin-top:12px;width:100%;font-size:12px;padding:8px"><i class="ti ti-edit"></i> Редагувати профіль</button>
+        </div>` : `
+        <div class="cab-section">
+          <div style="background:var(--bg);border-radius:12px;padding:16px">
+            <div style="font-size:22px;color:var(--green)"><i class="ti ti-user-question"></i></div>
+            <p style="margin-top:8px;font-size:13px;color:var(--text);font-weight:500">Заповніть профіль учня</p>
+            <p style="font-size:12px;color:var(--text-muted);margin-top:4px;line-height:1.5">Інструктори побачать ваші цілі та підберуть підхід.</p>
+            <button id="btn-fill-setup" class="btn-submit-instr" style="margin-top:12px;width:100%;padding:10px"><i class="ti ti-clipboard-list"></i> Заповнити профіль</button>
+          </div>
+        </div>`}
+      </div>
+      <div id="ctab-bookings" style="display:none;padding:0 20px 20px">
         <div id="cab-my-bookings"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>
       </div>
-      <div class="cab-section">
-        <div class="cab-section-title">Повідомлення</div>
+      <div id="ctab-chat" style="display:none;padding:0 20px 20px">
         <div id="cab-student-chats"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>
       </div>`;
+    window._clientTab = function(tab) {
+      ['profile','bookings','chat'].forEach(t => {
+        document.getElementById('ctab-'+t).style.display = t===tab ? '' : 'none';
+        document.getElementById('ctab-btn-'+t).classList.toggle('active', t===tab);
+      });
+    };
     document.getElementById('btn-fill-setup')?.addEventListener('click', () => renderSetupScreen(user, ud));
     document.getElementById('btn-edit-setup')?.addEventListener('click', () => renderSetupScreen(user, ud));
     loadClientBookings(user, document.getElementById('cab-my-bookings'));
@@ -2612,6 +2625,9 @@ function loadStudentChats(user, container) {
     snap => {
       if (!snap.size) { container.innerHTML = '<div class="cab-empty" style="color:var(--text-muted)"><i class="ti ti-message-circle-off"></i><br>Чатів ще немає</div>'; return; }
       const chats = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.lastAt?.seconds||0)-(a.lastAt?.seconds||0));
+      const totalUnread = chats.reduce((s,c) => s+(c.unreadByStudent||0), 0);
+      const badge = document.getElementById('ctab-chat-badge');
+      if (badge) { badge.textContent = totalUnread>9?'9+':totalUnread; badge.style.display = totalUnread?'':'none'; }
       container.innerHTML = chats.map(c => {
         const unread = c.unreadByStudent||0;
         return `<div class="chat-list-item${unread?' has-unread':''}" onclick="window.openChat('${_esc(c.instrId)}')">
