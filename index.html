@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.212</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.213</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1151,12 +1151,12 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       <div class="form-group">
         <label class="form-label">Робочі дні</label>
         <div class="days-grid">
-          <label class="day-opt"><input type="checkbox" name="days" value="Пн"> Пн</label>
-          <label class="day-opt"><input type="checkbox" name="days" value="Вт"> Вт</label>
-          <label class="day-opt"><input type="checkbox" name="days" value="Ср"> Ср</label>
-          <label class="day-opt"><input type="checkbox" name="days" value="Чт"> Чт</label>
-          <label class="day-opt"><input type="checkbox" name="days" value="Пт"> Пт</label>
-          <label class="day-opt"><input type="checkbox" name="days" value="Сб"> Сб</label>
+          <label class="day-opt"><input type="checkbox" name="days" value="Пн" checked> Пн</label>
+          <label class="day-opt"><input type="checkbox" name="days" value="Вт" checked> Вт</label>
+          <label class="day-opt"><input type="checkbox" name="days" value="Ср" checked> Ср</label>
+          <label class="day-opt"><input type="checkbox" name="days" value="Чт" checked> Чт</label>
+          <label class="day-opt"><input type="checkbox" name="days" value="Пт" checked> Пт</label>
+          <label class="day-opt"><input type="checkbox" name="days" value="Сб" checked> Сб</label>
           <label class="day-opt"><input type="checkbox" name="days" value="Нд"> Нд</label>
         </div>
       </div>
@@ -3289,9 +3289,15 @@ window._openBooking = async function(instrId) {
     const snap = await getDoc(doc(db, 'instructors', instrId));
     if (snap.exists()) {
       const fresh = snap.data();
-      window._instrProfiles[instrId] = { ...profD, availability: fresh.availability || {} };
+      window._instrProfiles[instrId] = {
+        ...profD,
+        availability: fresh.availability || {},
+        days: fresh.days || profD.days || [],
+        time_from: fresh.time_from || profD.time_from || '',
+        time_to: fresh.time_to || profD.time_to || '',
+      };
     }
-  } catch(e) {}
+  } catch(e) { console.warn('_openBooking getDoc:', e.message); }
   renderBookingDates(box, instrId, window._instrProfiles[instrId]);
 };
 
@@ -3329,7 +3335,7 @@ function renderBookingDates(box, instrId, d) {
     if (allDates.length >= 28) break;
   }
   if (!allDates.length) {
-    box.innerHTML = '<p class="booking-hint">Розклад ще не заповнено</p>';
+    box.innerHTML = '<p class="booking-hint">Інструктор ще не відкрив слоти для запису. Зверніться до нього напряму або завітайте пізніше.</p>';
     return;
   }
 
