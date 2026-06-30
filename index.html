@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.202</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.203</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2527,12 +2527,15 @@ function resizePhoto(file, maxPx = 200) {
 
 const photoInput = document.getElementById("photo-input");
 document.getElementById("photo-upload-area").addEventListener("click", () => photoInput.click());
-photoInput.addEventListener("change", async e => {
+photoInput.addEventListener("change", e => {
   const file = e.target.files[0];
   if (!file) return;
-  instrPhotoData = await resizePhoto(file);
-  document.getElementById("photo-preview").innerHTML =
-    `<img src="${instrPhotoData}" style="width:100%;height:100%;object-fit:cover">`;
+  photoInput.value = '';
+  _showPhotoCrop(file, (data) => {
+    instrPhotoData = data;
+    document.getElementById("photo-preview").innerHTML =
+      `<img src="${instrPhotoData}" style="width:100%;height:100%;object-fit:cover">`;
+  });
 });
 
 const carPhotoInput = document.getElementById("car-photo-input");
