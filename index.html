@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.209</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.210</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2787,9 +2787,9 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
     instrForm.querySelector(`[name="${field}"]`).style.borderColor = val ? '' : '#cc3333';
     if (!val) valid = false;
   });
-  if (!alreadyLoggedIn && pass && pass.length < 6) {
+  if (!alreadyLoggedIn && pass.length < 6) {
     instrForm.querySelector('[name="instr-pass"]').style.borderColor = '#cc3333';
-    if (errEl) { errEl.textContent = 'Пароль занадто простий — мінімум 6 символів.'; errEl.style.display = ''; }
+    if (errEl) { errEl.textContent = !pass ? 'Вкажіть пароль для входу в кабінет (мінімум 6 символів).' : 'Пароль занадто короткий — мінімум 6 символів.'; errEl.style.display = ''; }
     valid = false;
   }
   if (!valid) return;

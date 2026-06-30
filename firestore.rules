@@ -9,7 +9,13 @@ service cloud.firestore {
 
     // Інструктори
     match /instructors/{docId} {
-      allow read: if isAdmin()
+      // get (one doc) — broad OR is fine
+      allow get: if isAdmin()
+              || resource.data.status == 'approved'
+              || (request.auth != null && resource.data.userId == request.auth.uid)
+              || (request.auth != null && resource.data.email == request.auth.token.email);
+      // list (collection query) — Firestore can verify these filter-matching conditions
+      allow list: if isAdmin()
                || resource.data.status == 'approved'
                || (request.auth != null && resource.data.userId == request.auth.uid)
                || (request.auth != null && resource.data.email == request.auth.token.email);
