@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.217</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.218</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -3272,11 +3272,13 @@ window._openBooking = async function(instrId) {
     if (!profD || !box) { console.warn('_openBooking: no profD or box', instrId); return; }
     window._ga('booking_started', { instructor_id: instrId, instructor_name: profD.name||'', city: profD.area||'' });
     box.innerHTML = '<div class="slot-loading"><i class="ti ti-loader"></i></div>';
-    // Wait for Firebase Auth to initialize
+    // Wait for Firebase Auth to initialize (with 4s timeout safety net)
     let userNow = auth.currentUser;
     if (!userNow) {
-      try { await auth.authStateReady(); } catch(_) {}
-      userNow = auth.currentUser;
+      userNow = await new Promise(resolve => {
+        const t = setTimeout(() => { unsub(); resolve(null); }, 4000);
+        const unsub = onAuthStateChanged(auth, user => { clearTimeout(t); unsub(); resolve(user); });
+      });
     }
     if (!userNow) {
       box.innerHTML = `<div class="booking-login-prompt">
@@ -3292,7 +3294,10 @@ window._openBooking = async function(instrId) {
       return;
     }
     try {
-      const snap = await getDoc(doc(db, 'instructors', instrId));
+      const snap = await Promise.race([
+        getDoc(doc(db, 'instructors', instrId)),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000)),
+      ]);
       if (snap.exists()) {
         const fresh = snap.data();
         window._instrProfiles[instrId] = {
