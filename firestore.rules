@@ -61,9 +61,15 @@ service cloud.firestore {
                     && request.resource.data.status == 'cancelled'
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
 
-      // Інструктор підтверджує / скасовує (якщо є instructorUserId)
+      // Інструктор підтверджує / скасовує (по userId)
       allow update: if request.auth != null
                     && resource.data.instructorUserId == request.auth.uid
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+
+      // Інструктор підтверджує / скасовує (fallback по email, якщо userId не прив'язаний)
+      allow update: if request.auth != null
+                    && resource.data.instructorEmail == request.auth.token.email
+                    && resource.data.instructorEmail != ''
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
 
       // Адмін — повний доступ
