@@ -23,10 +23,15 @@ service cloud.firestore {
       allow create: if request.resource.data.status == 'pending';
       // Інструктор може редагувати власний профіль, але не може змінювати статус
       allow update: if isAdmin()
+                 // власник по userId
                  || (request.auth != null
                      && resource.data.userId == request.auth.uid
                      && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']))
-                 // Дозволяє прив'язати userId якщо він порожній і email співпадає
+                 // власник по email (fallback коли userId ще не прив'язаний)
+                 || (request.auth != null
+                     && resource.data.email == request.auth.token.email
+                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']))
+                 // прив'язати userId (тільки цей ключ, email має збігатись)
                  || (request.auth != null
                      && resource.data.userId == null
                      && resource.data.email == request.auth.token.email
