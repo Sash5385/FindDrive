@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.206</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.207</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2607,12 +2607,14 @@ function _showPhotoCrop(file, onConfirm, opts) {
 
   img.onload = () => {
     URL.revokeObjectURL(url);
-    const minScale = Math.max(CW / img.width, CH / img.height);
-    scale = minScale;
+    const fitH = CH / img.height;
+    const fitAll = Math.min(CW / img.width, CH / img.height);
+    const minScale = Math.min(fitAll, fitH) * 0.5;
+    scale = fitH;
     ox = (CW - img.width * scale) / 2;
     oy = (CH - img.height * scale) / 2;
     zoomSlider.min = Math.round(minScale * 100);
-    zoomSlider.max = Math.round(minScale * 100 * 4);
+    zoomSlider.max = Math.round(fitH * 100 * 4);
     zoomSlider.value = Math.round(scale * 100);
     draw();
     modal.style.display = 'flex';
