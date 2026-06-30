@@ -756,7 +756,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.215</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.216</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -4318,6 +4318,11 @@ function openInstrProfile(id, mpIdx) {
     ${instrTags.length ? `<div class="prof-tags-row">${instrTags.map(t=>`<span class="tag" style="${_ts(t)}">${_esc(t)}</span>`).join('')}</div>` : ''}
     ${d.about ? `<div class="prof-about-box">"${_esc(d.about)}"</div>` : ''}
     ${d.carPhoto ? `<img src="${_esc(d.carPhoto)}" class="prof-car-photo" alt="Авто інструктора" loading="lazy">` : ''}
+    <div class="prof-divider"></div>
+    <div class="prof-booking-section">
+      <div class="booking-label">Записатись на заняття</div>
+      <div id="prof-booking"></div>
+    </div>
     ${mps.length ? `
       <div class="prof-divider"></div>
       <div class="prof-section-label"><i class="ti ti-map-pins" style="color:${col}"></i> Точки зустрічі</div>
@@ -4344,11 +4349,6 @@ function openInstrProfile(id, mpIdx) {
       <button class="btn-show-phone" onclick="showPhone('${_esc(d.phone||'')}','${col}')">
         <i class="ti ti-phone"></i> Показати телефон
       </button>
-    </div>
-    <div class="prof-divider"></div>
-    <div class="prof-booking-section">
-      <div class="booking-label">Записатись на заняття</div>
-      <div id="prof-booking"></div>
     </div>`;
 
   if (window.openPanel) window.openPanel('instr-profile');
