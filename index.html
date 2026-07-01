@@ -792,7 +792,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.238</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.239</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -3902,7 +3902,17 @@ window._bookSlot = async function(instrId, dateStr, time) {
   const d = (window._instrProfiles||{})[instrId];
   const mps = (d?.meetingPoints||[]).filter(pt=>typeof pt==='object'&&pt.lat);
   const mpIdx = window._bkActiveMp;
-  const mp = (mpIdx !== null && mpIdx !== undefined && mps[mpIdx]) ? mps[mpIdx] : null;
+  const avail = getDateAvail(d, dateStr);
+  // Місце зустрічі береться зі слоту, який учень фактично записав (тримається одне місце на запис),
+  // фільтр-чіп (_bkActiveMp) використовується лише як запасний варіант
+  const mp = (avail?.locationLat && avail?.location)
+    ? { label: avail.location, lat: avail.locationLat, lng: avail.locationLng }
+    : ((mpIdx !== null && mpIdx !== undefined && mps[mpIdx]) ? mps[mpIdx] : null);
+  if (!mp) {
+    if (errEl) { errEl.textContent = 'У цього інструктора не вказано місце зустрічі для обраної дати.'; errEl.style.display = ''; }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-calendar-check"></i> Підтвердити запис'; }
+    return;
+  }
   const dur = window._bkActiveDur || window._clientProfile?.lessonDuration || d?.lessonDuration || 60;
   try {
     await addDoc(collection(db, 'bookings'), {
