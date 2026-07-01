@@ -790,7 +790,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.235</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.236</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2154,6 +2154,10 @@ async function loadInstrSettings(instr, container) {
   };
 
   function renderAll() {
+    // Preserve text the user has already typed before re-rendering
+    const draftPrice = document.getElementById('set-price')?.value;
+    const draftArea  = document.getElementById('set-area')?.value;
+    const draftAbout = document.getElementById('set-about')?.value;
     const faceSrc = pendingFacePhoto || instr.photo || '';
     const carSrc  = pendingCarPhoto  || instr.carPhoto || '';
     const _cpFields = [
@@ -2201,11 +2205,11 @@ async function loadInstrSettings(instr, container) {
         <div class="cab-form-row" style="margin-bottom:10px">
           <div>
             <label class="cab-label">Ціна, грн/год</label>
-            <input id="set-price" type="number" min="0" step="50" value="${esc(String(instr.price||''))}" class="cab-input" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
+            <input id="set-price" type="number" min="0" step="50" class="cab-input" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
           </div>
           <div>
             <label class="cab-label">Район(и)</label>
-            <input id="set-area" type="text" value="${esc(instr.area||'')}" placeholder="Шевченківський, Оболонь…" maxlength="100" class="cab-input" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
+            <input id="set-area" type="text" placeholder="Шевченківський, Оболонь…" maxlength="100" class="cab-input" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
           </div>
         </div>
         <label class="cab-label">Про себе</label>
@@ -2246,9 +2250,13 @@ async function loadInstrSettings(instr, container) {
 
       <button class="btn-cab-primary" onclick="window._saveInstrSettings('${instr.id}')"><i class="ti ti-device-floppy"></i> Зберегти налаштування</button>
       <button class="btn-cab-secondary" onclick="window._previewInstrProfile('${instr.id}')"><i class="ti ti-eye"></i> Переглянути профіль</button>`;
-    // set textarea value separately to avoid HTML escaping issues
+    // Restore text fields — use draft (what user typed) if it exists, else fall back to saved value
+    const priceEl = container.querySelector('#set-price');
+    if (priceEl) priceEl.value = draftPrice !== undefined ? draftPrice : String(instr.price || '');
+    const areaEl = container.querySelector('#set-area');
+    if (areaEl) areaEl.value = draftArea !== undefined ? draftArea : (instr.area || '');
     const aboutEl = container.querySelector('#set-about');
-    if (aboutEl) aboutEl.value = instr.about || '';
+    if (aboutEl) aboutEl.value = draftAbout !== undefined ? draftAbout : (instr.about || '');
   }
 
   window._setLessonDur = (d) => { lessonDur = d; renderAll(); };
