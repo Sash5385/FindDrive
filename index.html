@@ -421,6 +421,17 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .chat-unread-dot{min-width:18px;height:18px;border-radius:9px;background:#cc3333;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;flex-shrink:0}
 
 /* INSTRUCTOR SETTINGS */
+.cab-card{background:var(--white);border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.06),0 0 0 1px var(--border);padding:14px 16px;margin-bottom:12px}
+.cab-card-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text-muted);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.cab-card-title i{font-size:14px;color:var(--green)}
+.cab-label{font-size:11px;color:var(--text-hint);margin-bottom:5px;font-weight:500;display:block}
+.cab-form-row{display:grid;grid-template-columns:1fr 2fr;gap:8px}
+.cab-input{width:100%;border:.5px solid var(--border);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;box-sizing:border-box;transition:border-color .15s}
+.cab-input:focus{border-color:var(--green)}
+.btn-cab-primary{width:100%;padding:11px;background:var(--green);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .15s}
+.btn-cab-primary:hover{background:var(--green-dark)}
+.btn-cab-secondary{width:100%;padding:10px;background:var(--green-light);color:var(--green);border:.5px solid #b8ddc8;border-radius:9px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px;transition:background .15s;margin-top:8px}
+.btn-cab-secondary:hover{background:#d4ecdf}
 .instr-set-group{margin-bottom:14px}
 .instr-set-label{font-size:11px;color:var(--text-muted);margin-bottom:6px;display:block;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
 .instr-progress-wrap{background:var(--bg);border-radius:12px;padding:12px 14px;margin-bottom:14px}
@@ -779,7 +790,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.230</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.231</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2058,23 +2069,21 @@ async function renderProfileScreen(user) {
       </div>
       <div id="ctab-profile" style="padding:0 20px 20px">
         ${ud.setupDone ? `
-        <div class="cab-section">
-          <div class="cab-section-title">Профіль учня</div>
-          <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--text-muted);margin-top:6px">
-            ${(() => { const b=ud.budget; if(!b) return ''; const t=typeof b==='object'?(b.from||b.to?`${b.from||0}–${b.to||'∞'} грн/год`:''):(BUDGET_LABELS[b]||b); return t?`<div><i class="ti ti-wallet" style="color:var(--green)"></i> ${esc(t)}</div>`:'';})()}
-            ${ud.tsc ? `<div style="display:flex;align-items:flex-start;gap:6px"><i class="ti ti-building" style="color:var(--green);flex-shrink:0;margin-top:1px"></i><span>${esc(ud.tsc)}</span></div>` : ''}
-            ${(ud.schedule||[]).length ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${ud.schedule.map(s=>`<span class="tag">${esc(SCHED_LABELS[s]||s)}</span>`).join('')}</div>` : ''}
-            ${(ud.preferredTags||[]).length ? `<div style="margin-top:4px"><div style="font-size:11px;color:var(--text-hint);margin-bottom:4px"><i class="ti ti-filter" style="font-size:10px"></i> Шукаю інструктора:</div><div style="display:flex;flex-wrap:wrap;gap:4px">${ud.preferredTags.map(t=>`<span class="tag" style="background:var(--green-light);color:var(--green);border:.5px solid #b8ddc8">${esc(t)}</span>`).join('')}</div></div>` : ''}
+        <div class="cab-card">
+          <div class="cab-card-title"><i class="ti ti-user"></i> Профіль учня</div>
+          <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;color:var(--text)">
+            ${(() => { const b=ud.budget; if(!b) return ''; const t=typeof b==='object'?(b.from||b.to?`${b.from||0}–${b.to||'∞'} грн/год`:''):(BUDGET_LABELS[b]||b); return t?`<div style="display:flex;align-items:center;gap:8px"><i class="ti ti-wallet" style="color:var(--green);font-size:16px;flex-shrink:0"></i><span><span style="font-size:11px;color:var(--text-hint);display:block;margin-bottom:1px">Бюджет</span>${esc(t)}</span></div>`:'';})()}
+            ${ud.tsc ? `<div style="display:flex;align-items:flex-start;gap:8px"><i class="ti ti-building" style="color:var(--green);font-size:16px;flex-shrink:0;margin-top:2px"></i><span><span style="font-size:11px;color:var(--text-hint);display:block;margin-bottom:1px">ТСЦ</span>${esc(ud.tsc)}</span></div>` : ''}
+            ${(ud.schedule||[]).length ? `<div><div style="font-size:11px;color:var(--text-hint);margin-bottom:5px">Розклад</div><div style="display:flex;flex-wrap:wrap;gap:4px">${ud.schedule.map(s=>`<span class="tag">${esc(SCHED_LABELS[s]||s)}</span>`).join('')}</div></div>` : ''}
+            ${(ud.preferredTags||[]).length ? `<div><div style="font-size:11px;color:var(--text-hint);margin-bottom:5px"><i class="ti ti-filter" style="font-size:10px"></i> Шукаю інструктора</div><div style="display:flex;flex-wrap:wrap;gap:4px">${ud.preferredTags.map(t=>`<span class="tag" style="background:var(--green-light);color:var(--green);border:.5px solid #b8ddc8">${esc(t)}</span>`).join('')}</div></div>` : ''}
           </div>
-          <button id="btn-edit-setup" class="btn-bk-action" style="margin-top:12px;width:100%;font-size:12px;padding:8px"><i class="ti ti-edit"></i> Редагувати профіль</button>
+          <button id="btn-edit-setup" class="btn-cab-primary" style="margin-top:14px"><i class="ti ti-edit"></i> Редагувати профіль</button>
         </div>` : `
-        <div class="cab-section">
-          <div style="background:var(--bg);border-radius:12px;padding:16px">
-            <div style="font-size:22px;color:var(--green)"><i class="ti ti-user-question"></i></div>
-            <p style="margin-top:8px;font-size:13px;color:var(--text);font-weight:500">Заповніть профіль учня</p>
-            <p style="font-size:12px;color:var(--text-muted);margin-top:4px;line-height:1.5">Інструктори побачать ваші цілі та підберуть підхід.</p>
-            <button id="btn-fill-setup" class="btn-submit-instr" style="margin-top:12px;width:100%;padding:10px"><i class="ti ti-clipboard-list"></i> Заповнити профіль</button>
-          </div>
+        <div class="cab-card" style="text-align:center;padding:24px 16px">
+          <div style="font-size:32px;color:var(--green);margin-bottom:10px"><i class="ti ti-user-question"></i></div>
+          <p style="font-size:14px;color:var(--text);font-weight:600;margin:0 0 6px">Заповніть профіль учня</p>
+          <p style="font-size:12px;color:var(--text-muted);line-height:1.6;margin:0 0 16px">Інструктори побачать ваші цілі та підберуть підхід.</p>
+          <button id="btn-fill-setup" class="btn-cab-primary"><i class="ti ti-clipboard-list"></i> Заповнити профіль</button>
         </div>`}
       </div>
       <div id="ctab-bookings" style="display:none;padding:0 20px 20px">
@@ -2166,9 +2175,10 @@ async function loadInstrSettings(instr, container) {
         <div class="instr-progress-track"><div class="instr-progress-fill" style="width:${_cpPct}%"></div></div>
         <div class="instr-progress-missing">${_cpMissing.map(f=>`<span style="display:inline-flex;align-items:center;gap:3px;color:var(--text-hint)"><i class="ti ti-circle-dashed" style="font-size:10px"></i>${esc(f.label)}</span>`).join('')}</div>
       </div>` : `<div class="instr-progress-wrap" style="text-align:center"><i class="ti ti-circle-check" style="font-size:20px;color:var(--green)"></i><div style="font-size:12px;font-weight:600;color:var(--green);margin-top:4px">Профіль повністю заповнено!</div></div>`}
-      <div class="instr-set-group">
-        <span class="instr-set-label">Фото</span>
-        <div class="photo-uploads" style="justify-content:flex-start;padding:0 0 4px">
+
+      <div class="cab-card">
+        <div class="cab-card-title"><i class="ti ti-camera"></i> Фото</div>
+        <div class="photo-uploads" style="justify-content:flex-start;padding:0">
           <div class="photo-upload" onclick="document.getElementById('instr-face-input').click()" style="cursor:pointer">
             <div class="photo-preview">${faceSrc?`<img src="${esc(faceSrc)}" style="width:100%;height:100%;object-fit:cover">`:'<i class="ti ti-camera"></i>'}</div>
             <input type="file" id="instr-face-input" accept="image/*" hidden onchange="window._onInstrFaceChange(this)">
@@ -2180,25 +2190,43 @@ async function loadInstrSettings(instr, container) {
             <span class="photo-label">Авто</span>
           </div>
         </div>
-        ${pendingFacePhoto||pendingCarPhoto ? `<button class="btn-bk-action" id="btn-save-instr-photos" style="width:100%;font-size:12px;padding:9px;margin-top:6px" onclick="window._saveInstrPhotos('${instr.id}')"><i class="ti ti-device-floppy"></i> Зберегти фото</button>` : ''}
+        ${pendingFacePhoto||pendingCarPhoto ? `<button class="btn-cab-primary" id="btn-save-instr-photos" style="margin-top:12px" onclick="window._saveInstrPhotos('${instr.id}')"><i class="ti ti-device-floppy"></i> Зберегти фото</button>` : ''}
       </div>
-      <div class="instr-set-group">
-        <span class="instr-set-label">Тривалість уроку</span>
-        <div class="toggle-row">
-          ${[60,120].map(v => `<button class="toggle-btn${lessonDur===v?' active':''}" onclick="window._setLessonDur(${v})">${v} хв</button>`).join('')}
+
+      <div class="cab-card">
+        <div class="cab-card-title"><i class="ti ti-id-badge-2"></i> Особисті дані</div>
+        <div class="cab-form-row" style="margin-bottom:10px">
+          <div>
+            <label class="cab-label">Ціна, грн/год</label>
+            <input id="set-price" type="number" min="0" step="50" value="${esc(String(instr.price||''))}" class="cab-input" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
+          </div>
+          <div>
+            <label class="cab-label">Район(и)</label>
+            <input id="set-area" type="text" value="${esc(instr.area||'')}" placeholder="Шевченківський, Оболонь…" maxlength="100" class="cab-input" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
+          </div>
+        </div>
+        <label class="cab-label">Про себе</label>
+        <textarea id="set-about" rows="4" maxlength="500" placeholder="Підхід до навчання, спеціалізація, особливості…" class="cab-input" style="resize:none"></textarea>
+        <div style="margin-top:10px">
+          <label class="cab-label">Тривалість уроку</label>
+          <div class="toggle-row">
+            ${[60,120].map(v => `<button class="toggle-btn${lessonDur===v?' active':''}" onclick="window._setLessonDur(${v})">${v} хв</button>`).join('')}
+          </div>
         </div>
       </div>
-      <div class="instr-set-group">
-        <span class="instr-set-label">Спеціалізація</span>
+
+      <div class="cab-card">
+        <div class="cab-card-title"><i class="ti ti-tags"></i> Спеціалізація</div>
         <div class="tag-sel-grid">
           ${INSTR_TAGS.map(tag => `<button class="tag-sel-btn${instrTags.includes(tag)?' active':''}" style="${tagStyle(tag)}" onclick="window._toggleTag('${tag}')">${tag}</button>`).join('')}
         </div>
       </div>
-      <div class="instr-set-group">
-        <span class="instr-set-label">Точки зустрічі</span>
+
+      <div class="cab-card">
+        <div class="cab-card-title"><i class="ti ti-map-pin"></i> Точки зустрічі</div>
         ${meetingPts.length
           ? `<div class="mp-list">${meetingPts.map((pt,idx) => { const lbl=typeof pt==='string'?pt:pt.label; const hasCoords=typeof pt==='object'&&pt.lat; return `<span class="mp-chip">${hasCoords?'<i class="ti ti-map-pin" style="font-size:10px;color:var(--green);margin-right:3px"></i>':''}${esc(lbl)}<button class="mp-chip-del" onclick="window._removeMp(${idx})" title="Видалити"><i class="ti ti-x"></i></button></span>`; }).join('')}</div>`
-          : '<div style="font-size:11px;color:var(--text-hint);margin-bottom:8px">Немає збережених точок</div>'}
+          : '<div style="font-size:12px;color:var(--text-hint);margin-bottom:8px">Немає збережених точок</div>'}
         <div class="mp-map-search">
           <div class="mp-search-wrap">
             <input type="text" id="mp-new-input" placeholder="Адреса або орієнтир…" maxlength="100" oninput="window._mpAutoComplete(this.value)" onkeydown="if(event.key==='Enter'){window._mpHideSuggest();window._addMp()}" onblur="setTimeout(()=>window._mpHideSuggest(),200)">
@@ -2212,23 +2240,9 @@ async function loadInstrSettings(instr, container) {
           <div class="mp-map-coords" id="mp-map-coords">Натисніть на карту, щоб вибрати точку</div>
         </div>
       </div>
-      <div class="instr-set-group">
-        <span class="instr-set-label">Основна інформація</span>
-        <div style="display:flex;gap:8px;margin-bottom:8px">
-          <div style="flex:1">
-            <div style="font-size:11px;color:var(--text-hint);margin-bottom:4px">Ціна, грн/год</div>
-            <input id="set-price" type="number" min="0" step="50" value="${esc(String(instr.price||''))}" style="width:100%;border:.5px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;box-sizing:border-box;transition:border-color .15s" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
-          </div>
-          <div style="flex:2">
-            <div style="font-size:11px;color:var(--text-hint);margin-bottom:4px">Район(и)</div>
-            <input id="set-area" type="text" value="${esc(instr.area||'')}" placeholder="Шевченківський, Оболонь…" maxlength="100" style="width:100%;border:.5px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;box-sizing:border-box;transition:border-color .15s" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
-          </div>
-        </div>
-        <div style="font-size:11px;color:var(--text-hint);margin-bottom:4px">Про себе</div>
-        <textarea id="set-about" rows="4" maxlength="500" placeholder="Підхід до навчання, спеціалізація, особливості…" style="width:100%;border:.5px solid var(--border);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;resize:none;background:var(--bg);color:var(--text);box-sizing:border-box;outline:none;transition:border-color .15s" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''"></textarea>
-      </div>
-      <button class="btn-bk-action" style="width:100%;font-size:12px;padding:9px" onclick="window._saveInstrSettings('${instr.id}')"><i class="ti ti-device-floppy"></i> Зберегти налаштування</button>
-      <button onclick="window._previewInstrProfile('${instr.id}')" style="width:100%;margin-top:8px;font-size:12px;padding:8px;background:var(--green-light);color:var(--green);border:.5px solid #b8ddc8;border-radius:9px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px"><i class="ti ti-eye"></i> Переглянути профіль</button>`;
+
+      <button class="btn-cab-primary" onclick="window._saveInstrSettings('${instr.id}')"><i class="ti ti-device-floppy"></i> Зберегти налаштування</button>
+      <button class="btn-cab-secondary" onclick="window._previewInstrProfile('${instr.id}')"><i class="ti ti-eye"></i> Переглянути профіль</button>`;
     // set textarea value separately to avoid HTML escaping issues
     const aboutEl = container.querySelector('#set-about');
     if (aboutEl) aboutEl.value = instr.about || '';
