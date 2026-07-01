@@ -802,7 +802,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.248</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.249</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -5261,6 +5261,11 @@ function _setUserLocation(lat, lng, accuracy) {
     }).addTo(_mainMap);
   }
   _updateDistanceBadges();
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
+    .then(r=>r.json()).then(d=>{
+      const tags = tscTagsForAddress(d.address);
+      if (tags && tags.length) window._updateCloudTscTags?.(tags);
+    }).catch(()=>{});
 }
 
 function locateMe(fromSearch = false) {
@@ -5357,12 +5362,12 @@ window._startPickLocation = function() {
     span.className = 'tc-tag';
     span.style.cssText = `background:${c.bg};color:${c.tx};border-color:${c.bd}`;
     span.textContent = t;
-    const item = {span, ox:Math.cos(th)*r0, oy:y0, oz:Math.sin(th)*r0, on:false};
+    const item = {span, ox:Math.cos(th)*r0, oy:y0, oz:Math.sin(th)*r0, on:false, tag:t, color:c};
     span.onclick = () => {
       item.on = !item.on;
-      if (item.on) window._activeTagFilters.add(t); else window._activeTagFilters.delete(t);
+      if (item.on) window._activeTagFilters.add(item.tag); else window._activeTagFilters.delete(item.tag);
       span.style.filter     = item.on ? 'saturate(2.8) brightness(1.12)' : '';
-      span.style.boxShadow  = item.on ? `0 0 14px 3px ${c.bd}` : '';
+      span.style.boxShadow  = item.on ? `0 0 14px 3px ${item.color.bd}` : '';
       span.style.fontWeight = item.on ? '700' : '500';
       span.style.borderWidth= item.on ? '1.5px' : '';
       window._applyAllFilters?.();
@@ -5372,14 +5377,39 @@ window._startPickLocation = function() {
   });
 
   window._syncCloudTag = function(tag, on) {
-    const idx = TAGS.indexOf(tag);
+    const idx = items.findIndex(p => p.tag === tag);
     if (idx < 0) return;
-    const p = items[idx]; const c2 = TC[tag];
+    const p = items[idx];
     p.on = !!on;
     p.span.style.filter     = p.on ? 'saturate(2.8) brightness(1.12)' : '';
-    p.span.style.boxShadow  = p.on ? `0 0 14px 3px ${c2.bd}` : '';
+    p.span.style.boxShadow  = p.on ? `0 0 14px 3px ${p.color.bd}` : '';
     p.span.style.fontWeight = p.on ? '700' : '500';
     p.span.style.borderWidth= p.on ? '1.5px' : '';
+  };
+
+  // Динамічна заміна ТСЦ-тегів у хмарі під регіон обраної на мапі точки
+  const TSC_SLOT_KEYS = ['ТСЦ 8041','ТСЦ 8042','ТСЦ 8049'];
+  const tscSlotIdx = TSC_SLOT_KEYS.map(k => TAGS.indexOf(k));
+  window._updateCloudTscTags = function(newTags) {
+    tscSlotIdx.forEach((idx, slot) => {
+      if (idx < 0) return;
+      const item = items[idx];
+      const newTag = (newTags||[])[slot] || null;
+      if (item.on) { window._activeTagFilters.delete(item.tag); item.on = false; }
+      if (!newTag) {
+        item.span.style.display = 'none';
+        return;
+      }
+      item.span.style.display = '';
+      item.span.textContent = newTag;
+      item.tag = newTag;
+      item.color = TC[newTag] || {bg:'#f0f5f0',bd:'#dde8dd',tx:'#4a6a5a'};
+      item.span.style.background  = item.color.bg;
+      item.span.style.color       = item.color.tx;
+      item.span.style.borderColor = item.color.bd;
+      item.span.style.filter = ''; item.span.style.boxShadow = ''; item.span.style.fontWeight = '500'; item.span.style.borderWidth = '';
+    });
+    window._applyAllFilters?.();
   };
 
   let rotY = 0;
