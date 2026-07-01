@@ -790,7 +790,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.231</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.232</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2433,10 +2433,10 @@ function showToast(title, text = '', type = 'info') {
 async function showBrowserNotif(title, body) {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
   if ('serviceWorker' in navigator) {
-    const reg = await navigator.serviceWorker.ready.catch(() => null);
-    if (reg) { reg.showNotification(title, { body, icon: '/favicon.png', badge: '/favicon.png' }); return; }
+    const reg = await navigator.serviceWorker.getRegistration().catch(() => null);
+    if (reg?.active) { reg.showNotification(title, { body, icon: '/favicon.png', badge: '/favicon.png' }); return; }
   }
-  new Notification(title, { body, icon: '/favicon.png' });
+  try { new Notification(title, { body, icon: '/favicon.png' }); } catch(e) {}
 }
 
 async function registerFcmToken() {
@@ -2447,9 +2447,12 @@ async function registerFcmToken() {
   }
   if (Notification.permission !== 'granted') return;
   try {
+    // Register SW if not yet registered
+    let reg = await navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js').catch(() => null);
+    if (!reg) reg = await navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(() => null);
+    if (!reg) return;
     const { getMessaging, getToken } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js');
     const messaging = getMessaging(app);
-    const reg   = await navigator.serviceWorker.ready;
     const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: reg });
     if (token && auth.currentUser) {
       await setDoc(doc(db, 'users', auth.currentUser.uid), { fcmToken: token }, { merge: true });
@@ -2473,9 +2476,30 @@ function listenChatBadge(uid, role) {
   const userField = role === 'instructor' ? 'instrEmail' : 'studentId';
   const userVal   = role === 'instructor' ? (auth.currentUser?.email || '') : uid;
   if (!userVal) return;
+  let _prevUnread = {};
+  let _firstSnap  = true;
   _unsubChatBadge = onSnapshot(
     query(collection(db, 'chats'), where(userField, '==', userVal)),
-    snap => { _totalUnreadChats = snap.docs.reduce((s,d) => s+(d.data()[unreadField]||0), 0); _updateNavBadge(); },
+    snap => {
+      let total = 0;
+      const newUnread = {};
+      snap.docs.forEach(d => {
+        const data  = d.data();
+        const count = data[unreadField] || 0;
+        newUnread[d.id] = count;
+        total += count;
+        if (!_firstSnap && count > (_prevUnread[d.id] || 0)) {
+          const sender = role === 'instructor'
+            ? (data.studentName || 'Учень')
+            : (data.instrName   || 'Інструктор');
+          showBrowserNotif(`Нове повідомлення від ${sender}`, data.lastMessage || '');
+        }
+      });
+      _prevUnread = newUnread;
+      _firstSnap  = false;
+      _totalUnreadChats = total;
+      _updateNavBadge();
+    },
     () => {}
   );
 }
