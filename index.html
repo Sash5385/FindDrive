@@ -802,7 +802,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.247</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.248</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2361,17 +2361,19 @@ async function loadInstrSettings(instr, container) {
       fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
         .then(r=>r.json()).then(d=>{
           if (inp && d.display_name) inp.value = d.display_name.split(',').slice(0,3).join(', ');
-          const tags = tscTagsForAddress(d.address);
-          if (tags && tags.length && tags.join()!==dynamicTscTags.join()) {
-            dynamicTscTags = tags;
-            const grid = document.getElementById('instr-tag-grid');
-            if (grid) grid.innerHTML = tagListHtml();
-            showToast('ТСЦ оновлено', `Показано ТСЦ для: ${d.address.state||d.address.city||''}`, 'success');
-          }
+          _mpApplyTscTags(d.address);
         }).catch(()=>{});
     });
     const q = inp?.value.trim();
     if (q) window._mpGeoSearch(q);
+  }
+  function _mpApplyTscTags(addr) {
+    const tags = tscTagsForAddress(addr);
+    if (!tags || !tags.length || tags.join()===dynamicTscTags.join()) return;
+    dynamicTscTags = tags;
+    const grid = document.getElementById('instr-tag-grid');
+    if (grid) grid.innerHTML = tagListHtml();
+    showToast('ТСЦ оновлено', `Показано ТСЦ для: ${addr.state||addr.city||addr.town||''}`, 'success');
   }
   function _loadLeaflet(cb) {
     if (window.L) { cb(); return; }
@@ -2402,7 +2404,7 @@ async function loadInstrSettings(instr, container) {
     fetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(q)}`)
       .then(r=>r.json()).then(results=>{
         if (!results.length) return;
-        const {lat,lon,display_name} = results[0];
+        const {lat,lon,display_name,address} = results[0];
         const ll = L.latLng(+lat,+lon);
         _mpMapObj.setView(ll,16);
         _mpLatLng = {lat:+parseFloat(lat).toFixed(6), lng:+parseFloat(lon).toFixed(6)};
@@ -2411,6 +2413,7 @@ async function loadInstrSettings(instr, container) {
         if (inp2 && !inp2.value.trim()) inp2.value = display_name.split(',').slice(0,3).join(', ');
         const coordEl = document.getElementById('mp-map-coords');
         if (coordEl) coordEl.textContent = `${_mpLatLng.lat}, ${_mpLatLng.lng}`;
+        _mpApplyTscTags(address);
       }).catch(()=>{});
   };
   let _mpAcTimer = null;
@@ -2425,16 +2428,18 @@ async function loadInstrSettings(instr, container) {
           const ul2 = document.getElementById('mp-suggests');
           if (!ul2) return;
           if (!results.length) { ul2.style.display='none'; return; }
-          ul2.innerHTML = results.map(r => {
+          ul2.innerHTML = results.map((r,i) => {
             const short = r.display_name.split(',').slice(0,3).join(', ');
-            return `<li data-name="${_esc(r.display_name)}" data-lat="${r.lat}" data-lon="${r.lon}" onmousedown="window._mpSelectSuggest(this)">${_esc(short)}</li>`;
+            return `<li data-name="${_esc(r.display_name)}" data-lat="${r.lat}" data-lon="${r.lon}" data-idx="${i}" onmousedown="window._mpSelectSuggest(this)">${_esc(short)}</li>`;
           }).join('');
+          window._mpLastSuggestResults = results;
           ul2.style.display = '';
         }).catch(()=>{});
     }, 200);
   };
   window._mpSelectSuggest = (el) => {
     const name = el.dataset.name, lat = el.dataset.lat, lon = el.dataset.lon;
+    const address = window._mpLastSuggestResults?.[+el.dataset.idx]?.address;
     const inp = document.getElementById('mp-new-input');
     if (inp) inp.value = name.split(',').slice(0,3).join(', ');
     window._mpHideSuggest();
@@ -2446,6 +2451,7 @@ async function loadInstrSettings(instr, container) {
       const coordEl = document.getElementById('mp-map-coords');
       if (coordEl) coordEl.textContent = `${_mpLatLng.lat}, ${_mpLatLng.lng}`;
     }
+    if (address) _mpApplyTscTags(address);
   };
   window._addMp = () => {
     const inp = document.getElementById('mp-new-input');
@@ -4911,7 +4917,7 @@ function showPhone(phone, col) {
 let _mainMap, _userMarker, _instrPickMap, _instrPickMarker;
 
 
-const NOM_BASE = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=ua&accept-language=uk&bounded=0`;
+const NOM_BASE = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=ua&accept-language=uk&bounded=0&addressdetails=1`;
 
 const UKRAINE_CITIES = {
   'Київ':            {lat:50.4501, lng:30.5234},
