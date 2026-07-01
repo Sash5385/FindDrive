@@ -58,7 +58,20 @@ exports.onBookingUpdated = onDocumentUpdated(
   async event => {
     const before = event.data.before.data();
     const after  = event.data.after.data();
-    if (before.status === after.status || !after.clientId) return;
+    if (before.status === after.status) return;
+    if (after.status === 'cancelled' && after.cancelledBy === 'client') {
+      // Клієнт скасував — сповістити інструктора
+      const instrUid = after.instructorUserId || await getInstrUserId(after.instructorId);
+      if (instrUid) {
+        await sendPush(
+          instrUid,
+          'Заняття скасовано клієнтом',
+          `${after.clientName || 'Учень'} — ${after.date} о ${after.time}`,
+          { type: 'booking' }
+        );
+      }
+    }
+    if (!after.clientId) return;
     if (after.status === 'confirmed') {
       await sendPush(
         after.clientId,

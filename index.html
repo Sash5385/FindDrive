@@ -792,7 +792,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.237</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.238</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2612,7 +2612,7 @@ function listenInstrBookings(instrDocId) {
       const d = ch.doc.data();
       const prev = _knownStatuses[ch.doc.id];
       _knownStatuses[ch.doc.id] = d.status;
-      if (prev === 'confirmed' && d.status === 'cancelled') {
+      if (prev !== 'cancelled' && d.status === 'cancelled' && d.cancelledBy === 'client') {
         showToast('Заняття скасовано', `${d.clientName || 'Учень'} — ${d.date} о ${d.time}`, 'error');
         showBrowserNotif('Заняття скасовано клієнтом', `${d.clientName || 'Учень'} — ${d.date} о ${d.time}`, { type: 'booking' });
       }
@@ -4170,7 +4170,7 @@ window._hideReschForm = function(id) {
 window._cancelBooking = async function(bookingId) {
   if (!confirm('Скасувати цей запис?')) return;
   try {
-    await updateDoc(doc(db,'bookings',bookingId), { status:'cancelled' });
+    await updateDoc(doc(db,'bookings',bookingId), { status:'cancelled', cancelledBy:'client' });
     window._reloadClientBk?.();
   } catch(e) { alert('Не вдалось скасувати.'); }
 };
