@@ -802,7 +802,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.246</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.247</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1350,6 +1350,21 @@ function buildTscOptions(selected = []) {
   return TSC_LIST.map(([region, centers]) =>
     `<optgroup label="${esc(region)}">${centers.map(c=>`<option value="${esc(c)}"${selected.includes(c)?' selected':''}>${esc(c)}</option>`).join('')}</optgroup>`
   ).join('');
+}
+
+// Знаходить групу ТСЦ у TSC_LIST за назвою області/міста з Nominatim reverse-geocode
+function tscTagsForAddress(addr) {
+  if (!addr) return null;
+  const norm = s => (s||'').toLowerCase().replace('область','обл.').replace(/\s+/g,' ').trim();
+  const state = norm(addr.state);
+  const city  = norm(addr.city || addr.town || addr.village);
+  const group = TSC_LIST.find(([region]) => {
+    const r = norm(region);
+    if (r === 'київ') return city === 'київ' || state === 'київ';
+    return r === state;
+  });
+  if (!group) return null;
+  return group[1].map(full => { const m = full.match(/№(\d+)/); return m ? 'ТСЦ ' + m[1] : full; });
 }
 
 function populateInstrTscSelect() {
@@ -2186,6 +2201,16 @@ async function loadInstrSettings(instr, container) {
   let lessonDur  = [60,120].includes(instr.lessonDuration) ? instr.lessonDuration : 60;
   let meetingPts = [...(instr.meetingPoints || [])];
   let instrTags  = [...(Array.isArray(instr.tags) ? instr.tags : [])];
+  let dynamicTscTags = ['ТСЦ 8041','ТСЦ 8042','ТСЦ 8049'];
+  function tagListHtml() {
+    const out = [];
+    let inserted = false;
+    INSTR_TAGS.forEach(t => {
+      if (t.startsWith('ТСЦ ')) { if (!inserted) { out.push(...dynamicTscTags); inserted = true; } }
+      else out.push(t);
+    });
+    return out.map(tag => `<button class="tag-sel-btn${instrTags.includes(tag)?' active':''}" style="${tagStyle(tag)}" onclick="window._toggleTag('${tag}')">${tag}</button>`).join('');
+  }
   let pendingFacePhoto = null;
   let pendingCarPhoto  = null;
 
@@ -2288,8 +2313,8 @@ async function loadInstrSettings(instr, container) {
 
       <div class="cab-card">
         <div class="cab-card-title"><i class="ti ti-tags"></i> Спеціалізація</div>
-        <div class="tag-sel-grid">
-          ${INSTR_TAGS.map(tag => `<button class="tag-sel-btn${instrTags.includes(tag)?' active':''}" style="${tagStyle(tag)}" onclick="window._toggleTag('${tag}')">${tag}</button>`).join('')}
+        <div class="tag-sel-grid" id="instr-tag-grid">
+          ${tagListHtml()}
         </div>
       </div>
 
@@ -2334,7 +2359,16 @@ async function loadInstrSettings(instr, container) {
       const coordEl = document.getElementById('mp-map-coords');
       if (coordEl) coordEl.textContent = `${_mpLatLng.lat}, ${_mpLatLng.lng}`;
       fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
-        .then(r=>r.json()).then(d=>{ if (inp && d.display_name) inp.value = d.display_name.split(',').slice(0,3).join(', '); }).catch(()=>{});
+        .then(r=>r.json()).then(d=>{
+          if (inp && d.display_name) inp.value = d.display_name.split(',').slice(0,3).join(', ');
+          const tags = tscTagsForAddress(d.address);
+          if (tags && tags.length && tags.join()!==dynamicTscTags.join()) {
+            dynamicTscTags = tags;
+            const grid = document.getElementById('instr-tag-grid');
+            if (grid) grid.innerHTML = tagListHtml();
+            showToast('ТСЦ оновлено', `Показано ТСЦ для: ${d.address.state||d.address.city||''}`, 'success');
+          }
+        }).catch(()=>{});
     });
     const q = inp?.value.trim();
     if (q) window._mpGeoSearch(q);
