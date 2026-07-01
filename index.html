@@ -790,7 +790,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.232</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.233</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2515,12 +2515,12 @@ function updateNavBadge(count) {
   }
 }
 
-function listenInstrBookings(uid) {
+function listenInstrBookings(instrDocId) {
   if (_unsubInstr) { _unsubInstr(); _unsubInstr = null; }
   if (_unsubInstrAll) { _unsubInstrAll(); _unsubInstrAll = null; }
-  // Badge: count of pending bookings
+  // query by instructorId (Firestore doc ID) — always set, unlike instructorUserId which can be null
   let readyPending = false;
-  const qPending = query(collection(db, 'bookings'), where('instructorUserId', '==', uid), where('status', '==', 'pending'));
+  const qPending = query(collection(db, 'bookings'), where('instructorId', '==', instrDocId), where('status', '==', 'pending'));
   _unsubInstr = onSnapshot(qPending, snap => {
     _totalPendingBk = snap.size; _updateNavBadge();
     if (!readyPending) { readyPending = true; return; }
@@ -2535,7 +2535,7 @@ function listenInstrBookings(uid) {
   const _knownStatuses = {};
   let readyAll = false;
   const today = new Date().toISOString().slice(0,10);
-  const qAll = query(collection(db, 'bookings'), where('instructorUserId', '==', uid), where('date', '>=', today));
+  const qAll = query(collection(db, 'bookings'), where('instructorId', '==', instrDocId), where('date', '>=', today));
   _unsubInstrAll = onSnapshot(qAll, snap => {
     if (!readyAll) {
       snap.docs.forEach(d => { _knownStatuses[d.id] = d.data().status; });
@@ -2763,7 +2763,7 @@ onAuthStateChanged(auth, async user => {
     listenChatBadge(user.uid, 'student');
     getMyInstrProfile(user).then(instr => {
       if (instr?.id) {
-        listenInstrBookings(user.uid);
+        listenInstrBookings(instr.id);
         listenChatBadge(user.uid, 'instructor');
       }
     }).catch(() => {});
