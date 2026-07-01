@@ -3,8 +3,11 @@ const admin = require('firebase-admin');
 
 admin.initializeApp();
 
-async function sendPush(uid, title, body) {
+// data — об'єкт, який SW передає в notificationclick → відкриває потрібну панель
+async function sendPush(uid, title, body, data = {}) {
   if (!uid) return;
+  // FCM data values must be strings
+  const strData = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)]));
   try {
     const snap = await admin.firestore().collection('users').doc(uid).get();
     const token = snap.data()?.fcmToken;
@@ -12,6 +15,7 @@ async function sendPush(uid, title, body) {
     await admin.messaging().send({
       token,
       notification: { title, body },
+      data: strData,
       webpush: {
         notification: {
           icon:  'https://finddrive.id4drive.pro/favicon.png',
@@ -37,13 +41,13 @@ exports.onBookingCreated = onDocumentCreated(
   { document: 'bookings/{id}', region: 'europe-west1' },
   async event => {
     const d = event.data.data();
-    // instructorUserId може бути null — шукаємо через instructorId (doc ID)
     const uid = d.instructorUserId || await getInstrUserId(d.instructorId);
     if (!uid) return;
     await sendPush(
       uid,
       'Новий запис на заняття!',
-      `${d.clientName || 'Учень'} — ${d.date} о ${d.time}`
+      `${d.clientName || 'Учень'} — ${d.date} о ${d.time}`,
+      { type: 'booking' }
     );
   }
 );
@@ -59,13 +63,15 @@ exports.onBookingUpdated = onDocumentUpdated(
       await sendPush(
         after.clientId,
         'Запис підтверджено!',
-        `${after.date} о ${after.time} з ${after.instructorName || 'інструктором'}`
+        `${after.date} о ${after.time} з ${after.instructorName || 'інструктором'}`,
+        { type: 'booking' }
       );
     } else if (after.status === 'cancelled') {
       await sendPush(
         after.clientId,
         'Запис скасовано',
-        `${after.date} о ${after.time}`
+        `${after.date} о ${after.time}`,
+        { type: 'booking' }
       );
     }
   }
@@ -85,13 +91,21 @@ exports.onChatMessage = onDocumentCreated(
     const senderUid = msg.uid;
     const text = msg.text || 'Нове повідомлення';
 
-    // Якщо відправник — учень, повідомляємо інструктора
     if (senderUid === chat.studentId) {
       const instrUid = chat.instrUserId || await getInstrUserId(chatId.split('_')[0]);
-      await sendPush(instrUid, `Повідомлення від ${chat.studentName || 'учня'}`, text);
+      await sendPush(
+        instrUid,
+        `Повідомлення від ${chat.studentName || 'учня'}`,
+        text,
+        { type: 'chat', chatId, instrId: chatId.split('_')[0] }
+      );
     } else {
-      // Відправник — інструктор, повідомляємо учня
-      await sendPush(chat.studentId, `Повідомлення від ${chat.instrName || 'інструктора'}`, text);
+      await sendPush(
+        chat.studentId,
+        `Повідомлення від ${chat.instrName || 'інструктора'}`,
+        text,
+        { type: 'chat', chatId, instrId: chatId.split('_')[0] }
+      );
     }
   }
 );

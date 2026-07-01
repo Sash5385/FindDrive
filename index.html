@@ -790,7 +790,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.234</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.235</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2047,6 +2047,7 @@ async function renderProfileScreen(user) {
       loadInstrSettings(instr, document.getElementById('cab-instr-settings'));
       loadInstrCombined(instr, document.getElementById('cab-instr-combined'));
       loadInstrChats(instr, document.getElementById('cab-instr-chats'));
+      if (window._pendingNotif) { setTimeout(() => handleNotifClick(window._pendingNotif), 400); window._pendingNotif = null; }
     } else {
       document.getElementById('cab-body').innerHTML = headerHtml + `
         <div class="cab-section">
@@ -2103,6 +2104,8 @@ async function renderProfileScreen(user) {
     loadClientBookings(user, document.getElementById('cab-my-bookings'));
     loadStudentChats(user, document.getElementById('cab-student-chats'));
     if (ud.preferredTags?.length) window._applyStudentTagFilter?.(ud.preferredTags);
+    // Handle cold-start notification tap
+    if (window._pendingNotif) { setTimeout(() => handleNotifClick(window._pendingNotif), 400); window._pendingNotif = null; }
   }
 }
 
@@ -2430,14 +2433,66 @@ function showToast(title, text = '', type = 'info') {
   setTimeout(() => el.remove(), 5000);
 }
 
-async function showBrowserNotif(title, body) {
+async function showBrowserNotif(title, body, data = {}) {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
   if ('serviceWorker' in navigator) {
     const reg = await navigator.serviceWorker.getRegistration().catch(() => null);
-    if (reg?.active) { reg.showNotification(title, { body, icon: '/favicon.png', badge: '/favicon.png' }); return; }
+    if (reg?.active) { reg.showNotification(title, { body, icon: '/favicon.png', badge: '/favicon.png', data }); return; }
   }
-  try { new Notification(title, { body, icon: '/favicon.png' }); } catch(e) {}
+  try {
+    const n = new Notification(title, { body, icon: '/favicon.png' });
+    n.onclick = () => { handleNotifClick(data); window.focus(); n.close(); };
+  } catch(e) {}
 }
+
+function handleNotifClick(data = {}) {
+  if (!data.type) return;
+  if (data.type === 'booking') {
+    openPanel('cabinet');
+    // switch to bookings tab for student, or anketa for instructor
+    setTimeout(() => {
+      if (typeof window._clientTab === 'function') window._clientTab('bookings');
+      else if (typeof window._instrTab === 'function') window._instrTab('anketa');
+    }, 300);
+  } else if (data.type === 'chat') {
+    if (data.chatId && data.instrId) {
+      // open chat: if student — openChat by instrId; if instructor — _openInstrChat
+      if (typeof window.openChat === 'function' && auth.currentUser) {
+        const isInstr = data.chatId.startsWith(data.instrId + '_');
+        const studentId = data.chatId.replace(data.instrId + '_', '');
+        if (isInstr && auth.currentUser.uid !== studentId) {
+          // current user is instructor
+          openPanel('cabinet');
+          setTimeout(() => {
+            if (typeof window._instrTab === 'function') window._instrTab('chat');
+            if (typeof window._openInstrChat === 'function') window._openInstrChat(data.chatId, '');
+          }, 300);
+        } else {
+          window.openChat(data.instrId);
+        }
+      }
+    }
+  }
+}
+
+// Listen for postMessage from SW notificationclick (app was already open)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', event => {
+    if (event.data?.type === 'notif-click') handleNotifClick(event.data);
+  });
+}
+
+// Handle cold-start URL hash from SW notificationclick (app was closed)
+(function checkNotifHash() {
+  const h = location.hash;
+  if (!h.includes('notif=')) return;
+  const params = Object.fromEntries(h.slice(1).split('&').map(p => p.split('=')));
+  if (params.notif) {
+    // wait for auth + render, then handle
+    window._pendingNotif = { type: params.notif, chatId: params.chatId, instrId: params.instrId };
+    history.replaceState(null, '', location.pathname); // clean the URL
+  }
+})();
 
 async function registerFcmToken() {
   if (!('Notification' in window) || !('serviceWorker' in navigator)) return;
@@ -2492,7 +2547,8 @@ function listenChatBadge(uid, role) {
           const sender = role === 'instructor'
             ? (data.studentName || 'Учень')
             : (data.instrName   || 'Інструктор');
-          showBrowserNotif(`Нове повідомлення від ${sender}`, data.lastMessage || '');
+          const instrId = d.id.split('_')[0];
+          showBrowserNotif(`Нове повідомлення від ${sender}`, data.lastMessage || '', { type: 'chat', chatId: d.id, instrId });
         }
       });
       _prevUnread = newUnread;
@@ -2528,7 +2584,7 @@ function listenInstrBookings(instrDocId) {
       if (ch.type !== 'added') return;
       const d = ch.doc.data();
       showToast('Новий запис!', `${d.clientName || 'Учень'} — ${d.date} о ${d.time}`, 'success');
-      showBrowserNotif('Новий запис на заняття', `${d.clientName || 'Учень'} — ${d.date} о ${d.time}`);
+      showBrowserNotif('Новий запис на заняття', `${d.clientName || 'Учень'} — ${d.date} о ${d.time}`, { type: 'booking' });
     });
   }, () => {});
   // Cancellations of confirmed bookings by client
@@ -2548,7 +2604,7 @@ function listenInstrBookings(instrDocId) {
       _knownStatuses[ch.doc.id] = d.status;
       if (prev === 'confirmed' && d.status === 'cancelled') {
         showToast('Заняття скасовано', `${d.clientName || 'Учень'} — ${d.date} о ${d.time}`, 'error');
-        showBrowserNotif('Заняття скасовано клієнтом', `${d.clientName || 'Учень'} — ${d.date} о ${d.time}`);
+        showBrowserNotif('Заняття скасовано клієнтом', `${d.clientName || 'Учень'} — ${d.date} о ${d.time}`, { type: 'booking' });
       }
     });
   }, () => {});
@@ -2720,10 +2776,10 @@ function listenClientBookings(uid) {
       const d = ch.doc.data();
       if (d.status === 'confirmed') {
         showToast('Запис підтверджено!', `${d.date} о ${d.time} з ${d.instructorName || 'інструктором'}`, 'success');
-        showBrowserNotif('Запис підтверджено!', `${d.date} о ${d.time} з ${d.instructorName || 'інструктором'}`);
+        showBrowserNotif('Запис підтверджено!', `${d.date} о ${d.time} з ${d.instructorName || 'інструктором'}`, { type: 'booking' });
       } else if (d.status === 'cancelled') {
         showToast('Запис скасовано', `${d.date} о ${d.time}`, 'error');
-        showBrowserNotif('Запис скасовано', `${d.date} о ${d.time}`);
+        showBrowserNotif('Запис скасовано', `${d.date} о ${d.time}`, { type: 'booking' });
       }
     });
   }, () => {});
