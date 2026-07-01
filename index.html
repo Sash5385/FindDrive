@@ -802,7 +802,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.249</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.250</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -5092,6 +5092,7 @@ window._searchPickSuggest = function(el) {
   const ul = document.getElementById('search-suggest');
   if (ul) ul.style.display = 'none';
   if (_mainMap) { _mainMap.setView([+lat, +lon], 16); scrollToMap(); }
+  _setUserLocation(+lat, +lon, null);
 };
 
 function initLeafletMap() {
@@ -5264,7 +5265,10 @@ function _setUserLocation(lat, lng, accuracy) {
   fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
     .then(r=>r.json()).then(d=>{
       const tags = tscTagsForAddress(d.address);
-      if (tags && tags.length) window._updateCloudTscTags?.(tags);
+      if (tags && tags.length) {
+        window._updateCloudTscTags?.(tags);
+        showToast('ТСЦ у хмарі оновлено', `${d.address?.state||d.address?.city||''}: ${tags.join(', ')}`, 'success');
+      }
     }).catch(()=>{});
 }
 
