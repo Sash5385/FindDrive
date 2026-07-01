@@ -802,7 +802,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.251</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.252</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -3393,6 +3393,10 @@ const TAG_COLORS = {
 };
 window.TAG_COLORS = TAG_COLORS;
 window.INSTR_TAGS = INSTR_TAGS;
+// Плейн-скрипт нижче (карта/геолокація) не є module — потрібен явний доступ через window
+window.showToast = showToast;
+window._updateDistanceBadges = _updateDistanceBadges;
+window.tscTagsForAddress = tscTagsForAddress;
 function tagStyle(tag) {
   const c = TAG_COLORS[tag];
   return c ? `background:${c.bg};color:${c.tx};border-color:${c.bd}` : 'background:#f0f5f0;color:#4a6a5a;border-color:#dde8dd';
