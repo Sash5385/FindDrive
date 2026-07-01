@@ -442,7 +442,9 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .instr-progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width .4s}
 .instr-progress-missing{font-size:11px;color:var(--text-muted);line-height:1.6;display:flex;flex-wrap:wrap;gap:4px 8px}
 .instr-bk-stats{display:flex;gap:8px;margin-bottom:12px}
-.instr-bk-stat{flex:1;background:var(--bg);border-radius:10px;padding:10px 6px;text-align:center;border:.5px solid var(--border)}
+.instr-bk-stat{flex:1;background:var(--bg);border-radius:10px;padding:10px 6px;text-align:center;border:.5px solid var(--border);cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit}
+.instr-bk-stat:hover{background:var(--green-light);border-color:#b8ddc8}
+.instr-bk-stat:active{background:#d0eadb}
 .instr-bk-stat b{display:block;font-size:18px;font-weight:700;color:var(--green);line-height:1}
 .instr-bk-stat span{font-size:10px;color:var(--text-hint);margin-top:3px;display:block;line-height:1.2}
 .student-bk-stats{display:flex;gap:8px;margin-bottom:12px}
@@ -790,7 +792,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.236</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.237</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -4421,35 +4423,57 @@ async function loadInstrCombined(instr, container) {
       </div>`;
     }
 
-    function buildAllBk() {
+    function buildAllBk(initialTab) {
       if (!allBk.length) return '<div class="cab-empty" style="margin-top:16px"><i class="ti ti-calendar-off"></i><br>Записів ще немає</div>';
+      const tab     = initialTab || 'new';
       const today   = todayStr;
       const pending  = allBk.filter(b=>b.status==='pending'||b.status==='reschedule_requested');
       const upcoming = allBk.filter(b=>b.status==='confirmed'&&b.date>=today);
       const archive  = allBk.filter(b=>b.status==='cancelled'||(b.status==='confirmed'&&b.date<today));
+      // Build "students" panel — unique students with their latest booking
+      const studentMap = {};
+      [...allBk].reverse().forEach(b => {
+        if (b.clientId && !studentMap[b.clientId]) studentMap[b.clientId] = b;
+      });
+      const students = Object.values(studentMap).sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+      const studentsHtml = students.length
+        ? students.map(b=>`<div class="bk-card" style="display:flex;align-items:center;gap:10px;padding:10px 12px">
+            <div style="width:34px;height:34px;border-radius:50%;background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;flex-shrink:0">${esc((b.clientName||'?')[0].toUpperCase())}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:600;color:var(--text)">${esc(b.clientName||b.clientEmail||'Учень')}</div>
+              <div style="font-size:11px;color:var(--text-muted)">останній запис: ${esc(b.date)} о ${esc(b.time)}</div>
+            </div>
+          </div>`).join('')
+        : '<div class="cab-empty"><i class="ti ti-users-group"></i><br>Учнів ще немає</div>';
+      const isT = t => tab === t;
       return `<div style="margin-top:16px">
         <div class="bk-tabs">
-          <button class="bk-tab active" onclick="switchBkTab(this,'new')">Нові${pending.length?`<span class="bk-badge">${pending.length}</span>`:''}</button>
-          <button class="bk-tab" onclick="switchBkTab(this,'upcoming')">Заплановані${upcoming.length?`<span class="bk-badge" style="background:var(--green-dark)">${upcoming.length}</span>`:''}</button>
-          <button class="bk-tab" onclick="switchBkTab(this,'archive')">Архів</button>
+          <button class="bk-tab${isT('new')?' active':''}" onclick="switchBkTab(this,'new')">Нові${pending.length?`<span class="bk-badge">${pending.length}</span>`:''}</button>
+          <button class="bk-tab${isT('upcoming')?' active':''}" onclick="switchBkTab(this,'upcoming')">Підтверджено${upcoming.length?`<span class="bk-badge" style="background:var(--green-dark)">${upcoming.length}</span>`:''}</button>
+          <button class="bk-tab${isT('archive')?' active':''}" onclick="switchBkTab(this,'archive')">Архів</button>
+          <button class="bk-tab${isT('students')?' active':''}" onclick="switchBkTab(this,'students')">Учні</button>
         </div>
-        <div data-bk-panel="new">${renderInstrCards(pending,true)}</div>
-        <div data-bk-panel="upcoming" style="display:none">${renderInstrCards(upcoming,false)}</div>
-        <div data-bk-panel="archive" style="display:none">${renderInstrCards(archive,false)}</div>
+        <div data-bk-panel="new"${!isT('new')?' style="display:none"':''}>${renderInstrCards(pending,true)}</div>
+        <div data-bk-panel="upcoming"${!isT('upcoming')?' style="display:none"':''}>${renderInstrCards(upcoming,false)}</div>
+        <div data-bk-panel="archive"${!isT('archive')?' style="display:none"':''}>${renderInstrCards(archive,false)}</div>
+        <div data-bk-panel="students"${!isT('students')?' style="display:none"':''}>${studentsHtml}</div>
       </div>`;
     }
 
     const _bkConfirmed = allBk.filter(b => b.status === 'confirmed' || b.status === 'done').length;
     const _bkPending   = allBk.filter(b => b.status === 'pending' || b.status === 'reschedule_requested').length;
     const _bkStudents  = new Set(allBk.map(b => b.clientId).filter(Boolean)).size;
+    let _activeStatFilter = null;
     const _statsHtml = `<div class="instr-bk-stats">
-      <div class="instr-bk-stat"><b>${_bkConfirmed}</b><span>підтверджено</span></div>
-      <div class="instr-bk-stat"><b>${_bkPending}</b><span>очікують</span></div>
-      <div class="instr-bk-stat"><b>${_bkStudents}</b><span>учнів</span></div>
-      <div class="instr-bk-stat"><b>${allBk.length}</b><span>всього</span></div>
+      <button class="instr-bk-stat" onclick="window._combStatClick('upcoming')"><b>${_bkConfirmed}</b><span>підтверджено</span></button>
+      <button class="instr-bk-stat" onclick="window._combStatClick('new')"><b>${_bkPending}</b><span>очікують</span></button>
+      <button class="instr-bk-stat" onclick="window._combStatClick('students')"><b>${_bkStudents}</b><span>учнів</span></button>
+      <button class="instr-bk-stat" onclick="window._combStatClick('all')"><b>${allBk.length}</b><span>всього</span></button>
     </div>`;
 
     function renderAll() {
+      const tab = _activeStatFilter;
+      _activeStatFilter = null;
       container.innerHTML = _statsHtml + `
         <div class="av-legend">
           <div class="av-legend-item"><div class="av-legend-dot" style="background:var(--green-light);border:.5px solid var(--green)"></div>Відкрито</div>
@@ -4457,11 +4481,13 @@ async function loadInstrCombined(instr, container) {
           <div class="av-legend-item"><div class="av-legend-dot" style="background:#fff0f0;border:.5px solid #cc3333"></div>Закрито</div>
         </div>
         ${buildCal()}
-        ${editDate ? buildDayPanel() : buildAllBk()}`;
+        ${editDate ? buildDayPanel() : buildAllBk(tab)}`;
+      if (tab) setTimeout(() => container.querySelector('.bk-tabs')?.scrollIntoView({behavior:'smooth',block:'start'}), 60);
     }
 
     window._combCalNav    = (y,m) => { calYear=y; calMonth=m; editDate=null; renderAll(); };
     window._combPickDate  = (date) => { editDate=date; selectedBkId=null; renderAll(); };
+    window._combStatClick = (tab)  => { editDate=null; _activeStatFilter=tab; renderAll(); };
     window._combSetMode   = (mode) => {
       document.querySelectorAll('.avail-toggle-btn').forEach((b,i)=>b.classList.toggle('active',['open','weekly','closed'][i]===mode));
       const tl = document.getElementById('comb-time-loc');
