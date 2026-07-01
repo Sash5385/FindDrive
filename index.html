@@ -802,7 +802,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.250</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.251</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -5268,8 +5268,10 @@ function _setUserLocation(lat, lng, accuracy) {
       if (tags && tags.length) {
         window._updateCloudTscTags?.(tags);
         showToast('ТСЦ у хмарі оновлено', `${d.address?.state||d.address?.city||''}: ${tags.join(', ')}`, 'success');
+      } else {
+        showToast('ТСЦ не знайдено', `Для регіону "${d.address?.state||d.address?.city||'?'}" немає даних у базі ТСЦ`, 'info');
       }
-    }).catch(()=>{});
+    }).catch(e => { showToast('Помилка визначення ТСЦ', e.message || 'Проблема з мережею', 'error'); });
 }
 
 function locateMe(fromSearch = false) {
