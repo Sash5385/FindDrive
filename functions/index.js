@@ -4,6 +4,7 @@ const admin = require('firebase-admin');
 admin.initializeApp();
 
 async function sendPush(uid, title, body) {
+  if (!uid) return;
   try {
     const snap = await admin.firestore().collection('users').doc(uid).get();
     const token = snap.data()?.fcmToken;
@@ -24,14 +25,23 @@ async function sendPush(uid, title, body) {
   }
 }
 
+// Повертає userId інструктора по його Firestore doc ID
+async function getInstrUserId(instrId) {
+  if (!instrId) return null;
+  const snap = await admin.firestore().collection('instructors').doc(instrId).get();
+  return snap.data()?.userId || null;
+}
+
 // Інструктор отримує push коли клієнт бронює
 exports.onBookingCreated = onDocumentCreated(
   { document: 'bookings/{id}', region: 'europe-west1' },
   async event => {
     const d = event.data.data();
-    if (!d.instructorUserId) return;
+    // instructorUserId може бути null — шукаємо через instructorId (doc ID)
+    const uid = d.instructorUserId || await getInstrUserId(d.instructorId);
+    if (!uid) return;
     await sendPush(
-      d.instructorUserId,
+      uid,
       'Новий запис на заняття!',
       `${d.clientName || 'Учень'} — ${d.date} о ${d.time}`
     );
@@ -57,6 +67,31 @@ exports.onBookingUpdated = onDocumentUpdated(
         'Запис скасовано',
         `${after.date} о ${after.time}`
       );
+    }
+  }
+);
+
+// Push при новому повідомленні в чаті
+exports.onChatMessage = onDocumentCreated(
+  { document: 'chats/{chatId}/messages/{msgId}', region: 'europe-west1' },
+  async event => {
+    const msg    = event.data.data();
+    const chatId = event.params.chatId;
+
+    const chatSnap = await admin.firestore().collection('chats').doc(chatId).get();
+    if (!chatSnap.exists) return;
+    const chat = chatSnap.data();
+
+    const senderUid = msg.uid;
+    const text = msg.text || 'Нове повідомлення';
+
+    // Якщо відправник — учень, повідомляємо інструктора
+    if (senderUid === chat.studentId) {
+      const instrUid = chat.instrUserId || await getInstrUserId(chatId.split('_')[0]);
+      await sendPush(instrUid, `Повідомлення від ${chat.studentName || 'учня'}`, text);
+    } else {
+      // Відправник — інструктор, повідомляємо учня
+      await sendPush(chat.studentId, `Повідомлення від ${chat.instrName || 'інструктора'}`, text);
     }
   }
 );
