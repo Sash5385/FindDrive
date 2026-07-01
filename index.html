@@ -299,6 +299,8 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 /* MAP */
 .map-section{padding:24px 48px 24px}
 #map{height:360px;border-radius:18px;border:.5px solid var(--border);overflow:hidden}
+@media(min-width:900px){#map{height:560px}}
+@media(min-width:1280px){#map{height:640px}}
 .btn-locate{background:var(--green);color:#fff;border:none;border-radius:9px;padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;font-family:inherit}
 .btn-locate:hover{background:var(--green-dark)}
 .btn-pick-loc{background:var(--white);color:var(--green);border:.5px solid var(--green);border-radius:9px;padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s;font-family:inherit}
@@ -800,7 +802,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.245</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.246</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
