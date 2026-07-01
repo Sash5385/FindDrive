@@ -792,7 +792,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.239</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.240</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -4385,7 +4385,7 @@ async function loadInstrCombined(instr, container) {
       const selBk = selectedBkId ? allBk.find(b=>b.id===selectedBkId) : null;
       const detPanel = selBk ? `<div class="slot-hr-detail">
         <div style="font-weight:600;margin-bottom:4px">${esc(selBk.clientName||selBk.clientEmail||'Учень')}</div>
-        ${selBk.clientPhone?`<div style="font-size:12px;color:var(--text-muted);margin-top:2px"><i class="ti ti-phone" style="font-size:10px;color:var(--green)"></i> <a href="tel:${esc(selBk.clientPhone)}" style="color:var(--text-muted);text-decoration:none">${esc(selBk.clientPhone)}</a></div>`:''}
+        ${selBk.clientPhone?`<a href="tel:${esc(selBk.clientPhone)}" style="display:inline-flex;align-items:center;gap:5px;margin-top:4px;padding:5px 11px;background:var(--green-light);border:.5px solid #b8ddc8;border-radius:20px;font-size:12px;font-weight:600;color:var(--green);text-decoration:none"><i class="ti ti-phone-call" style="font-size:12px"></i> ${esc(selBk.clientPhone)}</a>`:''}
         ${selBk.clientEmail?`<div style="font-size:11px;color:var(--text-muted);margin-top:1px"><i class="ti ti-mail" style="font-size:10px"></i> ${esc(selBk.clientEmail)}</div>`:''}
         ${selBk.meetingPoint?.label?`<div style="font-size:11px;color:var(--text-muted);margin-top:1px"><i class="ti ti-map-pin" style="font-size:10px;color:var(--green)"></i> ${esc(selBk.meetingPoint.label)}</div>`:''}
         <div style="margin-top:6px">${bkStatusBadge(selBk.status)}</div>
