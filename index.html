@@ -800,7 +800,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.244</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.245</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1749,21 +1749,42 @@ async function renderAdminScreen(user) {
   foot.innerHTML = `<button class="btn-signout" onclick="window._signOut()"><i class="ti ti-logout"></i> Вийти</button>`;
   foot.style.display = '';
   const body = document.getElementById('cab-body');
+  body.style.padding = '0';
   body.innerHTML = `
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <div style="font-size:16px;font-weight:700;color:var(--text)"><i class="ti ti-shield-check" style="color:var(--green)"></i> Адмін-панель</div>
-      <button onclick="window._adminReload()" title="Оновити" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:18px;padding:4px"><i class="ti ti-refresh"></i></button>
+    <div style="padding:16px 20px 0">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <div style="font-size:16px;font-weight:700;color:var(--text)"><i class="ti ti-shield-check" style="color:var(--green)"></i> Адмін-панель</div>
+        <button onclick="window._adminReload()" title="Оновити" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:18px;padding:4px"><i class="ti ti-refresh"></i></button>
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${esc(user.email)}</div>
     </div>
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">${esc(user.email)}</div>
-    <div id="admin-content"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>`;
+    <div class="instr-tab-bar">
+      <button class="instr-tab-btn active" id="adm-tab-btn-instr" onclick="window._adminTab('instr')"><i class="ti ti-steering-wheel"></i> Інструктори</button>
+      <button class="instr-tab-btn" id="adm-tab-btn-users" onclick="window._adminTab('users')"><i class="ti ti-users"></i> Учні</button>
+      <button class="instr-tab-btn" id="adm-tab-btn-bookings" onclick="window._adminTab('bookings')"><i class="ti ti-calendar-event"></i> Записи</button>
+    </div>
+    <div style="padding:16px 20px">
+      <div id="adm-panel-instr"></div>
+      <div id="adm-panel-users" style="display:none"></div>
+      <div id="adm-panel-bookings" style="display:none"></div>
+    </div>`;
+
+  window._adminTab = (tab) => {
+    ['instr','users','bookings'].forEach(t => {
+      document.getElementById('adm-panel-'+t).style.display = t===tab ? '' : 'none';
+      document.getElementById('adm-tab-btn-'+t).classList.toggle('active', t===tab);
+    });
+  };
 
   window._adminReload = () => loadAdminData();
   await loadAdminData();
 
   async function loadAdminData() {
-    const el = document.getElementById('admin-content');
-    if (!el) return;
-    el.innerHTML = '<div class="cab-empty"><i class="ti ti-loader"></i></div>';
+    const instrEl    = document.getElementById('adm-panel-instr');
+    const usersEl     = document.getElementById('adm-panel-users');
+    const bookingsEl  = document.getElementById('adm-panel-bookings');
+    if (!instrEl) return;
+    instrEl.innerHTML = usersEl.innerHTML = bookingsEl.innerHTML = '<div class="cab-empty"><i class="ti ti-loader"></i></div>';
     try {
       const snap = await getDocs(query(collection(db, 'instructors'), orderBy('createdAt', 'desc')));
       const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -1771,18 +1792,18 @@ async function renderAdminScreen(user) {
       const approved = all.filter(i => i.status === 'approved');
       const rejected = all.filter(i => i.status === 'rejected');
 
-      const instrHtml = [
+      instrEl.innerHTML = [
         renderAdminGroup('На розгляді', pending,  'pending'),
         renderAdminGroup('Активні',      approved, 'approved'),
         renderAdminGroup('Відхилені',    rejected, 'rejected'),
-      ].join('');
+      ].join('') || '<div class="cab-empty">Даних немає</div>';
 
       // Load users
       let usersSnap;
       try { usersSnap = await getDocs(query(collection(db, 'users'), orderBy('createdAt', 'desc'))); }
       catch { usersSnap = await getDocs(collection(db, 'users')); }
       const users = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const usersHtml = users.length ? `
+      usersEl.innerHTML = users.length ? `
         <div class="admin-header">Учні <span style="font-size:11px;color:var(--text-muted)">${users.length}</span></div>
         ${users.map(u => `
           <div class="admin-card" id="adm-u-${u.id}">
@@ -1800,12 +1821,49 @@ async function renderAdminScreen(user) {
               <div class="admin-field"><div class="admin-field-label">UID</div><div class="admin-field-val" style="font-size:10px;color:var(--text-hint);word-break:break-all">${esc(u.id)}</div></div>
               <div class="admin-actions"><button class="admin-btn delete" onclick="window._adminDeleteUser('${u.id}','${esc((u.name||u.email||'').replace(/'/g,''))}')"><i class="ti ti-trash"></i> Видалити учня</button></div>
             </div>
-          </div>`).join('')}` : '';
+          </div>`).join('')}` : '<div class="cab-empty">Учнів ще немає</div>';
 
-      el.innerHTML = (instrHtml + usersHtml) || '<div class="cab-empty">Даних немає</div>';
+      // Load bookings
+      const bkSnap = await getDocs(query(collection(db, 'bookings'), orderBy('createdAt', 'desc')));
+      const bookings = bkSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      bookingsEl.innerHTML = renderAdminBookings(bookings);
     } catch(e) {
-      if (el) el.innerHTML = `<div class="cab-empty" style="color:#cc3333">Помилка: ${esc(e.message||e)}</div>`;
+      const msg = `<div class="cab-empty" style="color:#cc3333">Помилка: ${esc(e.message||e)}</div>`;
+      if (instrEl && !instrEl.children.length) instrEl.innerHTML = msg;
+      if (usersEl && !usersEl.children.length) usersEl.innerHTML = msg;
+      if (bookingsEl && !bookingsEl.children.length) bookingsEl.innerHTML = msg;
     }
+  }
+
+  function renderAdminBookings(list) {
+    if (!list.length) return '<div class="cab-empty">Записів ще немає</div>';
+    const cnt = `<span style="font-size:11px;color:var(--text-muted)">${list.length}</span>`;
+    return `<div class="admin-header">Усі записи ${cnt}</div>` + list.map(b => {
+      const dateStr = bkDateStr(b);
+      const mpLbl = b.meetingPoint?.label || '';
+      return `<div class="admin-card" id="adm-bk-${b.id}">
+        <div class="admin-card-head" onclick="document.getElementById('adm-bk-${b.id}').classList.toggle('open')">
+          <div class="admin-card-avatar"><i class="ti ti-calendar-event"></i></div>
+          <div class="admin-card-main">
+            <div class="admin-card-name">${esc(b.clientName||b.clientEmail||'Учень')} → ${esc(b.instructorName||'Інструктор')}</div>
+            <div class="admin-card-sub">${esc(dateStr)} о ${esc(b.time||'')} · ${b.duration||60} хв</div>
+          </div>
+          ${bkStatusBadge(b.status)}
+          <i class="ti ti-chevron-down admin-card-arrow"></i>
+        </div>
+        <div class="admin-card-body">
+          <div class="admin-field"><div class="admin-field-label">Учень</div><div class="admin-field-val">${esc(b.clientName||'—')}</div></div>
+          <div class="admin-field"><div class="admin-field-label">Тел. учня</div><div class="admin-field-val">${esc(b.clientPhone||'—')}</div></div>
+          <div class="admin-field"><div class="admin-field-label">Email учня</div><div class="admin-field-val">${esc(b.clientEmail||'—')}</div></div>
+          <div class="admin-field"><div class="admin-field-label">Інструктор</div><div class="admin-field-val">${esc(b.instructorName||'—')}</div></div>
+          <div class="admin-field"><div class="admin-field-label">Тел. інструктора</div><div class="admin-field-val">${esc(b.instructorPhone||'—')}</div></div>
+          <div class="admin-field"><div class="admin-field-label">Дата/час</div><div class="admin-field-val">${esc(dateStr)} о ${esc(b.time||'—')}</div></div>
+          <div class="admin-field"><div class="admin-field-label">Тривалість</div><div class="admin-field-val">${b.duration||60} хв</div></div>
+          <div class="admin-field"><div class="admin-field-label">Місце зустрічі</div><div class="admin-field-val">${esc(mpLbl||'—')}</div></div>
+          <div class="admin-field"><div class="admin-field-label">Статус</div><div class="admin-field-val">${bkStatusBadge(b.status)}</div></div>
+        </div>
+      </div>`;
+    }).join('');
   }
 
   function renderAdminGroup(label, list, status) {
