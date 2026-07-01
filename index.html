@@ -792,7 +792,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.240</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.241</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -3710,10 +3710,12 @@ function renderBookingDates(box, instrId, d) {
     if (allDates.length >= 28) break;
   }
   if (!allDates.length) {
+    const phoneHtml = d.phone ? `<a href="tel:${esc(d.phone)}" style="display:inline-flex;align-items:center;gap:6px;margin-bottom:10px;padding:8px 16px;background:var(--green);border-radius:20px;font-size:13px;font-weight:600;color:#fff;text-decoration:none"><i class="ti ti-phone-call"></i> ${esc(d.phone)}</a><br>` : '';
     box.innerHTML = `<div style="text-align:center;padding:16px 0">
       <div style="font-size:28px;margin-bottom:8px;opacity:.4">📅</div>
-      <p style="font-size:13px;color:var(--text-muted);margin:0 0 10px;line-height:1.5">Інструктор ще не відкрив слоти для запису.<br>Зверніться напряму або завітайте пізніше.</p>
-      <button onclick="window._openBooking('${esc(instrId)}')" style="background:var(--green-light);border:.5px solid var(--border);border-radius:9px;padding:7px 18px;font-size:12px;color:var(--green);cursor:pointer;font-family:inherit;font-weight:500"><i class="ti ti-refresh"></i> Оновити</button>
+      <p style="font-size:13px;color:var(--text-muted);margin:0 0 10px;line-height:1.5">Інструктор ще не відкрив слоти для онлайн-запису.<br>Щоб записатись — зателефонуйте і домовтесь напряму.</p>
+      ${phoneHtml}
+      <button onclick="window._openBooking('${esc(instrId)}')" style="display:block;margin:0 auto;background:var(--green-light);border:.5px solid var(--border);border-radius:9px;padding:7px 18px;font-size:12px;color:var(--green);cursor:pointer;font-family:inherit;font-weight:500"><i class="ti ti-refresh"></i> Оновити</button>
     </div>`;
     return;
   }
