@@ -793,7 +793,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.269</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.270</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -4103,8 +4103,8 @@ window._bookSlot = async function(instrId, dateStr, time) {
         <div class="booking-done-icon"><i class="ti ti-circle-check"></i></div>
         <div class="booking-done-text">Запис надіслано!</div>
         <div class="booking-done-sub">${esc(day)}.${esc(m)}.${esc(y)} о ${esc(time)}${mpHtml}<br>Інструктор підтвердить найближчим часом</div>
-        <button class="btn-bk-ical" style="margin-top:12px" onclick="window._addToCalendar(${calArgs2})"><i class="ti ti-calendar-plus"></i> Додати до календаря</button>
-        <button class="btn-bk-ical" style="margin-top:8px" onclick="window._openBooking('${esc(instrId)}')"><i class="ti ti-arrow-left"></i> Записатись ще на урок</button>
+        <button class="btn-bk-action" style="margin-top:12px;width:100%;justify-content:center;display:flex;align-items:center;gap:6px;padding:9px" onclick="window._addToCalendar(${calArgs2})"><i class="ti ti-calendar-plus"></i> Додати до календаря</button>
+        <button class="btn-bk-action" style="margin-top:8px;width:100%;justify-content:center;display:flex;align-items:center;gap:6px;padding:9px" onclick="window._openBooking('${esc(instrId)}')"><i class="ti ti-arrow-left"></i> Записатись ще на урок</button>
       </div>`;
     }
   } catch(e) {
