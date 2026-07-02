@@ -796,7 +796,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.259</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.260</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1773,6 +1773,23 @@ async function saveSetup(user) {
 
 const ADMIN_EMAIL = 'sash5385@gmail.com';
 
+let _unsubAdminInstr = null;
+function listenNewInstructorApps() {
+  if (_unsubAdminInstr) { _unsubAdminInstr(); _unsubAdminInstr = null; }
+  let ready = false;
+  const q = query(collection(db, 'instructors'), where('status', '==', 'pending'));
+  _unsubAdminInstr = onSnapshot(q, snap => {
+    if (!ready) { ready = true; return; }
+    snap.docChanges().forEach(ch => {
+      if (ch.type !== 'added') return;
+      const d = ch.doc.data();
+      showToast('Нова анкета інструктора!', `${d.name || 'Інструктор'} — ${d.phone || d.email || ''}`, 'success');
+      showBrowserNotif('Нова анкета інструктора!', `${d.name || 'Інструктор'} — ${d.phone || d.email || ''}`, { type: 'admin' });
+      window._adminReload?.();
+    });
+  }, () => {});
+}
+
 // --- Admin panel ---
 async function renderAdminScreen(user) {
   window._cabUser = user;
@@ -1809,6 +1826,7 @@ async function renderAdminScreen(user) {
 
   window._adminReload = () => loadAdminData();
   await loadAdminData();
+  listenNewInstructorApps();
 
   async function loadAdminData() {
     const instrEl    = document.getElementById('adm-panel-instr');

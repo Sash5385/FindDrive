@@ -36,6 +36,14 @@ async function getInstrUserId(instrId) {
   return snap.data()?.userId || null;
 }
 
+const ADMIN_EMAIL = 'sash5385@gmail.com';
+
+// Повертає uid адміна по email (шукаємо в users, бо саме там зберігається fcmToken)
+async function getAdminUid() {
+  const snap = await admin.firestore().collection('users').where('email', '==', ADMIN_EMAIL).limit(1).get();
+  return snap.empty ? null : snap.docs[0].id;
+}
+
 // Інструктор отримує push коли клієнт бронює
 exports.onBookingCreated = onDocumentCreated(
   { document: 'bookings/{id}', region: 'europe-west1' },
@@ -87,6 +95,23 @@ exports.onBookingUpdated = onDocumentUpdated(
         { type: 'booking' }
       );
     }
+  }
+);
+
+// Адмін отримує push коли подана нова анкета інструктора
+exports.onInstructorCreated = onDocumentCreated(
+  { document: 'instructors/{id}', region: 'europe-west1' },
+  async event => {
+    const d = event.data.data();
+    if (d.status !== 'pending') return;
+    const adminUid = await getAdminUid();
+    if (!adminUid) return;
+    await sendPush(
+      adminUid,
+      'Нова анкета інструктора!',
+      `${d.name || 'Інструктор'} — ${d.phone || d.email || ''}`,
+      { type: 'admin' }
+    );
   }
 );
 
