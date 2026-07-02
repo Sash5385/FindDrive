@@ -39,7 +39,9 @@ service cloud.firestore {
                  || (request.auth != null
                      && resource.data.userId == null
                      && resource.data.email == request.auth.token.email
-                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['userId']));
+                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['userId']))
+                 || (request.auth != null
+                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'reviews']));
       allow delete: if isAdmin();
     }
 
@@ -60,7 +62,17 @@ service cloud.firestore {
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'cancelledBy']);
       allow update: if isInstructor(resource.data.instructorId)
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'date', 'time', 'proposedDate', 'proposedTime']);
+      allow update: if request.auth != null
+                    && resource.data.clientId == request.auth.uid
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reviewed']);
       allow delete: if isAdmin();
+    }
+
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if request.auth != null
+                    && request.resource.data.clientId == request.auth.uid;
+      allow update, delete: if isAdmin();
     }
 
     match /chats/{chatId} {
