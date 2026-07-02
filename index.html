@@ -796,7 +796,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.266</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.267</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2330,7 +2330,7 @@ async function loadInstrSettings(instr, container) {
             <span class="photo-label">Інструктор</span>
           </div>
           <div class="instr-photo-box" onclick="document.getElementById('instr-car-input').click()">
-            <div class="instr-photo-box-preview">${carSrc?`<img src="${esc(carSrc)}">`:'<i class="ti ti-car"></i>'}</div>
+            <div class="instr-photo-box-preview" style="aspect-ratio:16/9">${carSrc?`<img src="${esc(carSrc)}">`:'<i class="ti ti-car"></i>'}</div>
             <input type="file" id="instr-car-input" accept="image/*" hidden onchange="window._onInstrCarChange(this)">
             <span class="photo-label">Авто</span>
           </div>
