@@ -60,6 +60,19 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .denied h3{font-size:16px;font-weight:600;margin-bottom:8px}
 .denied p{font-size:13px;color:var(--text-muted);margin-bottom:16px}
 @media(max-width:600px){.card{flex-direction:column}.card-actions{flex-direction:row}}
+
+/* TABS */
+.tabs{display:flex;gap:8px;margin-bottom:24px;border-bottom:.5px solid var(--border)}
+.tab-btn{background:none;border:none;padding:10px 4px;margin-right:20px;font-size:14px;font-weight:500;color:var(--text-muted);cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+.tab-btn.active{color:var(--green);border-bottom-color:var(--green)}
+.tab-btn .count-badge{margin-left:6px}
+
+/* PROBLEM CARDS */
+.problem-card{background:var(--white);border-radius:16px;border:.5px solid var(--border);padding:18px 20px;margin-bottom:12px}
+.problem-card.resolved{opacity:.55}
+.problem-text{font-size:14px;color:var(--text);line-height:1.55;margin-bottom:8px;white-space:pre-wrap}
+.problem-meta{font-size:12px;color:var(--text-muted);display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.problem-actions{display:flex;gap:8px}
 </style>
 </head>
 <body>
@@ -85,11 +98,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 
 <div id="admin-panel" style="display:none">
   <div class="wrap">
-    <div class="page-head">
-      <div class="page-title">Нові заявки інструкторів</div>
-      <span id="count-badge" class="count-badge" style="display:none"></span>
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-btn-pending" onclick="window._switchTab('pending')">Заявки інструкторів<span id="count-badge-pending" class="count-badge" style="display:none"></span></button>
+      <button class="tab-btn" id="tab-btn-problems" onclick="window._switchTab('problems')">Проблеми<span id="count-badge-problems" class="count-badge" style="display:none"></span></button>
     </div>
-    <div id="pending-list"></div>
+    <div id="tab-pending">
+      <div class="page-head">
+        <div class="page-title">Нові заявки інструкторів</div>
+      </div>
+      <div id="pending-list"></div>
+    </div>
+    <div id="tab-problems" style="display:none">
+      <div class="page-head">
+        <div class="page-title">Звернення про проблеми</div>
+      </div>
+      <div id="problems-list"></div>
+    </div>
   </div>
 </div>
 
@@ -97,7 +121,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, query, where, onSnapshot, updateDoc, deleteDoc, doc }
+import { getFirestore, collection, query, where, orderBy, onSnapshot, updateDoc, deleteDoc, doc }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const ADMIN_EMAIL = 'sash5385@gmail.com';
@@ -129,6 +153,7 @@ onAuthStateChanged(auth, user => {
     document.getElementById('admin-panel').style.display = '';
     document.getElementById('btn-signout').style.display = '';
     listenPending();
+    listenProblems();
   } else if (user) {
     document.getElementById('auth-gate').innerHTML = `
       <img class="gate-logo" src="logo192.png" alt="">
@@ -150,12 +175,19 @@ document.getElementById('btn-google-login').addEventListener('click', () => {
   signInWithPopup(auth, provider).catch(console.error);
 });
 
+window._switchTab = function(tab) {
+  document.getElementById('tab-pending').style.display  = tab === 'pending'  ? '' : 'none';
+  document.getElementById('tab-problems').style.display = tab === 'problems' ? '' : 'none';
+  document.getElementById('tab-btn-pending').classList.toggle('active', tab === 'pending');
+  document.getElementById('tab-btn-problems').classList.toggle('active', tab === 'problems');
+};
+
 function listenPending() {
   onSnapshot(
     query(collection(db, 'instructors'), where('status', '==', 'pending')),
     snap => {
       const list  = document.getElementById('pending-list');
-      const badge = document.getElementById('count-badge');
+      const badge = document.getElementById('count-badge-pending');
       if (snap.empty) {
         list.innerHTML = '<div class="empty">🎉 Нових заявок немає</div>';
         badge.style.display = 'none';
@@ -167,6 +199,65 @@ function listenPending() {
     }
   );
 }
+
+function listenProblems() {
+  onSnapshot(
+    query(collection(db, 'problems'), orderBy('createdAt', 'desc')),
+    snap => {
+      const list  = document.getElementById('problems-list');
+      const badge = document.getElementById('count-badge-problems');
+      const newCount = snap.docs.filter(d => d.data().status !== 'resolved').length;
+      if (snap.empty) {
+        list.innerHTML = '<div class="empty">🎉 Звернень немає</div>';
+        badge.style.display = 'none';
+        return;
+      }
+      if (newCount > 0) {
+        badge.textContent = newCount + ' нових';
+        badge.style.display = '';
+      } else {
+        badge.style.display = 'none';
+      }
+      list.innerHTML = snap.docs.map(renderProblemCard).join('');
+    },
+    err => {
+      document.getElementById('problems-list').innerHTML = '<div class="empty">Не вдалось завантажити звернення</div>';
+      console.error('listenProblems error:', err.message);
+    }
+  );
+}
+
+function renderProblemCard(d) {
+  const p = d.data();
+  const resolved = p.status === 'resolved';
+  const dateStr = p.createdAt?.toDate?.().toLocaleString('uk-UA', { day:'numeric', month:'long', hour:'2-digit', minute:'2-digit' }) || '—';
+  return `<div class="problem-card${resolved ? ' resolved' : ''}" id="p-${d.id}">
+    <div class="problem-text">${esc(p.text)}</div>
+    <div class="problem-meta">
+      ${p.contact ? `<span>📞 ${esc(p.contact)}</span>` : ''}
+      ${p.userEmail ? `<span>✉️ ${esc(p.userEmail)}</span>` : ''}
+      <span>${dateStr}</span>
+      ${resolved ? '<span>· вирішено</span>' : ''}
+    </div>
+    <div class="problem-actions">
+      ${resolved
+        ? `<button class="btn-reject" onclick="window._reopenProblem('${d.id}')">↺ Повернути</button>`
+        : `<button class="btn-approve" onclick="window._resolveProblem('${d.id}')">✓ Вирішено</button>`}
+      <button class="btn-reject" onclick="window._deleteProblem('${d.id}')">✗ Видалити</button>
+    </div>
+  </div>`;
+}
+
+window._resolveProblem = async id => {
+  await updateDoc(doc(db, 'problems', id), { status: 'resolved' });
+};
+window._reopenProblem = async id => {
+  await updateDoc(doc(db, 'problems', id), { status: 'new' });
+};
+window._deleteProblem = async id => {
+  if (confirm('Видалити це звернення?'))
+    await deleteDoc(doc(db, 'problems', id));
+};
 
 function renderCard(d) {
   const p = d.data();

@@ -249,6 +249,14 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .scroll-top.visible{opacity:1;pointer-events:all;transform:translateY(0)}
 .scroll-top:hover{background:var(--green-dark)}
 
+/* PROBLEM BANNER */
+.problem-banner{background:var(--green-light);border-bottom:.5px solid var(--border);padding:10px 48px;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;text-align:center}
+.problem-banner-text{font-size:13px;color:var(--text);display:flex;align-items:center;gap:7px}
+.problem-banner-text i{color:var(--green);font-size:16px}
+.problem-banner-btn{background:var(--green);color:#fff;border:none;border-radius:9px;padding:7px 16px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .2s;white-space:nowrap}
+.problem-banner-btn:hover{background:var(--green-dark)}
+@media(max-width:600px){.problem-banner{padding:10px 20px}}
+
 /* AUTH MODAL */
 .auth-modal-overlay{position:fixed;inset:0;background:rgba(13,42,26,.5);z-index:1200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .auth-modal-box{background:var(--white);border-radius:18px;padding:0;max-width:480px;width:100%;position:relative;box-shadow:0 12px 60px rgba(13,42,26,.22);animation:authBoxIn .28s cubic-bezier(.34,1.56,.64,1);border:1px solid #000;overflow:hidden}
@@ -779,7 +787,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.277</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.278</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -802,6 +810,30 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-mobile-link" href="#how-it-works" onclick="closeMobileMenu()"><i class="ti ti-list-check"></i> Як це працює</a>
   <a class="nav-mobile-link" href="#instructors" onclick="closeMobileMenu()"><i class="ti ti-users"></i> Інструктори</a>
   <a class="nav-mobile-link" href="#" onclick="event.preventDefault();closeMobileMenu();document.getElementById('map-anchor').scrollIntoView({behavior:'smooth'})"><i class="ti ti-map"></i> Карта</a>
+</div>
+
+<div class="problem-banner">
+  <span class="problem-banner-text"><i class="ti ti-message-circle-2"></i> Якщо у вас виникли проблеми — напишіть нам і ми вирішимо її</span>
+  <button class="problem-banner-btn" onclick="window._openProblemModal()">Написати нам</button>
+</div>
+
+<div id="problem-modal" class="auth-modal-overlay" style="display:none" onclick="if(event.target===this)window._closeProblemModal()">
+  <div class="auth-modal-box" style="max-width:440px">
+    <div class="auth-modal-head">
+      <div class="auth-modal-logo">
+        <div class="auth-modal-logo-icon"><i class="ti ti-message-circle-2"></i></div>
+        <span class="auth-modal-brand">Повідомити про проблему</span>
+      </div>
+      <button class="auth-modal-close" onclick="window._closeProblemModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="auth-modal-body">
+      <textarea id="problem-text" class="form-input" rows="4" placeholder="Опишіть, що сталося…" style="resize:none;margin-bottom:12px"></textarea>
+      <input id="problem-contact" class="form-input" type="text" placeholder="Телефон або email для відповіді (необов'язково)" style="margin-bottom:6px">
+      <div id="problem-err" class="field-err" style="display:none;margin-bottom:8px"></div>
+      <button id="problem-submit-btn" class="auth-role-btn-primary" style="padding:11px" onclick="window._submitProblem()">Надіслати</button>
+      <div id="problem-sent" style="display:none;text-align:center;color:var(--green);font-size:13px;font-weight:500;margin-top:10px"><i class="ti ti-circle-check"></i> Дякуємо! Ми отримали ваше звернення</div>
+    </div>
+  </div>
 </div>
 
 <section class="hero">
@@ -1493,6 +1525,58 @@ window._closeAuthModal = function() {
   modal.style.display = 'none';
   document.body.style.overflow = '';
   _authModalActive = false;
+};
+
+// --- Problem report modal ---
+window._openProblemModal = function() {
+  const modal = document.getElementById('problem-modal');
+  if (!modal) return;
+  document.getElementById('problem-text').value = '';
+  document.getElementById('problem-contact').value = '';
+  document.getElementById('problem-err').style.display = 'none';
+  document.getElementById('problem-sent').style.display = 'none';
+  document.getElementById('problem-submit-btn').style.display = '';
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+};
+window._closeProblemModal = function() {
+  const modal = document.getElementById('problem-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
+};
+window._submitProblem = async function() {
+  const text    = document.getElementById('problem-text').value.trim();
+  const contact = document.getElementById('problem-contact').value.trim();
+  const errEl   = document.getElementById('problem-err');
+  if (!text) {
+    errEl.textContent = 'Опишіть, будь ласка, проблему';
+    errEl.style.display = '';
+    return;
+  }
+  errEl.style.display = 'none';
+  const btn = document.getElementById('problem-submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Надсилаємо…';
+  try {
+    await addDoc(collection(db, 'problems'), {
+      text,
+      contact: contact || null,
+      userId: auth.currentUser?.uid || null,
+      userEmail: auth.currentUser?.email || null,
+      status: 'new',
+      createdAt: serverTimestamp()
+    });
+    btn.style.display = 'none';
+    document.getElementById('problem-sent').style.display = '';
+    setTimeout(() => window._closeProblemModal(), 1800);
+  } catch (e) {
+    errEl.textContent = 'Не вдалось надіслати. Спробуйте ще раз';
+    errEl.style.display = '';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Надіслати';
+  }
 };
 
 window.renderAuthRoleSelect = function() {
@@ -3606,7 +3690,7 @@ window._shareInstructor = async function() {
 
 // Keyboard shortcuts: ESC → close panels, / → focus search
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') { window._closeAuthModal?.(); window.closeAll?.(); closeMobileMenu(); }
+  if (e.key === 'Escape') { window._closeAuthModal?.(); window._closeProblemModal?.(); window.closeAll?.(); closeMobileMenu(); }
   if (e.key === '/' && !e.ctrlKey && !e.metaKey && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)) {
     e.preventDefault();
     const inp = document.getElementById('search-input');
