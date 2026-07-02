@@ -178,9 +178,9 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .card-photo-wrap{position:relative;height:130px;background:var(--green-light)}
 .card-car-ph{width:100%;height:100%;object-fit:cover;display:block}
 .card-car-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:52px;opacity:.18;background:linear-gradient(135deg,#ddeef8,#c8daea)}
-.card-face-ov{position:absolute;bottom:-26px;left:14px;width:52px;height:52px;border-radius:50%;overflow:hidden;border:3px solid var(--white);box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:3}
+.card-face-ov{position:absolute;bottom:-52px;left:14px;width:104px;height:104px;border-radius:50%;overflow:hidden;border:4px solid var(--white);box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:3}
 .card-kpp{position:absolute;top:8px;right:8px;z-index:3;background:rgba(13,42,26,.65);color:#fff;border-radius:12px;padding:3px 9px;font-size:10px;font-weight:500;backdrop-filter:blur(4px)}
-.card-body{padding:30px 14px 14px}
+.card-body{padding:58px 14px 14px}
 .badge-today{display:inline-flex;align-items:center;gap:3px;background:var(--green-light);color:var(--green);border:.5px solid #b8d8c8;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:600;letter-spacing:.3px;margin-bottom:6px}
 .badge-verified{display:inline-flex;align-items:center;gap:3px;background:#e6f1fb;color:#185fa5;border:.5px solid #a4c4e4;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:600;letter-spacing:.3px}
 .instr-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;position:relative;z-index:1}
@@ -332,7 +332,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 /* CABINET */
 .cab-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:1049;opacity:0;pointer-events:none;transition:opacity .3s}
 .cab-overlay.open{opacity:1;pointer-events:all}
-.cabinet{position:fixed;top:0;right:0;width:100vw;height:100vh;background-color:var(--bg);background-image:radial-gradient(circle 340px at 10% 12%,rgba(168,240,192,.55),transparent 70%),radial-gradient(circle 280px at 88% 22%,rgba(240,224,96,.42),transparent 70%),radial-gradient(circle 300px at 8% 58%,rgba(240,168,208,.42),transparent 70%),radial-gradient(circle 320px at 86% 68%,rgba(160,216,248,.48),transparent 70%),radial-gradient(circle 260px at 50% 92%,rgba(192,184,248,.38),transparent 70%);z-index:1050;display:flex;flex-direction:column;box-shadow:-4px 0 32px rgba(0,0,0,.14);opacity:0;pointer-events:none;transform:scale(.82);transform-origin:right center;transition:opacity .18s ease,transform .45s cubic-bezier(.34,1.56,.64,1)}
+.cabinet{position:fixed;top:0;right:0;width:100vw;height:100vh;background-color:var(--bg);background-image:radial-gradient(circle 340px at 10% 12%,rgba(168,240,192,.55),transparent 70%),radial-gradient(circle 280px at 88% 22%,rgba(240,224,96,.42),transparent 70%),radial-gradient(circle 300px at 8% 58%,rgba(240,168,208,.42),transparent 70%),radial-gradient(circle 320px at 86% 68%,rgba(160,216,248,.48),transparent 70%),radial-gradient(circle 260px at 50% 92%,rgba(192,184,248,.38),transparent 70%);z-index:1050;display:flex;flex-direction:column;border:1px solid #000;box-shadow:-4px 0 32px rgba(0,0,0,.14);opacity:0;pointer-events:none;transform:scale(.82);transform-origin:right center;transition:opacity .18s ease,transform .45s cubic-bezier(.34,1.56,.64,1)}
 .cabinet.open{opacity:1;pointer-events:all;transform:scale(1)}
 @media(min-width:900px){.cabinet{width:560px;box-shadow:-4px 0 32px rgba(0,0,0,.14);transform-origin:right center}.instr-wide{width:620px}.instr-profile-panel{width:720px}}
 @media(min-width:1280px){.cabinet{width:720px}.instr-wide{width:780px}.instr-profile-panel{width:960px}}
@@ -796,7 +796,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.265</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.266</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -926,7 +926,6 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     <span class="section-label">Інструктори поруч</span>
     <a class="section-link" href="#instructors">Усі інструктори <i class="ti ti-arrow-right"></i></a>
   </div>
-  <div id="rv-row" class="rv-row"><span class="rv-label"><i class="ti ti-history" style="font-size:12px"></i> Нещодавно:</span><div id="rv-chips" class="rv-chips"></div></div>
   <div class="instr-slider-wrap">
     <button class="instr-slider-btn prev" id="instr-prev" onclick="window._instrSlide(-1)" aria-label="Назад"><i class="ti ti-chevron-left"></i></button>
     <div id="instr-grid" class="instr-grid"></div>
@@ -3493,8 +3492,8 @@ function buildCard(d, i, id) {
       ${isNew ? '<span class="badge-new">Новий</span>' : ''}
       <div class="card-face-ov">
         ${d.photo
-          ? `<img src="${esc(d.photo)}" style="width:100%;height:100%;object-fit:cover" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div style="display:none;width:100%;height:100%;background:${th.bg};color:${th.color};align-items:center;justify-content:center;font-size:17px;font-weight:600">${esc(initials(d.name))}</div>`
-          : `<div style="width:100%;height:100%;background:${th.bg};color:${th.color};display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600">${esc(initials(d.name))}</div>`}
+          ? `<img src="${esc(d.photo)}" style="width:100%;height:100%;object-fit:cover" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div style="display:none;width:100%;height:100%;background:${th.bg};color:${th.color};align-items:center;justify-content:center;font-size:32px;font-weight:600">${esc(initials(d.name))}</div>`
+          : `<div style="width:100%;height:100%;background:${th.bg};color:${th.color};display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:600">${esc(initials(d.name))}</div>`}
       </div>
     </div>
     <div class="card-body">
