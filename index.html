@@ -796,7 +796,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.257</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.258</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1833,11 +1833,11 @@ async function renderAdminScreen(user) {
         renderAdminGroup('Відхилені',    rejected, 'rejected'),
       ].join('') || '<div class="cab-empty">Даних немає</div>';
 
-      // Load users
-      let usersSnap;
-      try { usersSnap = await getDocs(query(collection(db, 'users'), orderBy('createdAt', 'desc'))); }
-      catch { usersSnap = await getDocs(collection(db, 'users')); }
-      const users = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // Load users — без orderBy('createdAt'), бо Firestore виключає документи без цього поля
+      // (наприклад учнів, що зайшли через Google і ще не мали createdAt) — сортуємо на клієнті
+      const usersSnap = await getDocs(collection(db, 'users'));
+      const users = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
       usersEl.innerHTML = users.length ? `
         <div class="admin-header">Учні <span style="font-size:11px;color:var(--text-muted)">${users.length}</span></div>
         ${users.map(u => `
