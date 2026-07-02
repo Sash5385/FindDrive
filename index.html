@@ -796,7 +796,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.254</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.255</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1735,7 +1735,7 @@ async function renderSetupScreen(user, pre = {}) {
 <div class="setup-card">
   <div class="setup-qlabel">Що шукаю в інструктора <span style="font-size:10px;color:var(--text-hint);font-weight:400;text-transform:none;letter-spacing:0">(фільтрує список)</span></div>
   <div class="setup-grid2">
-    ${INSTR_TAGS.filter(t => t !== 'Автомат' && t !== 'Механіка').map(tag => {
+    ${INSTR_TAGS.filter(t => t !== 'Автомат' && t !== 'Механіка' && !t.startsWith('ТСЦ ')).map(tag => {
       const c = TAG_COLORS[tag]||{};
       const cv = c.bg ? `--tc-bg:${c.bg};--tc-bd:${c.bd};--tc-tx:${c.tx}` : '';
       const checked = (pre.preferredTags||[]).includes(tag);
