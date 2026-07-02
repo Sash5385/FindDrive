@@ -793,7 +793,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.272</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.273</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -3458,6 +3458,20 @@ function tagStyle(tag) {
   return c ? `background:${c.bg};color:${c.tx};border-color:${c.bd}` : 'background:#f0f5f0;color:#4a6a5a;border-color:#dde8dd';
 }
 
+function _instrHasUpcomingSlots(d) {
+  const today = new Date();
+  for (let i = 0; i <= 14; i++) {
+    const dt = new Date(today);
+    dt.setDate(today.getDate() + i);
+    const iso = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    const av = getDateAvail(d, iso);
+    if (!av) continue;
+    if (av.openSlots) { if (av.openSlots.length > 0) return true; }
+    else if (av.from || av.to) { return true; }
+  }
+  return false;
+}
+
 function buildCard(d, i, id) {
   const th = THEMES[i % THEMES.length];
   const instrTags = Array.isArray(d.tags) ? d.tags : [];
@@ -3476,7 +3490,8 @@ function buildCard(d, i, id) {
   } else {
     isAvailToday = Array.isArray(d.days) && d.days.includes(_dayNames[new Date().getDay()]);
   }
-  return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}' data-price="${d.price||0}" data-rating="${d.rating||0}" data-gearbox="${esc(d.gearbox||'')}" data-area="${esc((d.area||'').toLowerCase())}" data-instr-id="${esc(id||'')}" data-lat="${d.lat||''}" data-lng="${d.lng||''}" data-dist="" data-name="${esc((d.name||'').toLowerCase())}" data-experience="${d.experience||0}" data-verified="${d.verified?'1':''}" data-today="${isAvailToday?'1':''}">
+  const hasSlots = _instrHasUpcomingSlots(d);
+  return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}' data-price="${d.price||0}" data-rating="${d.rating||0}" data-gearbox="${esc(d.gearbox||'')}" data-area="${esc((d.area||'').toLowerCase())}" data-instr-id="${esc(id||'')}" data-lat="${d.lat||''}" data-lng="${d.lng||''}" data-dist="" data-name="${esc((d.name||'').toLowerCase())}" data-experience="${d.experience||0}" data-verified="${d.verified?'1':''}" data-today="${isAvailToday?'1':''}" data-has-slots="${hasSlots?'1':''}">
     <div class="card-blob" style="background:${th.blob}"></div>
     <button class="card-fav${isFav?' on':''}" data-fav-id="${esc(id||'')}" onclick="window._toggleFav(this)" title="До обраних"><i class="ti ti-heart${isFav?'-filled':''}"></i></button>
     <div class="card-name-row">
@@ -3581,14 +3596,17 @@ function _applyAllFilters() {
     let tagOk = true;
     if (window._activeTagFilters.size > 0) {
       const TODAY_TAG = 'Сьогодні доступний';
+      const SLOTS_TAG = 'Є вільні слоти';
       const todayFilter = window._activeTagFilters.has(TODAY_TAG);
-      const regularTags = [...window._activeTagFilters].filter(t => t !== TODAY_TAG);
+      const slotsFilter = window._activeTagFilters.has(SLOTS_TAG);
+      const regularTags = [...window._activeTagFilters].filter(t => t !== TODAY_TAG && t !== SLOTS_TAG);
       try {
         if (regularTags.length > 0) {
           const cardTags = JSON.parse(card.dataset.tags || '[]');
           tagOk = regularTags.every(t => cardTags.includes(t));
         }
         if (tagOk && todayFilter) tagOk = card.dataset.today === '1';
+        if (tagOk && slotsFilter) tagOk = card.dataset.hasSlots === '1';
       } catch { tagOk = false; }
     }
     card.style.display = nameOk && cityOk && tagOk ? '' : 'none';
@@ -5341,6 +5359,7 @@ window._startPickLocation = function() {
   if (!el) return;
   const TC = {
     'Сьогодні доступний':   {bg:'#d4f0e0',bd:'#1a7a4a',tx:'#0d4a2a'},
+    'Є вільні слоти':       {bg:'#e6f1fb',bd:'#185fa5',tx:'#0d3a68'},
     'Автомат':               {bg:'#e8f4ee',bd:'#a8d0b8',tx:'#1a7a4a'},
     'Механіка':              {bg:'#e6f1fb',bd:'#a4c4e4',tx:'#185fa5'},
     'Інструктор не палить':  {bg:'#f0f8e8',bd:'#b4d890',tx:'#3c7000'},
