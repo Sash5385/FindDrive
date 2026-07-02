@@ -5,7 +5,8 @@ const admin = require('firebase-admin');
 admin.initializeApp();
 
 // data — об'єкт, який SW передає в notificationclick → відкриває потрібну панель
-async function sendPush(uid, title, body, data = {}) {
+// link — куди веде клік по сповіщенню (за замовчуванням головна, для адмін-пушів — admin.html)
+async function sendPush(uid, title, body, data = {}, link = 'https://finddrive.in.ua/') {
   if (!uid) return;
   // FCM data values must be strings
   const strData = Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)]));
@@ -22,7 +23,7 @@ async function sendPush(uid, title, body, data = {}) {
           icon:  'https://finddrive.in.ua/favicon.png',
           badge: 'https://finddrive.in.ua/favicon.png',
         },
-        fcmOptions: { link: 'https://finddrive.in.ua/' }
+        fcmOptions: { link }
       }
     });
   } catch (e) {
@@ -111,7 +112,8 @@ exports.onInstructorCreated = onDocumentCreated(
       adminUid,
       'Нова анкета інструктора!',
       `${d.name || 'Інструктор'} — ${d.phone || d.email || ''}`,
-      { type: 'admin' }
+      { type: 'admin' },
+      'https://finddrive.in.ua/admin.html'
     );
   }
 );
