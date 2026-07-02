@@ -796,7 +796,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.255</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.256</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1722,13 +1722,6 @@ async function renderSetupScreen(user, pre = {}) {
     <input id="s-budget-from" class="form-input" type="number" placeholder="від" min="0" step="50" style="flex:1" value="${pre.budget?.from||''}">
     <span style="color:var(--text-muted);font-weight:600;flex-shrink:0">—</span>
     <input id="s-budget-to" class="form-input" type="number" placeholder="до" min="0" step="50" style="flex:1" value="${pre.budget?.to||''}">
-  </div>
-</div>
-
-<div class="setup-card">
-  <div class="setup-qlabel">Зручний час занять</div>
-  <div class="setup-grid2">
-    ${btns([['morning','Ранок (7–11)'],['day','День (11–17)'],['evening','Вечір (17–21)'],['weekend','Вихідні']],'s-sched','checkbox',pre.schedule||[])}
   </div>
 </div>
 
