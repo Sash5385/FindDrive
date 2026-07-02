@@ -796,7 +796,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.258</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.259</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1143,10 +1143,6 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       <div id="instr-auth-err" style="display:none;background:var(--pink-light);color:var(--pink);border-radius:9px;padding:10px 14px;font-size:13px;margin-bottom:12px"></div>
 
       <div class="form-divider">Умови роботи</div>
-      <div class="form-group">
-        <label class="form-label">Місто та район роботи</label>
-        <input class="form-input" name="area" type="text" placeholder="Харків, Центр; або Київ, Оболонь…">
-      </div>
       <div class="form-group">
         <label class="form-label">Місце роботи на карті</label>
         <div class="addr-search-wrap">
@@ -3283,7 +3279,7 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
   const days     = [...instrForm.querySelectorAll('[name="days"]:checked')].map(c => c.value);
   const lat      = parseFloat(instrForm.querySelector('[name="lat"]').value)  || null;
   const lng      = parseFloat(instrForm.querySelector('[name="lng"]').value)  || null;
-  const area     = instrForm.querySelector('[name="area"]').value.trim();
+  const area     = instrForm.querySelector('[name="area"]')?.value.trim() || '';
   const gearbox  = instrForm.querySelector('[name="gearbox"]:checked')?.value || 'Автомат';
   const price    = Number(instrForm.querySelector('[name="price"]').value) || 0;
   const car      = instrForm.querySelector('[name="car"]').value.trim();
