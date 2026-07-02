@@ -796,7 +796,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.262</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.263</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2296,6 +2296,8 @@ async function loadInstrSettings(instr, container) {
     // Preserve text the user has already typed before re-rendering
     const draftPrice = document.getElementById('set-price')?.value;
     const draftAbout = document.getElementById('set-about')?.value;
+    const draftCertNumber = document.getElementById('set-cert-number')?.value;
+    const draftCertExpiry = document.getElementById('set-cert-expiry')?.value;
     const faceSrc = pendingFacePhoto || instr.photo || '';
     const carSrc  = pendingCarPhoto  || instr.carPhoto || '';
     const _cpFields = [
@@ -2348,6 +2350,20 @@ async function loadInstrSettings(instr, container) {
       </div>
 
       <div class="cab-card">
+        <div class="cab-card-title"><i class="ti ti-certificate"></i> Атестат спеціаліста</div>
+        <div class="cab-form-row">
+          <div>
+            <label class="cab-label">Номер</label>
+            <input id="set-cert-number" type="text" placeholder="Наприклад АБ №123456" maxlength="100" class="cab-input" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
+          </div>
+          <div>
+            <label class="cab-label">Дійсний до</label>
+            <input id="set-cert-expiry" type="date" class="cab-input" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
+          </div>
+        </div>
+      </div>
+
+      <div class="cab-card">
         <div class="cab-card-title"><i class="ti ti-tags"></i> Що пропонуєте</div>
         <div class="tag-sel-grid" id="instr-tag-grid">
           ${tagListHtml()}
@@ -2380,6 +2396,10 @@ async function loadInstrSettings(instr, container) {
     if (priceEl) priceEl.value = draftPrice !== undefined ? draftPrice : String(instr.price || '');
     const aboutEl = container.querySelector('#set-about');
     if (aboutEl) aboutEl.value = draftAbout !== undefined ? draftAbout : (instr.about || '');
+    const certNumberEl = container.querySelector('#set-cert-number');
+    if (certNumberEl) certNumberEl.value = draftCertNumber !== undefined ? draftCertNumber : (instr.certNumber || '');
+    const certExpiryEl = container.querySelector('#set-cert-expiry');
+    if (certExpiryEl) certExpiryEl.value = draftCertExpiry !== undefined ? draftCertExpiry : (instr.certExpiry || '');
   }
 
   function _initMpMapNow() {
@@ -2513,17 +2533,20 @@ async function loadInstrSettings(instr, container) {
     const price = parseInt(document.getElementById('set-price')?.value) || instr.price || 0;
     const area  = instr.area || '';
     const about = document.getElementById('set-about')?.value.trim() || '';
+    const certNumber = document.getElementById('set-cert-number')?.value.trim() || '';
+    const certExpiry = document.getElementById('set-cert-expiry')?.value || '';
     try {
       await updateDoc(doc(db,'instructors',instrId), {
         lessonDuration: lessonDur,
         meetingPoints:  meetingPts,
         tags:           instrTags,
-        price, area, about,
+        price, area, about, certNumber, certExpiry,
       });
       instr.lessonDuration = lessonDur;
       instr.meetingPoints  = meetingPts;
       instr.tags           = instrTags;
       instr.price = price; instr.area = area; instr.about = about;
+      instr.certNumber = certNumber; instr.certExpiry = certExpiry;
       if (window._instrProfiles?.[instrId]) {
         Object.assign(window._instrProfiles[instrId], { lessonDuration:lessonDur, meetingPoints:meetingPts, tags:instrTags, price, area, about });
       }
