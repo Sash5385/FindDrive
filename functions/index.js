@@ -19,10 +19,10 @@ async function sendPush(uid, title, body, data = {}) {
       data: strData,
       webpush: {
         notification: {
-          icon:  'https://finddrive.id4drive.pro/favicon.png',
-          badge: 'https://finddrive.id4drive.pro/favicon.png',
+          icon:  'https://finddrive.in.ua/favicon.png',
+          badge: 'https://finddrive.in.ua/favicon.png',
         },
-        fcmOptions: { link: 'https://finddrive.id4drive.pro/' }
+        fcmOptions: { link: 'https://finddrive.in.ua/' }
       }
     });
   } catch (e) {

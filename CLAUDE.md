@@ -10,7 +10,7 @@ FindDrive — маркетплейс пошуку інструкторів з в
 ## Репозиторій
 
 - GitHub: `sash5385/finddrive` → GitHub Pages
-- Домен: `finddrive.id4drive.pro` (CNAME на `sash5385.github.io`, налаштований через nic.ua)
+- Домен: `finddrive.in.ua` (apex-домен, A-записи на GitHub Pages)
 - Гілка для деплою: `main`
 
 ## Поточний стек
