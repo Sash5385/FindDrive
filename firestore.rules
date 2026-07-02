@@ -57,9 +57,9 @@ service cloud.firestore {
       allow update: if request.auth != null
                     && resource.data.clientId == request.auth.uid
                     && request.resource.data.status == 'cancelled'
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'cancelledBy']);
       allow update: if isInstructor(resource.data.instructorId)
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'date', 'time', 'proposedDate', 'proposedTime']);
       allow delete: if isAdmin();
     }
 
