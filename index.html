@@ -796,7 +796,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.261</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.262</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -2295,7 +2295,6 @@ async function loadInstrSettings(instr, container) {
   function renderAll() {
     // Preserve text the user has already typed before re-rendering
     const draftPrice = document.getElementById('set-price')?.value;
-    const draftArea  = document.getElementById('set-area')?.value;
     const draftAbout = document.getElementById('set-about')?.value;
     const faceSrc = pendingFacePhoto || instr.photo || '';
     const carSrc  = pendingCarPhoto  || instr.carPhoto || '';
@@ -2304,10 +2303,9 @@ async function loadInstrSettings(instr, container) {
       { label: 'Фото авто',        ok: !!carSrc },
       { label: 'Про себе',         ok: !!(instr.about) },
       { label: 'Ціна',             ok: !!(instr.price) },
-      { label: 'Район',            ok: !!(instr.area) },
       { label: 'Стаж',             ok: !!(instr.experience) },
       { label: 'Точки зустрічі',   ok: meetingPts.length > 0 },
-      { label: 'Спеціалізація',    ok: instrTags.length > 0 },
+      { label: 'Що пропонуєте',    ok: instrTags.length > 0 },
     ];
     const _cpDone = _cpFields.filter(f => f.ok).length;
     const _cpPct  = Math.round(_cpDone / _cpFields.length * 100);
@@ -2328,7 +2326,7 @@ async function loadInstrSettings(instr, container) {
           <div class="instr-photo-box" onclick="document.getElementById('instr-face-input').click()">
             <div class="instr-photo-box-preview">${faceSrc?`<img src="${esc(faceSrc)}">`:'<i class="ti ti-camera"></i>'}</div>
             <input type="file" id="instr-face-input" accept="image/*" hidden onchange="window._onInstrFaceChange(this)">
-            <span class="photo-label">Обличчя</span>
+            <span class="photo-label">Інструктор</span>
           </div>
           <div class="instr-photo-box" onclick="document.getElementById('instr-car-input').click()">
             <div class="instr-photo-box-preview">${carSrc?`<img src="${esc(carSrc)}">`:'<i class="ti ti-car"></i>'}</div>
@@ -2341,22 +2339,16 @@ async function loadInstrSettings(instr, container) {
 
       <div class="cab-card">
         <div class="cab-card-title"><i class="ti ti-id-badge-2"></i> Особисті дані</div>
-        <div class="cab-form-row" style="margin-bottom:10px">
-          <div>
-            <label class="cab-label">Ціна, грн/год</label>
-            <input id="set-price" type="number" min="0" step="50" class="cab-input" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
-          </div>
-          <div>
-            <label class="cab-label">Район(и)</label>
-            <input id="set-area" type="text" placeholder="Шевченківський, Оболонь…" maxlength="100" class="cab-input" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
-          </div>
+        <div style="margin-bottom:10px">
+          <label class="cab-label">Ціна, грн/год</label>
+          <input id="set-price" type="number" min="0" step="50" class="cab-input" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
         </div>
         <label class="cab-label">Про себе</label>
         <textarea id="set-about" rows="4" maxlength="500" placeholder="Підхід до навчання, спеціалізація, особливості…" class="cab-input" style="resize:none"></textarea>
       </div>
 
       <div class="cab-card">
-        <div class="cab-card-title"><i class="ti ti-tags"></i> Спеціалізація</div>
+        <div class="cab-card-title"><i class="ti ti-tags"></i> Що пропонуєте</div>
         <div class="tag-sel-grid" id="instr-tag-grid">
           ${tagListHtml()}
         </div>
@@ -2386,8 +2378,6 @@ async function loadInstrSettings(instr, container) {
     // Restore text fields — use draft (what user typed) if it exists, else fall back to saved value
     const priceEl = container.querySelector('#set-price');
     if (priceEl) priceEl.value = draftPrice !== undefined ? draftPrice : String(instr.price || '');
-    const areaEl = container.querySelector('#set-area');
-    if (areaEl) areaEl.value = draftArea !== undefined ? draftArea : (instr.area || '');
     const aboutEl = container.querySelector('#set-about');
     if (aboutEl) aboutEl.value = draftAbout !== undefined ? draftAbout : (instr.about || '');
   }
@@ -2521,7 +2511,7 @@ async function loadInstrSettings(instr, container) {
   };
   window._saveInstrSettings = async (instrId) => {
     const price = parseInt(document.getElementById('set-price')?.value) || instr.price || 0;
-    const area  = document.getElementById('set-area')?.value.trim() || instr.area || '';
+    const area  = instr.area || '';
     const about = document.getElementById('set-about')?.value.trim() || '';
     try {
       await updateDoc(doc(db,'instructors',instrId), {
