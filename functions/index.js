@@ -161,6 +161,41 @@ exports.sendLessonReminders = onSchedule(
   }
 );
 
+// Щоденне прибирання минулих дат з availability інструкторів —
+// документ інструктора не повинен рости вічно, старі слоти нікому не потрібні
+exports.cleanupOldAvailability = onSchedule(
+  { schedule: 'every day 03:00', timeZone: 'Europe/Kyiv', region: 'europe-west1' },
+  async () => {
+    const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Kyiv' }).format(new Date());
+    const snap = await admin.firestore().collection('instructors').get();
+
+    let batch = admin.firestore().batch();
+    let opsInBatch = 0;
+    let touchedDocs = 0;
+
+    for (const doc of snap.docs) {
+      const availability = doc.data().availability;
+      if (!availability || typeof availability !== 'object') continue;
+      const staleKeys = Object.keys(availability).filter(dateStr => dateStr < todayStr);
+      if (!staleKeys.length) continue;
+
+      const updates = {};
+      staleKeys.forEach(k => { updates[`availability.${k}`] = admin.firestore.FieldValue.delete(); });
+      batch.update(doc.ref, updates);
+      opsInBatch++;
+      touchedDocs++;
+
+      if (opsInBatch >= 400) {
+        await batch.commit();
+        batch = admin.firestore().batch();
+        opsInBatch = 0;
+      }
+    }
+    if (opsInBatch > 0) await batch.commit();
+    console.log(`cleanupOldAvailability: очищено ${touchedDocs} документ(ів) інструкторів`);
+  }
+);
+
 // Push при новому повідомленні в чаті
 exports.onChatMessage = onDocumentCreated(
   { document: 'chats/{chatId}/messages/{msgId}', region: 'europe-west1' },
