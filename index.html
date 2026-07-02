@@ -249,13 +249,9 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .scroll-top.visible{opacity:1;pointer-events:all;transform:translateY(0)}
 .scroll-top:hover{background:var(--green-dark)}
 
-/* PROBLEM BANNER */
-.problem-banner{background:var(--green-light);border-bottom:.5px solid var(--border);padding:10px 48px;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;text-align:center}
-.problem-banner-text{font-size:13px;color:var(--text);display:flex;align-items:center;gap:7px}
-.problem-banner-text i{color:var(--green);font-size:16px}
+/* PROBLEM BUTTON */
 .problem-banner-btn{background:var(--green);color:#fff;border:none;border-radius:9px;padding:7px 16px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .2s;white-space:nowrap}
 .problem-banner-btn:hover{background:var(--green-dark)}
-@media(max-width:600px){.problem-banner{padding:10px 20px}}
 
 /* AUTH MODAL */
 .auth-modal-overlay{position:fixed;inset:0;background:rgba(13,42,26,.5);z-index:1200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
@@ -787,7 +783,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.278</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.279</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -810,11 +806,6 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-mobile-link" href="#how-it-works" onclick="closeMobileMenu()"><i class="ti ti-list-check"></i> Як це працює</a>
   <a class="nav-mobile-link" href="#instructors" onclick="closeMobileMenu()"><i class="ti ti-users"></i> Інструктори</a>
   <a class="nav-mobile-link" href="#" onclick="event.preventDefault();closeMobileMenu();document.getElementById('map-anchor').scrollIntoView({behavior:'smooth'})"><i class="ti ti-map"></i> Карта</a>
-</div>
-
-<div class="problem-banner">
-  <span class="problem-banner-text"><i class="ti ti-message-circle-2"></i> Якщо у вас виникли проблеми — напишіть нам і ми вирішимо її</span>
-  <button class="problem-banner-btn" onclick="window._openProblemModal()">Написати нам</button>
 </div>
 
 <div id="problem-modal" class="auth-modal-overlay" style="display:none" onclick="if(event.target===this)window._closeProblemModal()">
@@ -975,6 +966,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <div class="footer-bottom">
     <div class="footer-copy">© 2025 FindDrive. Всі права захищено.</div>
     <div class="footer-id4drive"><i class="ti ti-link"></i> Частина екосистеми <a href="https://id4drive.pro" target="_blank" rel="noopener">ID4Drive</a></div>
+    <button class="problem-banner-btn" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
 
