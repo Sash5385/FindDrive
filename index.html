@@ -779,7 +779,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.280</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.281</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -4524,6 +4524,7 @@ async function loadInstrCombined(instr, container) {
       const hours = [];
       { let _sc=fh*60+(fm||0),_ec=th*60+(tm||0); while(_sc<_ec){hours.push(`${String(Math.floor(_sc/60)).padStart(2,'0')}:${String(_sc%60).padStart(2,'0')}`);_sc+=30;} }
 
+      const hasLoc = !!avCurr.locationLat;
       const hourBtns = hours.map(hr => {
         const bk = bkMap[hr];
         const isOpen = openSlots.includes(hr);
@@ -4536,6 +4537,8 @@ async function loadInstrCombined(instr, container) {
           return `<button class="slot-hr-btn slot-hr-booked${selectedBkId===bk.id?' selected':''}" onclick="window._combSlotDetail('${bk.id}')"><span class="slot-hr-time">${hr}</span><span class="slot-hr-nm">${nm}</span><span class="slot-hr-dot" style="background:${dotClr}"></span></button>`;
         } else if (isOpen) {
           return `<button class="slot-hr-btn slot-hr-open" onclick="window._combToggleSlot('${instr.id}','${editDate}','${hr}')"><span class="slot-hr-time">${hr}</span><span class="slot-hr-lbl">вільно</span></button>`;
+        } else if (!hasLoc) {
+          return `<button class="slot-hr-btn slot-hr-closed" style="opacity:.45" onclick="window._combToggleSlot('${instr.id}','${editDate}','${hr}')"><span class="slot-hr-time">${hr}</span><i class="ti ti-lock" style="font-size:11px"></i></button>`;
         } else {
           return `<button class="slot-hr-btn slot-hr-closed" onclick="window._combToggleSlot('${instr.id}','${editDate}','${hr}')"><span class="slot-hr-time">${hr}</span></button>`;
         }
@@ -4568,6 +4571,7 @@ async function loadInstrCombined(instr, container) {
           <label style="display:flex;align-items:center;gap:5px;margin-bottom:5px"><i class="ti ti-map-pin" style="color:#185fa5;font-size:12px"></i> Точка зустрічі на цей день</label>
           ${mpSectionHtml}
         </div>
+        ${!hasLoc?`<p style="font-size:11px;color:#c07000;margin:0 0 8px;display:flex;align-items:center;gap:5px"><i class="ti ti-lock"></i> Оберіть точку зустрічі вище, щоб відкрити слоти на цей день</p>`:''}
         <div class="slot-hr-grid">${hourBtns}</div>
         ${detPanel}
         <div class="avail-loc-row" style="margin-top:10px">
@@ -4661,6 +4665,10 @@ async function loadInstrCombined(instr, container) {
       const curr = localAvail[date] || {};
       const slots = [...(curr.openSlots||[])];
       const idx = slots.indexOf(slot);
+      if (idx<0 && !curr.locationLat) {
+        showToast('Спершу оберіть точку зустрічі', 'Без місця зустрічі слот не можна відкрити', 'error');
+        return;
+      }
       if (idx>=0) slots.splice(idx,1); else { slots.push(slot); slots.sort(); }
       const data = Object.assign({}, curr, {openSlots:slots});
       try {
@@ -4718,6 +4726,7 @@ async function loadInstrCombined(instr, container) {
     window._combClearLoc = async (instrId, date) => {
       const curr = {...(localAvail[date]||{})};
       delete curr.location; delete curr.locationLat; delete curr.locationLng;
+      if (curr.openSlots?.length) curr.openSlots = []; // без точки зустрічі слоти не можуть лишатись відкритими
       try {
         await updateDoc(doc(db,'instructors',instrId),{[`availability.${date}`]:curr});
         localAvail[date]=curr;
