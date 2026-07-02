@@ -8,20 +8,20 @@
 <meta name="robots" content="index, follow">
 <meta name="author" content="FindDrive">
 <meta name="keywords" content="інструктор з водіння, автошкола, уроки водіння, записатись до інструктора, водіння Україна">
-<link rel="canonical" href="https://finddrive.id4drive.pro/">
+<link rel="canonical" href="https://finddrive.in.ua/">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://finddrive.id4drive.pro/">
+<meta property="og:url" content="https://finddrive.in.ua/">
 <meta property="og:site_name" content="FindDrive">
 <meta property="og:locale" content="uk_UA">
 <meta property="og:title" content="FindDrive — Знайди інструктора з водіння поряд">
 <meta property="og:description" content="Маркетплейс інструкторів з водіння по всій Україні. Обирай за містом, ціною та рейтингом — записуйся онлайн за 2 хвилини.">
-<meta property="og:image" content="https://finddrive.id4drive.pro/og-image.png">
+<meta property="og:image" content="https://finddrive.in.ua/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="FindDrive — Знайди інструктора з водіння поряд">
 <meta name="twitter:description" content="Маркетплейс інструкторів з водіння по всій Україні. Обирай за містом, ціною та рейтингом.">
-<meta name="twitter:image" content="https://finddrive.id4drive.pro/og-image.png">
+<meta name="twitter:image" content="https://finddrive.in.ua/og-image.png">
 <!-- Google Analytics GA4 — замініть G-XXXXXXXXXX на свій Measurement ID з analytics.google.com -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
 <script>
@@ -213,31 +213,17 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 
 
 /* TRUST BAR */
-/* TESTIMONIALS */
-.reviews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-@media(max-width:900px){.reviews-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:600px){.reviews-grid{grid-template-columns:1fr}}
-.review-card{background:var(--white);border-radius:18px;padding:22px 20px;border:.5px solid var(--border)}
-.review-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.review-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
-.review-name{font-size:14px;font-weight:500;color:var(--text);line-height:1.2}
-.review-date{font-size:11px;color:var(--text-hint);margin-top:2px}
-.review-stars{color:#f59e0b;font-size:14px;margin-bottom:10px;letter-spacing:2px}
-.review-text{font-size:13px;line-height:1.65;color:var(--text-muted)}
 
 /* HOW IT WORKS SECTION */
-.how-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-@media(max-width:900px){.how-grid{grid-template-columns:1fr 1fr}}
+.how-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
 @media(max-width:480px){.how-grid{grid-template-columns:1fr 1fr;gap:12px}}
 .how-card{border-radius:18px;padding:26px 22px;position:relative;overflow:hidden;color:#fff}
 .how-num{position:absolute;top:14px;right:18px;font-size:42px;font-weight:700;opacity:.18;line-height:1;pointer-events:none}
 .how-icon{font-size:30px;margin-bottom:14px;display:block;line-height:1}
 .how-title{font-size:15px;font-weight:600;margin-bottom:8px;line-height:1.3}
 .how-desc{font-size:12.5px;line-height:1.65;opacity:.88}
-.how-green{background:#1a7a4a}
 .how-pink{background:#993556}
 .how-blue{background:#185fa5}
-.how-olive{background:#4a7a1a}
 @media(max-width:480px){.how-title{font-size:13px}.how-icon{font-size:24px;margin-bottom:10px}.how-card{padding:18px 16px}.how-num{font-size:34px}}
 
 /* FILTER EMPTY STATE */
@@ -262,6 +248,10 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .scroll-top{position:fixed;bottom:26px;right:26px;width:44px;height:44px;background:var(--green);color:#fff;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;z-index:500;opacity:0;pointer-events:none;transform:translateY(10px);transition:opacity .22s,transform .22s;box-shadow:0 4px 18px rgba(26,122,74,.38)}
 .scroll-top.visible{opacity:1;pointer-events:all;transform:translateY(0)}
 .scroll-top:hover{background:var(--green-dark)}
+
+/* PROBLEM BUTTON */
+.problem-banner-btn{background:var(--green);color:#fff;border:none;border-radius:9px;padding:7px 16px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .2s;white-space:nowrap}
+.problem-banner-btn:hover{background:var(--green-dark)}
 
 /* AUTH MODAL */
 .auth-modal-overlay{position:fixed;inset:0;background:rgba(13,42,26,.5);z-index:1200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
@@ -793,12 +783,11 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.275</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.280</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
     <a class="nav-link" href="#instructors">Інструктори</a>
-    <a class="nav-link" href="#reviews">Відгуки</a>
     <a class="nav-link" href="#" onclick="event.preventDefault();document.getElementById('map-anchor').scrollIntoView({behavior:'smooth'})">Карта</a>
   </div>
   <div class="nav-right">
@@ -816,8 +805,26 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 <div id="nav-mobile" class="nav-mobile" role="dialog" aria-modal="false" aria-label="Навігаційне меню">
   <a class="nav-mobile-link" href="#how-it-works" onclick="closeMobileMenu()"><i class="ti ti-list-check"></i> Як це працює</a>
   <a class="nav-mobile-link" href="#instructors" onclick="closeMobileMenu()"><i class="ti ti-users"></i> Інструктори</a>
-  <a class="nav-mobile-link" href="#reviews" onclick="closeMobileMenu()"><i class="ti ti-star"></i> Відгуки</a>
   <a class="nav-mobile-link" href="#" onclick="event.preventDefault();closeMobileMenu();document.getElementById('map-anchor').scrollIntoView({behavior:'smooth'})"><i class="ti ti-map"></i> Карта</a>
+</div>
+
+<div id="problem-modal" class="auth-modal-overlay" style="display:none" onclick="if(event.target===this)window._closeProblemModal()">
+  <div class="auth-modal-box" style="max-width:440px">
+    <div class="auth-modal-head">
+      <div class="auth-modal-logo">
+        <div class="auth-modal-logo-icon"><i class="ti ti-message-circle-2"></i></div>
+        <span class="auth-modal-brand">Повідомити про проблему</span>
+      </div>
+      <button class="auth-modal-close" onclick="window._closeProblemModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="auth-modal-body">
+      <textarea id="problem-text" class="form-input" rows="4" placeholder="Опишіть, що сталося…" style="resize:none;margin-bottom:12px"></textarea>
+      <input id="problem-contact" class="form-input" type="text" placeholder="Телефон або email для відповіді (необов'язково)" style="margin-bottom:6px">
+      <div id="problem-err" class="field-err" style="display:none;margin-bottom:8px"></div>
+      <button id="problem-submit-btn" class="auth-role-btn-primary" style="padding:11px" onclick="window._submitProblem()">Надіслати</button>
+      <div id="problem-sent" style="display:none;text-align:center;color:var(--green);font-size:13px;font-weight:500;margin-top:10px"><i class="ti ti-circle-check"></i> Дякуємо! Ми отримали ваше звернення</div>
+    </div>
+  </div>
 </div>
 
 <section class="hero">
@@ -883,29 +890,17 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     <span class="section-label">Як це працює</span>
   </div>
   <div class="how-grid">
-    <div class="how-card how-green">
-      <span class="how-num">1</span>
-      <i class="ti ti-map-pin how-icon"></i>
-      <div class="how-title">Вкажіть район</div>
-      <div class="how-desc">Введіть адресу або натисніть «Моє місце» — покажемо інструкторів поблизу вас</div>
-    </div>
     <div class="how-card how-pink">
-      <span class="how-num">2</span>
+      <span class="how-num">1</span>
       <i class="ti ti-users how-icon"></i>
       <div class="how-title">Оберіть інструктора</div>
       <div class="how-desc">Порівнюйте за рейтингом, ціною та відгуками. Дивіться точки зустрічі на карті</div>
     </div>
     <div class="how-card how-blue">
-      <span class="how-num">3</span>
+      <span class="how-num">2</span>
       <i class="ti ti-calendar-event how-icon"></i>
       <div class="how-title">Забронюйте час</div>
       <div class="how-desc">Оберіть зручну дату і вільний слот прямо на сайті — підтвердження одразу</div>
-    </div>
-    <div class="how-card how-olive">
-      <span class="how-num">4</span>
-      <i class="ti ti-steering-wheel how-icon"></i>
-      <div class="how-title">Їдьте на урок</div>
-      <div class="how-desc">Доїжджайте до інструктора самі — він працює з фіксованої зручної точки</div>
     </div>
   </div>
 </section>
@@ -934,38 +929,6 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 
 
 
-<section class="section" id="reviews" style="padding-bottom:52px">
-  <div class="section-top">
-    <span class="section-label">Відгуки учнів</span>
-  </div>
-  <div class="reviews-grid">
-    <div class="review-card">
-      <div class="review-head">
-        <div class="review-av" style="background:#1a7a4a">АК</div>
-        <div><div class="review-name">Аліна Коваленко</div><div class="review-date">Березень 2025</div></div>
-      </div>
-      <div class="review-stars">★★★★★</div>
-      <div class="review-text">Знайшла інструктора за 5 хвилин! Він поряд з домом, не треба їхати через все місто. Здала з першого разу — дуже задоволена сервісом.</div>
-    </div>
-    <div class="review-card">
-      <div class="review-head">
-        <div class="review-av" style="background:#185fa5">МП</div>
-        <div><div class="review-name">Максим Петренко</div><div class="review-date">Квітень 2025</div></div>
-      </div>
-      <div class="review-stars">★★★★★</div>
-      <div class="review-text">Зручно порівнювати інструкторів за ціною і районом. Записався онлайн, підтвердження прийшло одразу. Рекомендую всім хто хоче навчитися швидко.</div>
-    </div>
-    <div class="review-card">
-      <div class="review-head">
-        <div class="review-av" style="background:#993556">ОС</div>
-        <div><div class="review-name">Олена Савченко</div><div class="review-date">Травень 2025</div></div>
-      </div>
-      <div class="review-stars">★★★★☆</div>
-      <div class="review-text">Дуже зручно що інструктор сам не їде до тебе — значить він знає своє місце і навчить добре. Ціни прозорі, ніяких сюрпризів.</div>
-    </div>
-  </div>
-</section>
-
 <footer>
   <div class="footer-grid">
     <div class="footer-brand">
@@ -980,7 +943,6 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       <div class="footer-col-links">
         <a class="footer-link" href="#instructors"><i class="ti ti-search"></i> Знайти інструктора</a>
         <a class="footer-link" href="#how-it-works"><i class="ti ti-list-check"></i> Як це працює</a>
-        <a class="footer-link" href="#reviews"><i class="ti ti-star"></i> Відгуки</a>
         <a class="footer-link" href="#" onclick="event.preventDefault();document.getElementById('map-anchor').scrollIntoView({behavior:'smooth'})"><i class="ti ti-map"></i> Карта</a>
       </div>
     </div>
@@ -1004,6 +966,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <div class="footer-bottom">
     <div class="footer-copy">© 2025 FindDrive. Всі права захищено.</div>
     <div class="footer-id4drive"><i class="ti ti-link"></i> Частина екосистеми <a href="https://id4drive.pro" target="_blank" rel="noopener">ID4Drive</a></div>
+    <button class="problem-banner-btn" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
 
@@ -1554,6 +1517,58 @@ window._closeAuthModal = function() {
   modal.style.display = 'none';
   document.body.style.overflow = '';
   _authModalActive = false;
+};
+
+// --- Problem report modal ---
+window._openProblemModal = function() {
+  const modal = document.getElementById('problem-modal');
+  if (!modal) return;
+  document.getElementById('problem-text').value = '';
+  document.getElementById('problem-contact').value = '';
+  document.getElementById('problem-err').style.display = 'none';
+  document.getElementById('problem-sent').style.display = 'none';
+  document.getElementById('problem-submit-btn').style.display = '';
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+};
+window._closeProblemModal = function() {
+  const modal = document.getElementById('problem-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
+};
+window._submitProblem = async function() {
+  const text    = document.getElementById('problem-text').value.trim();
+  const contact = document.getElementById('problem-contact').value.trim();
+  const errEl   = document.getElementById('problem-err');
+  if (!text) {
+    errEl.textContent = 'Опишіть, будь ласка, проблему';
+    errEl.style.display = '';
+    return;
+  }
+  errEl.style.display = 'none';
+  const btn = document.getElementById('problem-submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Надсилаємо…';
+  try {
+    await addDoc(collection(db, 'problems'), {
+      text,
+      contact: contact || null,
+      userId: auth.currentUser?.uid || null,
+      userEmail: auth.currentUser?.email || null,
+      status: 'new',
+      createdAt: serverTimestamp()
+    });
+    btn.style.display = 'none';
+    document.getElementById('problem-sent').style.display = '';
+    setTimeout(() => window._closeProblemModal(), 1800);
+  } catch (e) {
+    errEl.textContent = 'Не вдалось надіслати. Спробуйте ще раз';
+    errEl.style.display = '';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Надіслати';
+  }
 };
 
 window.renderAuthRoleSelect = function() {
@@ -3667,7 +3682,7 @@ window._shareInstructor = async function() {
 
 // Keyboard shortcuts: ESC → close panels, / → focus search
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') { window._closeAuthModal?.(); window.closeAll?.(); closeMobileMenu(); }
+  if (e.key === 'Escape') { window._closeAuthModal?.(); window._closeProblemModal?.(); window.closeAll?.(); closeMobileMenu(); }
   if (e.key === '/' && !e.ctrlKey && !e.metaKey && !['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName)) {
     e.preventDefault();
     const inp = document.getElementById('search-input');
@@ -3680,7 +3695,7 @@ document.addEventListener('keydown', function(e) {
   const obs = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
   }, { threshold: 0.12 });
-  document.querySelectorAll('.how-card, .review-card, .cta-inner').forEach((el, i) => {
+  document.querySelectorAll('.how-card, .cta-inner').forEach((el, i) => {
     el.classList.add('reveal');
     el.style.transitionDelay = (i % 4 * 80) + 'ms';
     obs.observe(el);

@@ -26,7 +26,7 @@ messaging.onBackgroundMessage(payload => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const data = event.notification.data || {};
-  const appUrl = 'https://finddrive.id4drive.pro/';
+  const appUrl = 'https://finddrive.in.ua/';
 
   // Build target URL with notification action encoded in hash
   let hash = '#notif=' + (data.type || 'cabinet');

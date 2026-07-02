@@ -75,6 +75,14 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    match /problems/{problemId} {
+      allow create: if request.resource.data.status == 'new'
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() > 0
+                    && request.resource.data.text.size() < 3000;
+      allow read, update, delete: if isAdmin();
+    }
+
     match /chats/{chatId} {
       allow get: if request.auth != null
                  && (resource.data.studentId == request.auth.uid
