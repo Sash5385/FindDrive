@@ -1,4 +1,5 @@
 const { onDocumentCreated, onDocumentUpdated } = require('firebase-functions/v2/firestore');
+const { onSchedule } = require('firebase-functions/v2/scheduler');
 const admin = require('firebase-admin');
 
 admin.initializeApp();
@@ -112,6 +113,51 @@ exports.onInstructorCreated = onDocumentCreated(
       `${d.name || 'Інструктор'} — ${d.phone || d.email || ''}`,
       { type: 'admin' }
     );
+  }
+);
+
+// Поточний зсув Europe/Kyiv від UTC у хвилинах (враховує літній/зимовий час)
+function kyivOffsetMinutes(date) {
+  const utcStr  = date.toLocaleString('en-US', { timeZone: 'UTC' });
+  const kyivStr = date.toLocaleString('en-US', { timeZone: 'Europe/Kyiv' });
+  return (new Date(kyivStr) - new Date(utcStr)) / 60000;
+}
+
+// Перетворює дату+час запису (в Europe/Kyiv) на реальний UTC-момент
+function bookingDateTimeUtc(dateStr, timeStr, offsetMin) {
+  const naive = new Date(`${dateStr}T${timeStr}:00Z`);
+  return new Date(naive.getTime() - offsetMin * 60000);
+}
+
+// Нагадування учню й інструктору за ~2 год до підтвердженого заняття
+exports.sendLessonReminders = onSchedule(
+  { schedule: 'every 30 minutes', region: 'europe-west1' },
+  async () => {
+    const now = new Date();
+    const offsetMin = kyivOffsetMinutes(now);
+    const windowStart = new Date(now.getTime() + 105 * 60 * 1000); // +1год45хв
+    const windowEnd   = new Date(now.getTime() + 135 * 60 * 1000); // +2год15хв
+
+    const snap = await admin.firestore().collection('bookings')
+      .where('status', '==', 'confirmed')
+      .get();
+
+    for (const doc of snap.docs) {
+      const d = doc.data();
+      if (d.reminderSent || !d.date || !d.time) continue;
+      const lessonAt = bookingDateTimeUtc(d.date, d.time, offsetMin);
+      if (lessonAt < windowStart || lessonAt > windowEnd) continue;
+
+      const locHint = d.meetingPoint?.label ? ` — ${d.meetingPoint.label}` : '';
+      if (d.clientId) {
+        await sendPush(d.clientId, 'Нагадування про урок', `Сьогодні о ${d.time}${locHint}`, { type: 'booking' });
+      }
+      const instrUid = d.instructorUserId || await getInstrUserId(d.instructorId);
+      if (instrUid) {
+        await sendPush(instrUid, 'Нагадування про урок', `${d.clientName || 'Учень'} — сьогодні о ${d.time}${locHint}`, { type: 'booking' });
+      }
+      await doc.ref.update({ reminderSent: true });
+    }
   }
 );
 
