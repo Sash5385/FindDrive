@@ -639,7 +639,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .btn-bk-action:hover{background:var(--green-dark)}
 .btn-bk-reject{background:none;border:.5px solid var(--border);border-radius:7px;padding:6px 12px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--text-muted);transition:border-color .15s,color .15s}
 .btn-row{display:flex;gap:6px;margin-top:8px}
-.btn-row>button,.bk-reschedule-row>button,.avail-save-row>button{flex:1;min-width:0}
+.btn-row>button,.avail-save-row>button{flex:1;min-width:0}
 .slot-crm-list{display:flex;flex-direction:column;gap:6px;margin-top:10px}
 .slot-crm-card{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;border:.5px solid var(--border);background:var(--white);font-size:12px}
 .slot-crm-busy{border-color:var(--green);background:var(--green-light)}
@@ -702,12 +702,6 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .bk-cal-day.selected{background:var(--green)!important;color:#fff!important;font-weight:600;box-shadow:none!important}
 .bk-cal-day.in-month:not(.selected):not(.today):not(.has-bk):hover{background:var(--bg)}
 .bk-reschedule-hint{font-size:11px;color:#856404;background:#fff8e6;border-radius:7px;padding:7px 10px;margin-top:6px;line-height:1.5;border:.5px solid #f0e0a0}
-.bk-reschedule-form{margin-top:8px;background:var(--bg);border:.5px solid var(--border);border-radius:8px;padding:10px 12px;display:none}
-.bk-reschedule-inputs{display:flex;gap:6px}
-.bk-reschedule-inputs>div{flex:1}
-.bk-reschedule-inputs label{font-size:11px;color:var(--text-muted);display:block;margin-bottom:3px}
-.bk-reschedule-inputs input{width:100%;border:.5px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;background:var(--white);box-sizing:border-box}
-.bk-reschedule-row{display:flex;gap:6px;margin-top:8px}
 /* AVAILABILITY CALENDAR */
 .av-cal-wrap{margin-bottom:12px;background:var(--white);border-radius:12px;padding:12px;border:.5px solid var(--border)}
 .av-cal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
@@ -802,7 +796,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.253</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.254</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -4242,7 +4236,6 @@ function renderClientCards(docs) {
   const clientPhoto = cp.photo || '';
   return docs.map(b => {
     const isActive = (b.status==='pending'||b.status==='confirmed'||b.status==='reschedule_requested') && b.date >= today;
-    const showReschedule = isActive && b.status !== 'reschedule_requested' && b.status !== 'cancelled';
     const showCancel     = isActive;
     const isPastConfirmed = b.date < today && b.status === 'confirmed';
     const reviewHtml = isPastConfirmed
@@ -4272,20 +4265,9 @@ function renderClientCards(docs) {
       ${showInstrPhone ? `<div class="bk-meta" style="margin-top:3px"><i class="ti ti-phone" style="font-size:11px;color:var(--green)"></i><a href="tel:${esc(b.instructorPhone)}" style="color:var(--text-muted);text-decoration:none">${esc(b.instructorPhone)}</a></div>` : ''}
       ${b.status==='reschedule_requested'&&b.proposedDate?`<div class="bk-reschedule-hint"><i class="ti ti-clock"></i> Запит на перенос: <b>${esc(b.proposedDate.split('-').reverse().join('.'))} о ${esc(b.proposedTime||'')}</b> — очікуємо відповідь інструктора</div>`:''}
       ${showAddCal?`<button class="btn-bk-ical" onclick="window._addToCalendar(${calArgs})"><i class="ti ti-calendar-plus"></i> До календаря</button>`:''}
-      ${showReschedule||showCancel?`
+      ${showCancel?`
         <div class="btn-row" style="flex-wrap:wrap;align-items:center">
-          ${showReschedule?`<button class="btn-bk-reject" style="font-size:11px;padding:5px 10px" onclick="window._showReschForm('${b.id}')"><i class="ti ti-calendar-time"></i> Перенести</button>`:''}
-          ${showCancel?`<button class="btn-bk-cancel" style="font-size:11px;padding:5px 10px" onclick="window._cancelBooking('${b.id}')"><i class="ti ti-x"></i> Скасувати</button>`:''}
-        </div>
-        <div class="bk-reschedule-form" id="rf-${b.id}">
-          <div class="bk-reschedule-inputs">
-            <div><label>Нова дата</label><input type="date" id="rd-${b.id}" min="${today}"></div>
-            <div><label>Час</label><input type="time" id="rt-${b.id}" step="900"></div>
-          </div>
-          <div class="bk-reschedule-row">
-            <button class="btn-bk-action" style="font-size:11px;padding:5px 12px" onclick="window._submitReschedule('${b.id}')"><i class="ti ti-send"></i> Запросити перенос</button>
-            <button class="btn-bk-reject" style="font-size:11px;padding:5px 12px" onclick="window._hideReschForm('${b.id}')">Відмінити</button>
-          </div>
+          <button class="btn-bk-cancel" style="font-size:11px;padding:5px 10px" onclick="window._cancelBooking('${b.id}')"><i class="ti ti-x"></i> Скасувати</button>
         </div>` : ''}
       ${reviewHtml}
     </div>`;
@@ -4308,33 +4290,12 @@ window._addToCalendar = function(date, time, duration, instrName, location) {
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(a.href);
 };
-window._showReschForm = function(id) {
-  const f = document.getElementById('rf-'+id);
-  if (f) { f.style.display = ''; f.querySelector('input[type=date]')?.focus(); }
-};
-window._hideReschForm = function(id) {
-  const f = document.getElementById('rf-'+id);
-  if (f) f.style.display = 'none';
-};
-
 window._cancelBooking = async function(bookingId) {
   if (!confirm('Скасувати цей запис?')) return;
   try {
     await updateDoc(doc(db,'bookings',bookingId), { status:'cancelled', cancelledBy:'client' });
     window._reloadClientBk?.();
   } catch(e) { alert('Не вдалось скасувати.'); }
-};
-
-window._submitReschedule = async function(bookingId) {
-  const newDate = document.getElementById('rd-'+bookingId)?.value;
-  const newTime = document.getElementById('rt-'+bookingId)?.value;
-  if (!newDate || !newTime) { alert('Вкажіть нову дату і час'); return; }
-  try {
-    await updateDoc(doc(db,'bookings',bookingId), {
-      status:'reschedule_requested', proposedDate:newDate, proposedTime:newTime
-    });
-    window._reloadClientBk?.();
-  } catch(e) { alert('Не вдалось надіслати запит.'); }
 };
 
 async function getMyInstrProfile(user) {
