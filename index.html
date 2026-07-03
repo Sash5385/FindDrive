@@ -839,7 +839,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.292</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.293</span>
   </a>
   <div class="nav-links">
     <span class="nav-tagline"><i class="ti ti-heart-handshake"></i> Знаємо, як складно знайти кваліфікованого інструктора. Ми допоможемо!</span>
@@ -1011,7 +1011,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 
 <section class="section" id="faq">
   <div class="faq-wrap">
-    <details class="faq-spoiler">
+    <details class="faq-spoiler" id="faq-spoiler">
       <summary class="faq-spoiler-head">
         <span class="faq-spoiler-title"><i class="ti ti-help-circle"></i> Часті запитання <span class="faq-spoiler-hint">— натисніть, щоб розгорнути</span></span>
         <i class="ti ti-chevron-down faq-spoiler-chev"></i>
@@ -1144,7 +1144,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       <div class="footer-col-title">Інструкторам</div>
       <div class="footer-col-links">
         <a class="footer-link" href="#" onclick="event.preventDefault();window._openInfoModal('partnership')"><i class="ti ti-file-text"></i> Умови партнерства</a>
-        <a class="footer-link" href="#faq" onclick="var d=document.querySelector('.faq-spoiler');if(d)d.open=true"><i class="ti ti-help-circle"></i> FAQ</a>
+        <a class="footer-link" href="#faq" onclick="event.preventDefault();var d=document.getElementById('faq-spoiler');if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'})}"><i class="ti ti-help-circle"></i> FAQ</a>
       </div>
     </div>
     <div>
