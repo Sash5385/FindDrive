@@ -839,7 +839,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.297</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.298</span>
   </a>
   <div class="nav-links">
     <span class="nav-tagline"><i class="ti ti-heart-handshake"></i> Знаємо, як складно знайти кваліфікованого інструктора. Ми допоможемо!</span>
@@ -5431,10 +5431,10 @@ window._addInstrMarker = function(inst, id) {
       <div style="font-weight:600;color:#fff;font-size:13px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(inst.name)}</div>
       ${inst.mpLabel ? `<div style="color:rgba(255,255,255,.75);font-size:10px;margin-top:2px;line-height:1.4"><i class="ti ti-map-pin" style="font-size:9px"></i> ${_esc(inst.mpLabel)}</div>` : ''}
     </div>
-    <div style="position:relative;height:120px">
+    <div style="position:relative;height:170px">
       ${inst.carPhoto
-        ? `<img src="${inst.carPhoto}" style="width:100%;height:120px;object-fit:cover;display:block">`
-        : `<div style="width:100%;height:120px;background:linear-gradient(135deg,#ddeef8,#c8daea);display:flex;align-items:center;justify-content:center;font-size:40px;opacity:.25">🚗</div>`}
+        ? `<img src="${inst.carPhoto}" style="width:100%;height:170px;object-fit:cover;display:block">`
+        : `<div style="width:100%;height:170px;background:linear-gradient(135deg,#ddeef8,#c8daea);display:flex;align-items:center;justify-content:center;font-size:40px;opacity:.25">🚗</div>`}
       ${inst.gearbox ? `<div style="position:absolute;top:6px;right:6px;background:rgba(13,42,26,.68);color:#fff;border-radius:10px;padding:2px 8px;font-size:10px;font-weight:500;backdrop-filter:blur(4px)">${_esc(inst.gearbox)}</div>` : ''}
       <div style="position:absolute;bottom:-27px;left:10px;width:56px;height:56px;border-radius:50%;overflow:hidden;border:3px solid #1a7a4a;box-shadow:0 2px 8px rgba(0,0,0,.22);z-index:2">
         ${inst.photo
