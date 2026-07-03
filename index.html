@@ -839,7 +839,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.291</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.292</span>
   </a>
   <div class="nav-links">
     <span class="nav-tagline"><i class="ti ti-heart-handshake"></i> Знаємо, як складно знайти кваліфікованого інструктора. Ми допоможемо!</span>
@@ -953,35 +953,40 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 
 
 <section class="section" id="how-it-works" style="padding-bottom:44px">
-  <div class="section-top">
-    <span class="section-label">Як це працює</span>
-  </div>
-  <div class="how-grid">
-    <div class="how-card how-green">
-      <span class="how-num">1</span>
-      <i class="ti ti-map-pin how-icon"></i>
-      <div class="how-title">Вкажіть район</div>
-      <div class="how-desc">Введіть адресу або натисніть «Моє місце» — покажемо інструкторів поблизу вас</div>
+  <details class="faq-spoiler" id="how-it-works-spoiler" open>
+    <summary class="faq-spoiler-head">
+      <span class="faq-spoiler-title"><i class="ti ti-list-check"></i> Як це працює <span class="faq-spoiler-hint">— натисніть, щоб згорнути</span></span>
+      <i class="ti ti-chevron-down faq-spoiler-chev"></i>
+    </summary>
+    <div class="faq-spoiler-body" style="padding:20px 22px 22px">
+      <div class="how-grid">
+        <div class="how-card how-green">
+          <span class="how-num">1</span>
+          <i class="ti ti-map-pin how-icon"></i>
+          <div class="how-title">Вкажіть район</div>
+          <div class="how-desc">Введіть адресу або натисніть «Моє місце» — покажемо інструкторів поблизу вас</div>
+        </div>
+        <div class="how-card how-pink">
+          <span class="how-num">2</span>
+          <i class="ti ti-users how-icon"></i>
+          <div class="how-title">Оберіть інструктора</div>
+          <div class="how-desc">Порівнюйте за рейтингом, ціною та відгуками. Дивіться точки зустрічі на карті</div>
+        </div>
+        <div class="how-card how-blue">
+          <span class="how-num">3</span>
+          <i class="ti ti-calendar-event how-icon"></i>
+          <div class="how-title">Забронюйте час</div>
+          <div class="how-desc">Оберіть зручну дату і вільний слот прямо на сайті — підтвердження одразу</div>
+        </div>
+        <div class="how-card how-olive">
+          <span class="how-num">4</span>
+          <i class="ti ti-steering-wheel how-icon"></i>
+          <div class="how-title">Їдьте на урок</div>
+          <div class="how-desc">Зустріньтесь з обраним інструктором і після проведеного уроку залиште відгук</div>
+        </div>
+      </div>
     </div>
-    <div class="how-card how-pink">
-      <span class="how-num">2</span>
-      <i class="ti ti-users how-icon"></i>
-      <div class="how-title">Оберіть інструктора</div>
-      <div class="how-desc">Порівнюйте за рейтингом, ціною та відгуками. Дивіться точки зустрічі на карті</div>
-    </div>
-    <div class="how-card how-blue">
-      <span class="how-num">3</span>
-      <i class="ti ti-calendar-event how-icon"></i>
-      <div class="how-title">Забронюйте час</div>
-      <div class="how-desc">Оберіть зручну дату і вільний слот прямо на сайті — підтвердження одразу</div>
-    </div>
-    <div class="how-card how-olive">
-      <span class="how-num">4</span>
-      <i class="ti ti-steering-wheel how-icon"></i>
-      <div class="how-title">Їдьте на урок</div>
-      <div class="how-desc">Зустріньтесь з обраним інструктором і після проведеного уроку залиште відгук</div>
-    </div>
-  </div>
+  </details>
 </section>
 
 <section class="map-section" id="map-anchor">
@@ -3185,6 +3190,7 @@ onAuthStateChanged(auth, async user => {
   if (user) {
     btnLogin.style.display = "none";
     navUser.style.display  = "flex";
+    window._applyHowItWorksSpoiler?.(user);
     document.getElementById("nav-avatar").src       = user.photoURL || "";
     document.getElementById("nav-name").textContent = (user.displayName || user.email || "").split(" ")[0];
     if (user.providerData[0]?.providerId === 'google.com') {
@@ -3247,6 +3253,20 @@ function _openInstrPanelDirect() {
 }
 window._openInstrForm = _openInstrPanelDirect;
 window._auth = auth;
+
+/* «Як це працює» — авто-згортання під спойлер для акаунтів старших за добу */
+(function() {
+  const el = document.getElementById('how-it-works-spoiler');
+  if (!el) return;
+  const hint = el.querySelector('.faq-spoiler-hint');
+  const syncHint = () => { if (hint) hint.textContent = el.open ? '— натисніть, щоб згорнути' : '— натисніть, щоб розгорнути'; };
+  el.addEventListener('toggle', syncHint);
+  window._applyHowItWorksSpoiler = function(user) {
+    if (!user?.metadata?.creationTime) return;
+    const ageMs = Date.now() - new Date(user.metadata.creationTime).getTime();
+    if (ageMs >= 24 * 60 * 60 * 1000) { el.open = false; syncHint(); }
+  };
+})();
 window._renderProfileScreen = renderProfileScreen;
 
 document.getElementById("instr-close").addEventListener("click", closeAll);
