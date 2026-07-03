@@ -142,6 +142,21 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .section-label{font-size:11px;letter-spacing:2.5px;color:var(--text-hint);text-transform:uppercase}
 .section-link{font-size:13px;color:var(--green);display:flex;align-items:center;gap:4px;text-decoration:none}
 
+/* FAQ */
+.faq-wrap{max-width:820px;margin:0 auto}
+.faq-group{margin-bottom:26px}
+.faq-group-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--green-dark);margin-bottom:12px;letter-spacing:.2px}
+.faq-group-title i{font-size:18px;color:var(--green)}
+.faq-item{background:var(--white);border:1px solid #000;border-radius:14px;margin-bottom:10px;overflow:hidden}
+.faq-item[open]{background:var(--green-light)}
+.faq-q{list-style:none;cursor:pointer;padding:15px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14px;font-weight:500;color:var(--text)}
+.faq-q::-webkit-details-marker{display:none}
+.faq-q i{color:var(--green);font-size:18px;flex-shrink:0;transition:transform .2s}
+.faq-item[open] .faq-q i{transform:rotate(180deg)}
+.faq-a{padding:0 18px 16px;font-size:13.5px;line-height:1.6;color:var(--text-muted)}
+.faq-a b{color:var(--text);font-weight:600}
+@media(max-width:640px){.faq-q{font-size:13px}.faq-a{font-size:13px}}
+
 /* INSTRUCTOR CARDS SLIDER */
 .instr-slider-wrap{position:relative}
 .instr-grid{display:flex;flex-direction:row;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:none;-ms-overflow-style:none}
@@ -782,7 +797,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.284</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.285</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -936,6 +951,111 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   </div>
 </section>
 
+<section class="section" id="faq">
+  <div class="section-top">
+    <span class="section-label">Часті запитання</span>
+  </div>
+  <div class="faq-wrap">
+
+    <div class="faq-group">
+      <div class="faq-group-title"><i class="ti ti-car"></i> Для учнів</div>
+
+      <details class="faq-item">
+        <summary class="faq-q">Що таке FindDrive? <i class="ti ti-chevron-down"></i></summary>
+        <div class="faq-a">FindDrive — це маркетплейс, де ви знаходите інструктора з водіння поряд із вами за геолокацією. Головна перевага — ви бачите інструкторів на карті й обираєте найближчого.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Як знайти інструктора поблизу? <i class="ti ti-chevron-down"></i></summary>
+        <div class="faq-a">Є три способи: натисніть <b>«Моє місце»</b> — сайт визначить вашу геолокацію і покаже інструкторів поряд; введіть адресу або район вручну в полі пошуку; або натисніть <b>«Вручну»</b> на карті й позначте своє місце кліком.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Чи потрібно ділитися своїм місцезнаходженням? <i class="ti ti-chevron-down"></i></summary>
+        <div class="faq-a">Ні, це необов'язково. Геолокація використовується лише щоб показати найближчих інструкторів і ніде не зберігається. Якщо не хочете давати доступ — просто введіть район вручну.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Як обрати інструктора? <i class="ti ti-chevron-down"></i></summary>
+        <div class="faq-a">Порівнюйте інструкторів за рейтингом, ціною за годину, відгуками та відстанню. Клацніть на картку, щоб відкрити повний профіль: фото, стаж, район, тип КПП, опис, точки зустрічі, ТСЦ, де інструктор знає маршрути, та відгуки інших учнів.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Що означає значок «Верифіковано»? <i class="ti ti-chevron-down"></i></summary>
+        <div class="faq-a">Це інструктор, чиї дані перевірила команда FindDrive. Такий профіль надійніший, але й неверифіковані інструктори проходять базову модерацію перед появою на карті.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Як записатися на заняття? <i class="ti ti-chevron-down"></i></summary>
+        <div class="faq-a">У деяких інструкторів у профілі доступний онлайн-запис — оберіть зручну дату й вільний слот, і підтвердження надійде одразу. Не всі інструктори користуються цим блоком, тому запис також можна узгодити за телефоном, вказаним у профілі.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Що означає «Автомат» і «Механіка»? <i class="ti ti-chevron-down"></i></summary>
+        <div class="faq-a">Це тип коробки передач авто інструктора. Обирайте «Автомат», якщо хочете вчитися на автоматичній КПП, або «Механіка» — на механічній. Тег можна клацнути у хмарі тегів, щоб одразу відфільтрувати інструкторів.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Навіщо в профілі вказані ТСЦ? <i class="ti ti-chevron-down"></i></summary>
+        <div class="faq-a">ТСЦ — це сервісні центри МВС, де складають іспит на права. Якщо інструктор знає маршрути конкретного ТСЦ, вам буде легше підготуватися саме до вашого іспиту.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Скільки коштує і як оплачувати заняття? <i class="ti ti-chevron-down"></i></summary>
+        <div class="faq-a">Ціну за годину встановлює сам інструктор — вона вказана в його профілі. Оплата відбувається напряму інструктору; сам сайт за пошук та запис із учнів плати не бере.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Як скасувати або перенести запис? <i class="ti ti-chevron-down"></i></summary>
+        <div class="faq-a">Умови скасування узгоджуйте безпосередньо з інструктором за вказаним у профілі телефоном. Радимо попереджати заздалегідь.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Як залишити відгук? <i class="ti ti-chevron-down"></i></summary>
+        <div class="faq-a">Відгук і оцінку можна залишити після заняття з інструктором. Відгуки формують його рейтинг і допомагають іншим учням.</div>
+      </details>
+    </div>
+
+    <div class="faq-group">
+      <div class="faq-group-title"><i class="ti ti-steering-wheel"></i> Для інструкторів</div>
+
+      <details class="faq-item">
+        <summary class="faq-q">Як стати інструктором на FindDrive? <i class="ti ti-chevron-down"></i></summary>
+        <div class="faq-a">Натисніть <b>«Стати інструктором»</b>, заповніть анкету (ПІБ, телефон, район, тип КПП, фото обличчя та авто тощо). Після перевірки ваш профіль з'явиться на карті.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Скільки коштує розміщення? <i class="ti ti-chevron-down"></i></summary>
+        <div class="faq-a">Зараз платформа <b>безкоштовна</b> — ми набираємо аудиторію. Платна підписка з'явиться пізніше, і про це буде повідомлено заздалегідь.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Як учні мене знаходять? <i class="ti ti-chevron-down"></i></summary>
+        <div class="faq-a">Ваша локація відображається на карті — учні бачать вас поряд і звертаються самостійно. Ви працюєте з однієї зручної точки й не витрачаєте час на роз'їзди.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">Як піднятися вище у видачі? <i class="ti ti-chevron-down"></i></summary>
+        <div class="faq-a">Що вищий рейтинг і що більше позитивних відгуків — то вище ваш профіль показується учням. Заповнений профіль із фото та описом теж підвищує довіру.</div>
+      </details>
+    </div>
+
+    <div class="faq-group">
+      <div class="faq-group-title"><i class="ti ti-info-circle"></i> Загальне</div>
+
+      <details class="faq-item">
+        <summary class="faq-q">У яких містах працює сервіс? <i class="ti ti-chevron-down"></i></summary>
+        <div class="faq-a">FindDrive охоплює всю Україну — у базі ТСЦ усіх областей. Кількість інструкторів у вашому районі залежить від того, скільки їх уже зареєструвалося.</div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-q">У мене виникла проблема / помилка на сайті. Куди звертатися? <i class="ti ti-chevron-down"></i></summary>
+        <div class="faq-a">Скористайтеся кнопкою <b>«Виникли проблеми?»</b> внизу сторінки — опишіть ситуацію, і ми відповімо.</div>
+      </details>
+    </div>
+
+  </div>
+</section>
 
 
 
@@ -961,7 +1081,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       <div class="footer-col-title">Інструкторам</div>
       <div class="footer-col-links">
         <a class="footer-link" href="#"><i class="ti ti-file-text"></i> Умови партнерства</a>
-        <a class="footer-link" href="#"><i class="ti ti-help-circle"></i> FAQ</a>
+        <a class="footer-link" href="#faq"><i class="ti ti-help-circle"></i> FAQ</a>
       </div>
     </div>
     <div>
