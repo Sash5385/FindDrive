@@ -315,6 +315,14 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .info-stat{flex:1;min-width:120px;background:var(--green-light);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
 .info-stat b{display:block;font-size:16px;color:var(--green-dark);font-weight:700}
 .info-stat span{font-size:12px;color:var(--text-muted)}
+.info-steps{list-style:none;padding:0;margin:4px 0 6px}
+.info-steps li{position:relative;padding:0 0 15px 40px;font-size:13.5px;line-height:1.55;color:var(--text-muted)}
+.info-steps li:last-child{padding-bottom:4px}
+.info-steps li:before{counter-increment:st;content:counter(st);position:absolute;left:0;top:-1px;width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center}
+.info-steps li:not(:last-child):after{content:"";position:absolute;left:12.5px;top:27px;bottom:1px;width:1px;background:var(--border)}
+.info-modal-body .info-steps{counter-reset:st}
+.info-modal-body .info-cta{display:inline-flex;align-items:center;gap:7px;background:var(--green);color:#fff;border:none;border-radius:9px;padding:11px 18px;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;text-decoration:none;margin-top:8px;transition:background .15s}
+.info-modal-body .info-cta:hover{background:var(--green-dark);color:#fff}
 .auth-roles-title{text-align:center;font-size:17px;font-weight:700;color:var(--text);margin-bottom:5px}
 .auth-roles-sub{text-align:center;font-size:13px;color:var(--text-muted);margin-bottom:22px}
 .auth-roles-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -828,7 +836,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.287</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.288</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -1121,9 +1129,9 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     <div>
       <div class="footer-col-title">Учням</div>
       <div class="footer-col-links">
-        <a class="footer-link" href="#instructors"><i class="ti ti-search"></i> Знайти інструктора</a>
-        <a class="footer-link" href="#how-it-works"><i class="ti ti-list-check"></i> Як це працює</a>
-        <a class="footer-link" href="#" onclick="event.preventDefault();document.getElementById('map-anchor').scrollIntoView({behavior:'smooth'})"><i class="ti ti-map"></i> Карта</a>
+        <a class="footer-link" href="#" onclick="event.preventDefault();window._openInfoModal('find')"><i class="ti ti-search"></i> Знайти інструктора</a>
+        <a class="footer-link" href="#" onclick="event.preventDefault();window._openInfoModal('howto')"><i class="ti ti-list-check"></i> Як це працює</a>
+        <a class="footer-link" href="#" onclick="event.preventDefault();window._openInfoModal('map')"><i class="ti ti-map"></i> Карта</a>
       </div>
     </div>
     <div>
@@ -1719,6 +1727,48 @@ window._closeProblemModal = function() {
 
 /* ---- Інфо-модалки: Про нас / Контакти / Конфіденційність / Умови ---- */
 window._infoContent = {
+  find: {
+    icon: 'ti-search',
+    title: 'Як знайти інструктора',
+    html: `
+      <p class="info-lead">Кілька кроків — і ви бачите інструкторів поряд із вами.</p>
+      <ol class="info-steps">
+        <li>Натисніть <b>«Моє місце»</b> або введіть свій район у полі пошуку.</li>
+        <li>Перегляньте картки інструкторів поблизу — рейтинг, ціна, відстань, теги.</li>
+        <li>Відкрийте профіль: фото, стаж, відгуки, точки зустрічі й ТСЦ.</li>
+        <li>Запишіться на вільний слот онлайн або зателефонуйте інструктору.</li>
+      </ol>
+      <a class="info-cta" href="#instructors" onclick="window._closeInfoModal()"><i class="ti ti-users"></i> Перейти до інструкторів</a>
+    `
+  },
+  howto: {
+    icon: 'ti-list-check',
+    title: 'Як це працює',
+    html: `
+      <p class="info-lead">FindDrive допомагає знайти інструктора поряд і записатися на заняття.</p>
+      <ol class="info-steps">
+        <li><b>Вкажіть район.</b> Введіть адресу або натисніть «Моє місце».</li>
+        <li><b>Оберіть інструктора.</b> Порівняйте за рейтингом, ціною та відгуками.</li>
+        <li><b>Забронюйте час.</b> Оберіть вільний слот онлайн або домовтеся по телефону.</li>
+        <li><b>Їдьте на урок.</b> Доїжджаєте до інструктора у зручну точку.</li>
+      </ol>
+      <a class="info-cta" href="#how-it-works" onclick="window._closeInfoModal()"><i class="ti ti-arrow-down"></i> Детальніше на сторінці</a>
+    `
+  },
+  map: {
+    icon: 'ti-map',
+    title: 'Як користуватися картою',
+    html: `
+      <p class="info-lead">На карті ви бачите інструкторів навколо себе й обираєте найближчого.</p>
+      <ol class="info-steps">
+        <li>Кожен <b>пін</b> на карті — це інструктор. Клік по піну відкриває його профіль.</li>
+        <li>Кнопка <b>«Моє місце»</b> визначає вашу геолокацію і показує, хто поряд.</li>
+        <li>Кнопка <b>«Вручну»</b> — позначте своє місце кліком по карті, без доступу до геолокації.</li>
+        <li>Наближайте й рухайте карту, щоб оглянути потрібний район.</li>
+      </ol>
+      <a class="info-cta" href="#map-anchor" onclick="window._closeInfoModal();setTimeout(function(){document.getElementById('map-anchor').scrollIntoView({behavior:'smooth'})},50);return false"><i class="ti ti-map-pin"></i> Відкрити карту</a>
+    `
+  },
   about: {
     icon: 'ti-info-circle',
     title: 'Про нас',
