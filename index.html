@@ -288,6 +288,19 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .problem-banner-btn{background:var(--green);color:#fff;border:none;border-radius:9px;padding:7px 16px;font-size:12.5px;font-weight:500;cursor:pointer;font-family:inherit;transition:background .2s;white-space:nowrap}
 .problem-banner-btn:hover{background:var(--green-dark)}
 
+/* CONFIRM MODAL */
+.confirm-modal-overlay{position:fixed;inset:0;background:rgba(13,42,26,.5);z-index:1400;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.confirm-modal-box{background:var(--white);border-radius:18px;max-width:380px;width:100%;border:1px solid #000;overflow:hidden;box-shadow:0 12px 60px rgba(13,42,26,.22);animation:authBoxIn .22s cubic-bezier(.34,1.56,.64,1)}
+.confirm-modal-head{background:var(--green);padding:16px 20px;font-size:14px;font-weight:600;color:#fff}
+.confirm-modal-body{padding:22px 20px;background:var(--green-light)}
+.confirm-modal-text{font-size:14px;color:var(--text);line-height:1.5;margin-bottom:20px}
+.confirm-modal-actions{display:flex;gap:10px;justify-content:flex-end}
+.confirm-modal-btn{border:none;border-radius:9px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .2s,opacity .2s}
+.confirm-modal-btn.ok{background:var(--green-dark);color:#fff}
+.confirm-modal-btn.ok:hover{background:#0a3a20}
+.confirm-modal-btn.cancel{background:var(--white);color:var(--text-muted);border:.5px solid var(--border)}
+.confirm-modal-btn.cancel:hover{background:var(--bg)}
+
 /* AUTH MODAL */
 .auth-modal-overlay{position:fixed;inset:0;background:rgba(13,42,26,.5);z-index:1200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .auth-modal-box{background:var(--white);border-radius:18px;padding:0;max-width:480px;width:100%;position:relative;box-shadow:0 12px 60px rgba(13,42,26,.22);animation:authBoxIn .28s cubic-bezier(.34,1.56,.64,1);border:1px solid #000;overflow:hidden}
@@ -1162,7 +1175,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.304</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.305</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -2286,7 +2299,7 @@ async function saveSetup(user) {
   } catch(e) {
     btn.disabled = false;
     btn.innerHTML = '<i class="ti ti-check"></i> Зберегти профіль';
-    alert('Помилка збереження. Спробуйте ще раз.');
+    showToast('Помилка збереження', 'Спробуйте ще раз', 'error');
   }
 }
 
@@ -2529,7 +2542,7 @@ async function loadInstrSettings(instr, container) {
       renderAll();
     } catch(e) {
       if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-device-floppy"></i> Зберегти фото'; }
-      alert('Помилка: ' + (e.message || e));
+      showToast('Помилка', e.message || String(e), 'error');
     }
   };
 
@@ -2802,7 +2815,7 @@ async function loadInstrSettings(instr, container) {
         if (distEl) distEl.innerHTML = `<i class="ti ti-map-pin"></i> ${esc(area||'—')}`;
       }
       showToast('Налаштування збережено!', '', 'success');
-    } catch(e) { alert('Помилка збереження.'); }
+    } catch(e) { showToast('Помилка збереження', '', 'error'); }
   };
   window._previewInstrProfile = (instrId) => {
     if (!window._instrProfiles) window._instrProfiles = {};
@@ -2830,6 +2843,38 @@ document.getElementById("nav-user").addEventListener("click", async () => {
 document.getElementById("cab-close").addEventListener("click", closeAll);
 
 // --- Notifications ---
+window._appConfirm = function(message, opts = {}) {
+  const { okText = 'OK', cancelText = 'Скасувати', title = 'Підтвердження' } = opts;
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'confirm-modal-overlay';
+    overlay.innerHTML = `
+      <div class="confirm-modal-box">
+        <div class="confirm-modal-head">${esc(title)}</div>
+        <div class="confirm-modal-body">
+          <div class="confirm-modal-text">${esc(message)}</div>
+          <div class="confirm-modal-actions">
+            <button class="confirm-modal-btn cancel">${esc(cancelText)}</button>
+            <button class="confirm-modal-btn ok">${esc(okText)}</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+    const escHandler = e => { if (e.key === 'Escape') cleanup(false); };
+    function cleanup(result) {
+      overlay.remove();
+      document.body.style.overflow = '';
+      document.removeEventListener('keydown', escHandler);
+      resolve(result);
+    }
+    overlay.querySelector('.ok').addEventListener('click', () => cleanup(true));
+    overlay.querySelector('.cancel').addEventListener('click', () => cleanup(false));
+    overlay.addEventListener('click', e => { if (e.target === overlay) cleanup(false); });
+    document.addEventListener('keydown', escHandler);
+  });
+};
+
 function showToast(title, text = '', type = 'info') {
   const icons = { success: 'ti-circle-check', error: 'ti-circle-x', info: 'ti-bell' };
   const wrap = document.getElementById('toast-wrap');
@@ -3349,7 +3394,7 @@ window._onStudentPhotoChange = function(input) {
       await setDoc(doc(db, 'users', user.uid), { photo: data }, { merge: true });
     } catch(e) {
       console.error('Student photo save:', e);
-      alert('Помилка збереження фото. Спробуйте ще раз.');
+      showToast('Помилка збереження фото', 'Спробуйте ще раз', 'error');
     }
   });
 };
@@ -3458,7 +3503,7 @@ window._saveContacts = async function() {
     if (navName && newName) navName.textContent = newName.split(' ')[0];
   } catch(e) {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-device-floppy"></i> Зберегти контакти'; }
-    alert('Помилка: ' + (e.message || e));
+    showToast('Помилка', e.message || String(e), 'error');
   }
 };
 
@@ -3512,7 +3557,7 @@ window._setReviewStar = function(bkId, n) {
 };
 window._submitReview = async function(bkId, instrId, clientName, clientPhoto) {
   const rating = _reviewRating[bkId];
-  if (!rating) { alert('Оберіть оцінку (зірки)'); return; }
+  if (!rating) { showToast('Оберіть оцінку', 'Натисніть на зірки', 'error'); return; }
   const text = document.getElementById('rev-text-' + bkId)?.value?.trim() || '';
   const btn = document.getElementById('rev-btn-' + bkId);
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> …'; }
@@ -3542,7 +3587,7 @@ window._submitReview = async function(bkId, instrId, clientName, clientPhoto) {
     if (revOpenBtn) revOpenBtn.outerHTML = `<div class="bk-review-done"><i class="ti ti-star-filled"></i> Відгук залишено</div>`;
   } catch(e) {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-send"></i> Надіслати'; }
-    alert('Помилка: ' + (e.message || e));
+    showToast('Помилка', e.message || String(e), 'error');
   }
 };
 
@@ -4611,11 +4656,11 @@ window._addToCalendar = function(date, time, duration, instrName, location) {
   URL.revokeObjectURL(a.href);
 };
 window._cancelBooking = async function(bookingId) {
-  if (!confirm('Скасувати цей запис?')) return;
+  if (!(await window._appConfirm('Скасувати цей запис?'))) return;
   try {
     await updateDoc(doc(db,'bookings',bookingId), { status:'cancelled', cancelledBy:'client' });
     window._reloadClientBk?.();
-  } catch(e) { alert('Не вдалось скасувати.'); }
+  } catch(e) { showToast('Не вдалось скасувати', '', 'error'); }
 };
 
 async function getMyInstrProfile(user) {
@@ -4985,7 +5030,7 @@ async function loadInstrCombined(instr, container) {
         localAvail[date]=data;
         if (window._instrProfiles?.[instrId]) { window._instrProfiles[instrId].availability=window._instrProfiles[instrId].availability||{}; window._instrProfiles[instrId].availability[date]=data; }
         renderAll();
-      } catch(e) { alert('Помилка збереження.'); }
+      } catch(e) { showToast('Помилка збереження', '', 'error'); }
     };
     window._combToggleDayOff = async (instrId, date) => {
       const curr = localAvail[date]||{};
@@ -4995,7 +5040,7 @@ async function loadInstrCombined(instr, container) {
         if (data===null) { await updateDoc(doc(db,'instructors',instrId),{[`availability.${date}`]:deleteField()}); delete localAvail[date]; if (window._instrProfiles?.[instrId]?.availability) delete window._instrProfiles[instrId].availability[date]; }
         else { await updateDoc(doc(db,'instructors',instrId),{[`availability.${date}`]:data}); localAvail[date]=data; if (window._instrProfiles?.[instrId]) { window._instrProfiles[instrId].availability=window._instrProfiles[instrId].availability||{}; window._instrProfiles[instrId].availability[date]=data; } }
         renderAll();
-      } catch(e) { alert('Помилка.'); }
+      } catch(e) { showToast('Помилка', '', 'error'); }
     };
     window._selectMpChip = (btn, ptIdx) => {
       const pts2 = (window._instrProfiles?.[instr.id]?.meetingPoints)||instr.meetingPoints||[];
@@ -5030,7 +5075,7 @@ async function loadInstrCombined(instr, container) {
         if (window._instrProfiles?.[instrId]) { window._instrProfiles[instrId].availability=window._instrProfiles[instrId].availability||{}; window._instrProfiles[instrId].availability[date]=data; }
         showToast('Збережено!',date.split('-').reverse().join('.'),'success');
         renderAll();
-      } catch(e) { alert('Помилка.'); }
+      } catch(e) { showToast('Помилка', '', 'error'); }
     };
     window._combClearLoc = async (instrId, date) => {
       const curr = {...(localAvail[date]||{})};
@@ -5043,7 +5088,7 @@ async function loadInstrCombined(instr, container) {
         window._pendingMpLoc=null;
         renderAll();
         showToast('Місце прибрано','','success');
-      } catch(e) { alert('Помилка.'); }
+      } catch(e) { showToast('Помилка', '', 'error'); }
     };
     window._combSaveDurs = async (instrId, date) => {
       const btns = document.querySelectorAll('.dur-day-btn');
@@ -5056,7 +5101,7 @@ async function loadInstrCombined(instr, container) {
         localAvail[date]=curr;
         if (window._instrProfiles?.[instrId]) { window._instrProfiles[instrId].availability=window._instrProfiles[instrId].availability||{}; window._instrProfiles[instrId].availability[date]=curr; }
         showToast('Тривалість збережено','','success');
-      } catch(e) { alert('Помилка.'); }
+      } catch(e) { showToast('Помилка', '', 'error'); }
     };
     window._combSlotDetail = (bkId) => {
       selectedBkId = selectedBkId===bkId ? null : bkId;
@@ -5068,7 +5113,7 @@ async function loadInstrCombined(instr, container) {
         delete localAvail[date];
         if (window._instrProfiles?.[instrId]?.availability) delete window._instrProfiles[instrId].availability[date];
         editDate=null; renderAll();
-      } catch(e) { alert('Помилка скидання.'); }
+      } catch(e) { showToast('Помилка скидання', '', 'error'); }
     };
     window._deleteMpPoint = async (instrId, idx) => {
       const pts = [...(window._instrProfiles?.[instrId]?.meetingPoints || instr.meetingPoints || [])];
@@ -5079,7 +5124,7 @@ async function loadInstrCombined(instr, container) {
         instr.meetingPoints = pts;
         renderAll();
         showToast('Точку видалено', '', 'success');
-      } catch(e) { alert('Помилка.'); }
+      } catch(e) { showToast('Помилка', '', 'error'); }
     };
 
     renderAll();
@@ -5119,16 +5164,16 @@ window._confirmBk = async function(bookingId) {
     window._reloadInstrBk?.();
   } catch(e) {
     console.error('_confirmBk error:', e.code, e.message, 'user:', auth.currentUser?.email);
-    alert('Помилка: ' + (e.code||e.message) + '\nВаш email: ' + (auth.currentUser?.email||'не визначено'));
+    showToast('Помилка', (e.code||e.message) + ' · ' + (auth.currentUser?.email||'email не визначено'), 'error');
   }
 };
 
 window._rejectBk = async function(bookingId) {
-  if (!confirm('Відхилити цей запис?')) return;
+  if (!(await window._appConfirm('Відхилити цей запис?'))) return;
   try {
     await updateDoc(doc(db,'bookings',bookingId),{status:'cancelled'});
     window._reloadInstrBk?.();
-  } catch(e) { alert('Помилка. Спробуйте ще раз.'); }
+  } catch(e) { showToast('Помилка', 'Спробуйте ще раз', 'error'); }
 };
 
 window._acceptReschedule = async function(bookingId) {
@@ -5141,23 +5186,23 @@ window._acceptReschedule = async function(bookingId) {
       status:'confirmed', proposedDate:null, proposedTime:null
     });
     window._reloadInstrBk?.();
-  } catch(e) { alert('Помилка. Спробуйте ще раз.'); }
+  } catch(e) { showToast('Помилка', 'Спробуйте ще раз', 'error'); }
 };
 
 window._rejectReschedule = async function(bookingId) {
-  if (!confirm('Відхилити перенос і залишити оригінальну дату?')) return;
+  if (!(await window._appConfirm('Відхилити перенос і залишити оригінальну дату?'))) return;
   try {
     await updateDoc(doc(db,'bookings',bookingId),{status:'confirmed',proposedDate:null,proposedTime:null});
     window._reloadInstrBk?.();
-  } catch(e) { alert('Помилка. Спробуйте ще раз.'); }
+  } catch(e) { showToast('Помилка', 'Спробуйте ще раз', 'error'); }
 };
 
 window._instrCancelBk = async function(bookingId) {
-  if (!confirm('Скасувати це заняття? Учень отримає сповіщення.')) return;
+  if (!(await window._appConfirm('Скасувати це заняття? Учень отримає сповіщення.'))) return;
   try {
     await updateDoc(doc(db,'bookings',bookingId),{status:'cancelled'});
     window._reloadInstrBk?.();
-  } catch(e) { alert('Помилка. Спробуйте ще раз.'); }
+  } catch(e) { showToast('Помилка', 'Спробуйте ще раз', 'error'); }
 };
 </script>
 
