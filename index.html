@@ -284,6 +284,26 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .auth-modal-logo-icon{width:30px;height:30px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center}
 .auth-modal-logo-icon i{font-size:17px;color:#fff}
 .auth-modal-brand{font-size:15px;font-weight:700;color:#fff}
+/* INFO MODAL (Про нас / Контакти / Конфіденційність / Умови) */
+.info-modal-body{padding:22px 26px 26px;background:var(--white);max-height:72vh;overflow-y:auto}
+.info-modal-body .info-lead{font-size:14.5px;line-height:1.6;color:var(--text);margin-bottom:16px}
+.info-modal-body h4{font-size:14px;font-weight:600;color:var(--green-dark);margin:20px 0 8px;letter-spacing:.2px}
+.info-modal-body h4:first-child{margin-top:0}
+.info-modal-body p{font-size:13.5px;line-height:1.65;color:var(--text-muted);margin-bottom:11px}
+.info-modal-body ul{margin:0 0 13px;padding-left:19px}
+.info-modal-body li{font-size:13.5px;line-height:1.6;color:var(--text-muted);margin-bottom:6px}
+.info-modal-body b{color:var(--text);font-weight:600}
+.info-modal-body a{color:var(--green);font-weight:500}
+.info-modal-body .info-meta{font-size:12px;color:var(--text-hint);margin-top:18px;padding-top:13px;border-top:1px solid var(--border)}
+.info-contact-row{display:flex;align-items:center;gap:11px;background:var(--green-light);border:1px solid var(--border);border-radius:12px;padding:13px 15px;margin-bottom:11px}
+.info-contact-row i{font-size:20px;color:var(--green);flex-shrink:0}
+.info-contact-row .l{font-size:12px;color:var(--text-muted);margin-bottom:2px}
+.info-contact-row .v{font-size:14px;font-weight:600;color:var(--text)}
+.info-contact-row .v a{color:var(--green)}
+.info-stats{display:flex;gap:10px;margin:4px 0 16px;flex-wrap:wrap}
+.info-stat{flex:1;min-width:120px;background:var(--green-light);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.info-stat b{display:block;font-size:16px;color:var(--green-dark);font-weight:700}
+.info-stat span{font-size:12px;color:var(--text-muted)}
 .auth-roles-title{text-align:center;font-size:17px;font-weight:700;color:var(--text);margin-bottom:5px}
 .auth-roles-sub{text-align:center;font-size:13px;color:var(--text-muted);margin-bottom:22px}
 .auth-roles-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -797,7 +817,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.285</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.286</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -838,6 +858,19 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       <button id="problem-submit-btn" class="auth-role-btn-primary" style="padding:11px" onclick="window._submitProblem()">Надіслати</button>
       <div id="problem-sent" style="display:none;text-align:center;color:var(--green);font-size:13px;font-weight:500;margin-top:10px"><i class="ti ti-circle-check"></i> Дякуємо! Ми отримали ваше звернення</div>
     </div>
+  </div>
+</div>
+
+<div id="info-modal" class="auth-modal-overlay" style="display:none" onclick="if(event.target===this)window._closeInfoModal()">
+  <div class="auth-modal-box" style="max-width:640px">
+    <div class="auth-modal-head">
+      <div class="auth-modal-logo">
+        <div class="auth-modal-logo-icon"><i id="info-modal-icon" class="ti ti-info-circle"></i></div>
+        <span id="info-modal-title" class="auth-modal-brand">Про нас</span>
+      </div>
+      <button class="auth-modal-close" onclick="window._closeInfoModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div id="info-modal-body" class="info-modal-body"></div>
   </div>
 </div>
 
@@ -1087,10 +1120,10 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     <div>
       <div class="footer-col-title">Компанія</div>
       <div class="footer-col-links">
-        <a class="footer-link" href="#"><i class="ti ti-info-circle"></i> Про нас</a>
-        <a class="footer-link" href="#"><i class="ti ti-mail"></i> Контакти</a>
-        <a class="footer-link" href="#"><i class="ti ti-lock"></i> Конфіденційність</a>
-        <a class="footer-link" href="#"><i class="ti ti-file-certificate"></i> Умови</a>
+        <a class="footer-link" href="#" onclick="event.preventDefault();window._openInfoModal('about')"><i class="ti ti-info-circle"></i> Про нас</a>
+        <a class="footer-link" href="#" onclick="event.preventDefault();window._openInfoModal('contacts')"><i class="ti ti-mail"></i> Контакти</a>
+        <a class="footer-link" href="#" onclick="event.preventDefault();window._openInfoModal('privacy')"><i class="ti ti-lock"></i> Конфіденційність</a>
+        <a class="footer-link" href="#" onclick="event.preventDefault();window._openInfoModal('terms')"><i class="ti ti-file-certificate"></i> Умови</a>
       </div>
     </div>
   </div>
@@ -1663,6 +1696,211 @@ window._openProblemModal = function() {
 };
 window._closeProblemModal = function() {
   const modal = document.getElementById('problem-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
+};
+
+/* ---- Інфо-модалки: Про нас / Контакти / Конфіденційність / Умови ---- */
+window._infoContent = {
+  about: {
+    icon: 'ti-info-circle',
+    title: 'Про нас',
+    html: `
+      <p class="info-lead">FindDrive — це маркетплейс, який допомагає знайти інструктора з водіння поряд із вами. Ми показуємо інструкторів на карті за геолокацією, щоб ви обрали найближчого і найзручнішого.</p>
+      <h4>Навіщо ми це робимо</h4>
+      <p>Знайти хорошого інструктора зазвичай складно: оголошення розкидані по групах, дошках і чатах, а зрозуміти, хто працює поряд, майже неможливо. Ми зібрали інструкторів в одному місці й додали головне — <b>локацію на карті</b>.</p>
+      <h4>Для учнів</h4>
+      <ul>
+        <li>Шукайте інструкторів поряд за геолокацією або районом.</li>
+        <li>Порівнюйте за рейтингом, ціною, відгуками та типом КПП.</li>
+        <li>Дивіться точки зустрічі й ТСЦ, де інструктор знає маршрути.</li>
+      </ul>
+      <h4>Для інструкторів</h4>
+      <ul>
+        <li>Безкоштовна вітрина — учні знаходять вас самі.</li>
+        <li>Ваша локація на карті замість роз'їздів по місту.</li>
+        <li>Рейтинг і відгуки, що працюють на вашу репутацію.</li>
+      </ul>
+      <h4>Наш статус</h4>
+      <p>FindDrive — молодий український проєкт. Зараз платформа <b>повністю безкоштовна</b> — ми зосереджені на тому, щоб зібрати якісну базу інструкторів і зручний сервіс для учнів по всій Україні.</p>
+      <div class="info-meta">Маєте питання чи пропозицію? Напишіть нам — розділ «Контакти».</div>
+    `
+  },
+  contacts: {
+    icon: 'ti-mail',
+    title: 'Контакти',
+    html: `
+      <p class="info-lead">Будемо раді допомогти — учням, інструкторам і партнерам. Оберіть зручний спосіб зв'язку.</p>
+      <div class="info-contact-row">
+        <i class="ti ti-mail"></i>
+        <div>
+          <div class="l">Email для загальних питань і підтримки</div>
+          <div class="v"><a href="mailto:Sash5385@gmail.com">Sash5385@gmail.com</a></div>
+        </div>
+      </div>
+      <div class="info-contact-row">
+        <i class="ti ti-steering-wheel"></i>
+        <div>
+          <div class="l">Співпраця для інструкторів</div>
+          <div class="v"><a href="mailto:Sash5385@gmail.com?subject=Співпраця%20інструктора">Sash5385@gmail.com</a></div>
+        </div>
+      </div>
+      <h4>Знайшли помилку на сайті?</h4>
+      <p>Скористайтеся кнопкою <b>«Виникли проблеми?»</b> внизу сторінки — опишіть ситуацію просто у формі, і ми розберемось.</p>
+      <h4>Час відповіді</h4>
+      <p>Зазвичай відповідаємо протягом 1–2 робочих днів. Дякуємо за терпіння — проєкт розвивається невеликою командою.</p>
+      <div class="info-meta">FindDrive · finddrive.in.ua</div>
+    `
+  },
+  privacy: {
+    icon: 'ti-lock',
+    title: 'Політика конфіденційності',
+    html: `
+      <p class="info-lead">Ця Політика пояснює, які персональні дані збирає сервіс FindDrive (далі — «Сервіс», «ми»), з якою метою і як ми їх захищаємо. Користуючись сайтом finddrive.in.ua, ви погоджуєтесь із цією Політикою.</p>
+
+      <h4>1. Хто обробляє дані</h4>
+      <p>Обробку персональних даних здійснює команда проєкту FindDrive. Питання щодо ваших даних надсилайте на <a href="mailto:Sash5385@gmail.com">Sash5385@gmail.com</a>.</p>
+
+      <h4>2. Які дані ми збираємо</h4>
+      <ul>
+        <li><b>Геолокація.</b> Використовується лише для показу інструкторів поряд, у момент пошуку. Точні координати ми <b>не зберігаємо</b> — вони обробляються у вашому браузері.</li>
+        <li><b>Дані інструктора</b> (при реєстрації анкети): ПІБ, телефон, email, район роботи, тип КПП, ТСЦ, опис, фото обличчя та авто, орієнтовна точка на карті.</li>
+        <li><b>Дані учня</b> (при записі чи зверненні): ім'я, телефон або email, які ви залишаєте для зв'язку з інструктором чи підтримкою.</li>
+        <li><b>Технічні дані:</b> знеособлена статистика відвідувань (Google Analytics), тип пристрою й браузера, cookies.</li>
+      </ul>
+
+      <h4>3. Мета обробки</h4>
+      <ul>
+        <li>Показ інструкторів на карті й забезпечення пошуку.</li>
+        <li>Створення й відображення профілю інструктора.</li>
+        <li>Організація запису та зв'язку між учнем і інструктором.</li>
+        <li>Модерація, безпека й запобігання зловживанням.</li>
+        <li>Покращення сервісу на основі знеособленої статистики.</li>
+      </ul>
+
+      <h4>4. Правові підстави</h4>
+      <p>Ми обробляємо дані на підставі вашої <b>згоди</b> (яку ви надаєте, заповнюючи форми), а також для <b>надання послуги</b>, якою ви користуєтесь. Обробка здійснюється відповідно до Закону України «Про захист персональних даних».</p>
+
+      <h4>5. Передача третім сторонам</h4>
+      <p>Ми не продаємо ваші дані. Дані можуть оброблятися надійними сервіс-провайдерами, які забезпечують роботу платформи:</p>
+      <ul>
+        <li><b>Google Firebase</b> — зберігання профілів і даних сервісу.</li>
+        <li><b>Google Analytics</b> — знеособлена статистика відвідувань.</li>
+      </ul>
+      <p>Контактні дані інструктора (наприклад, телефон) видимі учням — це необхідно для запису на заняття.</p>
+
+      <h4>6. Зберігання та захист</h4>
+      <p>Дані зберігаються стільки, скільки діє ваш профіль або скільки потрібно для мети обробки. Ми застосовуємо технічні та організаційні заходи захисту, однак жоден спосіб передачі даних в інтернеті не є абсолютно безпечним.</p>
+
+      <h4>7. Cookies та аналітика</h4>
+      <p>Сайт використовує cookies і подібні технології для коректної роботи й аналітики. Ви можете вимкнути cookies у налаштуваннях браузера, але частина функцій може працювати некоректно.</p>
+
+      <h4>8. Ваші права</h4>
+      <ul>
+        <li>Отримати доступ до своїх даних і їх копію.</li>
+        <li>Виправити неточні дані.</li>
+        <li>Видалити свій профіль і дані («право бути забутим»).</li>
+        <li>Відкликати згоду на обробку.</li>
+      </ul>
+      <p>Щоб скористатися правами, напишіть на <a href="mailto:Sash5385@gmail.com">Sash5385@gmail.com</a>.</p>
+
+      <h4>9. Діти</h4>
+      <p>Сервіс не призначений для осіб, які не досягли віку, з якого дозволено самостійно навчатися водінню відповідно до законодавства України. Ми свідомо не збираємо дані таких осіб.</p>
+
+      <h4>10. Зміни до Політики</h4>
+      <p>Ми можемо оновлювати цю Політику. Актуальна версія завжди доступна на цій сторінці; суттєві зміни ми намагатимемось повідомляти додатково.</p>
+
+      <h4>11. Контакти</h4>
+      <p>Питання щодо конфіденційності: <a href="mailto:Sash5385@gmail.com">Sash5385@gmail.com</a>.</p>
+
+      <div class="info-meta">Останнє оновлення: 3 липня 2026 р.</div>
+    `
+  },
+  terms: {
+    icon: 'ti-file-certificate',
+    title: 'Умови використання',
+    html: `
+      <p class="info-lead">Ці Умови регулюють користування сервісом FindDrive (finddrive.in.ua). Користуючись сайтом, ви підтверджуєте, що прочитали й погоджуєтесь із ними.</p>
+
+      <h4>1. Що таке FindDrive</h4>
+      <p>FindDrive — це <b>інформаційний майданчик (каталог)</b>, який зводить разом учнів і інструкторів з водіння. Ми <b>не є стороною</b> угоди між учнем та інструктором, не надаємо послуг з навчання водінню і не виступаємо роботодавцем інструкторів.</p>
+
+      <h4>2. Реєстрація та акаунт</h4>
+      <ul>
+        <li>Дані, які ви вказуєте, мають бути достовірними та актуальними.</li>
+        <li>Ви відповідаєте за збереження доступу до свого акаунта.</li>
+        <li>Ми можемо відмовити в реєстрації або заблокувати акаунт при порушенні цих Умов.</li>
+      </ul>
+
+      <h4>3. Правила для інструкторів</h4>
+      <ul>
+        <li>Вказуйте достовірні дані про себе, авто, ціни, район і доступність.</li>
+        <li>Ви самостійно відповідаєте за наявність усіх необхідних за законом документів і права надавати послуги з навчання водінню.</li>
+        <li>Підтримуйте актуальність профілю — локації, слотів, контактів.</li>
+        <li>Ставтеся до учнів коректно й професійно.</li>
+      </ul>
+
+      <h4>4. Правила для учнів</h4>
+      <ul>
+        <li>Використовуйте контакти інструкторів лише для запису й організації занять.</li>
+        <li>Залишайте чесні відгуки на основі власного досвіду.</li>
+        <li>Поважайте час і умови інструктора.</li>
+      </ul>
+
+      <h4>5. Записи, оплата та проведення занять</h4>
+      <p>Домовленості про заняття, їх вартість, час, місце та оплата відбуваються <b>безпосередньо між учнем та інструктором</b>. Сервіс не бере оплату з учнів за пошук чи запис і не бере участі в розрахунках. Ми не гарантуємо якість, зміст чи результат занять і не несемо відповідальності за дії сторін.</p>
+
+      <h4>6. Відгуки та контент</h4>
+      <p>Публікуючи відгуки, фото чи інший контент, ви підтверджуєте, що маєте на це право. Забороняються образи, наклеп, спам, фейкові відгуки й накрутка. Ми можемо видаляти контент, що порушує ці правила.</p>
+
+      <h4>7. Заборонена поведінка</h4>
+      <ul>
+        <li>Надання неправдивих даних чи видавання себе за іншу особу.</li>
+        <li>Спам, шахрайство, збирання даних інших користувачів.</li>
+        <li>Спроби зламу, перевантаження чи порушення роботи сервісу.</li>
+        <li>Будь-яке використання сервісу з протиправною метою.</li>
+      </ul>
+
+      <h4>8. Відмова від гарантій та відповідальність</h4>
+      <p>Сервіс надається «як є». Ми не гарантуємо безперервної роботи сайту й достовірності даних, розміщених користувачами. У межах, дозволених законодавством, FindDrive не несе відповідальності за шкоду, що виникла внаслідок взаємодії учня та інструктора або використання сервісу.</p>
+
+      <h4>9. Інтелектуальна власність</h4>
+      <p>Назва, дизайн, логотип і програмний код FindDrive належать проєкту. Контент, який завантажують користувачі, залишається їхнім, але ви надаєте нам право показувати його в межах роботи сервісу.</p>
+
+      <h4>10. Модерація та блокування</h4>
+      <p>Ми проводимо базову модерацію профілів, але це не є гарантією їх достовірності. Ми можемо призупинити або видалити профіль, що порушує Умови чи закон.</p>
+
+      <h4>11. Вартість і монетизація</h4>
+      <p>Наразі користування платформою <b>безкоштовне</b>. У майбутньому може з'явитися платна підписка для інструкторів — про це буде повідомлено заздалегідь, і це не стосуватиметься вже наданих безкоштовних послуг заднім числом.</p>
+
+      <h4>12. Зміни Умов</h4>
+      <p>Ми можемо оновлювати ці Умови. Продовження користування сервісом після змін означає вашу згоду з новою редакцією.</p>
+
+      <h4>13. Застосовне право</h4>
+      <p>Ці Умови регулюються законодавством України. Спори вирішуються шляхом переговорів, а в разі недосягнення згоди — відповідно до чинного законодавства України.</p>
+
+      <h4>14. Контакти</h4>
+      <p>Питання щодо Умов: <a href="mailto:Sash5385@gmail.com">Sash5385@gmail.com</a>.</p>
+
+      <div class="info-meta">Останнє оновлення: 3 липня 2026 р.</div>
+    `
+  }
+};
+window._openInfoModal = function(key) {
+  const data = window._infoContent[key];
+  const modal = document.getElementById('info-modal');
+  if (!data || !modal) return;
+  document.getElementById('info-modal-icon').className = 'ti ' + data.icon;
+  document.getElementById('info-modal-title').textContent = data.title;
+  const body = document.getElementById('info-modal-body');
+  body.innerHTML = data.html;
+  body.scrollTop = 0;
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+};
+window._closeInfoModal = function() {
+  const modal = document.getElementById('info-modal');
   if (!modal) return;
   modal.style.display = 'none';
   document.body.style.overflow = '';
