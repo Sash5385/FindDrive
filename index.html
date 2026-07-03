@@ -62,6 +62,9 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .logo-version{font-size:10px;font-weight:500;color:rgba(255,255,255,.75);background:rgba(255,255,255,.14);border:.5px solid rgba(255,255,255,.25);border-radius:6px;padding:2px 7px;letter-spacing:.3px;cursor:pointer;transition:background .15s,color .15s,border-color .15s;user-select:none}
 .logo-version:hover{background:rgba(255,255,255,.26);color:#fff;border-color:rgba(255,255,255,.4)}
 .logo-version.reloading{background:rgba(255,255,255,.32);color:#fff;border-color:rgba(255,255,255,.5)}
+.footer-version{font-size:10px;font-weight:500;color:var(--text-hint);background:var(--bg);border:.5px solid var(--border);border-radius:6px;padding:2px 7px;letter-spacing:.3px;cursor:pointer;transition:background .15s,color .15s,border-color .15s;user-select:none;margin-left:6px}
+.footer-version:hover{background:var(--green-light);color:var(--green);border-color:#b8ddc8}
+.footer-version.reloading{background:var(--green);color:#fff;border-color:var(--green)}
 .nav-links{display:flex;gap:28px;flex:1;min-width:0;justify-content:center}
 .nav-tagline{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:400;color:rgba(255,255,255,.92);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .nav-tagline i{font-size:16px;color:#fff;flex-shrink:0}
@@ -839,7 +842,6 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.298</span>
   </a>
   <div class="nav-links">
     <span class="nav-tagline"><i class="ti ti-heart-handshake"></i> Знаємо, як складно знайти кваліфікованого інструктора. Ми допоможемо!</span>
@@ -1158,7 +1160,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено.</div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.299</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
