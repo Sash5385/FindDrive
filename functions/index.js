@@ -46,10 +46,26 @@ async function getAdminUid() {
   return snap.empty ? null : snap.docs[0].id;
 }
 
+// Firestore-тригери гарантують доставку "щонайменше один раз" — той самий event.id
+// іноді прилітає повторно, тому без цієї перевірки один запис міг слати кілька пушів.
+// create() падає з ALREADY_EXISTS, якщо подія вже оброблена — саме так ловимо дублікат.
+async function claimEventOnce(eventId) {
+  try {
+    await admin.firestore().collection('_processedEvents').doc(eventId).create({
+      ts: admin.firestore.FieldValue.serverTimestamp()
+    });
+    return true;
+  } catch (e) {
+    if (e.code === 6 || e.message?.includes('ALREADY_EXISTS')) return false;
+    throw e;
+  }
+}
+
 // Інструктор отримує push коли клієнт бронює
 exports.onBookingCreated = onDocumentCreated(
   { document: 'bookings/{id}', region: 'europe-west1' },
   async event => {
+    if (!(await claimEventOnce(event.id))) return;
     const d = event.data.data();
     const uid = d.instructorUserId || await getInstrUserId(d.instructorId);
     if (!uid) return;
@@ -66,6 +82,7 @@ exports.onBookingCreated = onDocumentCreated(
 exports.onBookingUpdated = onDocumentUpdated(
   { document: 'bookings/{id}', region: 'europe-west1' },
   async event => {
+    if (!(await claimEventOnce(event.id))) return;
     const before = event.data.before.data();
     const after  = event.data.after.data();
     if (before.status === after.status) return;
@@ -104,6 +121,7 @@ exports.onBookingUpdated = onDocumentUpdated(
 exports.onInstructorCreated = onDocumentCreated(
   { document: 'instructors/{id}', region: 'europe-west1' },
   async event => {
+    if (!(await claimEventOnce(event.id))) return;
     const d = event.data.data();
     if (d.status !== 'pending') return;
     const adminUid = await getAdminUid();
@@ -202,6 +220,7 @@ exports.cleanupOldAvailability = onSchedule(
 exports.onChatMessage = onDocumentCreated(
   { document: 'chats/{chatId}/messages/{msgId}', region: 'europe-west1' },
   async event => {
+    if (!(await claimEventOnce(event.id))) return;
     const msg    = event.data.data();
     const chatId = event.params.chatId;
 
