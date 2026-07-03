@@ -55,22 +55,22 @@
 body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg);background-image:radial-gradient(circle 580px at 8% 7%, rgba(168,240,192,.42), transparent 70%),radial-gradient(circle 500px at 88% 12%, rgba(240,224,96,.36), transparent 70%),radial-gradient(circle 520px at 6% 50%, rgba(240,168,208,.34), transparent 70%),radial-gradient(circle 560px at 94% 58%, rgba(160,216,248,.38), transparent 70%),radial-gradient(circle 540px at 48% 90%, rgba(192,184,248,.32), transparent 70%),radial-gradient(circle 420px at 65% 30%, rgba(168,240,192,.20), transparent 70%);background-attachment:fixed}
 
 /* NAV */
-.nav{background:var(--white);border-bottom:.5px solid var(--border);padding:0 48px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav{background:var(--green);border-bottom:.5px solid var(--green-dark);padding:0 48px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
-.logo-box{width:34px;height:34px;background:var(--green);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px}
-.logo-text{font-size:15px;font-weight:600;color:var(--text)}
-.logo-version{font-size:10px;font-weight:500;color:var(--text-hint);background:var(--bg);border:.5px solid var(--border);border-radius:6px;padding:2px 7px;letter-spacing:.3px;cursor:pointer;transition:background .15s,color .15s,border-color .15s;user-select:none}
-.logo-version:hover{background:var(--green-light);color:var(--green);border-color:#b8ddc8}
-.logo-version.reloading{background:var(--green);color:#fff;border-color:var(--green)}
+.logo-box{width:34px;height:34px;background:rgba(255,255,255,.18);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px}
+.logo-text{font-size:15px;font-weight:600;color:#fff}
+.logo-version{font-size:10px;font-weight:500;color:rgba(255,255,255,.75);background:rgba(255,255,255,.14);border:.5px solid rgba(255,255,255,.25);border-radius:6px;padding:2px 7px;letter-spacing:.3px;cursor:pointer;transition:background .15s,color .15s,border-color .15s;user-select:none}
+.logo-version:hover{background:rgba(255,255,255,.26);color:#fff;border-color:rgba(255,255,255,.4)}
+.logo-version.reloading{background:rgba(255,255,255,.32);color:#fff;border-color:rgba(255,255,255,.5)}
 .nav-links{display:flex;gap:28px}
-.nav-link{font-size:14px;color:var(--text-muted);text-decoration:none;transition:color .2s}
-.nav-link:hover{color:var(--green)}
+.nav-link{font-size:14px;color:rgba(255,255,255,.85);text-decoration:none;transition:color .2s}
+.nav-link:hover{color:#fff}
 .nav-right{display:flex;align-items:center;gap:14px}
-.btn-login{font-size:14px;color:var(--green);background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:inherit}
-.btn-cta{background:var(--green);color:#fff;border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:500;cursor:pointer;transition:background .2s;font-family:inherit}
-.btn-cta:hover{background:var(--green-dark)}
-.nav-burger{display:none;background:none;border:none;cursor:pointer;padding:7px;color:var(--text);font-size:20px;line-height:1;border-radius:8px;transition:background .15s,color .15s;margin-left:2px}
-.nav-burger:hover{background:var(--green-light);color:var(--green)}
+.btn-login{font-size:14px;color:#fff;background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:inherit}
+.btn-cta{background:#fff;color:var(--green);border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s,color .2s;font-family:inherit}
+.btn-cta:hover{background:var(--green-light)}
+.nav-burger{display:none;background:none;border:none;cursor:pointer;padding:7px;color:#fff;font-size:20px;line-height:1;border-radius:8px;transition:background .15s,color .15s;margin-left:2px}
+.nav-burger:hover{background:rgba(255,255,255,.18);color:#fff}
 .nav-mobile{position:fixed;top:60px;left:0;right:0;background:var(--white);border-bottom:.5px solid var(--border);z-index:99;flex-direction:column;transform:translateY(-10px);opacity:0;pointer-events:none;transition:transform .2s ease,opacity .18s ease;box-shadow:0 8px 32px rgba(0,0,0,.1);display:flex}
 .nav-mobile.open{transform:translateY(0);opacity:1;pointer-events:all}
 .nav-mobile-link{display:flex;align-items:center;gap:10px;padding:15px 20px;font-size:15px;color:var(--text-muted);text-decoration:none;border-bottom:.5px solid var(--border);transition:background .15s,color .15s}
@@ -390,9 +390,9 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .weak-chip{background:var(--pink-light);color:var(--pink);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:500}
 .nav-user{display:flex;align-items:center;gap:8px;cursor:pointer;position:relative}
 .nav-avatar-wrap{position:relative;flex-shrink:0}
-.nav-avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;border:1.5px solid var(--border);display:block}
+.nav-avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,.5);display:block}
 .nav-notif-badge{position:absolute;top:-3px;right:-5px;min-width:16px;height:16px;border-radius:8px;background:#cc3333;color:#fff;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 3px;border:1.5px solid var(--white);line-height:1;pointer-events:none}
-.nav-name{font-size:13px;color:var(--text);font-weight:500}
+.nav-name{font-size:13px;color:#fff;font-weight:500}
 #chat-panel{width:min(100vw,440px)}
 @media(min-width:900px){#chat-panel{width:440px;box-shadow:-4px 0 32px rgba(0,0,0,.14);transform-origin:right center}}
 @media(min-width:1280px){#chat-panel{width:480px}}
@@ -782,7 +782,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.283</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.284</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
