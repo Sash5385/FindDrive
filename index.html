@@ -215,15 +215,18 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 /* TRUST BAR */
 
 /* HOW IT WORKS SECTION */
-.how-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.how-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:900px){.how-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:480px){.how-grid{grid-template-columns:1fr 1fr;gap:12px}}
 .how-card{border-radius:18px;padding:26px 22px;position:relative;overflow:hidden;color:#fff}
 .how-num{position:absolute;top:14px;right:18px;font-size:42px;font-weight:700;opacity:.18;line-height:1;pointer-events:none}
 .how-icon{font-size:30px;margin-bottom:14px;display:block;line-height:1}
 .how-title{font-size:15px;font-weight:600;margin-bottom:8px;line-height:1.3}
 .how-desc{font-size:12.5px;line-height:1.65;opacity:.88}
+.how-green{background:#1a7a4a}
 .how-pink{background:#993556}
 .how-blue{background:#185fa5}
+.how-olive{background:#4a7a1a}
 @media(max-width:480px){.how-title{font-size:13px}.how-icon{font-size:24px;margin-bottom:10px}.how-card{padding:18px 16px}.how-num{font-size:34px}}
 
 /* FILTER EMPTY STATE */
@@ -779,7 +782,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.282</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.283</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -886,17 +889,29 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     <span class="section-label">Як це працює</span>
   </div>
   <div class="how-grid">
-    <div class="how-card how-pink">
+    <div class="how-card how-green">
       <span class="how-num">1</span>
+      <i class="ti ti-map-pin how-icon"></i>
+      <div class="how-title">Вкажіть район</div>
+      <div class="how-desc">Введіть адресу або натисніть «Моє місце» — покажемо інструкторів поблизу вас</div>
+    </div>
+    <div class="how-card how-pink">
+      <span class="how-num">2</span>
       <i class="ti ti-users how-icon"></i>
       <div class="how-title">Оберіть інструктора</div>
       <div class="how-desc">Порівнюйте за рейтингом, ціною та відгуками. Дивіться точки зустрічі на карті</div>
     </div>
     <div class="how-card how-blue">
-      <span class="how-num">2</span>
+      <span class="how-num">3</span>
       <i class="ti ti-calendar-event how-icon"></i>
       <div class="how-title">Забронюйте час</div>
       <div class="how-desc">Оберіть зручну дату і вільний слот прямо на сайті — підтвердження одразу</div>
+    </div>
+    <div class="how-card how-olive">
+      <span class="how-num">4</span>
+      <i class="ti ti-steering-wheel how-icon"></i>
+      <div class="how-title">Їдьте на урок</div>
+      <div class="how-desc">Доїжджайте до інструктора самі — він працює з фіксованої зручної точки</div>
     </div>
   </div>
 </section>
@@ -1787,275 +1802,7 @@ async function saveSetup(user) {
   }
 }
 
-const ADMIN_EMAIL = 'sash5385@gmail.com';
-
-let _unsubAdminInstr = null;
-function listenNewInstructorApps() {
-  if (_unsubAdminInstr) { _unsubAdminInstr(); _unsubAdminInstr = null; }
-  let ready = false;
-  const q = query(collection(db, 'instructors'), where('status', '==', 'pending'));
-  _unsubAdminInstr = onSnapshot(q, snap => {
-    if (!ready) { ready = true; return; }
-    snap.docChanges().forEach(ch => {
-      if (ch.type !== 'added') return;
-      const d = ch.doc.data();
-      showToast('Нова анкета інструктора!', `${d.name || 'Інструктор'} — ${d.phone || d.email || ''}`, 'success');
-      showBrowserNotif('Нова анкета інструктора!', `${d.name || 'Інструктор'} — ${d.phone || d.email || ''}`, { type: 'admin' });
-      window._adminReload?.();
-    });
-  }, () => {});
-}
-
-// --- Admin panel ---
-async function renderAdminScreen(user) {
-  window._cabUser = user;
-  const foot = document.getElementById('cab-foot');
-  foot.innerHTML = `<button class="btn-signout" onclick="window._signOut()"><i class="ti ti-logout"></i> Вийти</button>`;
-  foot.style.display = '';
-  const body = document.getElementById('cab-body');
-  body.style.padding = '0';
-  body.innerHTML = `
-    <div style="padding:16px 20px 0">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-        <div style="font-size:16px;font-weight:700;color:var(--text)"><i class="ti ti-shield-check" style="color:var(--green)"></i> Адмін-панель</div>
-        <button onclick="window._adminReload()" title="Оновити" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:18px;padding:4px"><i class="ti ti-refresh"></i></button>
-      </div>
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">${esc(user.email)}</div>
-    </div>
-    <div class="instr-tab-bar">
-      <button class="instr-tab-btn active" id="adm-tab-btn-instr" onclick="window._adminTab('instr')"><i class="ti ti-steering-wheel"></i> Інструктори</button>
-      <button class="instr-tab-btn" id="adm-tab-btn-users" onclick="window._adminTab('users')"><i class="ti ti-users"></i> Учні</button>
-      <button class="instr-tab-btn" id="adm-tab-btn-bookings" onclick="window._adminTab('bookings')"><i class="ti ti-calendar-event"></i> Записи</button>
-    </div>
-    <div style="padding:16px 20px">
-      <div id="adm-panel-instr"></div>
-      <div id="adm-panel-users" style="display:none"></div>
-      <div id="adm-panel-bookings" style="display:none"></div>
-    </div>`;
-
-  window._adminTab = (tab) => {
-    ['instr','users','bookings'].forEach(t => {
-      document.getElementById('adm-panel-'+t).style.display = t===tab ? '' : 'none';
-      document.getElementById('adm-tab-btn-'+t).classList.toggle('active', t===tab);
-    });
-  };
-
-  window._adminReload = () => loadAdminData();
-  await loadAdminData();
-  listenNewInstructorApps();
-
-  async function loadAdminData() {
-    const instrEl    = document.getElementById('adm-panel-instr');
-    const usersEl     = document.getElementById('adm-panel-users');
-    const bookingsEl  = document.getElementById('adm-panel-bookings');
-    if (!instrEl) return;
-    instrEl.innerHTML = usersEl.innerHTML = bookingsEl.innerHTML = '<div class="cab-empty"><i class="ti ti-loader"></i></div>';
-    try {
-      const snap = await getDocs(query(collection(db, 'instructors'), orderBy('createdAt', 'desc')));
-      const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const pending  = all.filter(i => i.status === 'pending');
-      const approved = all.filter(i => i.status === 'approved');
-      const rejected = all.filter(i => i.status === 'rejected');
-
-      instrEl.innerHTML = [
-        renderAdminGroup('На розгляді', pending,  'pending'),
-        renderAdminGroup('Активні',      approved, 'approved'),
-        renderAdminGroup('Відхилені',    rejected, 'rejected'),
-      ].join('') || '<div class="cab-empty">Даних немає</div>';
-
-      // Load users — без orderBy('createdAt'), бо Firestore виключає документи без цього поля
-      // (наприклад учнів, що зайшли через Google і ще не мали createdAt) — сортуємо на клієнті
-      const usersSnap = await getDocs(collection(db, 'users'));
-      const users = usersSnap.docs.map(d => ({ id: d.id, ...d.data() }))
-        .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-      usersEl.innerHTML = users.length ? `
-        <div class="admin-header">Учні <span style="font-size:11px;color:var(--text-muted)">${users.length}</span></div>
-        ${users.map(u => `
-          <div class="admin-card" id="adm-u-${u.id}">
-            <div class="admin-card-head" onclick="document.getElementById('adm-u-${u.id}').classList.toggle('open')">
-              ${u.photo ? `<img class="admin-card-avatar" src="${esc(u.photo)}" alt="">` : `<div class="admin-card-avatar">${esc(((u.name||u.email||'?')[0]).toUpperCase())}</div>`}
-              <div class="admin-card-main">
-                <div class="admin-card-name">${esc(u.name||'Без імені')}</div>
-                <div class="admin-card-sub">${esc(u.email||u.id)}</div>
-              </div>
-              <i class="ti ti-chevron-down admin-card-arrow"></i>
-            </div>
-            <div class="admin-card-body">
-              <div class="admin-field"><div class="admin-field-label">Email</div><div class="admin-field-val">${esc(u.email||'—')}</div></div>
-              <div class="admin-field"><div class="admin-field-label">Телефон</div><div class="admin-field-val">${esc(u.phone||'—')}</div></div>
-              <div class="admin-field"><div class="admin-field-label">UID</div><div class="admin-field-val" style="font-size:10px;color:var(--text-hint);word-break:break-all">${esc(u.id)}</div></div>
-              <div class="admin-actions"><button class="admin-btn delete" onclick="window._adminDeleteUser('${u.id}','${esc((u.name||u.email||'').replace(/'/g,''))}')"><i class="ti ti-trash"></i> Видалити учня</button></div>
-            </div>
-          </div>`).join('')}` : '<div class="cab-empty">Учнів ще немає</div>';
-
-      // Load bookings
-      const bkSnap = await getDocs(query(collection(db, 'bookings'), orderBy('createdAt', 'desc')));
-      const bookings = bkSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      bookingsEl.innerHTML = renderAdminBookings(bookings);
-    } catch(e) {
-      const msg = `<div class="cab-empty" style="color:#cc3333">Помилка: ${esc(e.message||e)}</div>`;
-      if (instrEl && !instrEl.children.length) instrEl.innerHTML = msg;
-      if (usersEl && !usersEl.children.length) usersEl.innerHTML = msg;
-      if (bookingsEl && !bookingsEl.children.length) bookingsEl.innerHTML = msg;
-    }
-  }
-
-  function renderAdminBookings(list) {
-    if (!list.length) return '<div class="cab-empty">Записів ще немає</div>';
-    const cnt = `<span style="font-size:11px;color:var(--text-muted)">${list.length}</span>`;
-    return `<div class="admin-header">Усі записи ${cnt}</div>` + list.map(b => {
-      const dateStr = bkDateStr(b);
-      const mpLbl = b.meetingPoint?.label || '';
-      return `<div class="admin-card" id="adm-bk-${b.id}">
-        <div class="admin-card-head" onclick="document.getElementById('adm-bk-${b.id}').classList.toggle('open')">
-          <div class="admin-card-avatar"><i class="ti ti-calendar-event"></i></div>
-          <div class="admin-card-main">
-            <div class="admin-card-name">${esc(b.clientName||b.clientEmail||'Учень')} → ${esc(b.instructorName||'Інструктор')}</div>
-            <div class="admin-card-sub">${esc(dateStr)} о ${esc(b.time||'')} · ${b.duration||60} хв</div>
-          </div>
-          ${bkStatusBadge(b.status)}
-          <i class="ti ti-chevron-down admin-card-arrow"></i>
-        </div>
-        <div class="admin-card-body">
-          <div class="admin-field"><div class="admin-field-label">Учень</div><div class="admin-field-val">${esc(b.clientName||'—')}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Тел. учня</div><div class="admin-field-val">${esc(b.clientPhone||'—')}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Email учня</div><div class="admin-field-val">${esc(b.clientEmail||'—')}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Інструктор</div><div class="admin-field-val">${esc(b.instructorName||'—')}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Тел. інструктора</div><div class="admin-field-val">${esc(b.instructorPhone||'—')}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Дата/час</div><div class="admin-field-val">${esc(dateStr)} о ${esc(b.time||'—')}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Тривалість</div><div class="admin-field-val">${b.duration||60} хв</div></div>
-          <div class="admin-field"><div class="admin-field-label">Місце зустрічі</div><div class="admin-field-val">${esc(mpLbl||'—')}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Статус</div><div class="admin-field-val">${bkStatusBadge(b.status)}</div></div>
-        </div>
-      </div>`;
-    }).join('');
-  }
-
-  function renderAdminGroup(label, list, status) {
-    if (!list.length) return '';
-    const cnt = status === 'pending' ? `<span class="admin-badge-cnt">${list.length}</span>` : `<span style="font-size:11px;color:var(--text-muted)">${list.length}</span>`;
-    return `
-      <div class="admin-header">${label} ${cnt}</div>
-      ${list.map(instr => renderAdminCard(instr)).join('')}`;
-  }
-
-  function renderAdminCard(instr) {
-    const id = instr.id;
-    const ini = (instr.name||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
-    const statusCls = instr.status === 'approved' ? 'approved' : instr.status === 'rejected' ? 'rejected' : 'pending';
-    const statusLabel = { pending:'На розгляді', approved:'Активний', rejected:'Відхилено' }[instr.status] || instr.status;
-    const days = Array.isArray(instr.days) ? instr.days.join(', ') : (instr.days||'—');
-    const tags = Array.isArray(instr.tags) ? instr.tags : [];
-    const tsc  = Array.isArray(instr.tscKnown) ? instr.tscKnown.join(', ') : (instr.tscKnown||'—');
-    const mps  = Array.isArray(instr.meetingPoints) ? instr.meetingPoints : [];
-    const TC   = window.TAG_COLORS || {};
-    const created = instr.createdAt?.toDate?.() ? instr.createdAt.toDate().toLocaleDateString('uk-UA') : '—';
-
-    const tagsHtml = tags.length
-      ? tags.map(t => { const c=TC[t]||{}; return `<span class="admin-tag" style="background:${c.bg||'#f0f5f0'};color:${c.tx||'#4a6a5a'};border-color:${c.bd||'#dde8dd'}">${esc(t)}</span>`; }).join('')
-      : '<span style="color:var(--text-hint);font-size:11px">—</span>';
-    const mpsHtml = mps.length
-      ? mps.map((pt,i) => `<div style="font-size:11px;color:var(--text-muted);margin-top:2px"><i class="ti ti-map-pin" style="font-size:10px"></i> ${esc(pt.label||pt.name||`Точка ${i+1}`)} <span style="color:var(--text-hint)">${pt.lat?.toFixed?.(5)||''}, ${pt.lng?.toFixed?.(5)||''}</span></div>`).join('')
-      : '<span style="color:var(--text-hint);font-size:11px">—</span>';
-
-    const photoHtml = (instr.photo || instr.carPhoto) ? `
-      <div class="admin-photos">
-        ${instr.photo    ? `<div><img class="admin-photo" src="${esc(instr.photo)}" alt=""><div class="admin-photo-label">Обличчя</div></div>` : ''}
-        ${instr.carPhoto ? `<div><img class="admin-photo" src="${esc(instr.carPhoto)}" alt=""><div class="admin-photo-label">Авто</div></div>` : ''}
-      </div>` : '';
-
-    const verifyBtn = instr.status === 'approved' ? `<button class="admin-btn ${instr.verified?'reject':'approve'}" onclick="window._adminToggleVerify('${id}',${!instr.verified})" style="flex:0;white-space:nowrap"><i class="ti ti-${instr.verified?'shield-off':'shield-check'}"></i> ${instr.verified?'Зняти верифікацію':'Верифікувати'}</button>` : '';
-    const deleteBtn = `<button class="admin-btn delete" onclick="window._adminDeleteInstr('${id}','${esc((instr.name||'').replace(/'/g,''))}')"><i class="ti ti-trash"></i> Видалити</button>`;
-    const actionsHtml = instr.status === 'pending' ? `
-      <div class="admin-actions">
-        <button class="admin-btn approve" onclick="window._adminApprove('${id}')"><i class="ti ti-check"></i> Підтвердити</button>
-        <button class="admin-btn reject"  onclick="window._adminReject('${id}')"><i class="ti ti-x"></i> Відхилити</button>
-      </div>
-      <div class="admin-actions" style="margin-top:4px">${deleteBtn}</div>` : instr.status === 'approved' ? `
-      <div class="admin-actions">
-        ${verifyBtn}
-        <button class="admin-btn reject" onclick="window._adminReject('${id}')"><i class="ti ti-ban"></i> Деактивувати</button>
-      </div>
-      <div class="admin-actions" style="margin-top:4px">${deleteBtn}</div>` : `
-      <div class="admin-actions">
-        <button class="admin-btn approve" onclick="window._adminApprove('${id}')"><i class="ti ti-rotate-clockwise"></i> Відновити</button>
-        ${deleteBtn}
-      </div>`;
-
-    return `
-      <div class="admin-card" id="adm-card-${id}">
-        <div class="admin-card-head" onclick="document.getElementById('adm-card-${id}').classList.toggle('open')">
-          ${instr.photo
-            ? `<img class="admin-card-avatar" src="${esc(instr.photo)}" alt="">`
-            : `<div class="admin-card-avatar">${esc(ini)}</div>`}
-          <div class="admin-card-main">
-            <div class="admin-card-name">${esc(instr.name||'—')}</div>
-            <div class="admin-card-sub">${esc(instr.phone||'')}${instr.phone&&instr.area?' · ':''}${esc(instr.area||'')}${instr.price?' · '+instr.price+' грн/год':''}</div>
-          </div>
-          <span class="admin-status ${statusCls}">${statusLabel}</span>
-          <i class="ti ti-chevron-down admin-card-arrow"></i>
-        </div>
-        <div class="admin-card-body">
-          ${photoHtml}
-          <div class="admin-field"><div class="admin-field-label">Email</div><div class="admin-field-val">${esc(instr.email||'—')}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Телефон</div><div class="admin-field-val">${esc(instr.phone||'—')}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Район</div><div class="admin-field-val">${esc(instr.area||'—')}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Авто</div><div class="admin-field-val">${esc(instr.car||'—')}</div></div>
-          <div class="admin-field"><div class="admin-field-label">КПП</div><div class="admin-field-val">${esc(instr.gearbox||'—')}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Ціна</div><div class="admin-field-val">${instr.price ? esc(instr.price)+' грн/год' : '—'}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Стаж</div><div class="admin-field-val">${instr.experience ? esc(instr.experience)+' р.' : '—'}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Атестат №</div><div class="admin-field-val">${esc(instr.certNumber||'—')}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Атестат дійсний до</div><div class="admin-field-val">${instr.certExpiry?esc(instr.certExpiry.split('-').reverse().join('.')):'—'}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Дні</div><div class="admin-field-val">${esc(days)}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Час</div><div class="admin-field-val">${esc(instr.time_from||'—')} — ${esc(instr.time_to||'—')}</div></div>
-          <div class="admin-field"><div class="admin-field-label">ТСЦ</div><div class="admin-field-val">${esc(tsc)}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Теги</div><div class="admin-field-val">${tagsHtml}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Про себе</div><div class="admin-field-val" style="white-space:pre-line">${esc(instr.about||'—')}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Точки</div><div class="admin-field-val">${mpsHtml}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Локація</div><div class="admin-field-val">${instr.lat?.toFixed?.(5)||'—'}, ${instr.lng?.toFixed?.(5)||'—'} <a href="https://maps.google.com/?q=${instr.lat},${instr.lng}" target="_blank" style="color:var(--blue);font-size:11px;margin-left:4px"><i class="ti ti-external-link"></i></a></div></div>
-          <div class="admin-field"><div class="admin-field-label">userId</div><div class="admin-field-val" style="font-size:10px;color:var(--text-hint);word-break:break-all">${esc(instr.userId||'—')}</div></div>
-          <div class="admin-field"><div class="admin-field-label">Дата</div><div class="admin-field-val">${esc(created)}</div></div>
-          ${actionsHtml}
-        </div>
-      </div>`;
-  }
-}
-
-window._adminApprove = async (id) => {
-  try {
-    await updateDoc(doc(db, 'instructors', id), { status: 'approved' });
-    window._adminReload?.();
-  } catch(e) { alert('Помилка: ' + (e.message||e)); }
-};
-window._adminReject = async (id) => {
-  try {
-    await updateDoc(doc(db, 'instructors', id), { status: 'rejected' });
-    window._adminReload?.();
-  } catch(e) { alert('Помилка: ' + (e.message||e)); }
-};
-window._adminToggleVerify = async (id, value) => {
-  try {
-    await updateDoc(doc(db, 'instructors', id), { verified: value });
-    window._adminReload?.();
-  } catch(e) { alert('Помилка: ' + (e.message||e)); }
-};
-window._adminDeleteInstr = async (id, name) => {
-  if (!confirm(`Видалити інструктора «${name}»? Дію не можна скасувати.`)) return;
-  try {
-    await deleteDoc(doc(db, 'instructors', id));
-    window._adminReload?.();
-  } catch(e) { alert('Помилка: ' + (e.message||e)); }
-};
-window._adminDeleteUser = async (id, name) => {
-  if (!confirm(`Видалити учня «${name}»? Дію не можна скасувати.`)) return;
-  try {
-    await deleteDoc(doc(db, 'users', id));
-    window._adminReload?.();
-  } catch(e) { alert('Помилка: ' + (e.message||e)); }
-};
-
 async function renderProfileScreen(user) {
-  if (user.email === ADMIN_EMAIL) { await renderAdminScreen(user); return; }
   document.getElementById('cab-body').style.padding = '20px';
   window._cabUser = user;
   document.getElementById('cab-foot').innerHTML = `<button id="btn-signout" class="btn-signout"><i class="ti ti-logout"></i> Вийти з акаунту</button>`;

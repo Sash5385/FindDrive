@@ -26,6 +26,21 @@ messaging.onBackgroundMessage(payload => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const data = event.notification.data || {};
+
+  // Адмінські пуші (нова анкета) ведуть на окрему admin.html, а не на головну
+  if (data.type === 'admin') {
+    const adminUrl = 'https://finddrive.in.ua/admin.html';
+    event.waitUntil(
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+        for (const client of list) {
+          if (client.url.startsWith(adminUrl)) return client.focus();
+        }
+        return self.clients.openWindow(adminUrl);
+      })
+    );
+    return;
+  }
+
   const appUrl = 'https://finddrive.in.ua/';
 
   // Build target URL with notification action encoded in hash
