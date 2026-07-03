@@ -144,6 +144,17 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 
 /* FAQ */
 .faq-wrap{max-width:820px;margin:0 auto}
+.faq-spoiler{background:var(--white);border:1px solid #000;border-radius:16px;overflow:hidden}
+.faq-spoiler-head{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 22px;background:var(--green-light);transition:background .15s}
+.faq-spoiler-head::-webkit-details-marker{display:none}
+.faq-spoiler-head:hover{background:var(--green-mid)}
+.faq-spoiler-title{display:flex;align-items:center;gap:9px;font-size:16px;font-weight:600;color:var(--green-dark)}
+.faq-spoiler-title i{font-size:20px;color:var(--green)}
+.faq-spoiler-hint{font-size:11.5px;color:var(--text-hint);font-weight:400;margin-left:2px}
+.faq-spoiler-chev{color:var(--green);font-size:22px;transition:transform .2s;flex-shrink:0}
+.faq-spoiler[open] .faq-spoiler-chev{transform:rotate(180deg)}
+.faq-spoiler-body{padding:20px 22px 6px;border-top:1px solid var(--border)}
+@media(max-width:640px){.faq-spoiler-title{font-size:14px}.faq-spoiler-hint{display:none}.faq-spoiler-body{padding:16px 14px 4px}}
 .faq-group{margin-bottom:26px}
 .faq-group-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--green-dark);margin-bottom:12px;letter-spacing:.2px}
 .faq-group-title i{font-size:18px;color:var(--green)}
@@ -817,7 +828,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
     <span class="logo-text">FindDrive</span>
-    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.286</span>
+    <span class="logo-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.287</span>
   </a>
   <div class="nav-links">
     <a class="nav-link" href="#how-it-works">Як це працює</a>
@@ -985,10 +996,13 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 </section>
 
 <section class="section" id="faq">
-  <div class="section-top">
-    <span class="section-label">Часті запитання</span>
-  </div>
   <div class="faq-wrap">
+    <details class="faq-spoiler">
+      <summary class="faq-spoiler-head">
+        <span class="faq-spoiler-title"><i class="ti ti-help-circle"></i> Часті запитання <span class="faq-spoiler-hint">— натисніть, щоб розгорнути</span></span>
+        <i class="ti ti-chevron-down faq-spoiler-chev"></i>
+      </summary>
+      <div class="faq-spoiler-body">
 
     <div class="faq-group">
       <div class="faq-group-title"><i class="ti ti-car"></i> Для учнів</div>
@@ -1087,6 +1101,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       </details>
     </div>
 
+      </div>
+    </details>
   </div>
 </section>
 
@@ -1114,7 +1130,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       <div class="footer-col-title">Інструкторам</div>
       <div class="footer-col-links">
         <a class="footer-link" href="#"><i class="ti ti-file-text"></i> Умови партнерства</a>
-        <a class="footer-link" href="#faq"><i class="ti ti-help-circle"></i> FAQ</a>
+        <a class="footer-link" href="#faq" onclick="var d=document.querySelector('.faq-spoiler');if(d)d.open=true"><i class="ti ti-help-circle"></i> FAQ</a>
       </div>
     </div>
     <div>
