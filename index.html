@@ -1162,7 +1162,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.302</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.303</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -4130,11 +4130,12 @@ function getDateAvail(instr, dateStr) {
     }
     return null;
   }
+  if (!instr.scheduleActive) return null;
   const dt = new Date(dateStr + 'T00:00:00');
   const dayName = DAY_UA_FULL[dt.getDay()];
   if (!(instr.days||[]).includes(dayName)) return null;
   if (!instr.time_from || !instr.time_to) return null;
-  return { from: instr.time_from, to: instr.time_to, location: '' };
+  return { from: instr.time_from, to: instr.time_to, breakFrom: instr.breakFrom||'', breakTo: instr.breakTo||'', location: '' };
 }
 
 function renderBookingDates(box, instrId, d) {
@@ -4287,6 +4288,16 @@ window._pickDate = async function(instrId, dateStr) {
     const dayBreak = avail.breakMin != null ? avail.breakMin : (d.breakMin || 0);
     const stepMin = lessonMin + dayBreak;
     slots = genSlots(avail.from, avail.to, lessonMin, stepMin);
+    if (avail.breakFrom && avail.breakTo) {
+      const [bfh,bfm] = avail.breakFrom.split(':').map(Number);
+      const [bth,btm] = avail.breakTo.split(':').map(Number);
+      const bStart = bfh*60+bfm, bEnd = bth*60+btm;
+      slots = slots.filter(s => {
+        const [sh,sm] = s.split(':').map(Number);
+        const sStart = sh*60+sm, sEnd = sStart + lessonMin;
+        return sEnd <= bStart || sStart >= bEnd;
+      });
+    }
   }
   if (!slots.length) {
     slotBox.innerHTML = '<p class="booking-hint">Слоти недоступні</p>';
@@ -4682,7 +4693,7 @@ async function loadInstrCombined(instr, container) {
         if (ov.openSlots?.length) return 'open';
         return 'weekly';
       }
-      return (instr.days||[]).includes(DAY_UA_FULL[new Date(ds+'T00:00:00').getDay()]) ? 'weekly' : 'default';
+      return (instr.scheduleActive && (instr.days||[]).includes(DAY_UA_FULL[new Date(ds+'T00:00:00').getDay()])) ? 'weekly' : 'default';
     }
 
     function buildCal() {
@@ -4895,10 +4906,57 @@ async function loadInstrCombined(instr, container) {
       <button class="instr-bk-stat" onclick="window._combStatClick('all')"><b>${allBk.length}</b><span>всього</span></button>
     </div>`;
 
+    const DAY_ORDER = ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
+    function buildScheduleCard() {
+      const days = instr.days || [];
+      return `<div class="cab-card">
+        <div class="cab-card-title"><i class="ti ti-calendar-time"></i> Графік роботи</div>
+        <label style="display:flex;align-items:center;gap:9px;margin-bottom:14px;cursor:pointer;padding:10px 12px;background:var(--green-light);border-radius:9px">
+          <input type="checkbox" id="sched-active-cb" ${instr.scheduleActive?'checked':''} style="width:17px;height:17px;accent-color:var(--green);cursor:pointer;flex-shrink:0">
+          <span style="font-size:12.5px;color:var(--text)"><b>Активувати графік</b><br><span style="color:var(--text-muted);font-size:11.5px">Увімкнено — слоти відкриваються автоматично за розкладом нижче. Вимкнено — відкривайте слоти вручну в календарі.</span></span>
+        </label>
+        <label class="cab-label">Робочі дні</label>
+        <div class="days-grid" style="margin-bottom:12px">
+          ${DAY_ORDER.map(d=>`<label class="day-opt"><input type="checkbox" class="sched-day-cb" value="${d}"${days.includes(d)?' checked':''}> ${d}</label>`).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <div><label class="cab-label">Початок роботи</label><input type="time" id="sched-from" class="cab-input" value="${esc(instr.time_from||'09:00')}"></div>
+          <div><label class="cab-label">Кінець роботи</label><input type="time" id="sched-to" class="cab-input" value="${esc(instr.time_to||'18:00')}"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+          <div><label class="cab-label">Обідня перерва з</label><input type="time" id="sched-break-from" class="cab-input" value="${esc(instr.breakFrom||'')}"></div>
+          <div><label class="cab-label">до</label><input type="time" id="sched-break-to" class="cab-input" value="${esc(instr.breakTo||'')}"></div>
+        </div>
+        <button class="btn-cab-primary" onclick="window._saveSchedule('${instr.id}')"><i class="ti ti-device-floppy"></i> Зберегти графік</button>
+      </div>`;
+    }
+    window._saveSchedule = async function(instrId) {
+      const days = [...document.querySelectorAll('.sched-day-cb:checked')].map(cb=>cb.value);
+      const time_from = document.getElementById('sched-from').value;
+      const time_to = document.getElementById('sched-to').value;
+      const breakFrom = document.getElementById('sched-break-from').value;
+      const breakTo = document.getElementById('sched-break-to').value;
+      const scheduleActive = document.getElementById('sched-active-cb').checked;
+      if (time_from && time_to && time_from >= time_to) {
+        showToast('Помилка', 'Час початку має бути раніше за кінець', 'error'); return;
+      }
+      if (breakFrom && breakTo && breakFrom >= breakTo) {
+        showToast('Помилка', 'Перерва: початок має бути раніше за кінець', 'error'); return;
+      }
+      const data = { days, time_from, time_to, breakFrom, breakTo, scheduleActive };
+      try {
+        await updateDoc(doc(db,'instructors',instrId), data);
+        Object.assign(instr, data);
+        if (window._instrProfiles?.[instrId]) Object.assign(window._instrProfiles[instrId], data);
+        showToast('Графік збережено', scheduleActive ? 'Слоти відкриваються автоматично' : 'Відкривайте слоти вручну в календарі', 'success');
+        renderAll();
+      } catch(e) { showToast('Помилка', 'Не вдалось зберегти графік', 'error'); }
+    };
+
     function renderAll() {
       const tab = _activeStatFilter;
       _activeStatFilter = null;
-      container.innerHTML = _statsHtml + `
+      container.innerHTML = buildScheduleCard() + _statsHtml + `
         <div class="av-legend">
           <div class="av-legend-item"><div class="av-legend-dot" style="background:var(--green-light);border:.5px solid var(--green)"></div>Відкрито</div>
           <div class="av-legend-item"><div class="av-legend-dot" style="background:#f0faf4;border:.5px solid #2a8a5a"></div>Щотижня</div>
