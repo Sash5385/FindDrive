@@ -176,7 +176,7 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 
 /* INSTRUCTOR CARDS SLIDER */
 .instr-slider-wrap{position:relative}
-.instr-grid{display:flex;flex-direction:row;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:none;-ms-overflow-style:none}
+.instr-grid{display:flex;flex-direction:row;align-items:flex-start;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:none;-ms-overflow-style:none}
 .instr-grid::-webkit-scrollbar{display:none}
 .instr-slider-btn{position:absolute;top:50%;transform:translateY(-50%);z-index:10;width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--white);color:var(--green);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 12px rgba(0,0,0,.1);transition:background .15s,color .15s;flex-shrink:0}
 .instr-slider-btn:hover{background:var(--green);color:#fff}
@@ -207,20 +207,20 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .card-blob{position:absolute;width:130px;height:100px;border-radius:50%;filter:blur(40px);opacity:.35;top:0;right:0;pointer-events:none;z-index:0}
 .badge-new{position:absolute;top:8px;left:8px;background:var(--green);color:#fff;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:600;letter-spacing:.3px;z-index:4;pointer-events:none}
 .card-name-row{padding:11px 40px 10px 14px;border-bottom:.5px solid var(--border)}
-.card-photo-wrap{position:relative;height:175px;background:var(--green-light)}
+.card-photo-wrap{position:relative;height:148px;background:var(--green-light)}
 .card-car-ph{width:100%;height:100%;object-fit:cover;display:block}
 .card-car-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:52px;opacity:.18;background:linear-gradient(135deg,#ddeef8,#c8daea)}
-.card-face-ov{position:absolute;bottom:-52px;left:14px;width:104px;height:104px;border-radius:50%;overflow:hidden;border:4px solid var(--white);box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:3}
+.card-face-ov{position:absolute;bottom:-44px;left:14px;width:88px;height:88px;border-radius:50%;overflow:hidden;border:4px solid var(--white);box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:3}
 .card-kpp{position:absolute;top:8px;right:8px;z-index:3;background:rgba(13,42,26,.65);color:#fff;border-radius:12px;padding:3px 9px;font-size:10px;font-weight:500;backdrop-filter:blur(4px)}
-.card-body{padding:58px 14px 14px}
+.card-body{padding:50px 14px 12px}
 .badge-today{display:inline-flex;align-items:center;gap:3px;background:var(--green-light);color:var(--green);border:.5px solid #b8d8c8;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:600;letter-spacing:.3px;margin-bottom:6px}
 .badge-verified{display:inline-flex;align-items:center;gap:3px;background:#e6f1fb;color:#185fa5;border:.5px solid #a4c4e4;border-radius:6px;padding:2px 7px;font-size:10px;font-weight:600;letter-spacing:.3px}
 .instr-top{display:flex;align-items:center;gap:12px;margin-bottom:14px;position:relative;z-index:1}
 .avatar{width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;flex-shrink:0;border:2px solid rgba(255,255,255,.7)}
 .instr-name{font-size:14px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .instr-meta{font-size:12px;color:var(--text-hint);margin-top:2px;display:flex;align-items:center;gap:4px}
-.badge-dist{display:inline-flex;align-items:center;gap:5px;background:var(--green-light);border-radius:20px;padding:4px 10px;font-size:11px;color:#1a6a3a;margin-bottom:8px}
-.instr-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.badge-dist{display:inline-flex;align-items:center;gap:5px;background:var(--green-light);border-radius:20px;padding:4px 10px;font-size:11px;color:#1a6a3a;margin-bottom:6px}
+.instr-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
 .tag{font-size:11px;padding:3px 10px;border-radius:20px;border:.5px solid transparent}
 @keyframes userPulse{0%{box-shadow:0 0 0 0 rgba(24,95,165,.45)}70%{box-shadow:0 0 0 10px rgba(24,95,165,0)}100%{box-shadow:0 0 0 0 rgba(24,95,165,0)}}
 .user-location-dot{width:16px;height:16px;border-radius:50%;background:#185fa5;border:2.5px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);animation:userPulse 2s infinite}
@@ -235,7 +235,7 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .tag-sel-btn{padding:5px 12px;border-radius:20px;border:.5px solid transparent;font-size:11px;cursor:pointer;font-family:inherit;transition:border-width .1s,box-shadow .15s,opacity .15s}
 .tag-sel-btn.active{border-width:1.5px;font-weight:500;box-shadow:0 1px 5px rgba(0,0,0,.1)}
 .tag-sel-btn:hover:not(.active){opacity:.75}
-.instr-footer{display:flex;align-items:center;justify-content:space-between;border-top:.5px solid #eef3ee;padding-top:12px}
+.instr-footer{display:flex;align-items:center;justify-content:space-between;border-top:.5px solid #eef3ee;padding-top:10px}
 .price{font-size:15px;font-weight:500;color:var(--text)}
 .price span{font-size:12px;color:var(--text-hint);font-weight:400}
 .btn-book{background:var(--green);color:#fff;border:none;border-radius:9px;padding:7px 16px;font-size:12px;font-weight:500;cursor:pointer;transition:background .2s;font-family:inherit}
@@ -1175,7 +1175,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.313</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.314</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
