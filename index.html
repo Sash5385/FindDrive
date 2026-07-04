@@ -1175,7 +1175,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.311</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.312</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -5444,8 +5444,8 @@ window._focusInstrMarker = function(id, evt) {
   if (evt) evt.stopPropagation();
   const ref = window._instrMarkers && window._instrMarkers[id] && window._instrMarkers[id][0];
   if (!ref || !_mainMap) { scrollToMap(); return; }
-  _mainMap.setView([ref.spot.lat, ref.spot.lng], 15);
-  _openInstrPopup(ref.spot, ref.entry);
+  _mainMap.setView([ref.entry.lat, ref.entry.lng], 16);
+  _openInstrPopupAt(ref.entry);
   scrollToMap();
 };
 
@@ -5573,6 +5573,7 @@ function initLeafletMap() {
   }).addTo(_mainMap);
   window._mapReady = true;
   window._onMapReady?.();
+  _mainMap.on('zoomend', _renderClusters);
   _mainMap.on('click', function(e) {
     if (!_pickingLocation) return;
     _pickingLocation = false;
@@ -5585,14 +5586,12 @@ function initLeafletMap() {
   });
 }
 
-// Групування шпильок: інструктори в одній ~35м-комірці показуються ОДНІЄЮ шпилькою.
-// Якщо там кілька — тап відкриває вибір круглих фото інструкторів; тап по фото — картку інструктора.
-const _markerSpots = {};
+// Групування шпильок за ПІКСЕЛЬНОЮ відстанню на поточному зумі: шпильки, що візуально
+// накладаються (ближче ~36px), зливаються в одну шпильку-лічильник. Тап — вибір круглих
+// фото інструкторів; тап по фото — картка. При зумі кластери перераховуються.
+let _allEntries = [];
+let _clusterMarkers = [];
 let _mapActiveTags = [];
-function _spotKey(lat, lng) {
-  // ~0.0003° ≈ 33м по широті — групує лише реально сусідні точки зустрічі
-  return `${Math.round((+lat) / 0.0003)},${Math.round((+lng) / 0.0003)}`;
-}
 function _pinIcon(color) {
   return L.divIcon({
     className: '',
@@ -5644,74 +5643,91 @@ function _highlightCard(id) {
   document.querySelectorAll('.instr-card.map-highlight').forEach(c => c.classList.remove('map-highlight'));
   document.querySelector(`.instr-card[data-instr-id="${id}"]`)?.classList.add('map-highlight');
 }
-function _openInstrPopup(spot, entry) {
+function _openInstrPopupAt(entry) {
   L.popup({ closeButton: false, maxWidth: 320, autoPanPadding: [24, 24] })
-    .setLatLng([spot.lat, spot.lng])
+    .setLatLng([entry.lat, entry.lng])
     .setContent(_instrPopupHtml(entry.inst, entry.id))
     .openOn(_mainMap);
   _highlightCard(entry.id);
 }
-function _openSpotChooser(spot, elig) {
-  const avatars = elig.map((e, i) => {
+function _openChooser(latlng, entries) {
+  window._chooserEntries = entries;
+  const avatars = entries.map((e, i) => {
     const nm = (e.inst.name || 'Інструктор').split(' ')[0];
     const ini = (e.inst.name||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
     const av = e.inst.photo
       ? `<img src="${_esc(e.inst.photo)}" style="width:54px;height:54px;border-radius:50%;object-fit:cover;border:2px solid ${e.color};box-shadow:0 1px 5px rgba(0,0,0,.18)">`
       : `<div style="width:54px;height:54px;border-radius:50%;background:${e.color};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;border:2px solid ${e.color};box-shadow:0 1px 5px rgba(0,0,0,.18)">${_esc(ini)}</div>`;
-    return `<button onclick="window._spotPick('${spot.key}',${i})" style="background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;width:66px;padding:0;font-family:inherit">
+    return `<button onclick="window._chooserPick(${i})" style="background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;width:66px;padding:0;font-family:inherit">
       ${av}
       <span style="font-size:11px;color:var(--text);line-height:1.15;text-align:center;max-width:66px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_esc(nm)}</span>
     </button>`;
   }).join('');
   const html = `<div style="font-family:Inter,sans-serif;padding:12px 14px 14px">
-    <div style="font-size:12px;font-weight:600;color:var(--text);text-align:center;margin-bottom:11px">${elig.length} інструктори тут — оберіть</div>
+    <div style="font-size:12px;font-weight:600;color:var(--text);text-align:center;margin-bottom:11px">${entries.length} інструктори тут — оберіть</div>
     <div style="display:flex;flex-wrap:wrap;gap:13px;justify-content:center;max-width:246px">${avatars}</div>
   </div>`;
-  spot._elig = elig;
   L.popup({ closeButton: true, maxWidth: 280, autoPanPadding: [24, 24] })
-    .setLatLng([spot.lat, spot.lng])
+    .setLatLng(latlng)
     .setContent(html)
     .openOn(_mainMap);
 }
-window._spotPick = function(key, idx) {
-  const spot = _markerSpots[key];
-  const entry = spot && (spot._elig || spot.entries.filter(_eligible))[idx];
-  if (spot && entry) _openInstrPopup(spot, entry);
+window._chooserPick = function(i) {
+  const e = window._chooserEntries && window._chooserEntries[i];
+  if (e) _openInstrPopupAt(e);
 };
-function _renderSpot(spot) {
-  if (!_mainMap || !spot) return;
-  const elig = spot.entries.filter(_eligible);
-  spot._elig = elig;
-  if (!elig.length) { if (spot.marker && _mainMap.hasLayer(spot.marker)) _mainMap.removeLayer(spot.marker); return; }
-  if (!spot.marker) {
-    spot.marker = L.marker([spot.lat, spot.lng]);
-    spot.marker.on('click', () => {
-      const cur = spot.entries.filter(_eligible);
-      spot._elig = cur;
-      if (cur.length === 1) _openInstrPopup(spot, cur[0]); else _openSpotChooser(spot, cur);
+
+// Перебудова кластерів: групуємо eligible-шпильки за піксельною відстанню на поточному зумі
+function _renderClusters() {
+  if (!_mainMap) return;
+  _clusterMarkers.forEach(m => _mainMap.removeLayer(m));
+  _clusterMarkers = [];
+  const elig = _allEntries.filter(_eligible);
+  if (!elig.length) return;
+  const pts = elig.map(e => _mainMap.latLngToLayerPoint([e.lat, e.lng]));
+  const T = 36, T2 = T * T;
+  const used = new Array(elig.length).fill(false);
+  for (let i = 0; i < elig.length; i++) {
+    if (used[i]) continue;
+    used[i] = true;
+    const members = [elig[i]];
+    for (let j = i + 1; j < elig.length; j++) {
+      if (used[j]) continue;
+      const dx = pts[j].x - pts[i].x, dy = pts[j].y - pts[i].y;
+      if (dx * dx + dy * dy <= T2) { used[j] = true; members.push(elig[j]); }
+    }
+    const rep = members[0];
+    const marker = L.marker([rep.lat, rep.lng], {
+      icon: members.length === 1 ? _pinIcon(rep.color) : _groupIcon(members.length),
     });
+    marker.on('click', () => {
+      if (members.length === 1) _openInstrPopupAt(members[0]);
+      else _openChooser([rep.lat, rep.lng], members);
+    });
+    marker.addTo(_mainMap);
+    _clusterMarkers.push(marker);
   }
-  if (!_mainMap.hasLayer(spot.marker)) spot.marker.addTo(_mainMap);
-  spot.marker.setIcon(elig.length === 1 ? _pinIcon(elig[0].color) : _groupIcon(elig.length));
 }
-function _renderAllSpots() { Object.values(_markerSpots).forEach(_renderSpot); }
+let _clusterRenderQueued = false;
+function _queueClusterRender() {
+  if (_clusterRenderQueued) return;
+  _clusterRenderQueued = true;
+  requestAnimationFrame(() => { _clusterRenderQueued = false; _renderClusters(); });
+}
 
 window._addInstrMarker = function(inst, id) {
   if (!_mainMap) return;
-  const color = inst.color || '#1a7a4a';
-  const key = _spotKey(inst.lat, inst.lng);
-  const spot = _markerSpots[key] || (_markerSpots[key] = { key, lat: inst.lat, lng: inst.lng, entries: [], marker: null });
-  const entry = { inst, id, color, tags: inst.tags || [] };
-  spot.entries.push(entry);
+  const entry = { inst, id, lat: inst.lat, lng: inst.lng, color: inst.color || '#1a7a4a', tags: inst.tags || [] };
+  _allEntries.push(entry);
   window._instrMarkers = window._instrMarkers || {};
-  (window._instrMarkers[id] = window._instrMarkers[id] || []).push({ spot, entry, tags: entry.tags });
-  _renderSpot(spot);
+  (window._instrMarkers[id] = window._instrMarkers[id] || []).push({ entry, tags: entry.tags });
+  _queueClusterRender();
 };
 
 window._filterMapMarkers = function(active) {
   if (!_mainMap) return;
   _mapActiveTags = active || [];
-  _renderAllSpots();
+  _renderClusters();
 };
 
 window.initInstrMap = function() {
