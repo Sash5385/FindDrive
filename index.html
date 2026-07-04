@@ -22,6 +22,45 @@
 <meta name="twitter:title" content="FindDrive — Знайди інструктора з водіння поряд">
 <meta name="twitter:description" content="Маркетплейс інструкторів з водіння по всій Україні. Обирай за містом, ціною та рейтингом.">
 <meta name="twitter:image" content="https://finddrive.in.ua/og-image.png">
+<!-- Google Search Console: вставте сюди тег верифікації з search.google.com/search-console
+     (Add property → HTML tag). Приклад:
+     <meta name="google-site-verification" content="ВАШ_КОД"> -->
+<!-- Structured data (Schema.org) для кращого вигляду в пошуку Google -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://finddrive.in.ua/#organization",
+      "name": "FindDrive",
+      "url": "https://finddrive.in.ua/",
+      "logo": "https://finddrive.in.ua/logo192.png",
+      "image": "https://finddrive.in.ua/og-image.png",
+      "description": "Маркетплейс інструкторів з водіння по всій Україні. Пошук інструктора за геолокацією, порівняння за ціною та рейтингом, онлайн-запис.",
+      "areaServed": { "@type": "Country", "name": "Україна" },
+      "email": "Sash5385@gmail.com"
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://finddrive.in.ua/#website",
+      "url": "https://finddrive.in.ua/",
+      "name": "FindDrive",
+      "inLanguage": "uk-UA",
+      "publisher": { "@id": "https://finddrive.in.ua/#organization" },
+      "description": "Знайди інструктора з водіння поряд — за містом, ціною та рейтингом."
+    },
+    {
+      "@type": "Service",
+      "serviceType": "Пошук інструкторів з водіння",
+      "provider": { "@id": "https://finddrive.in.ua/#organization" },
+      "areaServed": { "@type": "Country", "name": "Україна" },
+      "audience": { "@type": "Audience", "audienceType": "Учні автошкіл та кандидати у водії" },
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "UAH", "description": "Пошук і запис до інструктора — безкоштовно для учнів" }
+    }
+  ]
+}
+</script>
 <!-- Google Analytics GA4 -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-1QDLW9TCGZ"></script>
 <script>
@@ -1175,7 +1214,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.315</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.316</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
