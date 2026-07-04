@@ -1175,7 +1175,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.310</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.311</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -5442,16 +5442,11 @@ function scrollToMap() {
 
 window._focusInstrMarker = function(id, evt) {
   if (evt) evt.stopPropagation();
-  const list = window._instrMarkers && window._instrMarkers[id];
-  const entry = list && list[0];
-  if (!entry || !_mainMap) { scrollToMap(); return; }
-  const ll = entry.marker.getLatLng();
-  _mainMap.setView([ll.lat, ll.lng], 15);
-  entry.marker.openPopup();
+  const ref = window._instrMarkers && window._instrMarkers[id] && window._instrMarkers[id][0];
+  if (!ref || !_mainMap) { scrollToMap(); return; }
+  _mainMap.setView([ref.spot.lat, ref.spot.lng], 15);
+  _openInstrPopup(ref.spot, ref.entry);
   scrollToMap();
-  document.querySelectorAll('.instr-card.map-highlight').forEach(c => c.classList.remove('map-highlight'));
-  const card = document.querySelector(`.instr-card[data-instr-id="${id}"]`);
-  if (card) card.classList.add('map-highlight');
 };
 
 function focusMap(latlng) {
@@ -5578,7 +5573,6 @@ function initLeafletMap() {
   }).addTo(_mainMap);
   window._mapReady = true;
   window._onMapReady?.();
-  _mainMap.on('zoomend', _relayoutAllSpots);
   _mainMap.on('click', function(e) {
     if (!_pickingLocation) return;
     _pickingLocation = false;
@@ -5591,40 +5585,32 @@ function initLeafletMap() {
   });
 }
 
-// Розведення накладених шпильок: пін-и в одній ~11м-комірці розкладаються по колу
-// в піксельному просторі (перераховується на кожному зумі), щоб жоден не перекривав інший.
+// Групування шпильок: інструктори в одній ~35м-комірці показуються ОДНІЄЮ шпилькою.
+// Якщо там кілька — тап відкриває вибір круглих фото інструкторів; тап по фото — картку інструктора.
 const _markerSpots = {};
-function _spotKey(lat, lng) { return `${(+lat).toFixed(4)},${(+lng).toFixed(4)}`; }
-function _relayoutSpot(spot) {
-  if (!_mainMap || !spot) return;
-  const shown = spot.entries.filter(m => _mainMap.hasLayer(m));
-  const n = shown.length;
-  if (n <= 1) { if (n === 1) shown[0].setLatLng([spot.lat, spot.lng]); return; }
-  const z = _mainMap.getZoom();
-  const base = _mainMap.project([spot.lat, spot.lng], z);
-  const rPx = 15 + n * 3;
-  shown.forEach((m, i) => {
-    const ang = (2 * Math.PI * i) / n - Math.PI / 2;
-    const p = L.point(base.x + rPx * Math.cos(ang), base.y + rPx * Math.sin(ang));
-    m.setLatLng(_mainMap.unproject(p, z));
-  });
+let _mapActiveTags = [];
+function _spotKey(lat, lng) {
+  // ~0.0003° ≈ 33м по широті — групує лише реально сусідні точки зустрічі
+  return `${Math.round((+lat) / 0.0003)},${Math.round((+lng) / 0.0003)}`;
 }
-function _relayoutAllSpots() { Object.values(_markerSpots).forEach(_relayoutSpot); }
-
-window._addInstrMarker = function(inst, id) {
-  if (!_mainMap) return;
-  const color = inst.color || '#1a7a4a';
-  const mpParam = inst.mpIdx !== undefined ? inst.mpIdx : 'null';
-  const pinIcon = L.divIcon({
+function _pinIcon(color) {
+  return L.divIcon({
     className: '',
     html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 50" width="26" height="50"><path d="M11.5 24 L13 50 L14.5 24" fill="${color}" stroke="${color}" stroke-width="1" stroke-linejoin="round"/><circle cx="13" cy="13" r="12" fill="${color}" stroke="white" stroke-width="2.5"/><circle cx="10" cy="10" r="4.5" fill="white" opacity="0.3"/></svg>`,
-    iconSize: [26, 50],
-    iconAnchor: [13, 50],
-    popupAnchor: [0, -48],
+    iconSize: [26, 50], iconAnchor: [13, 50], popupAnchor: [0, -48],
   });
-  const marker = L.marker([inst.lat, inst.lng], {icon: pinIcon}).addTo(_mainMap);
-  const _popInitials = (inst.name||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
-  marker.bindPopup(`<div style="font-family:Inter,sans-serif;width:300px;overflow:hidden">
+}
+function _groupIcon(count) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="width:38px;height:38px;border-radius:50%;background:#1a7a4a;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;color:#fff;font-family:Inter,sans-serif;font-weight:700;font-size:15px">${count}</div>`,
+    iconSize: [38, 38], iconAnchor: [19, 19], popupAnchor: [0, -18],
+  });
+}
+function _instrPopupHtml(inst, id) {
+  const mpParam = inst.mpIdx !== undefined ? inst.mpIdx : 'null';
+  const ini = (inst.name||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+  return `<div style="font-family:Inter,sans-serif;width:300px;overflow:hidden">
     <div style="background:#1a7a4a;padding:10px 14px;overflow:hidden;position:relative">
       <button onclick="_mainMap.closePopup()" aria-label="Закрити" style="position:absolute;top:7px;right:7px;width:22px;height:22px;border:none;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;font-size:13px;line-height:1"><i class="ti ti-x"></i></button>
       <div style="font-weight:600;color:#fff;font-size:13px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:26px">${_esc(inst.name)}</div>
@@ -5638,7 +5624,7 @@ window._addInstrMarker = function(inst, id) {
       <div style="position:absolute;bottom:-27px;left:10px;width:56px;height:56px;border-radius:50%;overflow:hidden;border:3px solid #1a7a4a;box-shadow:0 2px 8px rgba(0,0,0,.22);z-index:2">
         ${inst.photo
           ? `<img src="${inst.photo}" style="width:100%;height:100%;object-fit:cover">`
-          : `<div style="width:100%;height:100%;background:#0d4a2a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">${_esc(_popInitials)}</div>`}
+          : `<div style="width:100%;height:100%;background:#0d4a2a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">${_esc(ini)}</div>`}
       </div>
     </div>
     <div style="background:#1a7a4a;padding:33px 10px 6px 76px">
@@ -5649,34 +5635,83 @@ window._addInstrMarker = function(inst, id) {
       <button onclick="window.openChat('${_esc(id||'')}')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:3px;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:7px;padding:7px 2px;font-size:11.5px;cursor:pointer;font-family:inherit;font-weight:500;white-space:nowrap"><i class="ti ti-message-circle" style="font-size:13px"></i> Чат</button>
       ${inst.phone ? `<a href="tel:${_esc(inst.phone)}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:3px;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:7px;padding:7px 2px;font-size:11.5px;cursor:pointer;font-family:inherit;font-weight:500;text-decoration:none;white-space:nowrap"><i class="ti ti-phone-call" style="font-size:13px"></i> Подзвонити</a>` : ''}
     </div>
-  </div>`);
-  marker.on('click', () => marker.openPopup());
-  marker.on('popupopen', () => {
-    document.querySelectorAll('.instr-card.map-highlight').forEach(c => c.classList.remove('map-highlight'));
-    document.querySelector(`.instr-card[data-instr-id="${id}"]`)?.classList.add('map-highlight');
-  });
-  marker.on('popupclose', () => {
-    document.querySelectorAll('.instr-card.map-highlight').forEach(c => c.classList.remove('map-highlight'));
-  });
-  window._instrMarkers = window._instrMarkers || {};
-  (window._instrMarkers[id] = window._instrMarkers[id] || []).push({marker, tags: inst.tags||[]});
+  </div>`;
+}
+function _eligible(entry) {
+  return !_mapActiveTags.length || _mapActiveTags.some(t => (entry.tags||[]).includes(t));
+}
+function _highlightCard(id) {
+  document.querySelectorAll('.instr-card.map-highlight').forEach(c => c.classList.remove('map-highlight'));
+  document.querySelector(`.instr-card[data-instr-id="${id}"]`)?.classList.add('map-highlight');
+}
+function _openInstrPopup(spot, entry) {
+  L.popup({ closeButton: false, maxWidth: 320, autoPanPadding: [24, 24] })
+    .setLatLng([spot.lat, spot.lng])
+    .setContent(_instrPopupHtml(entry.inst, entry.id))
+    .openOn(_mainMap);
+  _highlightCard(entry.id);
+}
+function _openSpotChooser(spot, elig) {
+  const avatars = elig.map((e, i) => {
+    const nm = (e.inst.name || 'Інструктор').split(' ')[0];
+    const ini = (e.inst.name||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+    const av = e.inst.photo
+      ? `<img src="${_esc(e.inst.photo)}" style="width:54px;height:54px;border-radius:50%;object-fit:cover;border:2px solid ${e.color};box-shadow:0 1px 5px rgba(0,0,0,.18)">`
+      : `<div style="width:54px;height:54px;border-radius:50%;background:${e.color};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;border:2px solid ${e.color};box-shadow:0 1px 5px rgba(0,0,0,.18)">${_esc(ini)}</div>`;
+    return `<button onclick="window._spotPick('${spot.key}',${i})" style="background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;width:66px;padding:0;font-family:inherit">
+      ${av}
+      <span style="font-size:11px;color:var(--text);line-height:1.15;text-align:center;max-width:66px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_esc(nm)}</span>
+    </button>`;
+  }).join('');
+  const html = `<div style="font-family:Inter,sans-serif;padding:12px 14px 14px">
+    <div style="font-size:12px;font-weight:600;color:var(--text);text-align:center;margin-bottom:11px">${elig.length} інструктори тут — оберіть</div>
+    <div style="display:flex;flex-wrap:wrap;gap:13px;justify-content:center;max-width:246px">${avatars}</div>
+  </div>`;
+  spot._elig = elig;
+  L.popup({ closeButton: true, maxWidth: 280, autoPanPadding: [24, 24] })
+    .setLatLng([spot.lat, spot.lng])
+    .setContent(html)
+    .openOn(_mainMap);
+}
+window._spotPick = function(key, idx) {
+  const spot = _markerSpots[key];
+  const entry = spot && (spot._elig || spot.entries.filter(_eligible))[idx];
+  if (spot && entry) _openInstrPopup(spot, entry);
+};
+function _renderSpot(spot) {
+  if (!_mainMap || !spot) return;
+  const elig = spot.entries.filter(_eligible);
+  spot._elig = elig;
+  if (!elig.length) { if (spot.marker && _mainMap.hasLayer(spot.marker)) _mainMap.removeLayer(spot.marker); return; }
+  if (!spot.marker) {
+    spot.marker = L.marker([spot.lat, spot.lng]);
+    spot.marker.on('click', () => {
+      const cur = spot.entries.filter(_eligible);
+      spot._elig = cur;
+      if (cur.length === 1) _openInstrPopup(spot, cur[0]); else _openSpotChooser(spot, cur);
+    });
+  }
+  if (!_mainMap.hasLayer(spot.marker)) spot.marker.addTo(_mainMap);
+  spot.marker.setIcon(elig.length === 1 ? _pinIcon(elig[0].color) : _groupIcon(elig.length));
+}
+function _renderAllSpots() { Object.values(_markerSpots).forEach(_renderSpot); }
+
+window._addInstrMarker = function(inst, id) {
+  if (!_mainMap) return;
+  const color = inst.color || '#1a7a4a';
   const key = _spotKey(inst.lat, inst.lng);
-  const spot = _markerSpots[key] || (_markerSpots[key] = { lat: inst.lat, lng: inst.lng, entries: [] });
-  spot.entries.push(marker);
-  marker._spot = spot;
-  _relayoutSpot(spot);
+  const spot = _markerSpots[key] || (_markerSpots[key] = { key, lat: inst.lat, lng: inst.lng, entries: [], marker: null });
+  const entry = { inst, id, color, tags: inst.tags || [] };
+  spot.entries.push(entry);
+  window._instrMarkers = window._instrMarkers || {};
+  (window._instrMarkers[id] = window._instrMarkers[id] || []).push({ spot, entry, tags: entry.tags });
+  _renderSpot(spot);
 };
 
 window._filterMapMarkers = function(active) {
-  if (!window._instrMarkers || !_mainMap) return;
-  Object.values(window._instrMarkers).forEach(list => {
-    list.forEach(({marker, tags}) => {
-      const show = !active.length || active.some(t => tags.includes(t));
-      if (show) { if (!_mainMap.hasLayer(marker)) marker.addTo(_mainMap); }
-      else _mainMap.removeLayer(marker);
-    });
-  });
-  _relayoutAllSpots();
+  if (!_mainMap) return;
+  _mapActiveTags = active || [];
+  _renderAllSpots();
 };
 
 window.initInstrMap = function() {
