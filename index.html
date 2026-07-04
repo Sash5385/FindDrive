@@ -331,6 +331,9 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .section-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
 .section-label{font-size:11px;letter-spacing:2.5px;color:var(--text-hint);text-transform:uppercase}
 .section-link{font-size:13px;color:var(--green);display:flex;align-items:center;gap:4px;text-decoration:none}
+.city-links{display:flex;flex-wrap:wrap;gap:10px}
+.city-links a{background:var(--white);border:.5px solid var(--border);border-radius:20px;padding:8px 16px;font-size:13.5px;color:var(--green-dark);text-decoration:none;transition:background .15s,border-color .15s}
+.city-links a:hover{background:var(--green-light);border-color:#b8ddc8;color:var(--green)}
 
 /* FAQ */
 .faq-wrap{max-width:820px;margin:0 auto}
@@ -1321,6 +1324,20 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   </div>
 </section>
 
+<section class="section" id="cities">
+  <div class="section-top">
+    <span class="section-label">Інструктори з водіння по містах</span>
+  </div>
+  <div class="city-links">
+    <a href="/instruktor-kyiv/">Інструктор з водіння у Києві</a>
+    <a href="/instruktor-lviv/">Інструктор з водіння у Львові</a>
+    <a href="/instruktor-odesa/">Інструктор з водіння в Одесі</a>
+    <a href="/instruktor-dnipro/">Інструктор з водіння у Дніпрі</a>
+    <a href="/instruktor-kharkiv/">Інструктор з водіння у Харкові</a>
+    <a href="/instruktor-zaporizhzhia/">Інструктор з водіння у Запоріжжі</a>
+  </div>
+</section>
+
 
 
 
@@ -1359,7 +1376,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.317</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.318</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -6190,6 +6207,18 @@ window._startPickLocation = function() {
 })();
 
 initLeafletMap();
+
+// Дип-лінк із гео-лендінгів: ?city=Київ → одразу застосувати фільтр міста і показати карту
+(function _initCityFromUrl(){
+  const c = new URLSearchParams(location.search).get('city');
+  if (!c) return;
+  const apply = () => {
+    const sel = document.getElementById('city-select');
+    if (sel && [...sel.options].some(o => o.value === c)) { sel.value = c; window._selectCity(c); }
+  };
+  if (window._mapReady) apply();
+  else { const t = setInterval(() => { if (window._mapReady) { clearInterval(t); apply(); } }, 150); setTimeout(() => clearInterval(t), 5000); }
+})();
 
 document.getElementById("version-badge").addEventListener("click", function() {
   this.classList.add("reloading");
