@@ -1175,7 +1175,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.308</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.309</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -5375,6 +5375,25 @@ let _mainMap, _userMarker, _instrPickMap, _instrPickMarker;
 
 const NOM_BASE = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=ua&accept-language=uk&bounded=0&addressdetails=1`;
 
+// Будує URL пошуку адреси з урахуванням контексту: додає обране місто до запиту
+// і viewbox навколо міста/центру карти, щоб Nominatim краще знаходив вулиці
+// (напр. «Верховинна 44» без міста — неоднозначно). bounded=0 → місто лише як пріоритет, не жорсткий фільтр.
+function geoSearchUrl(query, limit = 5) {
+  let q = (query || '').trim();
+  const city = document.getElementById('city-select')?.value || '';
+  if (city && !q.toLowerCase().includes(city.toLowerCase())) {
+    q = `${city}, ${q}`;
+  }
+  let url = `${NOM_BASE}&limit=${limit}&q=${encodeURIComponent(q)}`;
+  const c = (city && UKRAINE_CITIES[city])
+    || (_mainMap ? { lat: _mainMap.getCenter().lat, lng: _mainMap.getCenter().lng } : null);
+  if (c) {
+    const dLat = 0.28, dLng = 0.42;
+    url += `&viewbox=${(c.lng - dLng).toFixed(4)},${(c.lat + dLat).toFixed(4)},${(c.lng + dLng).toFixed(4)},${(c.lat - dLat).toFixed(4)}`;
+  }
+  return url;
+}
+
 const UKRAINE_CITIES = {
   'Київ':            {lat:50.4501, lng:30.5234},
   'Харків':          {lat:49.9935, lng:36.2304},
@@ -5467,14 +5486,14 @@ function doSearch() {
   if (!query) return;
   window._ga('search', { search_term: query });
   scrollToMap();
-  fetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(query)}`)
+  fetch(geoSearchUrl(query, 1))
     .then(r=>r.json()).then(data => { if (data.length) focusMap({lat:+data[0].lat, lng:+data[0].lon}); }).catch(()=>{});
 }
 
 function searchQuery(query) {
   document.getElementById("search-input").value = query;
   scrollToMap();
-  fetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(query)}`)
+  fetch(geoSearchUrl(query, 1))
     .then(r=>r.json()).then(data => { if (data.length) focusMap({lat:+data[0].lat, lng:+data[0].lon}); }).catch(()=>{});
 }
 
@@ -5518,7 +5537,7 @@ function _showSearchSuggest(q) {
   }).join('');
 
   _searchAcTimer = setTimeout(() => {
-    fetch(`${NOM_BASE}&limit=5&q=${encodeURIComponent(q)}`)
+    fetch(geoSearchUrl(q, 5))
       .then(r => r.json()).then(results => {
         const ul2 = document.getElementById('search-suggest');
         if (!ul2) return;
