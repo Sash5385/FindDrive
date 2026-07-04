@@ -1175,7 +1175,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.306</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.307</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -2631,11 +2631,12 @@ async function loadInstrSettings(instr, container) {
           : '<div style="font-size:12px;color:var(--text-hint);margin-bottom:8px">Немає збережених точок</div>'}
         <div class="mp-map-search">
           <div class="mp-search-wrap">
-            <input type="text" id="mp-new-input" placeholder="Адреса або орієнтир…" maxlength="100" oninput="window._mpAutoComplete(this.value)" onkeydown="if(event.key==='Enter'){window._mpHideSuggest();window._addMp()}" onblur="setTimeout(()=>window._mpHideSuggest(),200)">
+            <input type="text" id="mp-new-input" placeholder="Адреса або орієнтир…" maxlength="100" oninput="window._mpAutoComplete(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();window._mpHideSuggest();window._addMp()}" onblur="setTimeout(()=>window._mpHideSuggest(),200)">
             <ul id="mp-suggests" class="mp-suggests" style="display:none"></ul>
           </div>
+          <button class="btn-bk-action" id="btn-mp-mylocation" style="font-size:11px;padding:6px 10px;flex-shrink:0" title="Моє місце" onclick="window._mpUseMyLocation()"><i class="ti ti-current-location"></i></button>
           <button class="btn-bk-action" style="font-size:11px;padding:6px 10px;flex-shrink:0" title="Знайти на карті" onclick="window._openMpMap()"><i class="ti ti-map-pin"></i></button>
-          <button class="btn-bk-action" style="font-size:11px;padding:6px 10px;flex-shrink:0" onclick="window._addMp()"><i class="ti ti-plus"></i></button>
+          <button class="btn-bk-action" id="btn-mp-add" style="font-size:11px;padding:6px 10px;flex-shrink:0" onclick="window._addMp()"><i class="ti ti-plus"></i></button>
         </div>
         <div class="mp-map-wrap" id="mp-map-wrap">
           <div id="mp-map-el" class="mp-map-el"></div>
@@ -2707,6 +2708,42 @@ async function loadInstrSettings(instr, container) {
       _loadLeaflet(_initMpMapNow);
     });
   };
+  window._mpUseMyLocation = () => {
+    if (!navigator.geolocation) { showToast('Геолокація недоступна', 'Введіть адресу вручну або оберіть на карті', 'error'); return; }
+    const btn = document.getElementById('btn-mp-mylocation');
+    const orig = btn?.innerHTML;
+    if (btn) { btn.innerHTML = '<i class="ti ti-loader"></i>'; btn.style.pointerEvents = 'none'; btn.style.opacity = '.7'; }
+    const restore = () => { if (btn) { btn.innerHTML = orig; btn.style.pointerEvents = ''; btn.style.opacity = ''; } };
+    navigator.geolocation.getCurrentPosition(pos => {
+      const lat = pos.coords.latitude, lng = pos.coords.longitude;
+      const applyPoint = () => {
+        const ll = L.latLng(lat, lng);
+        _mpMapObj.setView(ll, 16);
+        _mpLatLng = {lat:+lat.toFixed(6), lng:+lng.toFixed(6)};
+        if (_mpMarker) _mpMarker.setLatLng(ll); else _mpMarker = L.marker(ll).addTo(_mpMapObj);
+        const coordEl = document.getElementById('mp-map-coords');
+        if (coordEl) coordEl.textContent = `${_mpLatLng.lat}, ${_mpLatLng.lng}`;
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
+          .then(r=>r.json()).then(d=>{
+            const inp = document.getElementById('mp-new-input');
+            if (inp && d.display_name) inp.value = d.display_name.split(',').slice(0,3).join(', ');
+            _mpApplyTscTags(d.address);
+          }).catch(()=>{});
+        restore();
+        showToast('Місце визначено', 'Перевірте адресу і натисніть «+», щоб додати точку', 'success');
+      };
+      const wrap = document.getElementById('mp-map-wrap');
+      if (wrap && !wrap.classList.contains('open')) wrap.classList.add('open');
+      requestAnimationFrame(() => {
+        if (_mpMapObj) { _mpMapObj.invalidateSize(); applyPoint(); }
+        else _loadLeaflet(() => { _initMpMapNow(); applyPoint(); });
+      });
+    }, err => {
+      restore();
+      const msgs = { 1: 'Доступ до геолокації заборонено', 2: 'Не вдалося визначити місцезнаходження', 3: 'Час очікування вичерпано' };
+      showToast(msgs[err.code] || 'Помилка геолокації', 'Введіть адресу вручну', 'error');
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+  };
   window._mpGeoSearch = (q) => {
     if (!_mpMapObj || !q) return;
     fetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(q)}`)
@@ -2761,12 +2798,25 @@ async function loadInstrSettings(instr, container) {
     }
     if (address) _mpApplyTscTags(address);
   };
-  window._addMp = () => {
+  window._addMp = async () => {
     const inp = document.getElementById('mp-new-input');
     const val = inp?.value.trim();
     if (!val) return;
+    const btn = document.getElementById('btn-mp-add');
     if (!_mpLatLng) {
-      showToast('Виберіть точку на карті або оберіть адресу зі списку підказок', '', 'error');
+      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i>'; }
+      try {
+        const r = await fetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(val)}`);
+        const results = await r.json();
+        if (results.length) {
+          const {lat,lon} = results[0];
+          _mpLatLng = {lat:+parseFloat(lat).toFixed(6), lng:+parseFloat(lon).toFixed(6)};
+        }
+      } catch(e) {}
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-plus"></i>'; }
+    }
+    if (!_mpLatLng) {
+      showToast('Адресу не знайдено', 'Спробуйте інший формат або оберіть точку на карті', 'error');
       return;
     }
     const pt = {label:val, lat:_mpLatLng.lat, lng:_mpLatLng.lng};
