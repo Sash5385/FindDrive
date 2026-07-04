@@ -1175,7 +1175,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.312</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.313</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -5653,7 +5653,9 @@ function _openInstrPopupAt(entry) {
 function _openChooser(latlng, entries) {
   window._chooserEntries = entries;
   const avatars = entries.map((e, i) => {
-    const nm = (e.inst.name || 'Інструктор').split(' ')[0];
+    // ПІБ вводиться «Прізвище Ім'я По-батькові» — під фото показуємо ім'я (2-ге слово), не прізвище
+    const parts = (e.inst.name || '').trim().split(/\s+/).filter(Boolean);
+    const nm = parts[1] || parts[0] || 'Інструктор';
     const ini = (e.inst.name||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
     const av = e.inst.photo
       ? `<img src="${_esc(e.inst.photo)}" style="width:54px;height:54px;border-radius:50%;object-fit:cover;border:2px solid ${e.color};box-shadow:0 1px 5px rgba(0,0,0,.18)">`
