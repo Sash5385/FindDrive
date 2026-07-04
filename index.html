@@ -1175,7 +1175,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.309</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.310</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -5578,6 +5578,7 @@ function initLeafletMap() {
   }).addTo(_mainMap);
   window._mapReady = true;
   window._onMapReady?.();
+  _mainMap.on('zoomend', _relayoutAllSpots);
   _mainMap.on('click', function(e) {
     if (!_pickingLocation) return;
     _pickingLocation = false;
@@ -5589,6 +5590,26 @@ function initLeafletMap() {
     showToast('Місце встановлено', 'Відстані до інструкторів оновлено', 'success');
   });
 }
+
+// Розведення накладених шпильок: пін-и в одній ~11м-комірці розкладаються по колу
+// в піксельному просторі (перераховується на кожному зумі), щоб жоден не перекривав інший.
+const _markerSpots = {};
+function _spotKey(lat, lng) { return `${(+lat).toFixed(4)},${(+lng).toFixed(4)}`; }
+function _relayoutSpot(spot) {
+  if (!_mainMap || !spot) return;
+  const shown = spot.entries.filter(m => _mainMap.hasLayer(m));
+  const n = shown.length;
+  if (n <= 1) { if (n === 1) shown[0].setLatLng([spot.lat, spot.lng]); return; }
+  const z = _mainMap.getZoom();
+  const base = _mainMap.project([spot.lat, spot.lng], z);
+  const rPx = 15 + n * 3;
+  shown.forEach((m, i) => {
+    const ang = (2 * Math.PI * i) / n - Math.PI / 2;
+    const p = L.point(base.x + rPx * Math.cos(ang), base.y + rPx * Math.sin(ang));
+    m.setLatLng(_mainMap.unproject(p, z));
+  });
+}
+function _relayoutAllSpots() { Object.values(_markerSpots).forEach(_relayoutSpot); }
 
 window._addInstrMarker = function(inst, id) {
   if (!_mainMap) return;
@@ -5639,6 +5660,11 @@ window._addInstrMarker = function(inst, id) {
   });
   window._instrMarkers = window._instrMarkers || {};
   (window._instrMarkers[id] = window._instrMarkers[id] || []).push({marker, tags: inst.tags||[]});
+  const key = _spotKey(inst.lat, inst.lng);
+  const spot = _markerSpots[key] || (_markerSpots[key] = { lat: inst.lat, lng: inst.lng, entries: [] });
+  spot.entries.push(marker);
+  marker._spot = spot;
+  _relayoutSpot(spot);
 };
 
 window._filterMapMarkers = function(active) {
@@ -5650,6 +5676,7 @@ window._filterMapMarkers = function(active) {
       else _mainMap.removeLayer(marker);
     });
   });
+  _relayoutAllSpots();
 };
 
 window.initInstrMap = function() {
