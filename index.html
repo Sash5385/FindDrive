@@ -1380,7 +1380,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.319</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.320</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -6210,20 +6210,9 @@ window._startPickLocation = function() {
   requestAnimationFrame(()=>{resize();setTimeout(()=>resize(),300);start();});
 })();
 
-initLeafletMap();
-
-// Дип-лінк із гео-лендінгів: ?city=Київ → одразу застосувати фільтр міста і показати карту
-(function _initCityFromUrl(){
-  const c = new URLSearchParams(location.search).get('city');
-  if (!c) return;
-  const apply = () => {
-    const sel = document.getElementById('city-select');
-    if (sel && [...sel.options].some(o => o.value === c)) { sel.value = c; window._selectCity(c); }
-  };
-  if (window._mapReady) apply();
-  else { const t = setInterval(() => { if (window._mapReady) { clearInterval(t); apply(); } }, 150); setTimeout(() => clearInterval(t), 5000); }
-})();
-
+// Кнопку оновлення навішуємо ПЕРШОЮ і незалежно від усього іншого нижче — якщо Leaflet/карта
+// впаде з помилкою (напр. CDN unpkg.com заблоковано adblock'ом чи корпоративною мережею),
+// решта коду в цьому <script> зупиниться, і кнопка оновлення взагалі не запрацює.
 document.getElementById("version-badge").addEventListener("click", function() {
   this.classList.add("reloading");
   this.textContent = "↻ Оновлення…";
@@ -6231,6 +6220,28 @@ document.getElementById("version-badge").addEventListener("click", function() {
   url.searchParams.set("_r", Date.now());
   setTimeout(() => location.replace(url.toString()), 300);
 });
+
+try {
+  initLeafletMap();
+} catch (e) {
+  console.error('initLeafletMap failed (карта не завантажилась, ймовірно CDN Leaflet заблоковано):', e);
+}
+
+// Дип-лінк із гео-лендінгів: ?city=Київ → одразу застосувати фільтр міста і показати карту
+try {
+  (function _initCityFromUrl(){
+    const c = new URLSearchParams(location.search).get('city');
+    if (!c) return;
+    const apply = () => {
+      const sel = document.getElementById('city-select');
+      if (sel && [...sel.options].some(o => o.value === c)) { sel.value = c; window._selectCity(c); }
+    };
+    if (window._mapReady) apply();
+    else { const t = setInterval(() => { if (window._mapReady) { clearInterval(t); apply(); } }, 150); setTimeout(() => clearInterval(t), 5000); }
+  })();
+} catch (e) {
+  console.error('_initCityFromUrl failed:', e);
+}
 </script>
 <button class="scroll-top" id="scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Нагору" aria-label="Нагору"><i class="ti ti-arrow-up"></i></button>
 </body>
