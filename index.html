@@ -256,7 +256,11 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .nav-link{font-size:14px;color:rgba(255,255,255,.85);text-decoration:none;transition:color .2s}
 .nav-link:hover{color:#fff}
 .nav-right{display:flex;align-items:center;gap:14px}
-.btn-login{font-size:14px;color:#fff;background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:inherit}
+.btn-login{font-size:13.5px;font-weight:600;color:var(--green-dark);background:#fff;border:none;border-radius:20px;padding:9px 18px;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:inherit;box-shadow:0 1px 4px rgba(0,0,0,.1);transition:background .15s,transform .15s;white-space:nowrap}
+.btn-login:hover{background:var(--green-light);transform:translateY(-1px)}
+.btn-login .full{display:inline}
+.btn-login .short{display:none}
+@media(max-width:420px){.btn-login{padding:8px 13px;font-size:12.5px}.btn-login .full{display:none}.btn-login .short{display:inline}}
 .btn-cta{background:#fff;color:var(--green);border:none;border-radius:9px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s,color .2s;font-family:inherit}
 .btn-cta:hover{background:var(--green-light)}
 .nav-burger{display:none;background:none;border:none;cursor:pointer;padding:7px;color:#fff;font-size:20px;line-height:1;border-radius:8px;transition:background .15s,color .15s;margin-left:2px}
@@ -1047,7 +1051,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     <span class="nav-tagline"><i class="ti ti-heart-handshake"></i> Знаємо, як складно знайти кваліфікованого інструктора. Ми допоможемо!</span>
   </div>
   <div class="nav-right">
-    <button id="btn-login" class="btn-login"><i class="ti ti-user-circle"></i> Увійти</button>
+    <button id="btn-login" class="btn-login"><i class="ti ti-user-circle"></i> <span class="full">Увійти / Реєстрація</span><span class="short">Увійти</span></button>
     <div id="nav-user" class="nav-user" style="display:none" role="button" aria-label="Відкрити кабінет">
       <div class="nav-avatar-wrap">
         <img id="nav-avatar" class="nav-avatar" src="" alt="">
@@ -1376,7 +1380,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.318</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.319</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
