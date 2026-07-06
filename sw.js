@@ -33,7 +33,7 @@ self.addEventListener('notificationclick', e => {
 });
 
 // --- Caching ---
-const CACHE = 'finddrive-v14';
+const CACHE = 'finddrive-v15';
 
 const PRECACHE = [
   '/favicon.png',
@@ -46,9 +46,14 @@ const PRECACHE = [
 ];
 
 self.addEventListener('install', e => {
+  // Навмисно НЕ addAll(): воно all-or-nothing — якщо хоч один ресурс (зокрема
+  // зовнішні gstatic-скрипти Firebase, поза нашим контролем) не завантажиться,
+  // ВЕСЬ install падає і реєстрація SW відкидається браузером повністю —
+  // сайт лишається без офлайн-кешу й без «Встановити на головний екран».
+  // Замість цього кешуємо кожен ресурс окремо й ігноруємо поодинокі невдачі.
   e.waitUntil(
     caches.open(CACHE)
-      .then(c => c.addAll(PRECACHE))
+      .then(c => Promise.allSettled(PRECACHE.map(url => c.add(url))))
       .then(() => self.skipWaiting())
   );
 });
