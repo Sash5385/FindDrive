@@ -1,4 +1,4 @@
-const { onDocumentCreated, onDocumentUpdated } = require('firebase-functions/v2/firestore');
+const { onDocumentCreated, onDocumentUpdated, onDocumentWritten } = require('firebase-functions/v2/firestore');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const admin = require('firebase-admin');
 
@@ -60,6 +60,28 @@ async function claimEventOnce(eventId) {
     throw e;
   }
 }
+
+// Дзеркалить бронювання в публічну колекцію bookingSlots — БЕЗ жодних персональних даних
+// (ім'я/телефон/email клієнта та інструктора, точка зустрічі). Анонімний відвідувач має бачити,
+// які слоти зайняті, тому bookingSlots публічно читається; сам bookings — ні (firestore.rules).
+exports.mirrorBookingSlot = onDocumentWritten(
+  { document: 'bookings/{id}', region: 'europe-west1' },
+  async event => {
+    const after = event.data.after?.exists ? event.data.after.data() : null;
+    const ref = admin.firestore().collection('bookingSlots').doc(event.params.id);
+    if (!after || !['pending', 'confirmed'].includes(after.status)) {
+      await ref.delete().catch(() => {});
+      return;
+    }
+    await ref.set({
+      instructorId: after.instructorId || null,
+      date: after.date || null,
+      time: after.time || null,
+      duration: after.duration || 60,
+      status: after.status,
+    });
+  }
+);
 
 // Інструктор отримує push коли клієнт бронює
 exports.onBookingCreated = onDocumentCreated(

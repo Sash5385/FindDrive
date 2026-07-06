@@ -51,7 +51,12 @@ service cloud.firestore {
     }
 
     match /bookings/{bookingId} {
-      allow read: if true;
+      // Публічний доступ прибрано — тут ПІБ/телефон/email клієнта й інструктора, точка зустрічі.
+      // Анонімний перегляд зайнятих слотів реалізовано через окрему публічну колекцію bookingSlots
+      // (без персональних даних), яку наповнює Cloud Function mirrorBookingSlot.
+      allow read: if isAdmin()
+               || (request.auth != null && resource.data.clientId == request.auth.uid)
+               || isInstructor(resource.data.instructorId);
       allow create: if request.auth != null
                     && request.resource.data.clientId == request.auth.uid
                     && request.resource.data.status == 'pending';
@@ -66,6 +71,14 @@ service cloud.firestore {
                     && resource.data.clientId == request.auth.uid
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reviewed']);
       allow delete: if isAdmin();
+    }
+
+    match /bookingSlots/{id} {
+      // Публічний "зліпок" bookings без персональних даних — лише instructorId/date/time/duration/status.
+      // Пише виключно Cloud Function mirrorBookingSlot через Admin SDK (обходить ці правила),
+      // тому пряме клієнтське write заборонено.
+      allow read: if true;
+      allow write: if false;
     }
 
     match /reviews/{reviewId} {

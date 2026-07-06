@@ -1380,7 +1380,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.320</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.321</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -4333,16 +4333,16 @@ function genSlots(from, to, lessonMin = LESSON_MIN, stepMin = lessonMin) {
   return r;
 }
 
+// Читаємо з публічної bookingSlots (без персональних даних), а не з bookings напряму —
+// анонімний відвідувач має бачити зайняті слоти, але не імена/телефони/email з чужих бронювань.
 async function getBusySlots(instrId, dateStr) {
   try {
     const snap = await getDocs(query(
-      collection(db, 'bookings'),
+      collection(db, 'bookingSlots'),
       where('instructorId','==',instrId),
       where('date','==',dateStr)
     ));
-    return snap.docs
-      .filter(d => ['pending','confirmed'].includes(d.data().status))
-      .map(d => ({ time: d.data().time, duration: d.data().duration || 60 }));
+    return snap.docs.map(d => ({ time: d.data().time, duration: d.data().duration || 60 }));
   } catch(e) { return []; }
 }
 
