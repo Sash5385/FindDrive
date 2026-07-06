@@ -1380,7 +1380,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.322</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.323</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -5461,7 +5461,6 @@ window._instrCancelBk = async function(bookingId) {
 };
 </script>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 // Реєстрація service worker (кешування статики + офлайн-запасний варіант, підтримує "Встановити на головний екран").
 // Незалежно від решти коду нижче — обгорнуто окремо, щоб збій тут ніколи нічого не блокував.
@@ -5550,25 +5549,30 @@ function openInstrProfile(id, mpIdx) {
       setTimeout(() => window._bkSetMp?.(mpIdx), 150);
     }
   }, 50);
-  // Mini-map
+  // Mini-map (Leaflet міг ще не завантажитись через ліниву карту — довантажуємо перед використанням)
   setTimeout(() => {
     const mm = document.getElementById('prof-mini-map');
     if (!mm) return;
     if (window._profMiniMap) { try { window._profMiniMap.remove(); } catch(_) {} window._profMiniMap = null; }
     const lat = d.lat || (mps[0]?.lat), lng = d.lng || (mps[0]?.lng);
-    if (!lat || !lng || typeof L === 'undefined') return;
-    const miniMap = L.map(mm, { zoomControl: false, scrollWheelZoom: false, attributionControl: false }).setView([lat, lng], 14);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(miniMap);
-    if (d.lat && d.lng) {
-      L.marker([d.lat, d.lng]).addTo(miniMap);
-    }
-    mps.forEach((mp, i) => {
-      L.circleMarker([mp.lat, mp.lng], { radius: 8, fillColor: MP_COLORS[i%4], color: '#fff', weight: 2, fillOpacity: 0.9 })
-        .addTo(miniMap).bindTooltip(_esc(mp.label||'Точка '+(i+1)));
+    if (!lat || !lng) return;
+    _ensureMainMap().then(() => {
+      if (typeof L === 'undefined') return;
+      const mm2 = document.getElementById('prof-mini-map');
+      if (!mm2) return;
+      const miniMap = L.map(mm2, { zoomControl: false, scrollWheelZoom: false, attributionControl: false }).setView([lat, lng], 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(miniMap);
+      if (d.lat && d.lng) {
+        L.marker([d.lat, d.lng]).addTo(miniMap);
+      }
+      mps.forEach((mp, i) => {
+        L.circleMarker([mp.lat, mp.lng], { radius: 8, fillColor: MP_COLORS[i%4], color: '#fff', weight: 2, fillOpacity: 0.9 })
+          .addTo(miniMap).bindTooltip(_esc(mp.label||'Точка '+(i+1)));
+      });
+      window._profMiniMap = miniMap;
+      setTimeout(() => miniMap.invalidateSize(), 480);
+      setTimeout(() => miniMap.invalidateSize(), 750);
     });
-    window._profMiniMap = miniMap;
-    setTimeout(() => miniMap.invalidateSize(), 480);
-    setTimeout(() => miniMap.invalidateSize(), 750);
   }, 200);
 }
 
@@ -5642,11 +5646,10 @@ window._selectCity = function(city) {
   _activeCity = city;
   window._ga('search_city', { city: city || 'all' });
   const coords = city && UKRAINE_CITIES[city];
-  if (coords && _mainMap) {
-    _mainMap.setView([coords.lat, coords.lng], 12);
-    scrollToMap();
+  if (coords) {
+    _ensureMainMap().then(map => { if (map) { map.setView([coords.lat, coords.lng], 12); scrollToMap(); } });
   }
-  _applyAllFilters();
+  window._applyAllFilters?.();
 };
 
 function scrollToMap() {
@@ -5663,8 +5666,7 @@ window._focusInstrMarker = function(id, evt) {
 };
 
 function focusMap(latlng) {
-  if (!_mainMap) return;
-  _mainMap.setView([latlng.lat, latlng.lng], 15);
+  _ensureMainMap().then(map => { if (map) map.setView([latlng.lat, latlng.lng], 15); });
 }
 
 function toggleMobileMenu() {
@@ -5711,7 +5713,7 @@ window._filterByName = function(name, instrId) {
   if (inp) inp.value = name || '';
   const ul = document.getElementById('search-suggest');
   if (ul) ul.style.display = 'none';
-  _applyAllFilters();
+  window._applyAllFilters?.();
   if (_activeNameFilter) {
     document.getElementById('instructors')?.scrollIntoView({behavior:'smooth', block:'start'});
     if (instrId) setTimeout(() => {
@@ -5727,7 +5729,7 @@ function _showSearchSuggest(q) {
   const ul = document.getElementById('search-suggest');
   if (!q || q.length < 2) {
     if (ul) ul.style.display = 'none';
-    if (!q) { _activeNameFilter = ''; _applyAllFilters(); }
+    if (!q) { _activeNameFilter = ''; window._applyAllFilters?.(); }
     return;
   }
   const qLow = q.toLowerCase();
@@ -5774,7 +5776,7 @@ window._searchPickSuggest = function(el) {
   if (inp) inp.value = name.split(',').slice(0,3).join(', ');
   const ul = document.getElementById('search-suggest');
   if (ul) ul.style.display = 'none';
-  if (_mainMap) { _mainMap.setView([+lat, +lon], 16); scrollToMap(); }
+  _ensureMainMap().then(map => { if (map) { map.setView([+lat, +lon], 16); scrollToMap(); } });
   _setUserLocation(+lat, +lon, null);
 };
 
@@ -5949,88 +5951,96 @@ window.initInstrMap = function() {
   if (_instrPickMap) { _instrPickMap.invalidateSize(); return; }
   const el = document.getElementById("instr-map-pick");
   if (!el) return;
-  _instrPickMap = L.map(el, {zoomControl:true}).setView([50.4501,30.5234],12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(_instrPickMap);
-  _instrPickMarker = L.marker([50.4501,30.5234], {draggable:true}).addTo(_instrPickMap);
-  function syncLatLng() {
-    const pos = _instrPickMarker.getLatLng();
-    document.querySelector('#instr-form [name="lat"]').value = pos.lat.toFixed(6);
-    document.querySelector('#instr-form [name="lng"]').value = pos.lng.toFixed(6);
-  }
-  _instrPickMarker.on('dragend', syncLatLng);
-  syncLatLng();
+  // Leaflet міг ще не завантажитись (лінива карта) — довантажуємо перед використанням L.
+  _ensureMainMap().then(() => {
+    if (_instrPickMap) { _instrPickMap.invalidateSize(); return; }
+    if (typeof L === 'undefined') { console.warn('Leaflet недоступний — карту вибору локації не показано'); return; }
+    _instrPickMap = L.map(el, {zoomControl:true}).setView([50.4501,30.5234],12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(_instrPickMap);
+    _instrPickMarker = L.marker([50.4501,30.5234], {draggable:true}).addTo(_instrPickMap);
+    function syncLatLng() {
+      const pos = _instrPickMarker.getLatLng();
+      document.querySelector('#instr-form [name="lat"]').value = pos.lat.toFixed(6);
+      document.querySelector('#instr-form [name="lng"]').value = pos.lng.toFixed(6);
+    }
+    _instrPickMarker.on('dragend', syncLatLng);
+    syncLatLng();
 
-  // Address autocomplete
-  const addrInput = document.getElementById('instr-addr-search');
-  const addrBox   = document.getElementById('instr-addr-results');
-  if (!addrInput || !addrBox) return;
-  let _addrTimer;
-  function _closeAddr() { addrBox.innerHTML = ''; addrBox.classList.remove('open'); }
-  function _placePin(lat, lon, label) {
-    _instrPickMarker.setLatLng([lat, lon]);
-    _instrPickMap.setView([lat, lon], 16);
-    document.querySelector('#instr-form [name="lat"]').value = (+lat).toFixed(6);
-    document.querySelector('#instr-form [name="lng"]').value = (+lon).toFixed(6);
-    addrInput.value = label;
-    _closeAddr();
-  }
-  addrInput.addEventListener('input', () => {
-    clearTimeout(_addrTimer);
-    const q = addrInput.value.trim();
-    if (q.length < 3) { _closeAddr(); return; }
-    _addrTimer = setTimeout(async () => {
-      try {
-        const r = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=7&addressdetails=1&accept-language=uk&countrycodes=ua`,
-          { headers: { 'Accept-Language': 'uk' } }
-        );
-        const data = await r.json();
-        if (!data.length) {
-          addrBox.innerHTML = '<div class="addr-result-item" style="color:var(--text-muted)">Нічого не знайдено</div>';
+    // Address autocomplete
+    const addrInput = document.getElementById('instr-addr-search');
+    const addrBox   = document.getElementById('instr-addr-results');
+    if (!addrInput || !addrBox) return;
+    let _addrTimer;
+    function _closeAddr() { addrBox.innerHTML = ''; addrBox.classList.remove('open'); }
+    function _placePin(lat, lon, label) {
+      _instrPickMarker.setLatLng([lat, lon]);
+      _instrPickMap.setView([lat, lon], 16);
+      document.querySelector('#instr-form [name="lat"]').value = (+lat).toFixed(6);
+      document.querySelector('#instr-form [name="lng"]').value = (+lon).toFixed(6);
+      addrInput.value = label;
+      _closeAddr();
+    }
+    addrInput.addEventListener('input', () => {
+      clearTimeout(_addrTimer);
+      const q = addrInput.value.trim();
+      if (q.length < 3) { _closeAddr(); return; }
+      _addrTimer = setTimeout(async () => {
+        try {
+          const r = await fetch(
+            `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=7&addressdetails=1&accept-language=uk&countrycodes=ua`,
+            { headers: { 'Accept-Language': 'uk' } }
+          );
+          const data = await r.json();
+          if (!data.length) {
+            addrBox.innerHTML = '<div class="addr-result-item" style="color:var(--text-muted)">Нічого не знайдено</div>';
+            addrBox.classList.add('open');
+            return;
+          }
+          addrBox.innerHTML = data.map(d =>
+            `<div class="addr-result-item" tabindex="0" data-lat="${d.lat}" data-lon="${d.lon}">${d.display_name}</div>`
+          ).join('');
           addrBox.classList.add('open');
-          return;
-        }
-        addrBox.innerHTML = data.map(d =>
-          `<div class="addr-result-item" tabindex="0" data-lat="${d.lat}" data-lon="${d.lon}">${d.display_name}</div>`
-        ).join('');
-        addrBox.classList.add('open');
-        addrBox.querySelectorAll('.addr-result-item[data-lat]').forEach(item => {
-          item.addEventListener('click', () => _placePin(item.dataset.lat, item.dataset.lon, item.textContent));
-          item.addEventListener('keydown', e => { if (e.key === 'Enter') _placePin(item.dataset.lat, item.dataset.lon, item.textContent); });
-        });
-      } catch { _closeAddr(); }
-    }, 420);
+          addrBox.querySelectorAll('.addr-result-item[data-lat]').forEach(item => {
+            item.addEventListener('click', () => _placePin(item.dataset.lat, item.dataset.lon, item.textContent));
+            item.addEventListener('keydown', e => { if (e.key === 'Enter') _placePin(item.dataset.lat, item.dataset.lon, item.textContent); });
+          });
+        } catch { _closeAddr(); }
+      }, 420);
+    });
+    addrInput.addEventListener('keydown', e => {
+      if (e.key === 'Escape') _closeAddr();
+      if (e.key === 'ArrowDown') { e.preventDefault(); addrBox.querySelector('.addr-result-item')?.focus(); }
+    });
+    document.addEventListener('click', e => {
+      if (!addrInput.contains(e.target) && !addrBox.contains(e.target)) _closeAddr();
+    }, { passive: true });
   });
-  addrInput.addEventListener('keydown', e => {
-    if (e.key === 'Escape') _closeAddr();
-    if (e.key === 'ArrowDown') { e.preventDefault(); addrBox.querySelector('.addr-result-item')?.focus(); }
-  });
-  document.addEventListener('click', e => {
-    if (!addrInput.contains(e.target) && !addrBox.contains(e.target)) _closeAddr();
-  }, { passive: true });
 };
 
 let _userAccCircle = null;
 function _setUserLocation(lat, lng, accuracy) {
   window._userLat = lat; window._userLng = lng;
-  if (!_mainMap) return;
-  if (_userMarker) _mainMap.removeLayer(_userMarker);
-  if (_userAccCircle) _mainMap.removeLayer(_userAccCircle);
-  const dotIcon = L.divIcon({
-    className: '',
-    html: '<div class="user-location-dot"></div>',
-    iconSize: [16, 16], iconAnchor: [8, 8],
+  // Візуальні пін+коло на карті — лише після того, як карта довантажилась (не блокує решту нижче)
+  _ensureMainMap().then(map => {
+    if (!map) return;
+    if (_userMarker) map.removeLayer(_userMarker);
+    if (_userAccCircle) map.removeLayer(_userAccCircle);
+    const dotIcon = L.divIcon({
+      className: '',
+      html: '<div class="user-location-dot"></div>',
+      iconSize: [16, 16], iconAnchor: [8, 8],
+    });
+    _userMarker = L.marker([lat, lng], {icon: dotIcon, zIndexOffset: 9000})
+      .addTo(map)
+      .bindTooltip('Ваше місце', {permanent: false, direction: 'top', offset: [0, -10]});
+    if (accuracy && accuracy > 80) {
+      _userAccCircle = L.circle([lat, lng], {
+        radius: accuracy, color: '#185fa5', fillColor: '#185fa5',
+        fillOpacity: 0.08, weight: 1, dashArray: '4 4',
+      }).addTo(map);
+    }
   });
-  _userMarker = L.marker([lat, lng], {icon: dotIcon, zIndexOffset: 9000})
-    .addTo(_mainMap)
-    .bindTooltip('Ваше місце', {permanent: false, direction: 'top', offset: [0, -10]});
-  if (accuracy && accuracy > 80) {
-    _userAccCircle = L.circle([lat, lng], {
-      radius: accuracy, color: '#185fa5', fillColor: '#185fa5',
-      fillOpacity: 0.08, weight: 1, dashArray: '4 4',
-    }).addTo(_mainMap);
-  }
-  _updateDistanceBadges();
+  window._updateDistanceBadges?.();
   fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
     .then(r=>r.json()).then(d=>{
       const tags = tscTagsForAddress(d.address);
@@ -6052,7 +6062,7 @@ function locateMe(fromSearch = false) {
     restore();
     const lat = pos.coords.latitude, lng = pos.coords.longitude;
     const acc = Math.round(pos.coords.accuracy);
-    if (_mainMap) _mainMap.setView([lat, lng], acc < 200 ? 15 : 13);
+    _ensureMainMap().then(map => { if (map) map.setView([lat, lng], acc < 200 ? 15 : 13); });
     if (fromSearch) scrollToMap();
     _setUserLocation(lat, lng, pos.coords.accuracy);
     // count nearby instructors within 10km
@@ -6073,6 +6083,7 @@ function locateMe(fromSearch = false) {
 
 let _pickingLocation = false;
 window._startPickLocation = function() {
+  _ensureMainMap();
   if (!_mainMap) { scrollToMap(); setTimeout(window._startPickLocation, 400); return; }
   scrollToMap();
   _pickingLocation = !_pickingLocation;
@@ -6229,23 +6240,51 @@ document.getElementById("version-badge").addEventListener("click", function() {
   setTimeout(() => location.replace(url.toString()), 300);
 });
 
+// Лінива ініціалізація карти: Leaflet (~40KB) і сама карта довантажуються лише коли
+// секція карти наближається до екрану (IntersectionObserver), АБО одразу, якщо користувач
+// шукає/вмикає геолокацію/обирає місто раніше, ніж долистав до карти. _ensureMainMap()
+// ідемпотентна — можна викликати з будь-якої кількості місць, довантажить і ініціалізує лише раз.
+let _mainMapReadyPromise = null;
+function _ensureMainMap() {
+  if (_mainMapReadyPromise) return _mainMapReadyPromise;
+  _mainMapReadyPromise = new Promise(resolve => {
+    const boot = () => {
+      try { initLeafletMap(); } catch (e) { console.error('initLeafletMap failed:', e); }
+      resolve(_mainMap || null);
+    };
+    if (window.L) { boot(); return; }
+    const sc = document.createElement('script');
+    sc.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    sc.onload = boot;
+    sc.onerror = () => { console.warn('Leaflet CDN недоступний — карта не завантажена'); resolve(null); };
+    document.head.appendChild(sc);
+  });
+  return _mainMapReadyPromise;
+}
 try {
-  initLeafletMap();
+  (function _lazyMapObserver(){
+    const mapEl = document.getElementById('map');
+    if (!mapEl) { _ensureMainMap(); return; }
+    if (!('IntersectionObserver' in window)) { _ensureMainMap(); return; }
+    const io = new IntersectionObserver(entries => {
+      if (entries.some(en => en.isIntersecting)) { io.disconnect(); _ensureMainMap(); }
+    }, { rootMargin: '150px' });
+    io.observe(mapEl);
+  })();
 } catch (e) {
-  console.error('initLeafletMap failed (карта не завантажилась, ймовірно CDN Leaflet заблоковано):', e);
+  console.error('_lazyMapObserver failed:', e);
+  _ensureMainMap();
 }
 
-// Дип-лінк із гео-лендінгів: ?city=Київ → одразу застосувати фільтр міста і показати карту
+// Дип-лінк із гео-лендінгів: ?city=Київ → одразу довантажити карту й застосувати фільтр міста
 try {
   (function _initCityFromUrl(){
     const c = new URLSearchParams(location.search).get('city');
     if (!c) return;
-    const apply = () => {
+    _ensureMainMap().then(() => {
       const sel = document.getElementById('city-select');
       if (sel && [...sel.options].some(o => o.value === c)) { sel.value = c; window._selectCity(c); }
-    };
-    if (window._mapReady) apply();
-    else { const t = setInterval(() => { if (window._mapReady) { clearInterval(t); apply(); } }, 150); setTimeout(() => clearInterval(t), 5000); }
+    });
   })();
 } catch (e) {
   console.error('_initCityFromUrl failed:', e);
