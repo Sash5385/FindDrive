@@ -1386,7 +1386,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.325</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.326</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -1797,6 +1797,7 @@ function populateInstrTscSelect() {
 function openPanel(id) {
   document.getElementById(id).classList.add("open");
   document.getElementById("cab-overlay").classList.add("open");
+  if (id === 'instr-welcome') window._ga('instructor_signup_started', {});
 }
 function closeAll() {
   document.querySelectorAll(".cabinet.open").forEach(el => el.classList.remove("open"));
@@ -1935,6 +1936,7 @@ window._openAuthModal = function(role, mode) {
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
   _authModalActive = true;
+  window._ga('auth_modal_open', { role: role || 'select', mode: mode || 'login' });
   if (role) window.renderAuthModalForm(role, mode || 'login');
   else window.renderAuthRoleSelect();
 };
@@ -3521,6 +3523,10 @@ onAuthStateChanged(auth, async user => {
     const _fromModal = _authModalActive;
     const _wasNewReg = _isNewClientReg;
     _isNewClientReg  = false;
+    if (_fromModal) {
+      const method = user.providerData[0]?.providerId === 'google.com' ? 'google' : 'password';
+      window._ga(_wasNewReg ? 'sign_up' : 'login', { method });
+    }
     window._closeAuthModal?.();
     if (_fromModal) {
       openPanel('cabinet');
@@ -3954,6 +3960,7 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
     window._myInstrId = newRef.id;
     if (uid) localStorage.setItem(`myInstrId_${uid}`, newRef.id);
     window._lastOpenedAsInstr = true;
+    window._ga('instructor_application_submitted', { area: area || '', gearbox });
 
     document.getElementById("instr-form-wrap").style.display = "none";
     document.getElementById("instr-foot").style.display = "none";
@@ -4920,6 +4927,7 @@ window._cancelBooking = async function(bookingId) {
   if (!(await window._appConfirm('Скасувати цей запис?'))) return;
   try {
     await updateDoc(doc(db,'bookings',bookingId), { status:'cancelled', cancelledBy:'client' });
+    window._ga('booking_cancelled', { by: 'client' });
     window._reloadClientBk?.();
   } catch(e) { showToast('Не вдалось скасувати', '', 'error'); }
 };
@@ -5422,6 +5430,7 @@ function renderInstrCards(docs, showActions) {
 window._confirmBk = async function(bookingId) {
   try {
     await updateDoc(doc(db,'bookings',bookingId),{status:'confirmed'});
+    window._ga('booking_confirmed_by_instructor', {});
     window._reloadInstrBk?.();
   } catch(e) {
     console.error('_confirmBk error:', e.code, e.message, 'user:', auth.currentUser?.email);
@@ -5433,6 +5442,7 @@ window._rejectBk = async function(bookingId) {
   if (!(await window._appConfirm('Відхилити цей запис?'))) return;
   try {
     await updateDoc(doc(db,'bookings',bookingId),{status:'cancelled'});
+    window._ga('booking_cancelled', { by: 'instructor', reason: 'reject' });
     window._reloadInstrBk?.();
   } catch(e) { showToast('Помилка', 'Спробуйте ще раз', 'error'); }
 };
@@ -5462,6 +5472,7 @@ window._instrCancelBk = async function(bookingId) {
   if (!(await window._appConfirm('Скасувати це заняття? Учень отримає сповіщення.'))) return;
   try {
     await updateDoc(doc(db,'bookings',bookingId),{status:'cancelled'});
+    window._ga('booking_cancelled', { by: 'instructor', reason: 'cancel' });
     window._reloadInstrBk?.();
   } catch(e) { showToast('Помилка', 'Спробуйте ще раз', 'error'); }
 };
@@ -5588,8 +5599,8 @@ function showPhone(phone, col) {
   if (!phone) { w.innerHTML = '<p style="text-align:center;color:var(--text-muted);font-size:13px">Телефон не вказано</p>'; return; }
   const safePhone = _esc(phone), safePh = _esc(phone.replace(/\s/g,''));
   w.innerHTML = `<div style="display:flex;gap:8px;align-items:center;justify-content:center">
-    <a href="tel:${safePhone}" class="btn-call" style="background:${col||'var(--green)'}"><i class="ti ti-phone-call"></i> ${safePhone}</a>
-    <button title="Скопіювати" style="background:none;border:.5px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;font-size:16px;color:var(--text-muted);transition:background .15s" onclick="navigator.clipboard.writeText('${safePh}').then(()=>showToast('Телефон скопійовано','','success')).catch(()=>{})" onmouseover="this.style.background='var(--green-light)'" onmouseout="this.style.background='none'"><i class="ti ti-copy"></i></button>
+    <a href="tel:${safePhone}" class="btn-call" style="background:${col||'var(--green)'}" onclick="window._ga('contact_reveal',{method:'call'})"><i class="ti ti-phone-call"></i> ${safePhone}</a>
+    <button title="Скопіювати" style="background:none;border:.5px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;font-size:16px;color:var(--text-muted);transition:background .15s" onclick="window._ga('contact_reveal',{method:'copy'});navigator.clipboard.writeText('${safePh}').then(()=>showToast('Телефон скопійовано','','success')).catch(()=>{})" onmouseover="this.style.background='var(--green-light)'" onmouseout="this.style.background='none'"><i class="ti ti-copy"></i></button>
   </div>`;
 }
 
