@@ -214,6 +214,12 @@
   gtag('js', new Date());
   gtag('config', 'G-1QDLW9TCGZ', { page_location: location.href, page_title: document.title });
   window._ga = function(event, params) { if (typeof gtag === 'function') gtag('event', event, params || {}); };
+  // Легка видимість помилок, які раніше просто гасились у catch(e){} —
+  // видно в консолі одразу, і трапляється в GA4 як подія (без деталей, що містять PII)
+  window._logErr = function(context, e) {
+    console.error('[' + context + ']', e);
+    window._ga('js_error', { context: context, message: String((e && e.message) || e || '').slice(0, 150) });
+  };
 </script>
 <meta name="theme-color" content="#1a7a4a">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1380,7 +1386,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.323</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.324</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -1804,7 +1810,7 @@ window.openPanel = openPanel;
 window.closeAll  = closeAll;
 window._signOut  = async () => {
   const uid = auth.currentUser?.uid;
-  try { await signOut(auth); } catch(e) {}
+  try { await signOut(auth); } catch(e) { window._logErr('signOut', e); }
   window._myInstrId = null;
   if (uid) localStorage.removeItem(`myInstrId_${uid}`);
   closeAll();
@@ -1813,7 +1819,7 @@ window._setStudentLessonDur = async (dur) => {
   document.querySelectorAll('.student-dur-btn').forEach(b =>
     b.classList.toggle('active', parseInt(b.dataset.dur) === dur));
   if (window._clientProfile) window._clientProfile.lessonDuration = dur;
-  if (auth.currentUser) setDoc(doc(db,'users',auth.currentUser.uid),{lessonDuration:dur},{merge:true}).catch(()=>{});
+  if (auth.currentUser) setDoc(doc(db,'users',auth.currentUser.uid),{lessonDuration:dur},{merge:true}).catch(e => window._logErr('save_lesson_duration', e));
 };
 
 // --- Auth ---
@@ -2876,7 +2882,7 @@ async function loadInstrSettings(instr, container) {
         .then(r=>r.json()).then(d=>{
           if (inp && d.display_name) inp.value = d.display_name.split(',').slice(0,3).join(', ');
           _mpApplyTscTags(d.address);
-        }).catch(()=>{});
+        }).catch(e => window._logErr('reverse_geocode_mp_click', e));
     });
     const q = inp?.value.trim();
     if (q) window._mpGeoSearch(q);
@@ -2933,7 +2939,7 @@ async function loadInstrSettings(instr, container) {
             const inp = document.getElementById('mp-new-input');
             if (inp && d.display_name) inp.value = d.display_name.split(',').slice(0,3).join(', ');
             _mpApplyTscTags(d.address);
-          }).catch(()=>{});
+          }).catch(e => window._logErr('reverse_geocode_mp_mylocation', e));
         restore();
         showToast('Місце визначено', 'Перевірте адресу і натисніть «+», щоб додати точку', 'success');
       };
@@ -2964,7 +2970,7 @@ async function loadInstrSettings(instr, container) {
         const coordEl = document.getElementById('mp-map-coords');
         if (coordEl) coordEl.textContent = `${_mpLatLng.lat}, ${_mpLatLng.lng}`;
         _mpApplyTscTags(address);
-      }).catch(()=>{});
+      }).catch(e => window._logErr('mp_geo_search', e));
   };
   let _mpAcTimer = null;
   window._mpHideSuggest = () => { const ul=document.getElementById('mp-suggests'); if(ul) ul.style.display='none'; };
@@ -2984,7 +2990,7 @@ async function loadInstrSettings(instr, container) {
           }).join('');
           window._mpLastSuggestResults = results;
           ul2.style.display = '';
-        }).catch(()=>{});
+        }).catch(e => console.warn('mp_autocomplete failed:', e.message));
     }, 200);
   };
   window._mpSelectSuggest = (el) => {
@@ -3017,7 +3023,7 @@ async function loadInstrSettings(instr, container) {
           const {lat,lon} = results[0];
           _mpLatLng = {lat:+parseFloat(lat).toFixed(6), lng:+parseFloat(lon).toFixed(6)};
         }
-      } catch(e) {}
+      } catch(e) { window._logErr('geocode_meeting_point', e); }
       if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-plus"></i>'; }
     }
     if (!_mpLatLng) {
@@ -3151,7 +3157,7 @@ async function showBrowserNotif(title, body, data = {}) {
   try {
     const n = new Notification(title, { body, icon: '/favicon.png' });
     n.onclick = () => { handleNotifClick(data); window.focus(); n.close(); };
-  } catch(e) {}
+  } catch(e) { window._logErr('show_browser_notif', e); }
 }
 
 function handleNotifClick(data = {}) {
@@ -3386,7 +3392,7 @@ window._openInstrChat = function(chatId, studentName) {
   window._currentChatRole = 'instructor';
   document.getElementById('chat-panel-title').textContent = studentName || 'Учень';
   window._closeChatPanel = () => { closeAll(); setTimeout(() => openPanel('cabinet'), 180); };
-  updateDoc(doc(db, 'chats', chatId), { unreadByInstr: 0 }).catch(() => {});
+  updateDoc(doc(db, 'chats', chatId), { unreadByInstr: 0 }).catch(e => window._logErr('clear_unread_instr', e));
   closeAll();
   setTimeout(() => { openPanel('chat-panel'); listenChatMessages(chatId, user.uid, 'instructor'); }, 150);
 };
@@ -3509,8 +3515,8 @@ onAuthStateChanged(auth, async user => {
         const existing = s.exists() ? s.data() : {};
         const upd = { email: user.email||'' };
         if (!existing.name) upd.name = user.displayName||''; // set name only if never set
-        setDoc(doc(db, 'users', user.uid), upd, { merge: true }).catch(()=>{});
-      }).catch(()=>{});
+        setDoc(doc(db, 'users', user.uid), upd, { merge: true }).catch(e => window._logErr('sync_google_user_doc', e));
+      }).catch(e => window._logErr('read_user_doc_on_login', e));
     }
     const _fromModal = _authModalActive;
     const _wasNewReg = _isNewClientReg;
@@ -3532,7 +3538,7 @@ onAuthStateChanged(auth, async user => {
         listenInstrBookings(instr.id);
         listenChatBadge(user.uid, 'instructor');
       }
-    }).catch(() => {});
+    }).catch(e => window._logErr('get_my_instr_profile_on_login', e));
   } else {
     btnLogin.style.display = "";
     navUser.style.display  = "none";
@@ -3750,7 +3756,7 @@ window._saveContacts = async function() {
   try {
     await setDoc(doc(db, 'users', user.uid), { name: newName, phone: newPhone }, { merge: true });
     if (newName && newName !== user.displayName) {
-      await updateProfile(user, { displayName: newName }).catch(() => {});
+      await updateProfile(user, { displayName: newName }).catch(e => window._logErr('update_auth_display_name', e));
     }
     if (window._clientProfile) { window._clientProfile.name = newName; window._clientProfile.phone = newPhone; }
     if (btn) { btn.disabled = false; btn.style.display = 'none'; btn.innerHTML = '<i class="ti ti-device-floppy"></i> Зберегти контакти'; }
@@ -4940,7 +4946,7 @@ async function getMyInstrProfile(user) {
   function _cacheAndReturn(d) {
     window._myInstrId = d.id;
     localStorage.setItem(lsKey, d.id);
-    if (!d.data().userId) updateDoc(doc(db,'instructors',d.id),{userId:user.uid}).catch(()=>{});
+    if (!d.data().userId) updateDoc(doc(db,'instructors',d.id),{userId:user.uid}).catch(e => window._logErr('backfill_instructor_userid', e));
     return { id:d.id, ...d.data() };
   }
 
@@ -4963,7 +4969,7 @@ async function getMyInstrProfile(user) {
   try {
     const s3 = await getDocs(query(collection(db,'instructors'),where('email','==',emailLower)));
     if (!s3.empty) return _cacheAndReturn(s3.docs[0]);
-  } catch(e) {}
+  } catch(e) { console.warn('getMyInstrProfile lowercase email query failed:', e?.code||e); }
   return null;
 }
 
@@ -5697,14 +5703,14 @@ function doSearch() {
   window._ga('search', { search_term: query });
   scrollToMap();
   fetch(geoSearchUrl(query, 1))
-    .then(r=>r.json()).then(data => { if (data.length) focusMap({lat:+data[0].lat, lng:+data[0].lon}); }).catch(()=>{});
+    .then(r=>r.json()).then(data => { if (data.length) focusMap({lat:+data[0].lat, lng:+data[0].lon}); }).catch(e => window._logErr('geo_search_do_search', e));
 }
 
 function searchQuery(query) {
   document.getElementById("search-input").value = query;
   scrollToMap();
   fetch(geoSearchUrl(query, 1))
-    .then(r=>r.json()).then(data => { if (data.length) focusMap({lat:+data[0].lat, lng:+data[0].lon}); }).catch(()=>{});
+    .then(r=>r.json()).then(data => { if (data.length) focusMap({lat:+data[0].lat, lng:+data[0].lon}); }).catch(e => window._logErr('geo_search_query', e));
 }
 
 window._filterByName = function(name, instrId) {
