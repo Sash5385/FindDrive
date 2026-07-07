@@ -62,6 +62,23 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .btn-reject{background:none;border:.5px solid var(--border);border-radius:9px;padding:9px 16px;font-size:13px;color:var(--text-muted);cursor:pointer;font-family:inherit;transition:border-color .2s,color .2s;white-space:nowrap}
 .btn-reject:hover{border-color:#cc3333;color:#cc3333}
 
+/* CRITICAL-MASS GAUGE (тригер запуску монетизації — див. MONETIZATION.md §2) */
+.cm-gauge{background:var(--white);border:1px solid #000;border-radius:18px;padding:16px 18px;margin-bottom:18px}
+.cm-gauge-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.cm-gauge-title{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px}
+.cm-gauge-title i{color:var(--green)}
+.cm-gauge-target{font-size:11px;color:var(--text-muted)}
+.cm-gauge-stats{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:12px}
+.cm-stat{display:flex;flex-direction:column;gap:1px}
+.cm-stat-num{font-size:22px;font-weight:700;color:var(--green);line-height:1}
+.cm-stat-lbl{font-size:11px;color:var(--text-muted)}
+.cm-stat.muted .cm-stat-num{color:var(--text-muted)}
+.cm-bar{height:9px;border-radius:20px;background:var(--green-light);overflow:hidden;border:.5px solid var(--border)}
+.cm-bar-fill{height:100%;background:var(--green);border-radius:20px;transition:width .4s ease}
+.cm-bar-fill.ready{background:var(--pink)}
+.cm-gauge-note{font-size:11px;color:var(--text-hint);margin-top:8px;line-height:1.5}
+.cm-gauge-note.ready{color:var(--pink);font-weight:500}
+
 /* ADMIN CARDS (instructors / users / bookings) */
 .admin-header{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-hint);font-weight:500;margin:16px 0 10px;display:flex;align-items:center;gap:7px}
 .admin-header::before{content:'';flex:1;height:.5px;background:var(--border)}
@@ -144,6 +161,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
     </div>
     <div id="tab-instr">
       <div class="page-head"><div class="page-title">Інструктори</div></div>
+      <div id="cm-gauge"></div>
       <div id="instr-list"></div>
     </div>
     <div id="tab-users" style="display:none">
@@ -296,6 +314,8 @@ function listenInstructors() {
       if (pending.length) { badge.textContent = pending.length + ' нових'; badge.style.display = ''; }
       else badge.style.display = 'none';
 
+      renderCriticalMass(approved);
+
       const list = document.getElementById('instr-list');
       list.innerHTML = [
         renderInstrGroup('На розгляді', pending,  'pending'),
@@ -306,6 +326,47 @@ function listenInstructors() {
     err => { document.getElementById('instr-list').innerHTML = '<div class="empty">Помилка завантаження</div>'; console.error(err); }
   );
 }
+
+// Датчик критичної маси — тригер запуску підписки (MONETIZATION.md §2).
+// Поки що суто інформаційний: рахує активних інструкторів проти цільового порога.
+// Поріг зберігаємо в localStorage, щоб коригувати без деплою (клік по числу праворуч).
+const CM_TARGET_DEFAULT = 30;
+function cmTarget() {
+  const v = parseInt(localStorage.getItem('fd_cm_target'), 10);
+  return Number.isFinite(v) && v > 0 ? v : CM_TARGET_DEFAULT;
+}
+function renderCriticalMass(approved) {
+  const el = document.getElementById('cm-gauge');
+  if (!el) return;
+  const active   = approved.length;
+  const verified = approved.filter(i => i.verified).length;
+  const target   = cmTarget();
+  const pct      = Math.min(100, Math.round(active / target * 100));
+  const ready    = active >= target;
+  el.innerHTML = `
+    <div class="cm-gauge">
+      <div class="cm-gauge-top">
+        <div class="cm-gauge-title"><i class="ti ti-flag"></i> Критична маса — тригер запуску підписки</div>
+        <button class="cm-gauge-target" onclick="window._cmEditTarget()" title="Змінити ціль">ціль: ${target} · змінити</button>
+      </div>
+      <div class="cm-gauge-stats">
+        <div class="cm-stat"><span class="cm-stat-num">${active}</span><span class="cm-stat-lbl">активних</span></div>
+        <div class="cm-stat"><span class="cm-stat-num">${verified}</span><span class="cm-stat-lbl">верифікованих</span></div>
+        <div class="cm-stat muted"><span class="cm-stat-num">${pct}%</span><span class="cm-stat-lbl">до цілі</span></div>
+      </div>
+      <div class="cm-bar"><div class="cm-bar-fill ${ready?'ready':''}" style="width:${pct}%"></div></div>
+      <div class="cm-gauge-note ${ready?'ready':''}">${ready
+        ? '✓ Критичну масу досягнуто — можна планувати запуск підписки (заблаговременне повідомлення інструкторам, оферта). Див. MONETIZATION.md.'
+        : `Ще ${target - active} активних до порога. Монетизацію не вмикаємо, доки не набрано аудиторію.`}</div>
+    </div>`;
+}
+window._cmEditTarget = function() {
+  const cur = cmTarget();
+  const next = prompt('Цільова кількість активних інструкторів для запуску підписки:', String(cur));
+  if (next === null) return;
+  const n = parseInt(next, 10);
+  if (Number.isFinite(n) && n > 0) { localStorage.setItem('fd_cm_target', String(n)); location.reload(); }
+};
 
 function renderInstrGroup(label, list, status) {
   if (!list.length) return '';
