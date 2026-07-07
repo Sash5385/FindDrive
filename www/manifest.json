@@ -1,0 +1,31 @@
+{
+  "name": "FindDrive — Знайди інструктора",
+  "short_name": "FindDrive",
+  "description": "Маркетплейс пошуку інструкторів з водіння за геолокацією",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f0f2f0",
+  "theme_color": "#1a7a4a",
+  "lang": "uk",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "logo192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

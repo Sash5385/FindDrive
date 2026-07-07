@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">FindDrive</string>
+    <string name="title_activity_main">FindDrive</string>
+    <string name="package_name">ua.in.finddrive.app</string>
+    <string name="custom_url_scheme">ua.in.finddrive.app</string>
+</resources>

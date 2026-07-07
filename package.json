@@ -1,0 +1,20 @@
+{
+  "name": "finddrive",
+  "version": "1.0.0",
+  "description": "FindDrive — маркетплейс пошуку інструкторів з водіння за геолокацією",
+  "private": true,
+  "scripts": {
+    "cap:sync": "cap sync android",
+    "cap:open": "cap open android"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@capacitor/cli": "^8.4.1"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/core": "^8.4.1"
+  }
+}
