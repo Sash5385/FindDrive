@@ -1386,7 +1386,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.329</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.330</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -4046,6 +4046,23 @@ function _instrHasUpcomingSlots(d) {
   return false;
 }
 
+// ── Підписка інструктора (MONETIZATION.md §6) ────────────────────────────────
+// Поле `subscription` — опційне. Поки монетизацію не запущено, його немає в жодного
+// інструктора, тому всі трактуються як 'free'. Ці helper'и ЛИШЕ нормалізують дані:
+// каталог нікого не ховає й не пересортовує (це окремі кроки 0.2+, і hard-paywall —
+// лише після офіційного заблаговременного повідомлення, MONETIZATION.md §10).
+const SUB_STATUSES = ['free','trialing','active','past_due','canceled'];
+function subState(d){
+  const s = d && d.subscription && d.subscription.status;
+  return SUB_STATUSES.includes(s) ? s : 'free';
+}
+// «Платна активна» — стан, що згодом даватиме перки (пріоритет, бейдж). trialing теж.
+function subActive(d){ return subState(d) === 'active' || subState(d) === 'trialing'; }
+// Чи видимий у каталозі за станом підписки. Готово на майбутнє — ЗАРАЗ НЕ застосовується
+// для приховування (усі 'free' → true; жорсткий paywall вмикаємо окремим рішенням).
+function subVisibleInCatalog(d){ const s = subState(d); return s==='free'||s==='trialing'||s==='active'; }
+window.FD_SUB = { subState, subActive, subVisibleInCatalog };
+
 function buildCard(d, i, id) {
   const th = THEMES[i % THEMES.length];
   const instrTags = Array.isArray(d.tags) ? d.tags : [];
@@ -4060,7 +4077,7 @@ function buildCard(d, i, id) {
   // бейдж міг з'являтися, навіть якщо інструктор жодного разу не вмикав онлайн-запис.
   const isAvailToday = !!getDateAvail(d, _todayStr);
   const hasSlots = _instrHasUpcomingSlots(d);
-  return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}' data-price="${d.price||0}" data-rating="${d.rating||0}" data-gearbox="${esc(d.gearbox||'')}" data-area="${esc((d.area||'').toLowerCase())}" data-instr-id="${esc(id||'')}" data-lat="${d.lat||''}" data-lng="${d.lng||''}" data-dist="" data-name="${esc((d.name||'').toLowerCase())}" data-experience="${d.experience||0}" data-verified="${d.verified?'1':''}" data-today="${isAvailToday?'1':''}" data-has-slots="${hasSlots?'1':''}">
+  return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}' data-price="${d.price||0}" data-rating="${d.rating||0}" data-gearbox="${esc(d.gearbox||'')}" data-area="${esc((d.area||'').toLowerCase())}" data-instr-id="${esc(id||'')}" data-lat="${d.lat||''}" data-lng="${d.lng||''}" data-dist="" data-name="${esc((d.name||'').toLowerCase())}" data-experience="${d.experience||0}" data-verified="${d.verified?'1':''}" data-today="${isAvailToday?'1':''}" data-has-slots="${hasSlots?'1':''}" data-sub="${subState(d)}" data-sub-active="${subActive(d)?'1':''}">
     <div class="card-blob" style="background:${th.blob}"></div>
     <button class="card-fav${isFav?' on':''}" data-fav-id="${esc(id||'')}" onclick="window._toggleFav(this)" title="До обраних"><i class="ti ti-heart${isFav?'-filled':''}"></i></button>
     <div class="card-name-row">
