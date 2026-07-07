@@ -1386,7 +1386,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.327</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.328</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -4053,17 +4053,12 @@ function buildCard(d, i, id) {
   const tags = validTags.length ? validTags : [d.gearbox, (d.car||'').split(' ')[0]].filter(Boolean);
   const isFav = window._favs?.has(id||'');
   const isNew = d.createdAt?.toDate && (Date.now() - d.createdAt.toDate().getTime()) < 30*24*60*60*1000;
-  const _dayNames = ['Нд','Пн','Вт','Ср','Чт','Пт','Сб'];
   const _todayStr = new Date().toISOString().slice(0,10);
-  const _todayOv  = d.availability?.[_todayStr];
-  let isAvailToday;
-  if (_todayOv !== undefined) {
-    if (!_todayOv || _todayOv.open === false) { isAvailToday = false; }
-    else if (_todayOv.openSlots) { isAvailToday = _todayOv.openSlots.length > 0; }
-    else { isAvailToday = !!(_todayOv.from || _todayOv.to); }
-  } else {
-    isAvailToday = Array.isArray(d.days) && d.days.includes(_dayNames[new Date().getDay()]);
-  }
+  // getDateAvail — єдине джерело правди (те саме, що календар запису й _instrHasUpcomingSlots):
+  // враховує і явний override на дату, і scheduleActive + days для загального графіку.
+  // Раніше тут був дубльований підрахунок, який у fallback-гілці не перевіряв scheduleActive —
+  // бейдж міг з'являтися, навіть якщо інструктор жодного разу не вмикав онлайн-запис.
+  const isAvailToday = !!getDateAvail(d, _todayStr);
   const hasSlots = _instrHasUpcomingSlots(d);
   return `<div class="instr-card" data-tags='${JSON.stringify(validTags)}' data-price="${d.price||0}" data-rating="${d.rating||0}" data-gearbox="${esc(d.gearbox||'')}" data-area="${esc((d.area||'').toLowerCase())}" data-instr-id="${esc(id||'')}" data-lat="${d.lat||''}" data-lng="${d.lng||''}" data-dist="" data-name="${esc((d.name||'').toLowerCase())}" data-experience="${d.experience||0}" data-verified="${d.verified?'1':''}" data-today="${isAvailToday?'1':''}" data-has-slots="${hasSlots?'1':''}">
     <div class="card-blob" style="background:${th.blob}"></div>
