@@ -32,10 +32,10 @@ service cloud.firestore {
       allow update: if isAdmin()
                  || (request.auth != null
                      && resource.data.userId == request.auth.uid
-                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']))
+                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'subscription']))
                  || (request.auth != null
                      && resource.data.email == request.auth.token.email
-                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']))
+                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'subscription']))
                  || (request.auth != null
                      && resource.data.userId == null
                      && resource.data.email == request.auth.token.email
@@ -78,6 +78,14 @@ service cloud.firestore {
       // Пише виключно Cloud Function mirrorBookingSlot через Admin SDK (обходить ці правила),
       // тому пряме клієнтське write заборонено.
       allow read: if true;
+      allow write: if false;
+    }
+
+    match /payments/{paymentId} {
+      // Лог платежів підписки (MONETIZATION.md §7-8). Пише виключно Cloud Function
+      // paymentCallback через Admin SDK після перевірки підпису провайдера — клієнтський
+      // write заборонено, щоб ніхто не міг підробити собі "оплачено".
+      allow read: if isAdmin() || isInstructor(resource.data.instructorId);
       allow write: if false;
     }
 

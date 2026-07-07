@@ -1,5 +1,8 @@
 const { onDocumentCreated, onDocumentUpdated, onDocumentWritten } = require('firebase-functions/v2/firestore');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
+const { onRequest } = require('firebase-functions/v2/https');
+const { defineSecret } = require('firebase-functions/params');
+const crypto = require('crypto');
 const admin = require('firebase-admin');
 
 admin.initializeApp();
@@ -269,5 +272,110 @@ exports.onChatMessage = onDocumentCreated(
         { type: 'chat', chatId, instrId: chatId.split('_')[0] }
       );
     }
+  }
+);
+
+// ===== МОНЕТИЗАЦІЯ — ЧЕРНЕТКА (MONETIZATION.md §6-8) =====
+// paymentCallback ще не підключений до реального акаунту LiqPay — назви полів
+// callback-payload (order_id, status, payment_id, amount, currency, err_code,
+// err_description) відповідають публічній документації LiqPay, але фактичну
+// відповідь потрібно звірити в sandbox, коли з'являться реальні ключі.
+// Секрет НЕ зберігається в коді: firebase functions:secrets:set LIQPAY_PRIVATE_KEY
+const LIQPAY_PRIVATE_KEY = defineSecret('LIQPAY_PRIVATE_KEY');
+
+// Функція-ініціатор платежу (створення order_id, редирект на чекаут LiqPay)
+// буде окремим кроком — саме вона й задає цей формат order_id.
+const PLAN_DAYS = { monthly: 30, yearly: 365 };
+function parseSubscriptionOrderId(orderId) {
+  const m = /^sub_([^_]+)_(monthly|yearly)_\d+$/.exec(orderId || '');
+  return m ? { instructorId: m[1], plan: m[2] } : null;
+}
+
+// signature = base64(sha1(private_key + data + private_key)) — офіційна схема LiqPay.
+// timingSafeEqual захищає порівняння підпису від timing-атак; довжини звіряємо
+// заздалегідь, бо сама функція падає при вхідних буферах різного розміру.
+function liqpaySignatureValid(data, signature, privateKey) {
+  const expected = crypto.createHash('sha1').update(privateKey + data + privateKey).digest('base64');
+  if (expected.length !== signature.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+}
+
+// Приймає server-to-server callback від LiqPay про статус платежу підписки.
+exports.paymentCallback = onRequest(
+  { region: 'europe-west1', secrets: [LIQPAY_PRIVATE_KEY] },
+  async (req, res) => {
+    if (req.method !== 'POST') { res.status(405).send('Method Not Allowed'); return; }
+
+    const { data, signature } = req.body || {};
+    if (!data || !signature) { res.status(400).send('Missing data/signature'); return; }
+
+    if (!liqpaySignatureValid(data, signature, LIQPAY_PRIVATE_KEY.value())) {
+      console.error('paymentCallback: invalid signature');
+      res.status(400).send('Invalid signature');
+      return;
+    }
+
+    let payload;
+    try {
+      payload = JSON.parse(Buffer.from(data, 'base64').toString('utf8'));
+    } catch (e) {
+      console.error('paymentCallback: bad payload', e.message);
+      res.status(400).send('Bad payload');
+      return;
+    }
+
+    // LiqPay повторює недоставлені callback'и — захист від подвійної обробки.
+    const eventId = `liqpay_${payload.payment_id || 'noid'}_${payload.status || 'nostatus'}`;
+    if (!(await claimEventOnce(eventId))) { res.status(200).send('OK (duplicate)'); return; }
+
+    await admin.firestore().collection('payments').add({
+      provider: 'liqpay',
+      orderId: payload.order_id || null,
+      paymentId: payload.payment_id || null,
+      status: payload.status || null,
+      amount: payload.amount || null,
+      currency: payload.currency || null,
+      errCode: payload.err_code || null,
+      errDescription: payload.err_description || null,
+      receivedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    const parsed = parseSubscriptionOrderId(payload.order_id);
+    if (!parsed) {
+      console.warn('paymentCallback: unrecognized order_id', payload.order_id);
+      res.status(200).send('OK (unrecognized order_id)');
+      return;
+    }
+    const { instructorId, plan } = parsed;
+    const instrRef = admin.firestore().collection('instructors').doc(instructorId);
+
+    if (['success', 'subscribed'].includes(payload.status)) {
+      const days = PLAN_DAYS[plan] || 30;
+      await instrRef.update({
+        subscription: {
+          status: 'active',
+          plan,
+          provider: 'liqpay',
+          providerRef: payload.payment_id || null,
+          currentPeriodEnd: admin.firestore.Timestamp.fromMillis(Date.now() + days * 86400000),
+          startedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+      });
+    } else if (['failure', 'error'].includes(payload.status)) {
+      // Знижуємо статус лише тим, у кого підписка вже була активна —
+      // невдала перша спроба оплати без попередньої активної підписки нічого не змінює.
+      const snap = await instrRef.get();
+      if (snap.data()?.subscription?.status === 'active') {
+        await instrRef.update({ 'subscription.status': 'past_due' });
+        const uid = snap.data().userId;
+        if (uid) {
+          await sendPush(uid, 'Проблема з оплатою підписки', 'Оновіть спосіб оплати, щоб не втратити пріоритет у видачі', { type: 'admin' });
+        }
+      }
+    } else if (payload.status === 'unsubscribed') {
+      await instrRef.update({ 'subscription.status': 'canceled' });
+    }
+
+    res.status(200).send('OK');
   }
 );
