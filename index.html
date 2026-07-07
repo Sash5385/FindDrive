@@ -1386,7 +1386,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.330</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.331</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -4295,7 +4295,14 @@ async function loadInstructors() {
     }
     const offset = 0;
     window._instrProfiles = window._instrProfiles || {};
-    snap.docs.forEach((docSnap, i) => {
+    // Фаза 0.2 (MONETIZATION.md §12): активна підписка — вище у видачі.
+    // Рендер вставляє картки через insertAdjacentHTML("afterbegin",...), тобто
+    // хто обробляється ОСТАННІМ — опиняється НАЙЛІВІШЕ. Тому активних переносимо
+    // в кінець порядку обробки (ключ 0/1, стабільне сортування): коли активних
+    // немає — всі ключі однакові, порядок не змінюється (перевірено тестом).
+    const docsArr = snap.docs.slice();
+    docsArr.sort((a, b) => (subActive(a.data()) ? 1 : 0) - (subActive(b.data()) ? 1 : 0));
+    docsArr.forEach((docSnap, i) => {
       const d  = docSnap.data();
       const id = docSnap.id;
       const th = THEMES[i % THEMES.length];
@@ -4308,7 +4315,7 @@ async function loadInstructors() {
     setTimeout(_instrSliderSync, 100);
 
     function addMarkers() {
-      snap.docs.forEach((docSnap, i) => {
+      docsArr.forEach((docSnap, i) => {
         const d = docSnap.data();
         const id = docSnap.id;
         const instrColor = THEMES[i % THEMES.length].color;
