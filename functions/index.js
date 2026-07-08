@@ -275,8 +275,13 @@ exports.onChatMessage = onDocumentCreated(
   }
 );
 
-// ===== МОНЕТИЗАЦІЯ — ЧЕРНЕТКА (MONETIZATION.md §6-8) =====
-// paymentCallback ще не підключений до реального акаунту LiqPay — назви полів
+// ===== МОНЕТИЗАЦІЯ — ЧЕРНЕТКА (MONETIZATION.md §5-8) =====
+// УВАГА: обраний провайдер — еквайринг monobank (MONETIZATION.md §5), не LiqPay.
+// Код нижче написано під LiqPay-схему підпису й callback-payload як тимчасову
+// заготовку (спільна форма "перевір підпис → онови subscription" однакова для
+// будь-якого провайдера) — після підтвердження реального формату webhook і
+// підтримки рекуренту в monobank цю функцію потрібно переписати під нього.
+// paymentCallback ще не підключений до реального акаунту — назви полів
 // callback-payload (order_id, status, payment_id, amount, currency, err_code,
 // err_description) відповідають публічній документації LiqPay, але фактичну
 // відповідь потрібно звірити в sandbox, коли з'являться реальні ключі.
