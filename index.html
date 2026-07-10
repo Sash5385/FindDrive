@@ -702,9 +702,10 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .instr-progress-track{height:5px;background:#dde8dd;border-radius:3px;overflow:hidden;margin-bottom:10px}
 .instr-progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width .4s}
 .instr-progress-missing{font-size:11px;color:var(--text-muted);line-height:1.6;display:flex;flex-wrap:wrap;gap:4px 8px}
-.instr-bk-stats{display:flex;gap:8px;margin-bottom:12px}
-.instr-bk-stat{flex:1;background:var(--bg);border-radius:10px;padding:10px 6px;text-align:center;border:.5px solid var(--border);cursor:pointer;transition:background .15s,border-color .15s;font-family:inherit}
-.instr-bk-stat:hover{background:var(--green-light);border-color:#b8ddc8}
+.instr-bk-stats{display:flex;margin-bottom:12px;background:var(--white);border-radius:12px;border:.5px solid var(--border);overflow:hidden}
+.instr-bk-stat{flex:1;background:none;border-radius:0;padding:12px 6px;text-align:center;border:none;border-right:.5px solid var(--border);cursor:pointer;transition:background .15s;font-family:inherit}
+.instr-bk-stat:last-child{border-right:none}
+.instr-bk-stat:hover{background:var(--green-light)}
 .instr-bk-stat:active{background:#d0eadb}
 .instr-bk-stat b{display:block;font-size:18px;font-weight:700;color:var(--green);line-height:1}
 .instr-bk-stat span{font-size:10px;color:var(--text-hint);margin-top:3px;display:block;line-height:1.2}
@@ -979,8 +980,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .av-cal-day.av-closed{background:#fff0f0;color:#cc3333}
 .av-cal-day.today-av{outline:1.5px solid var(--green);outline-offset:-1px}
 .av-cal-day.selected-av{background:var(--green)!important;color:#fff!important;font-weight:600}
-.av-legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
-.av-legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text-muted)}
+.av-legend{display:grid;grid-template-columns:1fr 1fr 1fr;background:var(--white);border:.5px solid var(--border);border-radius:12px;padding:10px 6px;margin-bottom:12px}
+.av-legend-item{display:flex;align-items:center;justify-content:center;gap:6px;font-size:10.5px;color:var(--text-muted)}
 .av-legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
 .avail-edit-wrap{background:var(--white);border:.5px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px}
 .avail-edit-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
@@ -1386,7 +1387,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.333</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.334</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -5274,12 +5275,12 @@ async function loadInstrCombined(instr, container) {
       const tab = _activeStatFilter;
       _activeStatFilter = null;
       container.innerHTML = buildScheduleCard() + _statsHtml + `
+        ${buildCal()}
         <div class="av-legend">
           <div class="av-legend-item"><div class="av-legend-dot" style="background:var(--green-light);border:.5px solid var(--green)"></div>Відкрито</div>
           <div class="av-legend-item"><div class="av-legend-dot" style="background:#f0faf4;border:.5px solid #2a8a5a"></div>Щотижня</div>
           <div class="av-legend-item"><div class="av-legend-dot" style="background:#fff0f0;border:.5px solid #cc3333"></div>Закрито</div>
         </div>
-        ${buildCal()}
         ${editDate ? buildDayPanel() : buildAllBk(tab)}`;
       if (tab) setTimeout(() => container.querySelector('.bk-tabs')?.scrollIntoView({behavior:'smooth',block:'start'}), 60);
     }
