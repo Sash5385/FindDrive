@@ -1386,7 +1386,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.331</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.332</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -5072,7 +5072,9 @@ async function loadInstrCombined(instr, container) {
         const bbox = `${(spt.lng-0.005).toFixed(5)},${(spt.lat-0.005).toFixed(5)},${(spt.lng+0.005).toFixed(5)},${(spt.lat+0.005).toFixed(5)}`;
         previewHtml = `<iframe class="mp-preview-map" src="https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${spt.lat},${spt.lng}" loading="lazy"></iframe>`;
       }
-      const dayBks = bkByDate[editDate]||[];
+      // Скасовані записи не повинні займати годинний слот у сітці — інакше він назавжди
+      // лишається "зайнятим" навіть після скасування, і слот ніколи не звільняється.
+      const dayBks = (bkByDate[editDate]||[]).filter(b => b.status !== 'cancelled');
       const bkMap = {};
       dayBks.forEach(b => { if (b.time) bkMap[b.time] = b; });
       const lessonMin = instr.lessonDuration || LESSON_MIN;
