@@ -1386,7 +1386,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.332</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.333</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -1395,7 +1395,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <div class="cab-header">
     <div id="prof-head" style="display:flex;align-items:center;gap:14px;flex:1;min-width:0;overflow:hidden"></div>
     <button class="cab-share" onclick="window._shareInstructor()" title="Поділитися" aria-label="Поділитися"><i class="ti ti-share-2"></i></button>
-    <button class="cab-close" onclick="window.closeAll()"><i class="ti ti-x"></i></button>
+    <button class="cab-close" onclick="(window._closeInstrProfilePanel||window.closeAll)()"><i class="ti ti-x"></i></button>
   </div>
   <div id="prof-body" class="cab-body" style="padding:0 20px 24px"></div>
 </aside>
@@ -3083,7 +3083,13 @@ async function loadInstrSettings(instr, container) {
   window._previewInstrProfile = (instrId) => {
     if (!window._instrProfiles) window._instrProfiles = {};
     if (!window._instrProfiles[instrId]) window._instrProfiles[instrId] = { ...instr };
-    openInstrProfile(instrId);
+    // instr-panel and instr-profile share the same z-index and stack by DOM order,
+    // so instr-profile must close the settings panel first or it opens hidden behind it
+    closeAll();
+    setTimeout(() => {
+      openInstrProfile(instrId);
+      window._closeInstrProfilePanel = () => { closeAll(); setTimeout(() => openPanel('instr-panel'), 180); };
+    }, 150);
   };
 
   renderAll();
@@ -5491,6 +5497,7 @@ function _esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'
 function openInstrProfile(id, mpIdx) {
   const d = (window._instrProfiles||{})[id];
   if (!d) return;
+  window._closeInstrProfilePanel = closeAll;
   window._ga('instructor_profile_open', { instructor_id: id, instructor_name: d.name||'', city: d.area||'' });
   const ini = (d.name||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';
   const col = d.color||'#1a7a4a';
