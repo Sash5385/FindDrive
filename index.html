@@ -800,7 +800,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .cabinet.instr-profile-panel.open{transform:scale(1) translateY(0)}
 .prof-section-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-hint);margin-bottom:10px;font-weight:500;display:flex;align-items:center;gap:6px}
 .prof-mp-list{display:flex;flex-direction:column;gap:7px;margin-bottom:4px}
-.prof-mp-item{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--text-muted)}
+.prof-mp-item{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--text-muted);cursor:pointer;padding:4px 6px;margin:0 -6px;border-radius:8px;transition:background .15s}
+.prof-mp-item:hover{background:var(--green-light)}
 .prof-mp-nav{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;color:var(--text-hint);border:.5px solid var(--border);transition:color .15s,border-color .15s,background .15s;flex-shrink:0;text-decoration:none;font-size:14px}
 .prof-mp-nav:hover{color:var(--green);border-color:var(--green);background:var(--green-light)}
 .prof-mp-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
@@ -1387,7 +1388,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.334</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.335</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -5495,6 +5496,12 @@ window._instrProfiles = window._instrProfiles || {};
 
 function _esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
+window._profMiniMapGoTo = (lat, lng) => {
+  const m = window._profMiniMap;
+  if (!m || !lat || !lng) return;
+  m.flyTo([lat, lng], Math.max(m.getZoom(), 16), { duration: 0.6 });
+};
+
 function openInstrProfile(id, mpIdx) {
   const d = (window._instrProfiles||{})[id];
   if (!d) return;
@@ -5538,8 +5545,8 @@ function openInstrProfile(id, mpIdx) {
       <div class="prof-section-label"><i class="ti ti-map-pins" style="color:${col}"></i> Точки зустрічі</div>
       <div class="prof-mp-list">${mps.map((mp,i)=>{
         const gmUrl = (mp.lat && mp.lng) ? `https://www.google.com/maps/dir/?api=1&destination=${mp.lat},${mp.lng}` : '';
-        const navBtn = gmUrl ? `<a href="${gmUrl}" target="_blank" rel="noopener" class="prof-mp-nav" title="Прокласти маршрут"><i class="ti ti-navigation"></i></a>` : '';
-        return `<div class="prof-mp-item"><div class="prof-mp-dot" style="background:${MP_COLORS[i%4]}"></div><span style="flex:1">${_esc(mp.label||'Точка '+(i+1))}</span>${navBtn}</div>`;
+        const navBtn = gmUrl ? `<a href="${gmUrl}" target="_blank" rel="noopener" class="prof-mp-nav" title="Прокласти маршрут" onclick="event.stopPropagation()"><i class="ti ti-navigation"></i></a>` : '';
+        return `<div class="prof-mp-item" onclick="window._profMiniMapGoTo(${mp.lat},${mp.lng})"><div class="prof-mp-dot" style="background:${MP_COLORS[i%4]}"></div><span style="flex:1">${_esc(mp.label||'Точка '+(i+1))}</span>${navBtn}</div>`;
       }).join('')}</div>
     ` : ''}
     ${(d.lat && d.lng) || mps.length ? `
@@ -5582,7 +5589,7 @@ function openInstrProfile(id, mpIdx) {
       if (typeof L === 'undefined') return;
       const mm2 = document.getElementById('prof-mini-map');
       if (!mm2) return;
-      const miniMap = L.map(mm2, { zoomControl: false, scrollWheelZoom: false, attributionControl: false }).setView([lat, lng], 14);
+      const miniMap = L.map(mm2, { zoomControl: true, scrollWheelZoom: true, attributionControl: false }).setView([lat, lng], 14);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(miniMap);
       if (d.lat && d.lng) {
         L.marker([d.lat, d.lng]).addTo(miniMap);
