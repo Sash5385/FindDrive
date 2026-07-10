@@ -822,7 +822,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .photo-car-preview{width:110px;height:74px;border-radius:9px;background:var(--bg);border:1.5px dashed #b8d8c8;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--text-hint);overflow:hidden;transition:border-color .2s,color .2s}
 .photo-car-preview img{width:100%;height:100%;object-fit:cover}
 .photo-upload:hover .photo-car-preview{border-color:var(--green);color:var(--green)}
-.prof-car-photo{width:100%;max-height:140px;border-radius:9px;object-fit:cover;margin-bottom:14px;border:.5px solid var(--border)}
+.prof-car-photo{width:100%;aspect-ratio:4/3;max-height:360px;border-radius:9px;object-fit:cover;margin-bottom:14px;border:.5px solid var(--border)}
 .prof-mini-map{height:180px;border-radius:12px;overflow:hidden;margin-bottom:4px;border:.5px solid var(--border)}
 .prof-rating-row{font-size:12px;color:var(--text-hint);margin-top:3px}
 .prof-price-row{display:flex;align-items:baseline;gap:12px;margin:16px 0 12px}
@@ -1388,7 +1388,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.336</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.337</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -3676,7 +3676,7 @@ window._onStudentPhotoChange = function(input) {
 
 function _showPhotoCrop(file, onConfirm, opts) {
   const rect = opts && opts.rect;
-  const CW = rect ? 320 : 240, CH = rect ? 213 : 240;
+  const CW = rect ? 320 : 240, CH = rect ? 240 : 240;
   const cx = CW / 2, cy = CH / 2;
 
   const modal = document.getElementById('crop-modal');
@@ -3740,7 +3740,7 @@ function _showPhotoCrop(file, onConfirm, opts) {
   canvas.ontouchend   = endDrag;
 
   document.getElementById('crop-confirm-btn').onclick = () => {
-    const outW = rect ? 400 : 200, outH = rect ? 267 : 200;
+    const outW = rect ? 400 : 200, outH = rect ? 300 : 200;
     const out = document.createElement('canvas');
     out.width = outW; out.height = outH;
     const octx = out.getContext('2d');
@@ -5862,7 +5862,7 @@ function _instrPopupHtml(inst, id) {
         <button onclick="_mainMap.closePopup()" aria-label="Закрити" style="position:absolute;top:6px;right:6px;width:20px;height:20px;border:none;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;font-size:12px;line-height:1"><i class="ti ti-x"></i></button>
         <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,.5);flex-shrink:0">${av}</div>
         <div style="min-width:0">
-          <div style="font-weight:600;color:#fff;font-size:12.5px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(inst.name)}</div>
+          <div style="font-weight:600;color:#fff;font-size:12.5px;line-height:1.25;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden">${_esc(inst.name)}</div>
           <div style="color:rgba(255,255,255,.8);font-size:11px;margin-top:2px">⭐ ${inst.rating||'—'} · ${inst.price ? inst.price+' грн/год' : '—'}</div>
         </div>
       </div>
