@@ -781,8 +781,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .radio-group{display:flex;gap:14px;flex-wrap:wrap}
 .radio-opt{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-muted);cursor:pointer}
 .radio-opt input{accent-color:var(--green);cursor:pointer;width:14px;height:14px}
-.days-grid{display:flex;gap:6px;flex-wrap:wrap}
-.day-opt{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;border:.5px solid var(--border);font-size:12px;font-weight:500;color:var(--text-muted);cursor:pointer;transition:background .15s,border-color .15s,color .15s;position:relative;user-select:none}
+.days-grid{display:flex;gap:6px}
+.day-opt{display:flex;align-items:center;justify-content:center;flex:1;min-width:0;height:36px;border-radius:8px;border:.5px solid var(--border);font-size:12px;font-weight:500;color:var(--text-muted);cursor:pointer;transition:background .15s,border-color .15s,color .15s;position:relative;user-select:none}
 .day-opt input{position:absolute;opacity:0;width:0;height:0}
 .day-opt:has(input:checked){background:var(--green);border-color:var(--green);color:#fff}
 .day-opt:hover:not(:has(input:checked)){background:var(--green-light);border-color:#b8d8c8;color:var(--green)}
@@ -1386,7 +1386,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.330</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.331</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
