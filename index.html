@@ -837,7 +837,16 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .prof-cert-rule{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px}
 .prof-cert-rule span{height:.5px;width:44px;max-width:44px;background:#cfe6d8}
 .prof-cert-rule em{font-style:normal;font-size:11.5px;color:var(--text-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
-.prof-tags-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.prof-hero-price{text-align:center;margin:16px 0 12px}
+.prof-hero-price .prof-price-big{font-size:30px;font-weight:800;letter-spacing:-.5px}
+.prof-stat-strip{display:flex;background:var(--green-light);border:.5px solid #cfe6d8;border-radius:14px;overflow:hidden;margin-bottom:12px}
+.prof-stat-seg{flex:1;padding:11px 8px;text-align:center;display:flex;flex-direction:column;gap:3px;min-width:0}
+.prof-stat-seg+.prof-stat-seg{border-left:.5px solid #cfe6d8}
+.prof-stat-seg .v{font-size:15px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prof-stat-seg .v.ok{color:var(--green);display:inline-flex;align-items:center;justify-content:center;gap:4px}
+.prof-stat-seg .l{font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--text-hint);font-weight:600}
+.prof-area-c{display:flex;align-items:center;justify-content:center;gap:7px;font-size:13px;color:var(--text-muted);margin-bottom:14px}
+.prof-tags-row{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-bottom:14px}
 .prof-about-box{background:var(--bg);border-radius:12px;padding:14px;font-size:13px;color:var(--text-hint);font-style:italic;line-height:1.55;margin-bottom:16px}
 .prof-divider{height:.5px;background:var(--border);margin:16px 0}
 .btn-show-phone{width:100%;background:var(--green-light);color:var(--green);border:none;border-radius:10px;padding:13px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s}
@@ -1395,7 +1404,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.339</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.340</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -5521,6 +5530,10 @@ function openInstrProfile(id, mpIdx) {
   function _ts(tag){ const c=TC[tag]; return c?`background:${c.bg};color:${c.tx};border-color:${c.bd}`:'background:#f0f5f0;color:#4a6a5a;border-color:#dde8dd'; }
   const instrTags = Array.isArray(d.tags) ? d.tags.filter(t=>(window.INSTR_TAGS||[]).includes(t)) : [];
   const mps = (d.meetingPoints||[]).filter(pt=>typeof pt==='object'&&pt.lat);
+  const statSegs = [];
+  if (d.experience) statSegs.push(`<div class="prof-stat-seg"><span class="v">${_esc(String(d.experience))} р.</span><span class="l">Стаж</span></div>`);
+  if (d.verified) statSegs.push(`<div class="prof-stat-seg"><span class="v ok"><i class="ti ti-shield-check"></i> Так</span><span class="l">Верифіковано</span></div>`);
+  if (d.rating) statSegs.push(`<div class="prof-stat-seg"><span class="v">${_esc(String(d.rating))} ★</span><span class="l">Рейтинг</span></div>`);
 
   document.getElementById('instr-profile').dataset.instrId = id;
   document.getElementById('prof-head').innerHTML = `
@@ -5533,12 +5546,9 @@ function openInstrProfile(id, mpIdx) {
     </div>`;
 
   document.getElementById('prof-body').innerHTML = `
-    <div class="prof-price-row">
-      ${d.price ? `<span class="prof-price-big">${_esc(String(d.price))} грн<span class="prof-price-per"> / год</span></span>` : ''}
-      ${d.experience ? `<span class="prof-exp-chip">${_esc(String(d.experience))} р. стажу</span>` : ''}
-      ${d.verified ? `<span class="badge-verified"><i class="ti ti-shield-check" style="font-size:10px"></i> Верифіковано</span>` : ''}
-    </div>
-    ${d.area ? `<div class="prof-row"><i class="ti ti-map-pin" style="color:${col}"></i> ${_esc(d.area)}</div>` : ''}
+    ${d.price ? `<div class="prof-hero-price"><span class="prof-price-big">${_esc(String(d.price))} грн<span class="prof-price-per"> / год</span></span></div>` : ''}
+    ${statSegs.length ? `<div class="prof-stat-strip">${statSegs.join('')}</div>` : ''}
+    ${d.area ? `<div class="prof-area-c"><i class="ti ti-map-pin" style="color:${col}"></i> ${_esc(d.area)}</div>` : ''}
     ${(d.certNumber || d.certExpiry) ? `<div class="prof-cert">
       <i class="ti ti-certificate prof-cert-ico"></i>
       <div class="prof-cert-lab">Атестат спеціаліста</div>
