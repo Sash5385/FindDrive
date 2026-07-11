@@ -1388,7 +1388,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.337</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.338</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -5532,6 +5532,7 @@ function openInstrProfile(id, mpIdx) {
       ${d.verified ? `<span class="badge-verified"><i class="ti ti-shield-check" style="font-size:10px"></i> Верифіковано</span>` : ''}
     </div>
     ${d.area ? `<div class="prof-row"><i class="ti ti-map-pin" style="color:${col}"></i> ${_esc(d.area)}</div>` : ''}
+    ${(d.certNumber || d.certExpiry) ? `<div class="prof-row"><i class="ti ti-certificate" style="color:${col}"></i> Атестат спеціаліста${d.certNumber ? ' № '+_esc(d.certNumber) : ''}${d.certExpiry ? ` <span style="color:var(--text-muted)">· дійсний до ${_esc(d.certExpiry.split('-').reverse().join('.'))}</span>` : ''}</div>` : ''}
     ${instrTags.length ? `<div class="prof-tags-row">${instrTags.map(t=>`<span class="tag" style="${_ts(t)}">${_esc(t)}</span>`).join('')}</div>` : ''}
     ${d.about ? `<div class="prof-about-box">"${_esc(d.about)}"</div>` : ''}
     ${d.carPhoto ? `<img src="${_esc(d.carPhoto)}" class="prof-car-photo" alt="Авто інструктора" loading="lazy">` : ''}
