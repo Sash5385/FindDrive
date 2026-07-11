@@ -830,6 +830,13 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .prof-price-per{font-size:13px;font-weight:400;color:var(--text-muted)}
 .prof-exp-chip{background:var(--green-light);color:var(--green);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:500}
 .prof-row{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-muted);margin-bottom:10px}
+.prof-cert{text-align:center;padding:16px 12px;border:.5px solid #cfe6d8;border-radius:14px;background:var(--green-light);margin-bottom:14px}
+.prof-cert-ico{font-size:24px;color:var(--green);display:block;margin-bottom:4px;line-height:1}
+.prof-cert-lab{font-size:10.5px;letter-spacing:2px;text-transform:uppercase;color:var(--green);font-weight:600;margin-bottom:6px}
+.prof-cert-num{font-size:20px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:.5px}
+.prof-cert-rule{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px}
+.prof-cert-rule span{height:.5px;width:44px;max-width:44px;background:#cfe6d8}
+.prof-cert-rule em{font-style:normal;font-size:11.5px;color:var(--text-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .prof-tags-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
 .prof-about-box{background:var(--bg);border-radius:12px;padding:14px;font-size:13px;color:var(--text-hint);font-style:italic;line-height:1.55;margin-bottom:16px}
 .prof-divider{height:.5px;background:var(--border);margin:16px 0}
@@ -1388,7 +1395,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.338</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.339</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -5532,7 +5539,12 @@ function openInstrProfile(id, mpIdx) {
       ${d.verified ? `<span class="badge-verified"><i class="ti ti-shield-check" style="font-size:10px"></i> Верифіковано</span>` : ''}
     </div>
     ${d.area ? `<div class="prof-row"><i class="ti ti-map-pin" style="color:${col}"></i> ${_esc(d.area)}</div>` : ''}
-    ${(d.certNumber || d.certExpiry) ? `<div class="prof-row"><i class="ti ti-certificate" style="color:${col}"></i> Атестат спеціаліста${d.certNumber ? ' № '+_esc(d.certNumber) : ''}${d.certExpiry ? ` <span style="color:var(--text-muted)">· дійсний до ${_esc(d.certExpiry.split('-').reverse().join('.'))}</span>` : ''}</div>` : ''}
+    ${(d.certNumber || d.certExpiry) ? `<div class="prof-cert">
+      <i class="ti ti-certificate prof-cert-ico"></i>
+      <div class="prof-cert-lab">Атестат спеціаліста</div>
+      ${d.certNumber ? `<div class="prof-cert-num">${_esc(d.certNumber)}</div>` : ''}
+      ${d.certExpiry ? `<div class="prof-cert-rule"><span></span><em>дійсний до ${_esc(d.certExpiry.split('-').reverse().join('.'))}</em><span></span></div>` : ''}
+    </div>` : ''}
     ${instrTags.length ? `<div class="prof-tags-row">${instrTags.map(t=>`<span class="tag" style="${_ts(t)}">${_esc(t)}</span>`).join('')}</div>` : ''}
     ${d.about ? `<div class="prof-about-box">"${_esc(d.about)}"</div>` : ''}
     ${d.carPhoto ? `<img src="${_esc(d.carPhoto)}" class="prof-car-photo" alt="Авто інструктора" loading="lazy">` : ''}
