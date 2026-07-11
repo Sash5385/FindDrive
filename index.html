@@ -846,6 +846,10 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .prof-stat-seg .v.ok{color:var(--green);display:inline-flex;align-items:center;justify-content:center;gap:4px}
 .prof-stat-seg .l{font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--text-hint);font-weight:600}
 .prof-area-c{display:flex;align-items:center;justify-content:center;gap:7px;font-size:13px;color:var(--text-muted);margin-bottom:14px}
+.prof-sec{display:flex;align-items:center;gap:12px;margin:18px 0 12px}
+.prof-sec::before,.prof-sec::after{content:"";flex:1;height:.5px;background:var(--border)}
+.prof-sec span{display:inline-flex;align-items:center;gap:6px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-hint);font-weight:600;white-space:nowrap}
+.prof-tsc-list{text-align:center;font-size:12.5px;color:var(--text-muted);line-height:1.7;margin-bottom:4px}
 .prof-tags-row{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-bottom:14px}
 .prof-about-box{background:var(--bg);border-radius:12px;padding:14px;font-size:13px;color:var(--text-hint);font-style:italic;line-height:1.55;margin-bottom:16px}
 .prof-divider{height:.5px;background:var(--border);margin:16px 0}
@@ -1404,7 +1408,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.340</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.341</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -5558,14 +5562,12 @@ function openInstrProfile(id, mpIdx) {
     ${instrTags.length ? `<div class="prof-tags-row">${instrTags.map(t=>`<span class="tag" style="${_ts(t)}">${_esc(t)}</span>`).join('')}</div>` : ''}
     ${d.about ? `<div class="prof-about-box">"${_esc(d.about)}"</div>` : ''}
     ${d.carPhoto ? `<img src="${_esc(d.carPhoto)}" class="prof-car-photo" alt="Авто інструктора" loading="lazy">` : ''}
-    <div class="prof-divider"></div>
     <div class="prof-booking-section">
-      <div class="booking-label">Записатись на заняття</div>
+      <div class="prof-sec"><span><i class="ti ti-calendar-event" style="color:${col}"></i> Записатись на заняття</span></div>
       <div id="prof-booking"><div class="slot-loading"><i class="ti ti-loader"></i></div></div>
     </div>
     ${mps.length ? `
-      <div class="prof-divider"></div>
-      <div class="prof-section-label"><i class="ti ti-map-pins" style="color:${col}"></i> Точки зустрічі</div>
+      <div class="prof-sec"><span><i class="ti ti-map-pins" style="color:${col}"></i> Точки зустрічі</span></div>
       <div class="prof-mp-list">${mps.map((mp,i)=>{
         const gmUrl = (mp.lat && mp.lng) ? `https://www.google.com/maps/dir/?api=1&destination=${mp.lat},${mp.lng}` : '';
         const navBtn = gmUrl ? `<a href="${gmUrl}" target="_blank" rel="noopener" class="prof-mp-nav" title="Прокласти маршрут" onclick="event.stopPropagation()"><i class="ti ti-navigation"></i></a>` : '';
@@ -5573,16 +5575,14 @@ function openInstrProfile(id, mpIdx) {
       }).join('')}</div>
     ` : ''}
     ${(d.lat && d.lng) || mps.length ? `
-      <div class="prof-divider"></div>
-      <div class="prof-section-label"><i class="ti ti-map" style="color:${col}"></i> На мапі</div>
+      <div class="prof-sec"><span><i class="ti ti-map" style="color:${col}"></i> На мапі</span></div>
       <div id="prof-mini-map" class="prof-mini-map"></div>
     ` : ''}
     ${(d.tscKnown||[]).length ? `
-      <div class="prof-divider"></div>
-      <div class="prof-row" style="align-items:flex-start"><i class="ti ti-building" style="color:${col};flex-shrink:0;margin-top:1px"></i><span style="font-size:12px;line-height:1.5">${d.tscKnown.map(_esc).join('<br>')}</span></div>
+      <div class="prof-sec"><span><i class="ti ti-building" style="color:${col}"></i> Знайомі ТСЦ</span></div>
+      <div class="prof-tsc-list">${d.tscKnown.map(t=>`<div>${_esc(t)}</div>`).join('')}</div>
     ` : ''}
-    <div class="prof-divider"></div>
-    <div class="prof-section-label"><i class="ti ti-star" style="color:#f5a623"></i> Відгуки</div>
+    <div class="prof-sec"><span><i class="ti ti-star" style="color:#f5a623"></i> Відгуки</span></div>
     <div id="prof-reviews-list"><div class="prof-review-empty"><i class="ti ti-loader"></i></div></div>
     <div class="prof-divider"></div>
     <div id="prof-phone-wrap">
