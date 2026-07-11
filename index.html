@@ -740,7 +740,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .bk-mp-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 .bk-mp-chip{display:inline-flex;align-items:center;gap:4px;background:var(--green-light);color:var(--green);border-radius:20px;padding:3px 10px;font-size:11px;text-decoration:none;border:.5px solid #b8ddc8;transition:background .15s,color .15s}
 .bk-mp-chip:hover{background:var(--green);color:#fff}
-.bk-day-hours{display:inline-flex;align-items:center;gap:5px;background:var(--bg);border-radius:7px;padding:4px 10px;font-size:12px;color:var(--text-muted);margin-bottom:6px}
+.bk-day-hours{display:flex;width:fit-content;align-items:center;gap:5px;background:var(--bg);border-radius:7px;padding:4px 10px;font-size:12px;color:var(--text-muted);margin:0 auto 6px}
 .dur-pick-row{display:flex;gap:8px;margin-top:8px}
 .dur-pick-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:12px 0;border:.5px solid var(--border);border-radius:9px;background:var(--bg);cursor:pointer;font-family:inherit;transition:all .15s;gap:3px}
 .dur-pick-btn:hover,.dur-pick-btn.active{background:var(--green);border-color:var(--green);color:#fff}
@@ -860,15 +860,15 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 
 /* BOOKING PICKER */
 .prof-booking-section{padding:0 0 4px}
-.booking-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-hint);margin-bottom:10px;font-weight:500}
-.date-grid{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:4px}
+.booking-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-hint);margin-bottom:10px;font-weight:500;text-align:center}
+.date-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;margin-bottom:4px}
 .date-chip{background:var(--bg);border:.5px solid var(--border);border-radius:10px;padding:6px 8px;cursor:pointer;font-size:11px;font-family:inherit;text-align:center;min-width:46px;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:1px;color:var(--text)}
 .date-chip-day{font-size:10px;color:var(--text-hint);text-transform:uppercase;transition:color .15s}
 .date-chip-num{font-size:12px;font-weight:500;white-space:nowrap;transition:color .15s}
 .date-chip:hover{border-color:var(--green);background:var(--green-light)}
 .date-chip.selected{background:var(--green);border-color:var(--green)}
 .date-chip.selected .date-chip-day,.date-chip.selected .date-chip-num{color:#fff}
-.slot-grid{display:flex;flex-wrap:wrap;gap:7px}
+.slot-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:7px}
 .slot-chip{background:var(--bg);border:.5px solid var(--border);border-radius:9px;padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;color:var(--text);transition:all .15s}
 .slot-chip:hover:not(:disabled){background:var(--green-light);border-color:var(--green);color:var(--green)}
 .slot-chip.selected{background:var(--green);border-color:var(--green);color:#fff}
@@ -1012,7 +1012,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .avail-time-row input,.avail-loc-row input{width:100%;border:.5px solid var(--border);border-radius:6px;padding:6px 8px;font-size:12px;font-family:inherit;background:var(--white);box-sizing:border-box}
 .avail-loc-row{margin-bottom:10px}
 .avail-save-row{display:flex;gap:6px}
-.book-loc{display:inline-flex;align-items:center;gap:5px;background:var(--blue-light);color:var(--blue);border-radius:8px;padding:4px 10px;font-size:11px;margin-bottom:8px}
+.book-loc{display:flex;width:fit-content;align-items:center;gap:5px;background:var(--blue-light);color:var(--blue);border-radius:8px;padding:4px 10px;font-size:11px;margin:0 auto 8px}
 /* ADMIN */
 .admin-header{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-hint);font-weight:500;margin:16px 0 10px;display:flex;align-items:center;gap:7px}
 .admin-header::before{content:'';flex:1;height:.5px;background:var(--border)}
@@ -1408,7 +1408,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.341</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.342</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
