@@ -1408,7 +1408,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.343</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.344</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -4082,7 +4082,7 @@ function buildCard(d, i, id) {
   const th = THEMES[i % THEMES.length];
   const instrTags = Array.isArray(d.tags) ? d.tags : [];
   const validTags = instrTags.filter(t => INSTR_TAGS.includes(t));
-  const tags = validTags.length ? validTags : [d.gearbox, (d.car||'').split(' ')[0]].filter(Boolean);
+  const tags = validTags.length ? validTags : [gearboxLabel(d.gearbox), (d.car||'').split(' ')[0]].filter(Boolean);
   const isFav = window._favs?.has(id||'');
   const isNew = d.createdAt?.toDate && (Date.now() - d.createdAt.toDate().getTime()) < 30*24*60*60*1000;
   const _todayStr = new Date().toISOString().slice(0,10);
