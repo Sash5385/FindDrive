@@ -259,11 +259,12 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .nav-tagline{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:400;color:rgba(255,255,255,.92);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .nav-tagline i{font-size:16px;color:#fff;flex-shrink:0}
 @media(max-width:1000px){.nav-tagline{font-size:12px}.nav-tagline i{font-size:15px}}
-.nav-role-links{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:nowrap}
-.nav-role-btn{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap;text-decoration:none;transition:background .15s,transform .15s}
+.nav-role-links{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:nowrap}
+.nav-role-btn{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:20px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;text-decoration:none;transition:background .15s,transform .15s}
 .nav-role-btn:hover{background:rgba(255,255,255,.26);transform:translateY(-1px)}
-.nav-role-btn i{font-size:15px}
-@media(max-width:1080px){.nav-role-btn span{display:none}.nav-role-btn{padding:9px 11px}.nav-role-btn i{font-size:16px}}
+.nav-role-btn i{font-size:16px}
+@media(max-width:900px){.nav-role-btn span{display:none}.nav-role-btn{padding:9px;width:36px;height:36px;justify-content:center;border-radius:50%}.nav-role-btn i{font-size:17px}}
+@media(max-width:600px){.nav-role-links{gap:6px}.nav-role-btn{width:32px;height:32px;padding:7px}.nav-role-btn i{font-size:16px}}
 .nav-link{font-size:14px;color:rgba(255,255,255,.85);text-decoration:none;transition:color .2s}
 .nav-link:hover{color:#fff}
 .nav-right{display:flex;align-items:center;gap:14px}
@@ -385,7 +386,7 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .instr-slider-btn.prev{left:-18px}
 .instr-slider-btn.next{right:-18px}
 .instr-slider-btn:disabled{opacity:.3;cursor:default;pointer-events:none}
-@media(max-width:600px){.instr-slider-btn{display:none}.nav-links{display:none}.nav-burger{display:flex;align-items:center;justify-content:center}.section,.map-section{padding-left:20px;padding-right:20px}.nav{padding:0 20px}.hero-h1{font-size:26px}}
+@media(max-width:600px){.instr-slider-btn{display:none}.nav-burger{display:flex;align-items:center;justify-content:center}.section,.map-section{padding-left:20px;padding-right:20px}.nav{padding:0 14px}.hero-h1{font-size:26px}}
 @keyframes shimmer{0%{background-position:-600px 0}100%{background-position:600px 0}}
 .sk-card{background:var(--white);border-radius:18px;padding:20px 18px;border:.5px solid var(--border)}
 .sk-line{border-radius:6px;background:linear-gradient(90deg,#eaecea 25%,#f5f7f5 50%,#eaecea 75%);background-size:1200px 100%;animation:shimmer 1.6s infinite linear}
@@ -1440,7 +1441,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.348</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.349</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
