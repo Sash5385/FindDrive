@@ -259,6 +259,11 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .nav-tagline{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:400;color:rgba(255,255,255,.92);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .nav-tagline i{font-size:16px;color:#fff;flex-shrink:0}
 @media(max-width:1000px){.nav-tagline{font-size:12px}.nav-tagline i{font-size:15px}}
+.nav-role-links{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:nowrap}
+.nav-role-btn{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:20px;padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;white-space:nowrap;text-decoration:none;transition:background .15s,transform .15s}
+.nav-role-btn:hover{background:rgba(255,255,255,.26);transform:translateY(-1px)}
+.nav-role-btn i{font-size:15px}
+@media(max-width:1080px){.nav-role-btn span{display:none}.nav-role-btn{padding:9px 11px}.nav-role-btn i{font-size:16px}}
 .nav-link{font-size:14px;color:rgba(255,255,255,.85);text-decoration:none;transition:color .2s}
 .nav-link:hover{color:#fff}
 .nav-right{display:flex;align-items:center;gap:14px}
@@ -1084,7 +1089,11 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     <span class="logo-text">FindDrive</span>
   </a>
   <div class="nav-links">
-    <span class="nav-tagline"><i class="ti ti-heart-handshake"></i> Знаємо, як складно знайти кваліфікованого інструктора. Ми допоможемо!</span>
+    <div class="nav-role-links">
+      <a class="nav-role-btn" href="#" onclick="event.preventDefault();document.getElementById('instructors')?.scrollIntoView({behavior:'smooth'})"><i class="ti ti-user"></i> <span>Я учень</span></a>
+      <a class="nav-role-btn" href="#" onclick="event.preventDefault();setTimeout(()=>openPanel('instr-welcome'),50)"><i class="ti ti-steering-wheel"></i> <span>Я інструктор</span></a>
+      <a class="nav-role-btn" href="#" onclick="event.preventDefault();setTimeout(()=>openPanel('school-welcome'),50)"><i class="ti ti-building-store"></i> <span>Я автошкола</span></a>
+    </div>
   </div>
   <div class="nav-right">
     <button id="btn-login" class="btn-login"><i class="ti ti-user-circle"></i> <span class="full">Увійти / Реєстрація</span><span class="short">Увійти</span></button>
@@ -1105,7 +1114,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-mobile-link" href="#faq" onclick="event.preventDefault();closeMobileMenu();var d=document.getElementById('faq-spoiler');if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'})}"><i class="ti ti-help-circle"></i> FAQ</a>
   <a class="nav-mobile-link" href="#" onclick="event.preventDefault();closeMobileMenu();setTimeout(()=>openPanel('instr-welcome'),200)"><i class="ti ti-user-plus"></i> Стати інструктором</a>
   <a class="nav-mobile-link" href="#schools" onclick="closeMobileMenu()"><i class="ti ti-building-store"></i> Автошколи</a>
-  <a class="nav-mobile-link" href="#" onclick="event.preventDefault();closeMobileMenu();setTimeout(()=>openPanel('school-welcome'),200)"><i class="ti ti-building-store"></i> Стати школою</a>
+  <a class="nav-mobile-link" href="#" onclick="event.preventDefault();closeMobileMenu();setTimeout(()=>openPanel('school-welcome'),200)"><i class="ti ti-building-store"></i> Ви власник автошколи?</a>
 </div>
 
 <div id="problem-modal" class="auth-modal-overlay" style="display:none" onclick="if(event.target===this)window._closeProblemModal()">
@@ -1258,7 +1267,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 <section class="section" id="schools">
   <div class="section-top">
     <span class="section-label">Автошколи</span>
-    <a href="#" class="section-link" onclick="event.preventDefault();setTimeout(()=>openPanel('school-welcome'),50)">Стати школою <i class="ti ti-arrow-right"></i></a>
+    <a href="#" class="section-link" onclick="event.preventDefault();setTimeout(()=>openPanel('school-welcome'),50)">Ви власник автошколи? <i class="ti ti-arrow-right"></i></a>
   </div>
   <div class="instr-slider-wrap">
     <button class="instr-slider-btn prev" id="school-prev" onclick="window._schoolSlide(-1)" aria-label="Назад"><i class="ti ti-chevron-left"></i></button>
@@ -1431,7 +1440,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.347</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.348</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -1670,7 +1679,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 
 <aside id="school-welcome" class="cabinet">
   <div class="cab-header">
-    <span class="cab-title">Стати школою</span>
+    <span class="cab-title">Ви власник автошколи?</span>
     <button class="cab-close" onclick="closeAll()"><i class="ti ti-x"></i></button>
   </div>
   <div class="instr-welcome-body">
