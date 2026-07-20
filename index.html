@@ -242,7 +242,8 @@
   --bg:#f0f2f0;--white:#ffffff;--text:#0d2a1a;--text-muted:#5a7a6a;--text-hint:#7a9a8a;
   --border:#dde8dd;--pink:#993556;--pink-light:#fbeaf0;--blue:#185fa5;--blue-light:#e6f1fb;
 }
-body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg);background-image:radial-gradient(circle 580px at 8% 7%, rgba(168,240,192,.42), transparent 70%),radial-gradient(circle 500px at 88% 12%, rgba(240,224,96,.36), transparent 70%),radial-gradient(circle 520px at 6% 50%, rgba(240,168,208,.34), transparent 70%),radial-gradient(circle 560px at 94% 58%, rgba(160,216,248,.38), transparent 70%),radial-gradient(circle 540px at 48% 90%, rgba(192,184,248,.32), transparent 70%),radial-gradient(circle 420px at 65% 30%, rgba(168,240,192,.20), transparent 70%);background-attachment:fixed}
+html{overflow-x:hidden}
+body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg);background-image:radial-gradient(circle 580px at 8% 7%, rgba(168,240,192,.42), transparent 70%),radial-gradient(circle 500px at 88% 12%, rgba(240,224,96,.36), transparent 70%),radial-gradient(circle 520px at 6% 50%, rgba(240,168,208,.34), transparent 70%),radial-gradient(circle 560px at 94% 58%, rgba(160,216,248,.38), transparent 70%),radial-gradient(circle 540px at 48% 90%, rgba(192,184,248,.32), transparent 70%),radial-gradient(circle 420px at 65% 30%, rgba(168,240,192,.20), transparent 70%);background-attachment:fixed;overflow-x:hidden}
 
 /* NAV */
 .nav{background:var(--green);border-bottom:.5px solid var(--green-dark);padding:0 48px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
@@ -288,7 +289,7 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 /* HERO */
 .hero{position:relative;padding:48px 48px 44px}
 .hero-3col{position:relative;z-index:2;display:grid;grid-template-columns:1fr 2fr 1fr;gap:28px;align-items:center;min-height:360px}
-.hero-map-col,.hero-cloud-col{display:flex;justify-content:center;align-items:center}
+.hero-map-col,.hero-cloud-col{display:flex;justify-content:center;align-items:center;overflow:hidden}
 .hero-left-emblem{width:260px;height:260px;border-radius:50%;object-fit:cover;border:3px solid rgba(255,255,255,.88);box-shadow:0 8px 32px rgba(26,122,74,.18),0 0 0 8px rgba(255,255,255,.28);flex-shrink:0;background:var(--white)}
 .hero-cloud-wrap{width:338px;height:338px;position:relative;overflow:visible;flex-shrink:0}
 .hero-content{position:relative;z-index:2}
@@ -1441,7 +1442,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.349</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.350</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
