@@ -461,7 +461,7 @@ function renderSchoolCard(school) {
   const ini = initials(school.name);
   const statusCls = school.status === 'approved' ? 'approved' : school.status === 'rejected' ? 'rejected' : 'pending';
   const statusLabel = { pending:'На розгляді', approved:'Активна', rejected:'Відхилено' }[school.status] || school.status;
-  const branches = Array.isArray(school.branches) ? school.branches.join(', ') : (school.branches||'—');
+  const branches = Array.isArray(school.branches) ? school.branches.map(b => typeof b === 'string' ? b : (b.label||'')).filter(Boolean).join(', ') : '—';
   const created = school.createdAt?.toDate?.() ? school.createdAt.toDate().toLocaleDateString('uk-UA') : '—';
 
   const deleteBtn = `<button class="admin-btn delete" onclick="window._adminDeleteSchool('${id}','${esc((school.name||'').replace(/'/g,''))}')"><i class="ti ti-trash"></i> Видалити</button>`;
@@ -495,7 +495,9 @@ function renderSchoolCard(school) {
         <div class="admin-field"><div class="admin-field-label">Email</div><div class="admin-field-val">${esc(school.email||'—')}</div></div>
         <div class="admin-field"><div class="admin-field-label">Телефон</div><div class="admin-field-val">${esc(school.phone||'—')}</div></div>
         <div class="admin-field"><div class="admin-field-label">Райони / філії</div><div class="admin-field-val">${esc(branches)}</div></div>
-        <div class="admin-field"><div class="admin-field-label">Ціна від</div><div class="admin-field-val">${school.price_from ? esc(school.price_from)+' грн/год' : '—'}</div></div>
+        <div class="admin-field"><div class="admin-field-label">Сайт</div><div class="admin-field-val">${school.website ? `<a href="${esc(school.website)}" target="_blank" style="color:#185fa5">${esc(school.website)}</a>` : '—'}</div></div>
+        <div class="admin-field"><div class="admin-field-label">Ціна курсу</div><div class="admin-field-val">${school.price_course ? esc(school.price_course)+' грн' : '—'}</div></div>
+        <div class="admin-field"><div class="admin-field-label">Ціна допзаняття</div><div class="admin-field-val">${school.price_extra ? esc(school.price_extra)+' грн/год' : '—'}</div></div>
         <div class="admin-field"><div class="admin-field-label">Опис</div><div class="admin-field-val" style="white-space:pre-line">${esc(school.about||'—')}</div></div>
         <div class="admin-field"><div class="admin-field-label">userId</div><div class="admin-field-val" style="font-size:10px;color:var(--text-hint);word-break:break-all">${esc(school.userId||'—')}</div></div>
         <div class="admin-field"><div class="admin-field-label">Дата</div><div class="admin-field-val">${esc(created)}</div></div>
