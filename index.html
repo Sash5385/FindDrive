@@ -593,8 +593,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .cab-overlay.open{opacity:1;pointer-events:all}
 .cabinet{position:fixed;top:0;right:0;width:100vw;height:100vh;background-color:var(--bg);background-image:radial-gradient(circle 340px at 10% 12%,rgba(168,240,192,.55),transparent 70%),radial-gradient(circle 280px at 88% 22%,rgba(240,224,96,.42),transparent 70%),radial-gradient(circle 300px at 8% 58%,rgba(240,168,208,.42),transparent 70%),radial-gradient(circle 320px at 86% 68%,rgba(160,216,248,.48),transparent 70%),radial-gradient(circle 260px at 50% 92%,rgba(192,184,248,.38),transparent 70%);z-index:1050;display:flex;flex-direction:column;border:1px solid #000;box-shadow:-4px 0 32px rgba(0,0,0,.14);opacity:0;pointer-events:none;transform:scale(.82);transform-origin:right center;transition:opacity .18s ease,transform .45s cubic-bezier(.34,1.56,.64,1)}
 .cabinet.open{opacity:1;pointer-events:all;transform:scale(1)}
-@media(min-width:900px){.cabinet{width:560px;box-shadow:-4px 0 32px rgba(0,0,0,.14);transform-origin:right center}.instr-wide{width:620px}.instr-profile-panel{width:720px}}
-@media(min-width:1280px){.cabinet{width:720px}.instr-wide{width:780px}.instr-profile-panel{width:960px}}
+@media(min-width:900px){.cabinet{width:560px;box-shadow:-4px 0 32px rgba(0,0,0,.14);transform-origin:right center}.instr-wide{width:620px}.instr-profile-panel,.school-profile-panel{width:720px}}
+@media(min-width:1280px){.cabinet{width:720px}.instr-wide{width:780px}.instr-profile-panel,.school-profile-panel{width:960px}}
 .cab-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:var(--green);border-bottom:none;flex-shrink:0}
 .cab-title{font-size:15px;font-weight:600;color:#fff}
 .cab-close{background:none;border:none;cursor:pointer;color:rgba(255,255,255,.75);font-size:20px;display:flex;align-items:center;padding:4px;border-radius:7px;transition:background .15s,color .15s}
@@ -795,8 +795,16 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .success-sub{font-size:13px;color:var(--text-muted);line-height:1.65}
 
 /* INSTRUCTOR PROFILE PANEL */
-.instr-profile-panel{width:min(96vw,480px)}
-.cabinet.instr-profile-panel{transform:scale(.9) translateY(28px);transform-origin:center 85%}
+.instr-profile-panel,.school-profile-panel{width:min(96vw,480px)}
+.cabinet.instr-profile-panel,.cabinet.school-profile-panel{transform:scale(.9) translateY(28px);transform-origin:center 85%}
+.school-card{background:var(--white);border-radius:18px;padding:16px;border:.5px solid var(--border);position:relative;overflow:hidden;transition:border-color .2s,transform .2s,box-shadow .2s;flex-shrink:0;width:260px;scroll-snap-align:start;display:flex;flex-direction:column;gap:10px;cursor:pointer}
+.school-card:hover{border-color:var(--green);transform:translateY(-2px)}
+@media(max-width:600px){.school-card{width:calc(100vw - 56px)}}
+.school-logo-wrap{width:56px;height:56px;border-radius:14px;overflow:hidden;background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600;flex-shrink:0}
+.school-logo-wrap img{width:100%;height:100%;object-fit:cover}
+.school-branches{display:flex;flex-wrap:wrap;gap:5px}
+.school-roster-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:.5px solid var(--border)}
+.school-roster-row:last-child{border-bottom:none}
 .cabinet.instr-profile-panel.open{transform:scale(1) translateY(0)}
 .prof-section-label{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-hint);margin-bottom:10px;font-weight:500;display:flex;align-items:center;gap:6px}
 .prof-mp-list{display:flex;flex-direction:column;gap:7px;margin-bottom:4px}
@@ -1096,6 +1104,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-mobile-link" href="#how-it-works" onclick="event.preventDefault();closeMobileMenu();var d=document.getElementById('how-it-works-spoiler');if(d){d.open=true;d.dispatchEvent(new Event('toggle'));d.scrollIntoView({behavior:'smooth',block:'start'})}"><i class="ti ti-list-check"></i> Як це працює</a>
   <a class="nav-mobile-link" href="#faq" onclick="event.preventDefault();closeMobileMenu();var d=document.getElementById('faq-spoiler');if(d){d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'})}"><i class="ti ti-help-circle"></i> FAQ</a>
   <a class="nav-mobile-link" href="#" onclick="event.preventDefault();closeMobileMenu();setTimeout(()=>openPanel('instr-welcome'),200)"><i class="ti ti-user-plus"></i> Стати інструктором</a>
+  <a class="nav-mobile-link" href="#schools" onclick="closeMobileMenu()"><i class="ti ti-building-store"></i> Автошколи</a>
+  <a class="nav-mobile-link" href="#" onclick="event.preventDefault();closeMobileMenu();setTimeout(()=>openPanel('school-welcome'),200)"><i class="ti ti-building-store"></i> Стати школою</a>
 </div>
 
 <div id="problem-modal" class="auth-modal-overlay" style="display:none" onclick="if(event.target===this)window._closeProblemModal()">
@@ -1243,6 +1253,19 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     <div id="instr-grid" class="instr-grid"></div>
     <button class="instr-slider-btn next" id="instr-next" onclick="window._instrSlide(1)" aria-label="Вперед"><i class="ti ti-chevron-right"></i></button>
   </div>
+</section>
+
+<section class="section" id="schools">
+  <div class="section-top">
+    <span class="section-label">Автошколи</span>
+    <a href="#" class="section-link" onclick="event.preventDefault();setTimeout(()=>openPanel('school-welcome'),50)">Стати школою <i class="ti ti-arrow-right"></i></a>
+  </div>
+  <div class="instr-slider-wrap">
+    <button class="instr-slider-btn prev" id="school-prev" onclick="window._schoolSlide(-1)" aria-label="Назад"><i class="ti ti-chevron-left"></i></button>
+    <div id="school-grid" class="instr-grid"></div>
+    <button class="instr-slider-btn next" id="school-next" onclick="window._schoolSlide(1)" aria-label="Вперед"><i class="ti ti-chevron-right"></i></button>
+  </div>
+  <div id="school-grid-empty" style="display:none;text-align:center;padding:24px;color:var(--text-muted);font-size:13px"><i class="ti ti-building-store" style="font-size:22px;opacity:.4"></i><br>Поки що жодної школи не додано</div>
 </section>
 
 <section class="section" id="faq">
@@ -1408,7 +1431,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.344</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.345</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -1420,6 +1443,14 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     <button class="cab-close" onclick="(window._closeInstrProfilePanel||window.closeAll)()"><i class="ti ti-x"></i></button>
   </div>
   <div id="prof-body" class="cab-body" style="padding:0 20px 24px"></div>
+</aside>
+
+<aside id="school-profile" class="cabinet school-profile-panel">
+  <div class="cab-header">
+    <div id="school-prof-head" style="display:flex;align-items:center;gap:14px;flex:1;min-width:0;overflow:hidden"></div>
+    <button class="cab-close" onclick="closeAll()"><i class="ti ti-x"></i></button>
+  </div>
+  <div id="school-prof-body" class="cab-body" style="padding:0 20px 24px"></div>
 </aside>
 
 <div id="cab-overlay" class="cab-overlay"></div>
@@ -1635,6 +1666,118 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <div id="instr-foot" class="cab-foot">
     <button id="btn-submit-instr" class="btn-submit-instr"><i class="ti ti-send"></i> Надіслати анкету</button>
   </div>
+</aside>
+
+<aside id="school-welcome" class="cabinet">
+  <div class="cab-header">
+    <span class="cab-title">Стати школою</span>
+    <button class="cab-close" onclick="closeAll()"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="instr-welcome-body">
+    <div class="instr-welcome-hero">
+      <i class="ti ti-building-store"></i>
+      <h3>Автошкола на FindDrive</h3>
+      <p>Один профіль школи об'єднує всіх ваших інструкторів. Учні бачать школу і кожного інструктора окремо на карті.</p>
+    </div>
+    <div class="instr-benefits">
+      <div class="instr-benefit">
+        <div class="instr-benefit-icon"><i class="ti ti-users-group"></i></div>
+        <div><b>Один профіль — уся команда</b>Прив'яжіть своїх інструкторів до школи — кожен лишається зі своїм окремим кабінетом і записами</div>
+      </div>
+      <div class="instr-benefit">
+        <div class="instr-benefit-icon"><i class="ti ti-map-pin"></i></div>
+        <div><b>Філії на карті</b>Покажіть райони, де ви працюєте</div>
+      </div>
+      <div class="instr-benefit">
+        <div class="instr-benefit-icon"><i class="ti ti-star"></i></div>
+        <div><b>Рейтинг школи</b>Відгуки про кожного інструктора формують спільну репутацію школи</div>
+      </div>
+      <div class="instr-benefit">
+        <div class="instr-benefit-icon"><i class="ti ti-shield-check"></i></div>
+        <div><b>Зараз безкоштовно</b>Платформа безкоштовна на старті — платна підписка тільки після набору аудиторії</div>
+      </div>
+    </div>
+    <button class="btn-submit-instr" onclick="window._openSchoolForm()">
+      <i class="ti ti-building-store"></i> Зареєструвати школу
+    </button>
+    <p class="instr-welcome-note">
+      Вже є акаунт школи? <a href="#" onclick="closeAll();setTimeout(()=>window._openAuthModal('client','login'),180);return false" style="color:var(--green);font-weight:500">Увійти</a>
+    </p>
+  </div>
+</aside>
+
+<aside id="school-panel" class="cabinet instr-wide">
+  <div class="cab-header">
+    <span class="cab-title">Анкета школи</span>
+    <button id="school-close" class="cab-close"><i class="ti ti-x"></i></button>
+  </div>
+  <div id="school-form-wrap" class="cab-body">
+    <p class="instr-intro">Заповніть анкету — після перевірки профіль школи з'явиться на сайті.</p>
+    <div class="photo-uploads">
+      <div class="photo-upload" id="school-logo-upload-area" title="Лого школи">
+        <div id="school-logo-preview" class="photo-preview"><i class="ti ti-building-store"></i></div>
+        <input type="file" id="school-logo-input" name="logo" accept="image/*" hidden>
+        <span class="photo-label">Лого школи</span>
+      </div>
+    </div>
+    <form id="school-form" class="instr-form" novalidate>
+      <div class="form-divider">Основна інформація</div>
+      <div class="form-group">
+        <label class="form-label">Назва школи *</label>
+        <input class="form-input" name="name" type="text" placeholder="Автошкола «Дорога»">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Телефон *</label>
+          <input class="form-input" name="phone" type="tel" placeholder="+380 XX XXX XX XX">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email *</label>
+          <input class="form-input" name="email" type="email" placeholder="school@gmail.com" autocomplete="email">
+        </div>
+      </div>
+      <div class="form-group" id="school-pass-group">
+        <label class="form-label">Пароль для входу *</label>
+        <input class="form-input" name="school-pass" type="password" placeholder="Мінімум 6 символів" autocomplete="new-password">
+        <div style="font-size:11px;color:var(--text-hint);margin-top:5px;line-height:1.5">Після підтвердження анкети зможете увійти і керувати профілем школи та інструкторами</div>
+      </div>
+      <div id="school-auth-err" style="display:none;background:var(--pink-light);color:var(--pink);border-radius:9px;padding:10px 14px;font-size:13px;margin-bottom:12px"></div>
+
+      <div class="form-divider">Де ви працюєте</div>
+      <div class="form-group">
+        <label class="form-label">Райони / філії</label>
+        <input class="form-input" name="branches" type="text" placeholder="Шевченківський, Оболонь, Позняки">
+        <p style="font-size:11px;color:var(--text-hint);margin-top:5px">Через кому — покажемо бейджами в профілі школи</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ціна від (грн/год)</label>
+        <input class="form-input" name="price_from" type="number" placeholder="500" min="0">
+      </div>
+
+      <div class="form-divider">Про школу</div>
+      <div class="form-group">
+        <label class="form-label">Опис</label>
+        <textarea class="form-input form-textarea" name="about" placeholder="Досвід школи, кількість інструкторів, особливості навчання…"></textarea>
+      </div>
+    </form>
+  </div>
+  <div id="school-success" class="instr-success" style="display:none">
+    <div class="success-icon"><i class="ti ti-check"></i></div>
+    <div class="success-title">Анкету надіслано!</div>
+    <div class="success-sub">Ми перевіримо дані та опублікуємо профіль школи<br>протягом 1 робочого дня.</div>
+    <button onclick="closeAll();setTimeout(async()=>{const u=window._auth?.currentUser;if(u){await window._renderProfileScreen?.(u);window.openPanel?.('cabinet');}else{window.openPanel?.('cabinet');}},200)" style="margin-top:18px;background:var(--green);color:#fff;border:none;border-radius:9px;padding:11px 22px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px"><i class="ti ti-user-circle"></i> Відкрити мій кабінет</button>
+  </div>
+  <div id="school-foot" class="cab-foot">
+    <button id="btn-submit-school" class="btn-submit-instr"><i class="ti ti-send"></i> Надіслати анкету</button>
+  </div>
+</aside>
+
+<aside id="school-cabinet" class="cabinet instr-wide">
+  <div class="cab-header">
+    <span class="cab-title">Кабінет школи</span>
+    <button class="cab-close" onclick="closeAll()"><i class="ti ti-x"></i></button>
+  </div>
+  <div id="school-cab-body" class="cab-body" style="padding:20px"></div>
 </aside>
 
 <aside id="cabinet" class="cabinet">
@@ -2557,10 +2700,18 @@ async function renderProfileScreen(user) {
     </div>
     <div class="cab-empty"><i class="ti ti-loader"></i></div>`;
 
-  const [snap, instr] = await Promise.all([
+  const [snap, instr, mySchool] = await Promise.all([
     getDoc(doc(db, 'users', user.uid)).catch(() => null),
     getMyInstrProfile(user),
+    getMySchool(user).catch(() => null),
   ]);
+  if (mySchool) {
+    document.getElementById('cab-foot').innerHTML = `
+      <button id="btn-goto-school" class="btn-signout" style="background:var(--green-light);color:var(--green);margin-bottom:8px"><i class="ti ti-building-store"></i> Кабінет школи «${esc(mySchool.name||'')}»</button>
+      <button id="btn-signout" class="btn-signout"><i class="ti ti-logout"></i> Вийти з акаунту</button>`;
+    document.getElementById('btn-goto-school').addEventListener('click', () => openSchoolCabinet(mySchool));
+    document.getElementById('btn-signout').addEventListener('click', () => window._signOut());
+  }
   let ud = {};
   if (snap?.exists()) ud = snap.data();
   else if (window._clientProfile) ud = window._clientProfile; // fallback to in-memory cache
@@ -2646,6 +2797,7 @@ async function renderProfileScreen(user) {
           <button class="instr-tab-btn active" id="itab-btn-anketa" onclick="window._instrTab('anketa')"><i class="ti ti-id-badge-2"></i> Анкета</button>
           <button class="instr-tab-btn" id="itab-btn-slots" onclick="window._instrTab('slots')"><i class="ti ti-calendar-event"></i> Місце і слоти</button>
           <button class="instr-tab-btn" id="itab-btn-chat" onclick="window._instrTab('chat')"><i class="ti ti-message-circle"></i> Чат<span id="itab-chat-badge" style="display:none" class="instr-tab-badge"></span></button>
+          <button class="instr-tab-btn" id="itab-btn-school" onclick="window._instrTab('school')"><i class="ti ti-building-store"></i> Моя школа<span id="itab-school-badge" style="display:none" class="instr-tab-badge"></span></button>
         </div>
         <div id="itab-anketa" style="padding:0 20px 20px">
           <div id="cab-instr-settings"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>
@@ -2655,9 +2807,12 @@ async function renderProfileScreen(user) {
         </div>
         <div id="itab-chat" style="display:none;padding:0 20px 20px">
           <div id="cab-instr-chats"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>
+        </div>
+        <div id="itab-school" style="display:none;padding:0 20px 20px">
+          <div id="cab-instr-school"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>
         </div>`;
       window._instrTab = function(tab) {
-        ['anketa','slots','chat'].forEach(t => {
+        ['anketa','slots','chat','school'].forEach(t => {
           document.getElementById('itab-'+t).style.display = t===tab ? '' : 'none';
           document.getElementById('itab-btn-'+t).classList.toggle('active', t===tab);
         });
@@ -2665,6 +2820,8 @@ async function renderProfileScreen(user) {
       loadInstrSettings(instr, document.getElementById('cab-instr-settings'));
       loadInstrCombined(instr, document.getElementById('cab-instr-combined'));
       loadInstrChats(instr, document.getElementById('cab-instr-chats'));
+      loadInstrSchool(instr, document.getElementById('cab-instr-school'));
+      if (instr.schoolInvite) document.getElementById('itab-school-badge').style.display = '';
       if (window._pendingNotif) { setTimeout(() => handleNotifClick(window._pendingNotif), 400); window._pendingNotif = null; }
     } else {
       document.getElementById('cab-body').innerHTML = headerHtml + `
@@ -4353,6 +4510,415 @@ async function loadInstructors() {
 }
 
 loadInstructors();
+
+// --- Автошколи ---
+function buildSchoolCard(d, id) {
+  const branches = Array.isArray(d.branches) ? d.branches : [];
+  return `<div class="school-card" data-school-id="${esc(id||'')}" onclick="openSchoolProfile('${esc(id||'')}')">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="school-logo-wrap">${d.logo ? `<img src="${esc(d.logo)}" alt="">` : `<i class="ti ti-building-store"></i>`}</div>
+      <div style="min-width:0">
+        <div class="instr-name" style="white-space:normal">${esc(d.name||'')}</div>
+        <div class="instr-meta"><i class="ti ti-star"></i>${d.rating ? ' '+d.rating+' · '+d.reviews+' відгуків' : ' Нова школа'}</div>
+      </div>
+    </div>
+    <div class="school-branches">${branches.slice(0,4).map(b=>`<span class="tag">${esc(b)}</span>`).join('')}</div>
+    <div class="instr-footer">
+      <div class="price">${d.price_from?'від '+d.price_from+' грн':'—'} <span>/ год</span></div>
+      <button class="btn-book" onclick="event.stopPropagation();openSchoolProfile('${esc(id||'')}')">Переглянути</button>
+    </div>
+  </div>`;
+}
+
+async function loadSchools() {
+  try {
+    const snap = await getDocs(query(collection(db, "schools"), where("status","==","approved")));
+    const grid = document.getElementById("school-grid");
+    if (!grid) return;
+    if (snap.empty) {
+      document.getElementById('school-grid-empty').style.display = '';
+      return;
+    }
+    window._schoolProfiles = window._schoolProfiles || {};
+    snap.docs.forEach(docSnap => {
+      const d = docSnap.data();
+      const id = docSnap.id;
+      window._schoolProfiles[id] = d;
+      grid.insertAdjacentHTML("beforeend", buildSchoolCard(d, id));
+    });
+    setTimeout(_schoolSliderSync, 100);
+  } catch(e) {
+    console.warn("Schools load:", e.message);
+  }
+}
+loadSchools();
+
+window._schoolSlide = function(dir) {
+  const grid = document.getElementById('school-grid');
+  if (!grid) return;
+  const cardW = grid.querySelector('.school-card')?.offsetWidth || 274;
+  grid.scrollBy({ left: dir * (cardW + 14), behavior: 'smooth' });
+};
+function _schoolSliderSync() {
+  const grid = document.getElementById('school-grid');
+  const prev = document.getElementById('school-prev');
+  const next = document.getElementById('school-next');
+  if (!grid || !prev || !next) return;
+  prev.disabled = grid.scrollLeft <= 4;
+  next.disabled = grid.scrollLeft + grid.clientWidth >= grid.scrollWidth - 4;
+}
+document.getElementById('school-grid')?.addEventListener('scroll', _schoolSliderSync, { passive: true });
+
+async function openSchoolProfile(id) {
+  let d = window._schoolProfiles?.[id];
+  if (!d) {
+    try {
+      const s = await getDoc(doc(db, 'schools', id));
+      if (!s.exists()) { showToast('Профіль не знайдено', '', 'error'); return; }
+      d = s.data();
+    } catch(e) { showToast('Помилка завантаження', e.message||String(e), 'error'); return; }
+  }
+  const branches = Array.isArray(d.branches) ? d.branches : [];
+  document.getElementById('school-prof-head').innerHTML = `
+    <div class="school-logo-wrap">${d.logo ? `<img src="${esc(d.logo)}" alt="">` : `<i class="ti ti-building-store"></i>`}</div>
+    <div style="min-width:0">
+      <div class="cab-title" style="white-space:normal">${esc(d.name||'')}</div>
+      <div class="instr-meta"><i class="ti ti-star"></i>${d.rating ? ' '+d.rating+' · '+d.reviews+' відгуків' : ' Нова школа'}</div>
+    </div>`;
+  document.getElementById('school-prof-body').innerHTML = `
+    <div class="school-branches" style="margin:14px 0">${branches.map(b=>`<span class="tag"><i class="ti ti-map-pin"></i> ${esc(b)}</span>`).join('')}</div>
+    ${d.phone ? `<div style="font-size:13px;color:var(--text);margin-bottom:10px"><i class="ti ti-phone" style="color:var(--green)"></i> ${esc(d.phone)}</div>` : ''}
+    <div class="price" style="margin-bottom:14px">${d.price_from?'від '+d.price_from+' грн':'—'} <span>/ год</span></div>
+    ${d.about ? `<p style="font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:18px">${esc(d.about)}</p>` : ''}
+    <div class="cab-section-title">Інструктори школи</div>
+    <div id="school-instr-list"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>`;
+  window.openPanel('school-profile');
+  try {
+    const snap = await getDocs(query(collection(db,'instructors'), where('schoolId','==',id), where('status','==','approved')));
+    const el = document.getElementById('school-instr-list');
+    if (!el) return;
+    if (snap.empty) { el.innerHTML = `<div class="cab-empty">Ще немає інструкторів</div>`; return; }
+    el.innerHTML = snap.docs.map(docSnap => {
+      const di = docSnap.data();
+      window._instrProfiles = window._instrProfiles || {};
+      window._instrProfiles[docSnap.id] = window._instrProfiles[docSnap.id] || di;
+      return `<div class="school-roster-row" style="cursor:pointer" onclick="closeAll();setTimeout(()=>openInstrProfile('${esc(docSnap.id)}'),180)">
+        <div class="school-logo-wrap" style="width:38px;height:38px;font-size:14px">${di.photo ? `<img src="${esc(di.photo)}" alt="">` : esc(initials(di.name))}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;color:var(--text)">${esc(di.name||'')}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${di.price?di.price+' грн/год · ':''}${esc(di.area||'')}</div>
+        </div>
+        <i class="ti ti-chevron-right" style="color:var(--text-hint)"></i>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    const el = document.getElementById('school-instr-list');
+    if (el) el.innerHTML = `<div class="cab-empty">Не вдалось завантажити</div>`;
+  }
+}
+window.openSchoolProfile = openSchoolProfile;
+
+let schoolLogoData = null;
+function _openSchoolPanelDirect() {
+  closeAll();
+  setTimeout(() => {
+    openPanel("school-panel");
+    const passGroup = document.getElementById('school-pass-group');
+    if (passGroup) passGroup.style.display = auth.currentUser ? 'none' : '';
+    if (auth.currentUser) {
+      const emailEl = document.getElementById('school-form')?.querySelector('[name="email"]');
+      if (emailEl && !emailEl.value) emailEl.value = auth.currentUser.email || '';
+    }
+  }, 180);
+}
+window._openSchoolForm = _openSchoolPanelDirect;
+document.getElementById("school-close")?.addEventListener("click", closeAll);
+
+const schoolLogoInput = document.getElementById("school-logo-input");
+document.getElementById("school-logo-upload-area")?.addEventListener("click", () => schoolLogoInput.click());
+schoolLogoInput?.addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  schoolLogoInput.value = '';
+  _showPhotoCrop(file, (data) => {
+    schoolLogoData = data;
+    document.getElementById("school-logo-preview").innerHTML = `<img src="${schoolLogoData}" style="width:100%;height:100%;object-fit:cover">`;
+  });
+});
+
+const schoolForm = document.getElementById("school-form");
+schoolForm?.addEventListener("input", e => { e.target.style.borderColor = ""; });
+
+document.getElementById("btn-submit-school")?.addEventListener("click", async () => {
+  const name  = schoolForm.querySelector('[name="name"]').value.trim();
+  const phone = schoolForm.querySelector('[name="phone"]').value.trim();
+  const email = schoolForm.querySelector('[name="email"]').value.trim().toLowerCase();
+  const pass  = schoolForm.querySelector('[name="school-pass"]')?.value || '';
+  const alreadyLoggedIn = !!auth.currentUser;
+
+  const errEl = document.getElementById('school-auth-err');
+  if (errEl) errEl.style.display = 'none';
+
+  let valid = true;
+  [['name', name], ['phone', phone], ['email', email]].forEach(([field, val]) => {
+    schoolForm.querySelector(`[name="${field}"]`).style.borderColor = val ? '' : '#cc3333';
+    if (!val) valid = false;
+  });
+  if (!alreadyLoggedIn && pass.length < 6) {
+    schoolForm.querySelector('[name="school-pass"]').style.borderColor = '#cc3333';
+    if (errEl) { errEl.textContent = !pass ? 'Вкажіть пароль для входу в кабінет (мінімум 6 символів).' : 'Пароль занадто короткий — мінімум 6 символів.'; errEl.style.display = ''; }
+    valid = false;
+  }
+  if (!valid) return;
+
+  const btn = document.getElementById("btn-submit-school");
+  btn.disabled = true;
+  btn.innerHTML = '<i class="ti ti-loader"></i> Збереження…';
+
+  const branches = schoolForm.querySelector('[name="branches"]').value.split(',').map(s=>s.trim()).filter(Boolean);
+
+  let uid = auth.currentUser?.uid || null;
+
+  if (!alreadyLoggedIn && email && pass.length >= 6) {
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      await updateProfile(cred.user, { displayName: name });
+      uid = cred.user.uid;
+    } catch(authErr) {
+      const code = authErr.code || '';
+      if (code === 'auth/email-already-in-use') {
+        try {
+          const cred2 = await signInWithEmailAndPassword(auth, email, pass);
+          uid = cred2.user.uid;
+        } catch(signInErr) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="ti ti-send"></i> Надіслати анкету';
+          if (errEl) {
+            errEl.textContent = 'Цей email вже зареєстрований, але пароль невірний. Увійдіть через "Увійти" в навбарі, потім відправте анкету.';
+            errEl.style.display = '';
+          }
+          return;
+        }
+      } else if (code === 'auth/operation-not-allowed') {
+        uid = null;
+      } else {
+        uid = null;
+      }
+    }
+  }
+  uid = uid || auth.currentUser?.uid || null;
+
+  try {
+    const newRef = await addDoc(collection(db, "schools"), {
+      name, phone, email, branches,
+      price_from: Number(schoolForm.querySelector('[name="price_from"]').value) || 0,
+      about: schoolForm.querySelector('[name="about"]').value.trim(),
+      logo: schoolLogoData || null,
+      userId: uid,
+      status: "pending",
+      rating: null,
+      reviews: 0,
+      createdAt: serverTimestamp(),
+    });
+    window._mySchoolId = newRef.id;
+    if (uid) localStorage.setItem(`mySchoolId_${uid}`, newRef.id);
+
+    document.getElementById("school-form-wrap").style.display = "none";
+    document.getElementById("school-foot").style.display = "none";
+    document.getElementById("school-success").style.display = "flex";
+  } catch(err) {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-send"></i> Надіслати анкету';
+    if (errEl) {
+      const isPermission = err.message?.includes('permission') || err.code === 'permission-denied';
+      errEl.textContent = isPermission ? 'Немає прав на збереження. Спробуйте увійти ще раз.' : (err.message || String(err));
+      errEl.style.display = '';
+    }
+  }
+});
+
+async function getMySchool(user) {
+  const lsKey = `mySchoolId_${user.uid}`;
+  const lsId = window._mySchoolId || localStorage.getItem(lsKey);
+  if (lsId) {
+    try {
+      const cached = await getDoc(doc(db, 'schools', lsId));
+      if (cached.exists()) {
+        window._mySchoolId = lsId;
+        localStorage.setItem(lsKey, lsId);
+        return { id: lsId, ...cached.data() };
+      } else {
+        localStorage.removeItem(lsKey);
+        window._mySchoolId = null;
+      }
+    } catch(e) { /* fall through */ }
+  }
+  function _cacheAndReturn(d) {
+    window._mySchoolId = d.id;
+    localStorage.setItem(lsKey, d.id);
+    if (!d.data().userId) updateDoc(doc(db,'schools',d.id),{userId:user.uid}).catch(()=>{});
+    return { id:d.id, ...d.data() };
+  }
+  try {
+    const s1 = await getDocs(query(collection(db,'schools'),where('userId','==',user.uid)));
+    if (!s1.empty) return _cacheAndReturn(s1.docs[0]);
+  } catch(e) { console.warn('getMySchool userId query failed:', e?.code||e); }
+  if (!user.email) return null;
+  try {
+    const s2 = await getDocs(query(collection(db,'schools'),where('email','==',user.email)));
+    if (!s2.empty) return _cacheAndReturn(s2.docs[0]);
+  } catch(e) { console.warn('getMySchool email query failed:', e?.code||e); }
+  return null;
+}
+
+// --- Кабінет школи: профіль + запрошення інструкторів ---
+async function openSchoolCabinet(school) {
+  closeAll();
+  setTimeout(() => openPanel('school-cabinet'), 150);
+  const body = document.getElementById('school-cab-body');
+  body.innerHTML = `<div class="cab-empty"><i class="ti ti-loader"></i></div>`;
+  const branches = Array.isArray(school.branches) ? school.branches.join(', ') : '';
+  body.innerHTML = `
+    <div class="cab-section-title">Профіль школи</div>
+    <div class="form-group"><label class="form-label">Назва</label><input class="form-input" id="sc-name" value="${esc(school.name||'')}"></div>
+    <div class="form-group"><label class="form-label">Телефон</label><input class="form-input" id="sc-phone" value="${esc(school.phone||'')}"></div>
+    <div class="form-group"><label class="form-label">Райони / філії (через кому)</label><input class="form-input" id="sc-branches" value="${esc(branches)}"></div>
+    <div class="form-group"><label class="form-label">Ціна від (грн/год)</label><input class="form-input" type="number" id="sc-price" value="${school.price_from||''}"></div>
+    <div class="form-group"><label class="form-label">Опис</label><textarea class="form-input form-textarea" id="sc-about">${esc(school.about||'')}</textarea></div>
+    <button id="sc-save" class="btn-cab-primary" style="width:100%;margin-bottom:22px"><i class="ti ti-device-floppy"></i> Зберегти профіль</button>
+
+    <div class="cab-section-title">Запросити інструктора</div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <input class="form-input" id="sc-invite-email" type="email" placeholder="Email інструктора на FindDrive" style="flex:1">
+      <button id="sc-invite-btn" class="btn-cab-primary" style="width:auto;white-space:nowrap;padding:11px 16px"><i class="ti ti-send"></i> Запросити</button>
+    </div>
+    <p style="font-size:11px;color:var(--text-hint);margin-bottom:18px">Інструктор має вже мати підтверджений профіль на FindDrive. Запрошення з'явиться в його кабінеті — школа з'явиться в профілі лише після його підтвердження.</p>
+
+    <div class="cab-section-title">Інструктори школи</div>
+    <div id="sc-roster"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>`;
+
+  document.getElementById('sc-save').addEventListener('click', async () => {
+    const b = document.getElementById('sc-save');
+    b.disabled = true; b.innerHTML = '<i class="ti ti-loader"></i> Збереження…';
+    try {
+      await updateDoc(doc(db, 'schools', school.id), {
+        name: document.getElementById('sc-name').value.trim(),
+        phone: document.getElementById('sc-phone').value.trim(),
+        branches: document.getElementById('sc-branches').value.split(',').map(s=>s.trim()).filter(Boolean),
+        price_from: Number(document.getElementById('sc-price').value) || 0,
+        about: document.getElementById('sc-about').value.trim(),
+      });
+      showToast('Збережено', 'Профіль школи оновлено', 'success');
+    } catch(e) { showToast('Помилка', e.message||String(e), 'error'); }
+    b.disabled = false; b.innerHTML = '<i class="ti ti-device-floppy"></i> Зберегти профіль';
+  });
+
+  document.getElementById('sc-invite-btn').addEventListener('click', async () => {
+    const emailInp = document.getElementById('sc-invite-email');
+    const email = emailInp.value.trim().toLowerCase();
+    if (!email) return;
+    const b = document.getElementById('sc-invite-btn');
+    b.disabled = true; b.innerHTML = '<i class="ti ti-loader"></i>';
+    try {
+      const snap = await getDocs(query(collection(db,'instructors'), where('email','==',email), where('status','==','approved')));
+      if (snap.empty) {
+        showToast('Не знайдено', 'Інструктора з таким email і активним профілем не знайдено', 'error');
+      } else {
+        const target = snap.docs[0];
+        if (target.data().schoolId) {
+          showToast('Вже в школі', 'Цей інструктор вже прив\'язаний до іншої школи', 'error');
+        } else {
+          await updateDoc(doc(db,'instructors',target.id), { schoolInvite: { schoolId: school.id, schoolName: school.name||'', invitedAt: serverTimestamp() } });
+          showToast('Запрошення надіслано', '', 'success');
+          emailInp.value = '';
+        }
+      }
+    } catch(e) { showToast('Помилка', e.message||String(e), 'error'); }
+    b.disabled = false; b.innerHTML = '<i class="ti ti-send"></i> Запросити';
+  });
+
+  try {
+    const rosterSnap = await getDocs(query(collection(db,'instructors'), where('schoolId','==',school.id)));
+    const rosterEl = document.getElementById('sc-roster');
+    if (rosterSnap.empty) { rosterEl.innerHTML = `<div class="cab-empty">Ще немає прив'язаних інструкторів</div>`; return; }
+    rosterEl.innerHTML = rosterSnap.docs.map(d => {
+      const di = d.data();
+      return `<div class="school-roster-row">
+        <div class="school-logo-wrap" style="width:38px;height:38px;font-size:14px">${di.photo ? `<img src="${esc(di.photo)}" alt="">` : esc(initials(di.name))}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;color:var(--text)">${esc(di.name||'')}</div>
+          <div style="font-size:11px;color:var(--text-muted)">${esc(di.email||'')}</div>
+        </div>
+        <button onclick="window._schoolRemoveInstr('${esc(d.id)}')" style="background:none;border:none;color:#cc3333;cursor:pointer;font-size:16px" title="Прибрати зі школи"><i class="ti ti-x"></i></button>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('sc-roster').innerHTML = `<div class="cab-empty">Не вдалось завантажити</div>`;
+  }
+}
+window.openSchoolCabinet = openSchoolCabinet;
+window._schoolRemoveInstr = async function(instrId) {
+  try {
+    await updateDoc(doc(db,'instructors',instrId), { schoolId: null });
+    showToast('Прибрано', 'Інструктора відв\'язано від школи', 'success');
+    const mySchool = await getMySchool(auth.currentUser).catch(()=>null);
+    if (mySchool) openSchoolCabinet(mySchool);
+  } catch(e) { showToast('Помилка', e.message||String(e), 'error'); }
+};
+
+// --- Інструктор: вкладка "Моя школа" (запрошення/поточна школа) ---
+async function loadInstrSchool(instr, el) {
+  if (!el) return;
+  if (instr.schoolInvite) {
+    el.innerHTML = `
+      <div style="background:var(--green-light);border-radius:12px;padding:16px">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px"><i class="ti ti-building-store" style="color:var(--green)"></i> Запрошення від школи «${esc(instr.schoolInvite.schoolName||'')}»</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px">Прийміть, щоб ваш профіль з'явився в списку інструкторів цієї школи. Ваш кабінет і записи лишаються вашими.</div>
+        <div style="display:flex;gap:8px">
+          <button id="school-inv-accept" style="flex:1;background:var(--green);color:#fff;border:none;border-radius:9px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit"><i class="ti ti-check"></i> Прийняти</button>
+          <button id="school-inv-decline" style="flex:1;background:none;border:.5px solid var(--border);border-radius:9px;padding:9px;font-size:12px;cursor:pointer;font-family:inherit;color:var(--text-muted)">Відхилити</button>
+        </div>
+      </div>`;
+    document.getElementById('school-inv-accept').addEventListener('click', async () => {
+      try {
+        await updateDoc(doc(db,'instructors',instr.id), { schoolId: instr.schoolInvite.schoolId, schoolInvite: null });
+        instr.schoolId = instr.schoolInvite.schoolId; instr.schoolInvite = null;
+        document.getElementById('itab-school-badge').style.display = 'none';
+        loadInstrSchool(instr, el);
+        showToast('Готово', 'Ви приєднались до школи', 'success');
+      } catch(e) { showToast('Помилка', e.message||String(e), 'error'); }
+    });
+    document.getElementById('school-inv-decline').addEventListener('click', async () => {
+      try {
+        await updateDoc(doc(db,'instructors',instr.id), { schoolInvite: null });
+        instr.schoolInvite = null;
+        document.getElementById('itab-school-badge').style.display = 'none';
+        loadInstrSchool(instr, el);
+      } catch(e) { showToast('Помилка', e.message||String(e), 'error'); }
+    });
+    return;
+  }
+  if (instr.schoolId) {
+    let schoolName = '';
+    try { const s = await getDoc(doc(db,'schools',instr.schoolId)); if (s.exists()) schoolName = s.data().name || ''; } catch(e) {}
+    el.innerHTML = `
+      <div style="background:var(--bg);border-radius:12px;padding:16px">
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:10px"><i class="ti ti-building-store" style="color:var(--green)"></i> Ваша школа: ${esc(schoolName||'')}</div>
+        <button id="school-leave-btn" style="background:none;border:.5px solid var(--border);border-radius:9px;padding:8px 14px;font-size:12px;cursor:pointer;font-family:inherit;color:#cc3333"><i class="ti ti-logout"></i> Залишити школу</button>
+      </div>`;
+    document.getElementById('school-leave-btn').addEventListener('click', async () => {
+      if (!confirm('Залишити школу «'+schoolName+'»?')) return;
+      try {
+        await updateDoc(doc(db,'instructors',instr.id), { schoolId: null });
+        instr.schoolId = null;
+        loadInstrSchool(instr, el);
+        showToast('Готово', 'Ви залишили школу', 'success');
+      } catch(e) { showToast('Помилка', e.message||String(e), 'error'); }
+    });
+    return;
+  }
+  el.innerHTML = `<div class="cab-empty">Ви не прив'язані до жодної школи.<br><span style="font-size:11px">Школа може запросити вас за email вашого профілю.</span></div>`;
+}
 
 // =================== BOOKING SYSTEM ===================
 const DAY_IDX  = { 'Нд':0,'Пн':1,'Вт':2,'Ср':3,'Чт':4,'Пт':5,'Сб':6 };

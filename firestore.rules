@@ -19,7 +19,55 @@ service cloud.firestore {
               || instrDoc(instrId).email == request.auth.token.email);
     }
 
+    function schoolDoc(schoolId) {
+      return get(/databases/$(database)/documents/schools/$(schoolId)).data;
+    }
+
+    function isSchoolOwner(schoolId) {
+      return request.auth != null
+          && schoolId != null
+          && schoolId != ''
+          && (schoolDoc(schoolId).userId == request.auth.uid
+              || schoolDoc(schoolId).email == request.auth.token.email);
+    }
+
     match /instructors/{docId} {
+      allow get: if isAdmin()
+              || resource.data.status == 'approved'
+              || (request.auth != null && resource.data.userId == request.auth.uid)
+              || (request.auth != null && resource.data.email == request.auth.token.email);
+      allow list: if isAdmin()
+               || resource.data.status == 'approved'
+               || (request.auth != null && resource.data.userId == request.auth.uid)
+               || (request.auth != null && resource.data.email == request.auth.token.email);
+      allow create: if request.resource.data.status == 'pending';
+      allow update: if isAdmin()
+                 || (request.auth != null
+                     && resource.data.userId == request.auth.uid
+                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']))
+                 || (request.auth != null
+                     && resource.data.email == request.auth.token.email
+                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']))
+                 || (request.auth != null
+                     && resource.data.userId == null
+                     && resource.data.email == request.auth.token.email
+                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['userId']))
+                 || (request.auth != null
+                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'reviews']))
+                 // Школа надсилає запрошення інструктору — може змінити лише поле schoolInvite,
+                 // і лише якщо сама володіє школою, на яку запрошує.
+                 || (request.auth != null
+                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['schoolInvite'])
+                     && isSchoolOwner(request.resource.data.schoolInvite.schoolId))
+                 // Школа може відв'язати інструктора зі свого складу (лише обнулити schoolId, лише свого).
+                 || (request.auth != null
+                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['schoolId'])
+                     && request.resource.data.schoolId == null
+                     && isSchoolOwner(resource.data.schoolId));
+      allow delete: if isAdmin();
+    }
+
+    match /schools/{docId} {
       allow get: if isAdmin()
               || resource.data.status == 'approved'
               || (request.auth != null && resource.data.userId == request.auth.uid)

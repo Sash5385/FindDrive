@@ -141,10 +141,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
       <button class="tab-btn" id="tab-btn-users" onclick="window._switchTab('users')">Учні</button>
       <button class="tab-btn" id="tab-btn-bookings" onclick="window._switchTab('bookings')">Записи</button>
       <button class="tab-btn" id="tab-btn-problems" onclick="window._switchTab('problems')">Проблеми<span id="count-badge-problems" class="count-badge" style="display:none"></span></button>
+      <button class="tab-btn" id="tab-btn-schools" onclick="window._switchTab('schools')">Школи<span id="count-badge-schools" class="count-badge" style="display:none"></span></button>
     </div>
     <div id="tab-instr">
       <div class="page-head"><div class="page-title">Інструктори</div></div>
       <div id="instr-list"></div>
+    </div>
+    <div id="tab-schools" style="display:none">
+      <div class="page-head"><div class="page-title">Автошколи</div></div>
+      <div id="schools-list"></div>
     </div>
     <div id="tab-users" style="display:none">
       <div class="page-head"><div class="page-title">Учні</div></div>
@@ -243,6 +248,7 @@ onAuthStateChanged(auth, user => {
     listenUsers();
     listenBookings();
     listenProblems();
+    listenSchools();
   } else if (user) {
     document.getElementById('auth-gate').innerHTML = `
       <img class="gate-logo" src="logo192.png" alt="">
@@ -265,7 +271,7 @@ document.getElementById('btn-google-login').addEventListener('click', () => {
 });
 
 window._switchTab = function(tab) {
-  ['instr','users','bookings','problems'].forEach(t => {
+  ['instr','users','bookings','problems','schools'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t === tab ? '' : 'none';
     document.getElementById('tab-btn-'+t).classList.toggle('active', t === tab);
   });
@@ -405,6 +411,110 @@ window._adminToggleVerify = async (id, value) => {
 window._adminDeleteInstr = async (id, name) => {
   if (!confirm(`Видалити інструктора «${name}»? Дію не можна скасувати.`)) return;
   try { await deleteDoc(doc(db, 'instructors', id)); }
+  catch(e) { alert('Помилка: ' + (e.message||e)); }
+};
+
+// ===== ШКОЛИ =====
+let _schoolFirstSnap = true;
+function listenSchools() {
+  onSnapshot(
+    query(collection(db, 'schools'), orderBy('createdAt', 'desc')),
+    snap => {
+      if (!_schoolFirstSnap) {
+        snap.docChanges().forEach(ch => {
+          if (ch.type !== 'added') return;
+          const d = ch.doc.data();
+          if (d.status !== 'pending') return;
+          showToast('Нова анкета школи!', `${d.name || 'Школа'} — ${d.phone || d.email || ''}`);
+        });
+      }
+      _schoolFirstSnap = false;
+
+      const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const pending  = all.filter(i => i.status === 'pending');
+      const approved = all.filter(i => i.status === 'approved');
+      const rejected = all.filter(i => i.status === 'rejected');
+
+      const badge = document.getElementById('count-badge-schools');
+      if (pending.length) { badge.textContent = pending.length + ' нових'; badge.style.display = ''; }
+      else badge.style.display = 'none';
+
+      const list = document.getElementById('schools-list');
+      list.innerHTML = [
+        renderSchoolGroup('На розгляді', pending,  'pending'),
+        renderSchoolGroup('Активні',      approved, 'approved'),
+        renderSchoolGroup('Відхилені',    rejected, 'rejected'),
+      ].join('') || '<div class="empty">Даних немає</div>';
+    },
+    err => { document.getElementById('schools-list').innerHTML = '<div class="empty">Помилка завантаження</div>'; console.error(err); }
+  );
+}
+
+function renderSchoolGroup(label, list, status) {
+  if (!list.length) return '';
+  const cnt = status === 'pending' ? `<span class="admin-badge-cnt">${list.length}</span>` : `<span style="font-size:11px;color:var(--text-muted)">${list.length}</span>`;
+  return `<div class="admin-header">${label} ${cnt}</div>${list.map(renderSchoolCard).join('')}`;
+}
+
+function renderSchoolCard(school) {
+  const id = school.id;
+  const ini = initials(school.name);
+  const statusCls = school.status === 'approved' ? 'approved' : school.status === 'rejected' ? 'rejected' : 'pending';
+  const statusLabel = { pending:'На розгляді', approved:'Активна', rejected:'Відхилено' }[school.status] || school.status;
+  const branches = Array.isArray(school.branches) ? school.branches.join(', ') : (school.branches||'—');
+  const created = school.createdAt?.toDate?.() ? school.createdAt.toDate().toLocaleDateString('uk-UA') : '—';
+
+  const deleteBtn = `<button class="admin-btn delete" onclick="window._adminDeleteSchool('${id}','${esc((school.name||'').replace(/'/g,''))}')"><i class="ti ti-trash"></i> Видалити</button>`;
+  const actionsHtml = school.status === 'pending' ? `
+    <div class="admin-actions">
+      <button class="admin-btn approve" onclick="window._adminApproveSchool('${id}')"><i class="ti ti-check"></i> Підтвердити</button>
+      <button class="admin-btn reject"  onclick="window._adminRejectSchool('${id}')"><i class="ti ti-x"></i> Відхилити</button>
+    </div>
+    <div class="admin-actions" style="margin-top:4px">${deleteBtn}</div>` : school.status === 'approved' ? `
+    <div class="admin-actions">
+      <button class="admin-btn reject" onclick="window._adminRejectSchool('${id}')"><i class="ti ti-ban"></i> Деактивувати</button>
+    </div>
+    <div class="admin-actions" style="margin-top:4px">${deleteBtn}</div>` : `
+    <div class="admin-actions">
+      <button class="admin-btn approve" onclick="window._adminApproveSchool('${id}')"><i class="ti ti-rotate-clockwise"></i> Відновити</button>
+      ${deleteBtn}
+    </div>`;
+
+  return `
+    <div class="admin-card" id="adm-school-${id}">
+      <div class="admin-card-head" onclick="document.getElementById('adm-school-${id}').classList.toggle('open')">
+        ${school.logo ? `<img class="admin-card-avatar" src="${esc(school.logo)}" alt="">` : `<div class="admin-card-avatar">${esc(ini)}</div>`}
+        <div class="admin-card-main">
+          <div class="admin-card-name">${esc(school.name||'—')}</div>
+          <div class="admin-card-sub">${esc(school.phone||'')}${school.phone&&branches!=='—'?' · ':''}${esc(branches)}</div>
+        </div>
+        <span class="admin-status ${statusCls}">${statusLabel}</span>
+        <i class="ti ti-chevron-down admin-card-arrow"></i>
+      </div>
+      <div class="admin-card-body">
+        <div class="admin-field"><div class="admin-field-label">Email</div><div class="admin-field-val">${esc(school.email||'—')}</div></div>
+        <div class="admin-field"><div class="admin-field-label">Телефон</div><div class="admin-field-val">${esc(school.phone||'—')}</div></div>
+        <div class="admin-field"><div class="admin-field-label">Райони / філії</div><div class="admin-field-val">${esc(branches)}</div></div>
+        <div class="admin-field"><div class="admin-field-label">Ціна від</div><div class="admin-field-val">${school.price_from ? esc(school.price_from)+' грн/год' : '—'}</div></div>
+        <div class="admin-field"><div class="admin-field-label">Опис</div><div class="admin-field-val" style="white-space:pre-line">${esc(school.about||'—')}</div></div>
+        <div class="admin-field"><div class="admin-field-label">userId</div><div class="admin-field-val" style="font-size:10px;color:var(--text-hint);word-break:break-all">${esc(school.userId||'—')}</div></div>
+        <div class="admin-field"><div class="admin-field-label">Дата</div><div class="admin-field-val">${esc(created)}</div></div>
+        ${actionsHtml}
+      </div>
+    </div>`;
+}
+
+window._adminApproveSchool = async (id) => {
+  try { await updateDoc(doc(db, 'schools', id), { status: 'approved' }); }
+  catch(e) { alert('Помилка: ' + (e.message||e)); }
+};
+window._adminRejectSchool = async (id) => {
+  try { await updateDoc(doc(db, 'schools', id), { status: 'rejected' }); }
+  catch(e) { alert('Помилка: ' + (e.message||e)); }
+};
+window._adminDeleteSchool = async (id, name) => {
+  if (!confirm(`Видалити школу «${name}»? Дію не можна скасувати.`)) return;
+  try { await deleteDoc(doc(db, 'schools', id)); }
   catch(e) { alert('Помилка: ' + (e.message||e)); }
 };
 
