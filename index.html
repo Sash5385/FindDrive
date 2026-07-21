@@ -1442,7 +1442,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.351</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.352</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -6065,7 +6065,7 @@ async function loadInstrCombined(instr, container) {
           </div>`).join('')
         : '<div class="cab-empty"><i class="ti ti-users-group"></i><br>Учнів ще немає</div>';
       const isT = t => tab === t;
-      return `<div style="margin-top:16px">
+      return `<div style="margin-top:16px" data-bk-tabs>
         <div class="bk-tabs">
           <button class="bk-tab${isT('new')?' active':''}" onclick="switchBkTab(this,'new')">Нові${pending.length?`<span class="bk-badge">${pending.length}</span>`:''}</button>
           <button class="bk-tab${isT('upcoming')?' active':''}" onclick="switchBkTab(this,'upcoming')">Підтверджено${upcoming.length?`<span class="bk-badge" style="background:var(--green-dark)">${upcoming.length}</span>`:''}</button>
