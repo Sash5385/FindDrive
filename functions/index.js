@@ -1,6 +1,15 @@
 const { onDocumentCreated, onDocumentUpdated, onDocumentWritten } = require('firebase-functions/v2/firestore');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const admin = require('firebase-admin');
+const {
+  TARGET_INSTRUCTOR_EMAIL,
+  CALENDAR_SECRETS,
+  getCalendarClient,
+  buildEvent,
+  getBookingSchedule,
+  fromCalendarEvent,
+  isIgnorableCalendarError,
+} = require('./googleCalendarSync');
 
 admin.initializeApp();
 
@@ -268,6 +277,246 @@ exports.onChatMessage = onDocumentCreated(
         text,
         { type: 'chat', chatId, instrId: chatId.split('_')[0] }
       );
+    }
+  }
+);
+
+// ─── Google Calendar sync (MVP, тільки особистий календар одного інструктора) ───
+// Портовано з webid4/functions/googleCalendar.js + index.js, адаптовано під
+// Firestore (плоска колекція bookings/{bookingId} замість RTDB bookings/{uid}/{bookingId}).
+
+const CALENDAR_SYNC_FIELDS = ['googleEventId', 'calendarId', 'lastSyncedByApp'];
+const ECHO_WINDOW_MS = 3 * 60 * 1000;
+
+function isRecentEcho(ts) {
+  return !!ts && Date.now() - ts < ECHO_WINDOW_MS;
+}
+
+// Якщо різниця before/after — тільки в полях, які пише сам sync (наше ж відлуння)
+function onlyCalendarFieldsChanged(before, after) {
+  const keys = new Set([...Object.keys(before || {}), ...Object.keys(after || {})]);
+  for (const key of keys) {
+    if (CALENDAR_SYNC_FIELDS.includes(key)) continue;
+    if ((before || {})[key] !== (after || {})[key]) return false;
+  }
+  return true;
+}
+
+// Перевіряє чи діапазон [startMin, startMin+durMin) на дату date вільний
+// від інших активних бронювань цільового інструктора (для переносу з календаря)
+async function isRangeFreeForBooking(date, startMin, durMin, excludeBookingId) {
+  const endMin = startMin + durMin;
+  const snap = await admin.firestore().collection('bookings')
+    .where('instructorEmail', '==', TARGET_INSTRUCTOR_EMAIL)
+    .where('date', '==', date)
+    .get();
+
+  for (const doc of snap.docs) {
+    if (doc.id === excludeBookingId) continue;
+    const b = doc.data();
+    if (!b || b.status === 'cancelled') continue;
+    const sched = getBookingSchedule(b);
+    if (!sched) continue;
+    const bEnd = sched.startMin + sched.durMin;
+    if (startMin < bEnd && sched.startMin < endMin) return false;
+  }
+
+  return true;
+}
+
+// Брoнь створена/перенесена/скасована/видалена → відображаємо в Google Calendar
+// (тільки для бронювань цільового інструктора — інші instructorEmail ігноруються)
+exports.onBookingSyncToCalendar = onDocumentWritten(
+  { document: 'bookings/{bookingId}', region: 'europe-west1', secrets: CALENDAR_SECRETS },
+  async event => {
+    const before = event.data.before?.exists ? event.data.before.data() : null;
+    const after = event.data.after?.exists ? event.data.after.data() : null;
+    const { bookingId } = event.params;
+
+    const owner = after || before;
+    if (!owner || (owner.instructorEmail || '').toLowerCase() !== TARGET_INSTRUCTOR_EMAIL) return;
+
+    if (before && after) {
+      const justSyncedFromCalendar =
+        after.lastSyncedFromCalendar &&
+        after.lastSyncedFromCalendar !== before.lastSyncedFromCalendar &&
+        isRecentEcho(after.lastSyncedFromCalendar);
+      if (onlyCalendarFieldsChanged(before, after) || justSyncedFromCalendar) return;
+    }
+
+    let calendar;
+    try {
+      calendar = getCalendarClient();
+    } catch (e) {
+      console.error(`onBookingSyncToCalendar: client init failed bookingId=${bookingId}: ${e.message}`);
+      return;
+    }
+
+    try {
+      // Запис видалено повністю
+      if (!after) {
+        if (before?.googleEventId) {
+          await calendar.events
+            .delete({ calendarId: before.calendarId || 'primary', eventId: before.googleEventId })
+            .catch(err => { if (!isIgnorableCalendarError(err)) throw err; });
+        }
+        return;
+      }
+
+      // Скасовано — прибираємо event з календаря
+      if (after.status === 'cancelled') {
+        if (after.googleEventId) {
+          await calendar.events
+            .delete({ calendarId: after.calendarId || 'primary', eventId: after.googleEventId })
+            .catch(err => { if (!isIgnorableCalendarError(err)) throw err; });
+          await event.data.after.ref.update({ lastSyncedByApp: Date.now() });
+        }
+        return;
+      }
+
+      // Новий активний запис — створюємо event
+      if (!before) {
+        const eventBody = buildEvent(after, bookingId);
+        if (!eventBody) return;
+        const res = await calendar.events.insert({ calendarId: 'primary', requestBody: eventBody });
+        await event.data.after.ref.update({
+          googleEventId: res.data.id,
+          calendarId: 'primary',
+          lastSyncedByApp: Date.now(),
+        });
+        return;
+      }
+
+      // Перенесено дату/час/тривалість — оновлюємо event
+      const rescheduled =
+        after.date !== before.date ||
+        after.time !== before.time ||
+        after.duration !== before.duration;
+      if (!rescheduled) return;
+
+      const eventBody = buildEvent(after, bookingId);
+      if (!eventBody) return;
+
+      if (after.googleEventId) {
+        await calendar.events.patch({
+          calendarId: after.calendarId || 'primary',
+          eventId: after.googleEventId,
+          requestBody: eventBody,
+        });
+        await event.data.after.ref.update({ lastSyncedByApp: Date.now() });
+      } else {
+        const res = await calendar.events.insert({ calendarId: 'primary', requestBody: eventBody });
+        await event.data.after.ref.update({
+          googleEventId: res.data.id,
+          calendarId: 'primary',
+          lastSyncedByApp: Date.now(),
+        });
+      }
+    } catch (e) {
+      console.error(`onBookingSyncToCalendar error bookingId=${bookingId}: ${e.message}`);
+    }
+  }
+);
+
+// Кожні 10 хв: підтягуємо з Google Calendar скасування/перенос, зроблені вручну в календарі
+exports.syncCalendarToApp = onSchedule(
+  { schedule: 'every 10 minutes', region: 'europe-west1', secrets: CALENDAR_SECRETS },
+  async () => {
+    let calendar;
+    try {
+      calendar = getCalendarClient();
+    } catch (e) {
+      console.error(`syncCalendarToApp: client init failed: ${e.message}`);
+      return;
+    }
+
+    const syncStateRef = admin.firestore().collection('_syncState').doc('finddriveCalendar');
+    const syncStateSnap = await syncStateRef.get();
+    const syncToken = syncStateSnap.exists ? syncStateSnap.data().nextSyncToken : null;
+
+    const events = [];
+    let pageToken;
+    let newSyncToken = null;
+
+    try {
+      do {
+        const params = { calendarId: 'primary', maxResults: 250, pageToken };
+        if (syncToken) params.syncToken = syncToken;
+        else params.timeMin = new Date().toISOString();
+        const res = await calendar.events.list(params);
+        events.push(...(res.data.items || []));
+        pageToken = res.data.nextPageToken;
+        if (res.data.nextSyncToken) newSyncToken = res.data.nextSyncToken;
+      } while (pageToken);
+    } catch (e) {
+      const status = e?.code ?? e?.response?.status;
+      if (status === 410) {
+        console.warn('syncCalendarToApp: syncToken expired (410) — reset for full resync');
+        await syncStateRef.delete().catch(() => {});
+        return;
+      }
+      console.error(`syncCalendarToApp: events.list failed: ${e.message}`);
+      return;
+    }
+
+    for (const ev of events) {
+      const priv = ev.extendedProperties?.private;
+      if (!priv || priv.appSource !== 'finddrive' || !priv.bookingId) continue;
+
+      const bookingRef = admin.firestore().collection('bookings').doc(priv.bookingId);
+      const bookingSnap = await bookingRef.get();
+      if (!bookingSnap.exists) continue;
+      const booking = bookingSnap.data();
+      if (!booking || booking.status === 'cancelled') continue;
+
+      if (ev.status === 'cancelled') {
+        // Наше ж недавнє видалення через onBookingSyncToCalendar — ігноруємо
+        if (isRecentEcho(booking.lastSyncedByApp)) continue;
+
+        await bookingRef.update({ status: 'cancelled', cancelledBy: 'admin' }).catch(() => {});
+        console.log(`syncCalendarToApp: cancelled booking ${priv.bookingId} (deleted in Google Calendar)`);
+        continue;
+      }
+
+      // Активна подія — перевіряємо чи не перенесена вручну в календарі
+      if (isRecentEcho(booking.lastSyncedByApp) || isRecentEcho(booking.lastSyncedFromCalendar)) continue;
+
+      const calSchedule = fromCalendarEvent(ev);
+      if (!calSchedule) continue; // all-day подія — не наш формат, ігноруємо
+
+      const appSchedule = getBookingSchedule(booking);
+      if (!appSchedule) continue;
+
+      const changed = calSchedule.date !== appSchedule.date ||
+        calSchedule.startMin !== appSchedule.startMin ||
+        calSchedule.durMin !== appSchedule.durMin;
+      if (!changed) continue;
+
+      const free = await isRangeFreeForBooking(
+        calSchedule.date, calSchedule.startMin, calSchedule.durMin, priv.bookingId
+      );
+      if (!free) {
+        console.warn(
+          `syncCalendarToApp: reschedule from calendar bookingId=${priv.bookingId} → ` +
+          `${calSchedule.date} ${calSchedule.time} conflicts with existing slot, skipped`
+        );
+        continue;
+      }
+
+      await bookingRef.update({
+        date: calSchedule.date,
+        time: calSchedule.time,
+        duration: calSchedule.durMin,
+        lastSyncedFromCalendar: Date.now(),
+      }).catch(() => {});
+      console.log(
+        `syncCalendarToApp: rescheduled booking ${priv.bookingId} → ` +
+        `${calSchedule.date} ${calSchedule.time} (moved in Google Calendar)`
+      );
+    }
+
+    if (newSyncToken) {
+      await syncStateRef.set({ nextSyncToken: newSyncToken }, { merge: true });
     }
   }
 );
