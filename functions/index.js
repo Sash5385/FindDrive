@@ -1,5 +1,9 @@
 const { onDocumentCreated, onDocumentUpdated, onDocumentWritten } = require('firebase-functions/v2/firestore');
 const { onSchedule } = require('firebase-functions/v2/scheduler');
+// v1-неймспейс — лише для icsFeed: v1 HTTPS-функції отримують передбачуваний URL
+// (https://REGION-PROJECT.cloudfunctions.net/NAME), тоді як v2 — непередбачуваний Cloud Run URL
+// з хешем, який неможливо зашити в код клієнта заздалегідь.
+const functionsV1 = require('firebase-functions/v1');
 const admin = require('firebase-admin');
 const {
   TARGET_INSTRUCTOR_EMAIL,
@@ -520,3 +524,78 @@ exports.syncCalendarToApp = onSchedule(
     }
   }
 );
+
+function icsEscape(s) {
+  return String(s || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+}
+function icsStamp(d) {
+  return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+}
+
+// Публічний ICS-фід записів учня/інструктора для підписки в Google/Apple Calendar.
+// Авторизація — через непередбачуваний calToken у query (календарні застосунки не можуть
+// слати Firebase Auth заголовки при періодичному опитуванні), тому це відкритий HTTP endpoint,
+// а не Callable/Firestore-функція — читаємо напряму через Admin SDK (firestore.rules тут ні до чого).
+exports.icsFeed = functionsV1.region('europe-west1').https.onRequest(async (req, res) => {
+  const token = String(req.query.token || '');
+  if (!token) { res.status(400).send('Missing token'); return; }
+
+  try {
+    let calName = 'FindDrive', bookings = [];
+
+    const instrSnap = await admin.firestore().collection('instructors').where('calToken', '==', token).limit(1).get();
+    if (!instrSnap.empty) {
+      const instr = instrSnap.docs[0];
+      if (instr.data().calendarSyncEnabled === false) { res.status(403).send('Sync disabled'); return; }
+      calName = `FindDrive — ${instr.data().name || 'Інструктор'}`;
+      const [s1, s2] = await Promise.all([
+        admin.firestore().collection('bookings').where('instructorId', '==', instr.id).where('status', '==', 'confirmed').get(),
+        admin.firestore().collection('bookings').where('instructorId', '==', instr.id).where('status', '==', 'pending').get(),
+      ]);
+      bookings = [...s1.docs, ...s2.docs].map(d => ({ ...d.data(), _id: d.id, _who: 'client' }));
+    } else {
+      const userSnap = await admin.firestore().collection('users').where('calToken', '==', token).limit(1).get();
+      if (userSnap.empty) { res.status(404).send('Not found'); return; }
+      const user = userSnap.docs[0];
+      if (user.data().calendarSyncEnabled === false) { res.status(403).send('Sync disabled'); return; }
+      calName = `FindDrive — ${user.data().name || 'Учень'}`;
+      const [s1, s2] = await Promise.all([
+        admin.firestore().collection('bookings').where('clientId', '==', user.id).where('status', '==', 'confirmed').get(),
+        admin.firestore().collection('bookings').where('clientId', '==', user.id).where('status', '==', 'pending').get(),
+      ]);
+      bookings = [...s1.docs, ...s2.docs].map(d => ({ ...d.data(), _id: d.id, _who: 'instructor' }));
+    }
+
+    const lines = [
+      'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//FindDrive//Calendar Feed//UK', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH',
+      `X-WR-CALNAME:${icsEscape(calName)}`, 'X-WR-TIMEZONE:Europe/Kyiv',
+      'REFRESH-INTERVAL;VALUE=DURATION:PT1H', 'X-PUBLISHED-TTL:PT1H',
+    ];
+    bookings.forEach(bk => {
+      if (!bk.date || !bk.time) return;
+      const offsetMin = kyivOffsetMinutes(new Date(`${bk.date}T12:00:00Z`));
+      const start = bookingDateTimeUtc(bk.date, bk.time, offsetMin);
+      const end   = new Date(start.getTime() + (bk.duration || 60) * 60000);
+      const who   = bk._who === 'client' ? (bk.clientName || 'Учень') : (bk.instructorName || 'Інструктор');
+      const loc   = bk.meetingPoint?.label || bk.area || '';
+      lines.push(
+        'BEGIN:VEVENT',
+        `UID:finddrive-${bk._id}@finddrive.in.ua`,
+        `DTSTAMP:${icsStamp(new Date())}`,
+        `DTSTART:${icsStamp(start)}`,
+        `DTEND:${icsStamp(end)}`,
+        `SUMMARY:${icsEscape('Заняття з водіння — ' + who)}`,
+      );
+      if (loc) lines.push(`LOCATION:${icsEscape(loc)}`);
+      lines.push(`STATUS:${bk.status === 'confirmed' ? 'CONFIRMED' : 'TENTATIVE'}`, 'END:VEVENT');
+    });
+    lines.push('END:VCALENDAR');
+
+    res.set('Content-Type', 'text/calendar; charset=utf-8');
+    res.set('Cache-Control', 'public, max-age=1800');
+    res.status(200).send(lines.join('\r\n'));
+  } catch (e) {
+    console.error('icsFeed error:', e.message);
+    res.status(500).send('Internal error');
+  }
+});
