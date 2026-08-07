@@ -51,6 +51,23 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .tab-btn.active{color:var(--green);border-bottom-color:var(--green)}
 .tab-btn .count-badge{margin-left:6px}
 
+/* FUNNEL */
+.funnel-range{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.funnel-range-btn{background:var(--bg);border:none;border-radius:20px;padding:7px 16px;font-size:12.5px;font-weight:500;color:var(--text-muted);cursor:pointer;font-family:inherit;transition:all .15s}
+.funnel-range-btn.active{background:var(--green);color:#fff}
+.funnel-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.funnel-stat{background:var(--white);border:.5px solid var(--border);border-radius:14px;padding:16px}
+.funnel-stat b{display:block;font-size:26px;color:var(--text);font-weight:700}
+.funnel-stat span{font-size:12px;color:var(--text-muted)}
+.funnel-stat.approved b{color:var(--green)}
+.funnel-stat.rejected b{color:#cc3333}
+.funnel-daily{background:var(--white);border:.5px solid var(--border);border-radius:14px;padding:16px}
+.funnel-day-row{display:flex;align-items:center;gap:10px;padding:5px 0}
+.funnel-day-label{width:44px;font-size:11px;color:var(--text-muted);flex-shrink:0}
+.funnel-day-bar-wrap{flex:1;background:var(--bg);border-radius:5px;overflow:hidden;height:16px}
+.funnel-day-bar{height:100%;background:var(--green);border-radius:5px;min-width:2px}
+.funnel-day-count{width:22px;text-align:right;font-size:11px;font-weight:600;color:var(--text);flex-shrink:0}
+
 /* PROBLEM CARDS */
 .problem-card{background:var(--white);border-radius:16px;border:.5px solid var(--border);padding:18px 20px;margin-bottom:12px}
 .problem-card.resolved{opacity:.55}
@@ -142,6 +159,18 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
       <button class="tab-btn" id="tab-btn-bookings" onclick="window._switchTab('bookings')">Записи</button>
       <button class="tab-btn" id="tab-btn-problems" onclick="window._switchTab('problems')">Проблеми<span id="count-badge-problems" class="count-badge" style="display:none"></span></button>
       <button class="tab-btn" id="tab-btn-schools" onclick="window._switchTab('schools')">Школи<span id="count-badge-schools" class="count-badge" style="display:none"></span></button>
+      <button class="tab-btn" id="tab-btn-funnel" onclick="window._switchTab('funnel')">Воронка</button>
+    </div>
+    <div id="tab-funnel" style="display:none">
+      <div class="page-head"><div class="page-title">Воронка інструкторів</div></div>
+      <div class="funnel-range">
+        <button class="funnel-range-btn active" onclick="window._funnelSetRange('all',this)">Весь час</button>
+        <button class="funnel-range-btn" onclick="window._funnelSetRange('30d',this)">30 днів</button>
+        <button class="funnel-range-btn" onclick="window._funnelSetRange('7d',this)">7 днів</button>
+        <button class="funnel-range-btn" onclick="window._funnelSetRange('today',this)">Сьогодні</button>
+      </div>
+      <div id="funnel-stats"></div>
+      <div id="funnel-daily"></div>
     </div>
     <div id="tab-instr">
       <div class="page-head"><div class="page-title">Інструктори</div></div>
@@ -271,7 +300,7 @@ document.getElementById('btn-google-login').addEventListener('click', () => {
 });
 
 window._switchTab = function(tab) {
-  ['instr','users','bookings','problems','schools'].forEach(t => {
+  ['instr','users','bookings','problems','schools','funnel'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t === tab ? '' : 'none';
     document.getElementById('tab-btn-'+t).classList.toggle('active', t === tab);
   });
@@ -308,9 +337,84 @@ function listenInstructors() {
         renderInstrGroup('Активні',      approved, 'approved'),
         renderInstrGroup('Відхилені',    rejected, 'rejected'),
       ].join('') || '<div class="empty">Даних немає</div>';
+
+      renderFunnelTab(all);
     },
     err => { document.getElementById('instr-list').innerHTML = '<div class="empty">Помилка завантаження</div>'; console.error(err); }
   );
+}
+
+// ===== ВОРОНКА =====
+let _funnelRange = 'all';
+window._funnelSetRange = function(range, btn) {
+  _funnelRange = range;
+  document.querySelectorAll('.funnel-range-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderFunnelTab(_funnelAllInstr);
+};
+let _funnelAllInstr = [];
+function renderFunnelTab(all) {
+  _funnelAllInstr = all;
+  const statsEl = document.getElementById('funnel-stats');
+  const dailyEl = document.getElementById('funnel-daily');
+  if (!statsEl || !dailyEl) return;
+
+  const now = new Date();
+  const cutoffs = {
+    today: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    '7d':  new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+    '30d': new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
+    all:   null,
+  };
+  const cutoff = cutoffs[_funnelRange];
+  const filtered = all.filter(d => {
+    const t = d.createdAt?.toDate?.();
+    if (!t) return _funnelRange === 'all';
+    return !cutoff || t >= cutoff;
+  });
+
+  const submitted = filtered.length;
+  const approved  = filtered.filter(d => d.status === 'approved').length;
+  const rejected  = filtered.filter(d => d.status === 'rejected').length;
+  const pending   = filtered.filter(d => d.status === 'pending').length;
+  const decided   = approved + rejected;
+  const convPct   = decided ? Math.round(approved / decided * 100) : null;
+
+  statsEl.innerHTML = `
+    <div class="funnel-stats">
+      <div class="funnel-stat"><b>${submitted}</b><span>подано анкет</span></div>
+      <div class="funnel-stat"><b>${pending}</b><span>на розгляді</span></div>
+      <div class="funnel-stat approved"><b>${approved}</b><span>підтверджено</span></div>
+      <div class="funnel-stat rejected"><b>${rejected}</b><span>відхилено</span></div>
+      <div class="funnel-stat"><b>${convPct === null ? '—' : convPct + '%'}</b><span>конверсія підтвердження</span></div>
+    </div>`;
+
+  const daysBack = _funnelRange === 'today' ? 1 : _funnelRange === '7d' ? 7 : 14;
+  const byDay = {};
+  filtered.forEach(d => {
+    const t = d.createdAt?.toDate?.();
+    if (!t) return;
+    const key = t.toISOString().slice(0, 10);
+    byDay[key] = (byDay[key] || 0) + 1;
+  });
+  const days = [];
+  for (let i = daysBack - 1; i >= 0; i--) {
+    days.push(new Date(now.getTime() - i * 24 * 60 * 60 * 1000).toISOString().slice(0, 10));
+  }
+  const maxCount = Math.max(1, ...days.map(k => byDay[k] || 0));
+  dailyEl.innerHTML = submitted ? `
+    <div class="funnel-daily">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;font-weight:600">Подані анкети по днях</div>
+      ${days.map(k => {
+        const cnt = byDay[k] || 0;
+        const [, m, dd] = k.split('-');
+        return `<div class="funnel-day-row">
+          <div class="funnel-day-label">${dd}.${m}</div>
+          <div class="funnel-day-bar-wrap"><div class="funnel-day-bar" style="width:${cnt / maxCount * 100}%"></div></div>
+          <div class="funnel-day-count">${cnt}</div>
+        </div>`;
+      }).join('')}
+    </div>` : '<div class="empty">Немає даних за обраний період</div>';
 }
 
 function renderInstrGroup(label, list, status) {
