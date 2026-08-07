@@ -1442,7 +1442,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.352</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.353</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -1550,19 +1550,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     <button id="instr-close" class="cab-close"><i class="ti ti-x"></i></button>
   </div>
   <div id="instr-form-wrap" class="cab-body">
-    <p class="instr-intro">Заповніть анкету — після перевірки профіль з'явиться на карті.</p>
-    <div class="photo-uploads">
-      <div class="photo-upload" id="photo-upload-area" title="Фото обличчя">
-        <div id="photo-preview" class="photo-preview"><i class="ti ti-camera"></i></div>
-        <input type="file" id="photo-input" name="photo" accept="image/*" hidden>
-        <span class="photo-label">Фото обличчя</span>
-      </div>
-      <div class="photo-upload" id="car-photo-upload-area" title="Фото авто">
-        <div id="car-photo-preview" class="photo-car-preview"><i class="ti ti-car"></i></div>
-        <input type="file" id="car-photo-input" name="carPhoto" accept="image/*" hidden>
-        <span class="photo-label">Фото авто</span>
-      </div>
-    </div>
+    <p class="instr-intro">Швидка реєстрація — 30 секунд. Фото, ціну, точку зустрічі та графік донастроїте в кабінеті вже після підтвердження анкети.</p>
     <form id="instr-form" class="instr-form" novalidate>
       <div class="form-divider">Основна інформація</div>
       <div class="form-group">
@@ -1586,19 +1574,12 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       </div>
       <div id="instr-auth-err" style="display:none;background:var(--pink-light);color:var(--pink);border-radius:9px;padding:10px 14px;font-size:13px;margin-bottom:12px"></div>
 
-      <div class="form-divider">Умови роботи</div>
+      <div class="form-divider">Де і як працюєте</div>
       <div class="form-group">
-        <label class="form-label">Місце роботи на карті</label>
-        <div class="addr-search-wrap">
-          <i class="ti ti-search addr-search-icon"></i>
-          <input id="instr-addr-search" class="form-input" type="text" placeholder="Знайти адресу або вулицю…" autocomplete="off" style="padding-left:32px">
-          <div id="instr-addr-results" class="addr-results"></div>
-        </div>
-        <div id="instr-map-pick" style="height:180px;border-radius:9px;overflow:hidden;border:.5px solid var(--border)"></div>
-        <p style="font-size:11px;color:var(--text-hint);margin-top:5px;display:flex;align-items:center;gap:4px"><i class="ti ti-info-circle"></i> Введіть адресу або перетягніть маркер на місце роботи</p>
+        <label class="form-label">Район</label>
+        <input class="form-input" name="area" type="text" placeholder="Наприклад, Шевченківський">
+        <p style="font-size:11px;color:var(--text-hint);margin-top:5px;display:flex;align-items:center;gap:4px"><i class="ti ti-info-circle"></i> Точну точку зустрічі на карті додасте в кабінеті</p>
       </div>
-      <input type="hidden" name="lat">
-      <input type="hidden" name="lng">
       <div class="form-group">
         <label class="form-label">Тип КПП</label>
         <div class="radio-group">
@@ -1606,65 +1587,6 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
           <label class="radio-opt"><input type="radio" name="gearbox" value="Механіка"> Механіка</label>
           <label class="radio-opt"><input type="radio" name="gearbox" value="Обидва"> Автомат/Механіка</label>
         </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Ціна / год (грн)</label>
-          <input class="form-input" name="price" type="number" placeholder="600" min="0">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Стаж (років)</label>
-          <input class="form-input" name="experience" type="number" placeholder="5" min="0">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Авто (марка, модель)</label>
-        <input class="form-input" name="car" type="text" placeholder="Toyota Corolla 2020, автомат">
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Атестат спеціаліста (номер)</label>
-          <input class="form-input" name="cert-number" type="text" placeholder="Наприклад АБ №123456">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Дійсний до</label>
-          <input class="form-input" name="cert-expiry" type="date">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">ТСЦ де знаєте маршрути</label>
-        <select id="instr-tsc-select" multiple class="form-input" style="height:148px;padding:0;overflow-y:auto"></select>
-        <p style="font-size:11px;color:var(--text-hint);margin-top:5px;display:flex;align-items:center;gap:4px"><i class="ti ti-info-circle"></i> Ctrl (або Cmd) для вибору кількох ТСЦ</p>
-      </div>
-
-      <div class="form-divider">Графік</div>
-      <div class="form-group">
-        <label class="form-label">Робочі дні</label>
-        <div class="days-grid">
-          <label class="day-opt"><input type="checkbox" name="days" value="Пн" checked> Пн</label>
-          <label class="day-opt"><input type="checkbox" name="days" value="Вт" checked> Вт</label>
-          <label class="day-opt"><input type="checkbox" name="days" value="Ср" checked> Ср</label>
-          <label class="day-opt"><input type="checkbox" name="days" value="Чт" checked> Чт</label>
-          <label class="day-opt"><input type="checkbox" name="days" value="Пт" checked> Пт</label>
-          <label class="day-opt"><input type="checkbox" name="days" value="Сб" checked> Сб</label>
-          <label class="day-opt"><input type="checkbox" name="days" value="Нд"> Нд</label>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Час від</label>
-          <input class="form-input" name="time_from" type="time" value="08:00">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Час до</label>
-          <input class="form-input" name="time_to" type="time" value="20:00">
-        </div>
-      </div>
-
-      <div class="form-divider">Про себе</div>
-      <div class="form-group">
-        <label class="form-label">Розкажіть про себе</label>
-        <textarea class="form-input form-textarea" name="about" placeholder="Підхід до навчання, спеціалізація, особливості…"></textarea>
       </div>
     </form>
   </div>
@@ -2960,6 +2882,10 @@ async function loadInstrSettings(instr, container) {
   function renderAll() {
     // Preserve text the user has already typed before re-rendering
     const draftPrice = document.getElementById('set-price')?.value;
+    const draftArea = document.getElementById('set-area')?.value;
+    const draftExperience = document.getElementById('set-experience')?.value;
+    const draftCar = document.getElementById('set-car')?.value;
+    const draftGearbox = container.querySelector('[name="set-gearbox"]:checked')?.value;
     const draftAbout = document.getElementById('set-about')?.value;
     const draftCertNumber = document.getElementById('set-cert-number')?.value;
     const draftCertExpiry = document.getElementById('set-cert-expiry')?.value;
@@ -2968,6 +2894,8 @@ async function loadInstrSettings(instr, container) {
     const _cpFields = [
       { label: 'Фото обличчя',     ok: !!faceSrc },
       { label: 'Фото авто',        ok: !!carSrc },
+      { label: 'Район',            ok: !!(instr.area) },
+      { label: 'Авто',             ok: !!(instr.car) },
       { label: 'Про себе',         ok: !!(instr.about) },
       { label: 'Ціна',             ok: !!(instr.price) },
       { label: 'Стаж',             ok: !!(instr.experience) },
@@ -3007,8 +2935,30 @@ async function loadInstrSettings(instr, container) {
       <div class="cab-card">
         <div class="cab-card-title"><i class="ti ti-id-badge-2"></i> Особисті дані</div>
         <div style="margin-bottom:10px">
-          <label class="cab-label">Ціна, грн/год</label>
-          <input id="set-price" type="number" min="0" step="50" class="cab-input" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
+          <label class="cab-label">Район</label>
+          <input id="set-area" type="text" placeholder="Наприклад, Шевченківський" class="cab-input" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
+        </div>
+        <div class="cab-form-row" style="margin-bottom:10px">
+          <div>
+            <label class="cab-label">Ціна, грн/год</label>
+            <input id="set-price" type="number" min="0" step="50" class="cab-input" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
+          </div>
+          <div>
+            <label class="cab-label">Стаж, років</label>
+            <input id="set-experience" type="number" min="0" class="cab-input" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
+          </div>
+        </div>
+        <div style="margin-bottom:10px">
+          <label class="cab-label">Авто (марка, модель)</label>
+          <input id="set-car" type="text" placeholder="Toyota Corolla 2020, автомат" class="cab-input" onfocus="this.style.borderColor='var(--green)'" onblur="this.style.borderColor=''">
+        </div>
+        <div style="margin-bottom:10px">
+          <label class="cab-label">Тип КПП</label>
+          <div class="radio-group">
+            <label class="radio-opt"><input type="radio" name="set-gearbox" value="Автомат"${instr.gearbox!=='Механіка'&&instr.gearbox!=='Обидва'?' checked':''}> Автомат</label>
+            <label class="radio-opt"><input type="radio" name="set-gearbox" value="Механіка"${instr.gearbox==='Механіка'?' checked':''}> Механіка</label>
+            <label class="radio-opt"><input type="radio" name="set-gearbox" value="Обидва"${instr.gearbox==='Обидва'?' checked':''}> Автомат/Механіка</label>
+          </div>
         </div>
         <label class="cab-label">Про себе</label>
         <textarea id="set-about" rows="4" maxlength="500" placeholder="Підхід до навчання, спеціалізація, особливості…" class="cab-input" style="resize:none"></textarea>
@@ -3063,6 +3013,16 @@ async function loadInstrSettings(instr, container) {
     // Restore text fields — use draft (what user typed) if it exists, else fall back to saved value
     const priceEl = container.querySelector('#set-price');
     if (priceEl) priceEl.value = draftPrice !== undefined ? draftPrice : String(instr.price || '');
+    const areaEl = container.querySelector('#set-area');
+    if (areaEl) areaEl.value = draftArea !== undefined ? draftArea : (instr.area || '');
+    const experienceEl = container.querySelector('#set-experience');
+    if (experienceEl) experienceEl.value = draftExperience !== undefined ? draftExperience : String(instr.experience || '');
+    const carEl = container.querySelector('#set-car');
+    if (carEl) carEl.value = draftCar !== undefined ? draftCar : (instr.car || '');
+    if (draftGearbox) {
+      const gbEl = container.querySelector(`[name="set-gearbox"][value="${draftGearbox}"]`);
+      if (gbEl) gbEl.checked = true;
+    }
     const aboutEl = container.querySelector('#set-about');
     if (aboutEl) aboutEl.value = draftAbout !== undefined ? draftAbout : (instr.about || '');
     const certNumberEl = container.querySelector('#set-cert-number');
@@ -3249,7 +3209,10 @@ async function loadInstrSettings(instr, container) {
   };
   window._saveInstrSettings = async (instrId) => {
     const price = parseInt(document.getElementById('set-price')?.value) || instr.price || 0;
-    const area  = instr.area || '';
+    const area  = document.getElementById('set-area')?.value.trim() || '';
+    const experience = parseInt(document.getElementById('set-experience')?.value) || 0;
+    const car = document.getElementById('set-car')?.value.trim() || '';
+    const gearbox = document.querySelector('[name="set-gearbox"]:checked')?.value || instr.gearbox || 'Автомат';
     const about = document.getElementById('set-about')?.value.trim() || '';
     const certNumber = document.getElementById('set-cert-number')?.value.trim() || '';
     const certExpiry = document.getElementById('set-cert-expiry')?.value || '';
@@ -3258,25 +3221,29 @@ async function loadInstrSettings(instr, container) {
         lessonDuration: lessonDur,
         meetingPoints:  meetingPts,
         tags:           instrTags,
-        price, area, about, certNumber, certExpiry,
+        price, area, experience, car, gearbox, about, certNumber, certExpiry,
       });
       instr.lessonDuration = lessonDur;
       instr.meetingPoints  = meetingPts;
       instr.tags           = instrTags;
-      instr.price = price; instr.area = area; instr.about = about;
+      instr.price = price; instr.area = area; instr.experience = experience;
+      instr.car = car; instr.gearbox = gearbox; instr.about = about;
       instr.certNumber = certNumber; instr.certExpiry = certExpiry;
       if (window._instrProfiles?.[instrId]) {
-        Object.assign(window._instrProfiles[instrId], { lessonDuration:lessonDur, meetingPoints:meetingPts, tags:instrTags, price, area, about });
+        Object.assign(window._instrProfiles[instrId], { lessonDuration:lessonDur, meetingPoints:meetingPts, tags:instrTags, price, area, experience, car, gearbox, about });
       }
       // Update card in DOM if visible
       const card = document.querySelector(`.instr-card[data-instr-id="${instrId}"]`);
       if (card) {
         card.dataset.price = price;
         card.dataset.area  = (area||'').toLowerCase();
+        card.dataset.gearbox = gearbox;
         const priceEl = card.querySelector('.price');
         if (priceEl) priceEl.innerHTML = (price ? price+' грн' : '—') + ' <span>/ год</span>';
         const distEl = card.querySelector('.badge-dist');
         if (distEl) distEl.innerHTML = `<i class="ti ti-map-pin"></i> ${esc(area||'—')}`;
+        const kppEl = card.querySelector('.card-kpp');
+        if (kppEl) kppEl.textContent = gearboxLabel(gearbox);
       }
       showToast('Налаштування збережено!', '', 'success');
     } catch(e) { showToast('Помилка збереження', '', 'error'); }
@@ -3800,55 +3767,6 @@ window._renderProfileScreen = renderProfileScreen;
 
 document.getElementById("instr-close").addEventListener("click", closeAll);
 
-// Photo: resize to ≤200px before storing
-let instrPhotoData = null;
-let instrCarPhotoData = null;
-
-function resizePhoto(file, maxPx = 200) {
-  return new Promise(resolve => {
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const img = new Image();
-      img.onload = () => {
-        const s = Math.min(maxPx / img.width, maxPx / img.height, 1);
-        const c = document.createElement('canvas');
-        c.width  = Math.round(img.width  * s);
-        c.height = Math.round(img.height * s);
-        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-        resolve(c.toDataURL('image/jpeg', 0.8));
-      };
-      img.src = ev.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-const photoInput = document.getElementById("photo-input");
-document.getElementById("photo-upload-area").addEventListener("click", () => photoInput.click());
-photoInput.addEventListener("change", e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  photoInput.value = '';
-  _showPhotoCrop(file, (data) => {
-    instrPhotoData = data;
-    document.getElementById("photo-preview").innerHTML =
-      `<img src="${instrPhotoData}" style="width:100%;height:100%;object-fit:cover">`;
-  });
-});
-
-const carPhotoInput = document.getElementById("car-photo-input");
-document.getElementById("car-photo-upload-area").addEventListener("click", () => carPhotoInput.click());
-carPhotoInput.addEventListener("change", e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  carPhotoInput.value = '';
-  _showPhotoCrop(file, (data) => {
-    instrCarPhotoData = data;
-    document.getElementById("car-photo-preview").innerHTML =
-      `<img src="${instrCarPhotoData}" style="width:100%;height:100%;object-fit:cover">`;
-  }, { rect: true });
-});
-
 // Student photo upload
 window._cabUser = null;
 window._pendingStudentPhoto = null;
@@ -4095,16 +4013,8 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
   btn.disabled = true;
   btn.innerHTML = '<i class="ti ti-loader"></i> Збереження…';
 
-  const days     = [...instrForm.querySelectorAll('[name="days"]:checked')].map(c => c.value);
-  const lat      = parseFloat(instrForm.querySelector('[name="lat"]').value)  || null;
-  const lng      = parseFloat(instrForm.querySelector('[name="lng"]').value)  || null;
   const area     = instrForm.querySelector('[name="area"]')?.value.trim() || '';
   const gearbox  = instrForm.querySelector('[name="gearbox"]:checked')?.value || 'Автомат';
-  const price    = Number(instrForm.querySelector('[name="price"]').value) || 0;
-  const car      = instrForm.querySelector('[name="car"]').value.trim();
-  const certNumber = instrForm.querySelector('[name="cert-number"]')?.value.trim() || '';
-  const certExpiry = instrForm.querySelector('[name="cert-expiry"]')?.value || '';
-  const tscKnown = [...(document.getElementById('instr-tsc-select')?.selectedOptions||[])].map(o=>o.value);
 
   let uid = auth.currentUser?.uid || null;
 
@@ -4146,16 +4056,13 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
   try {
     const newRef = await addDoc(collection(db, "instructors"), {
       name, phone, email,
-      area, gearbox, price, car,
-      experience: Number(instrForm.querySelector('[name="experience"]').value) || 0,
-      days,
-      time_from: instrForm.querySelector('[name="time_from"]').value,
-      time_to:   instrForm.querySelector('[name="time_to"]').value,
-      about:     instrForm.querySelector('[name="about"]').value.trim(),
-      photo:     instrPhotoData || null,
-      carPhoto:  instrCarPhotoData || null,
-      lat, lng, tscKnown,
-      certNumber, certExpiry,
+      area, gearbox,
+      price: 0, car: '', experience: 0,
+      days: [], time_from: '', time_to: '',
+      about: '',
+      photo: null, carPhoto: null,
+      lat: null, lng: null, tscKnown: [],
+      certNumber: '', certExpiry: '',
       userId:    uid,
       status:    "pending",
       rating:    null,
