@@ -1,0 +1,30 @@
+name: Smoke test
+
+# Не блокує GitHub Pages — деплой з main іде своїм маршрутом незалежно.
+# Це лише сигнал (зелена галочка/червоний хрестик на коміті), що сторінка
+# реально відкривається без JS-помилок і ключові кнопки/панелі працюють.
+on:
+  push:
+    branches:
+      - main
+      - 'claude/**'
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run smoke check
+        run: npm run smoke
