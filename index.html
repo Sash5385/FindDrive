@@ -1442,7 +1442,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.358</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.359</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -1572,6 +1572,10 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
         <input class="form-input" name="instr-pass" type="password" placeholder="Мінімум 6 символів" autocomplete="new-password">
         <div style="font-size:11px;color:var(--text-hint);margin-top:5px;line-height:1.5">Після підтвердження анкети зможете увійти і керувати записами від учнів</div>
       </div>
+      <div class="form-group" id="instr-pass2-group">
+        <label class="form-label">Повторіть пароль *</label>
+        <input class="form-input" name="instr-pass2" type="password" placeholder="Ще раз той самий пароль" autocomplete="new-password">
+      </div>
       <div id="instr-auth-err" style="display:none;background:var(--pink-light);color:var(--pink);border-radius:9px;padding:10px 14px;font-size:13px;margin-bottom:12px"></div>
 
       <div class="form-divider">Де і як працюєте</div>
@@ -1684,6 +1688,10 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
         <label class="form-label">Пароль для входу *</label>
         <input class="form-input" name="school-pass" type="password" placeholder="Мінімум 6 символів" autocomplete="new-password">
         <div style="font-size:11px;color:var(--text-hint);margin-top:5px;line-height:1.5">Після підтвердження анкети зможете увійти і керувати профілем школи та інструкторами</div>
+      </div>
+      <div class="form-group" id="school-pass2-group">
+        <label class="form-label">Повторіть пароль *</label>
+        <input class="form-input" name="school-pass2" type="password" placeholder="Ще раз той самий пароль" autocomplete="new-password">
       </div>
       <div id="school-auth-err" style="display:none;background:var(--pink-light);color:var(--pink);border-radius:9px;padding:10px 14px;font-size:13px;margin-bottom:12px"></div>
 
@@ -3764,6 +3772,8 @@ function _openInstrPanelDirect() {
     setTimeout(() => window.initInstrMap?.(), 150);
     const passGroup = document.getElementById('instr-pass-group');
     if (passGroup) passGroup.style.display = auth.currentUser ? 'none' : '';
+    const pass2Group = document.getElementById('instr-pass2-group');
+    if (pass2Group) pass2Group.style.display = auth.currentUser ? 'none' : '';
     if (auth.currentUser) {
       const emailEl = instrForm?.querySelector('[name="email"]');
       if (emailEl && !emailEl.value) emailEl.value = auth.currentUser.email || '';
@@ -4015,6 +4025,7 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
   const phone = instrForm.querySelector('[name="phone"]').value.trim();
   const email = instrForm.querySelector('[name="email"]').value.trim().toLowerCase();
   const pass  = instrForm.querySelector('[name="instr-pass"]')?.value || '';
+  const pass2 = instrForm.querySelector('[name="instr-pass2"]')?.value || '';
   const alreadyLoggedIn = !!auth.currentUser;
 
   const errEl = document.getElementById('instr-auth-err');
@@ -4028,6 +4039,10 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
   if (!alreadyLoggedIn && pass.length < 6) {
     instrForm.querySelector('[name="instr-pass"]').style.borderColor = '#cc3333';
     if (errEl) { errEl.textContent = !pass ? 'Вкажіть пароль для входу в кабінет (мінімум 6 символів).' : 'Пароль занадто короткий — мінімум 6 символів.'; errEl.style.display = ''; }
+    valid = false;
+  } else if (!alreadyLoggedIn && pass !== pass2) {
+    instrForm.querySelector('[name="instr-pass2"]').style.borderColor = '#cc3333';
+    if (errEl) { errEl.textContent = 'Паролі не збігаються.'; errEl.style.display = ''; }
     valid = false;
   }
   if (!valid) return;
@@ -4607,6 +4622,8 @@ function _openSchoolPanelDirect() {
     mountBranchPicker(document.getElementById('school-branch-picker'), []);
     const passGroup = document.getElementById('school-pass-group');
     if (passGroup) passGroup.style.display = auth.currentUser ? 'none' : '';
+    const pass2Group = document.getElementById('school-pass2-group');
+    if (pass2Group) pass2Group.style.display = auth.currentUser ? 'none' : '';
     if (auth.currentUser) {
       const emailEl = document.getElementById('school-form')?.querySelector('[name="email"]');
       if (emailEl && !emailEl.value) emailEl.value = auth.currentUser.email || '';
@@ -4636,6 +4653,7 @@ document.getElementById("btn-submit-school")?.addEventListener("click", async ()
   const phone = schoolForm.querySelector('[name="phone"]').value.trim();
   const email = schoolForm.querySelector('[name="email"]').value.trim().toLowerCase();
   const pass  = schoolForm.querySelector('[name="school-pass"]')?.value || '';
+  const pass2 = schoolForm.querySelector('[name="school-pass2"]')?.value || '';
   const alreadyLoggedIn = !!auth.currentUser;
 
   const errEl = document.getElementById('school-auth-err');
@@ -4649,6 +4667,10 @@ document.getElementById("btn-submit-school")?.addEventListener("click", async ()
   if (!alreadyLoggedIn && pass.length < 6) {
     schoolForm.querySelector('[name="school-pass"]').style.borderColor = '#cc3333';
     if (errEl) { errEl.textContent = !pass ? 'Вкажіть пароль для входу в кабінет (мінімум 6 символів).' : 'Пароль занадто короткий — мінімум 6 символів.'; errEl.style.display = ''; }
+    valid = false;
+  } else if (!alreadyLoggedIn && pass !== pass2) {
+    schoolForm.querySelector('[name="school-pass2"]').style.borderColor = '#cc3333';
+    if (errEl) { errEl.textContent = 'Паролі не збігаються.'; errEl.style.display = ''; }
     valid = false;
   }
   if (!valid) return;
