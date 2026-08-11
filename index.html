@@ -1442,7 +1442,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.362</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.363</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -5607,8 +5607,9 @@ function renderCalendar(bookings, year, month, selectedDate, prefix) {
   const todayStr = new Date().toISOString().slice(0, 10);
   const [py, pm] = month === 0  ? [year-1, 11] : [year, month-1];
   const [ny, nm] = month === 11 ? [year+1,  0] : [year, month+1];
-  const navFn  = `window._${prefix}CalNav`;
-  const dateFn = `window._${prefix}CalDate`;
+  const navFn     = `window._${prefix}CalNav`;
+  const navFnName = `_${prefix}CalNav`;
+  const dateFn    = `window._${prefix}CalDate`;
 
   let cells = DOWS_UA.map(d => `<div class="bk-cal-dow">${d}</div>`).join('');
   for (let i = 0; i < startDow; i++) cells += '<div class="bk-cal-day"></div>';
@@ -5625,7 +5626,7 @@ function renderCalendar(bookings, year, month, selectedDate, prefix) {
     const click = sts.length ? `onclick="${dateFn}('${ds}')"` : '';
     cells += `<div class="${cls}" ${click}>${d}</div>`;
   }
-  return `<div class="bk-cal-wrap">
+  return `<div class="bk-cal-wrap" ontouchstart="window._calSwipeStart(event)" ontouchend="window._calSwipeEnd(event,${py},${pm},${ny},${nm},'${navFnName}')">
     <div class="bk-cal-header">
       <button class="bk-cal-nav" onclick="${navFn}(${py},${pm})"><i class="ti ti-chevron-left"></i></button>
       <span class="bk-cal-title">${MONTHS_UA[month]} ${year}</span>
@@ -5634,6 +5635,26 @@ function renderCalendar(bookings, year, month, selectedDate, prefix) {
     <div class="bk-cal-grid">${cells}</div>
   </div>`;
 }
+
+// Свайп вліво/вправо по календарю — гортає місяці (тільки якщо рух переважно
+// горизонтальний, щоб не заважати звичайному вертикальному скролу сторінки).
+let _calSwipeX = null, _calSwipeY = null;
+window._calSwipeStart = function(e) {
+  const t = e.changedTouches?.[0];
+  if (!t) return;
+  _calSwipeX = t.clientX; _calSwipeY = t.clientY;
+};
+window._calSwipeEnd = function(e, py, pm, ny, nm, navFnName) {
+  if (_calSwipeX === null) return;
+  const t = e.changedTouches?.[0];
+  const dx = t ? t.clientX - _calSwipeX : 0;
+  const dy = t ? t.clientY - _calSwipeY : 0;
+  _calSwipeX = null; _calSwipeY = null;
+  if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+  const fn = window[navFnName];
+  if (typeof fn !== 'function') return;
+  if (dx < 0) fn(ny, nm); else fn(py, pm);
+};
 
 function bkDateStr(b) {
   const [y,m,day] = (b.date||'').split('-');
