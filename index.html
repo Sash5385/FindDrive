@@ -1442,7 +1442,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.355</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.356</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -1578,8 +1578,19 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       <div class="form-group">
         <label class="form-label">Район</label>
         <input class="form-input" name="area" type="text" placeholder="Наприклад, Шевченківський">
-        <p style="font-size:11px;color:var(--text-hint);margin-top:5px;display:flex;align-items:center;gap:4px"><i class="ti ti-info-circle"></i> Точну точку зустрічі на карті додасте в кабінеті</p>
       </div>
+      <div class="form-group">
+        <label class="form-label">Точка зустрічі на карті</label>
+        <div class="addr-search-wrap">
+          <i class="ti ti-search addr-search-icon"></i>
+          <input id="instr-addr-search" class="form-input" type="text" placeholder="Знайти адресу або вулицю…" autocomplete="off" style="padding-left:32px">
+          <div id="instr-addr-results" class="addr-results"></div>
+        </div>
+        <div id="instr-map-pick" style="height:180px;border-radius:9px;overflow:hidden;border:.5px solid var(--border)"></div>
+        <p style="font-size:11px;color:var(--text-hint);margin-top:5px;display:flex;align-items:center;gap:4px"><i class="ti ti-info-circle"></i> Введіть адресу або перетягніть маркер на місце роботи</p>
+      </div>
+      <input type="hidden" name="lat">
+      <input type="hidden" name="lng">
       <div class="form-group">
         <label class="form-label">Тип КПП</label>
         <div class="radio-group">
@@ -1587,6 +1598,10 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
           <label class="radio-opt"><input type="radio" name="gearbox" value="Механіка"> Механіка</label>
           <label class="radio-opt"><input type="radio" name="gearbox" value="Обидва"> Автомат/Механіка</label>
         </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Ціна / год (грн)</label>
+        <input class="form-input" name="price" type="number" placeholder="600" min="0">
       </div>
     </form>
   </div>
@@ -4015,6 +4030,9 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
 
   const area     = instrForm.querySelector('[name="area"]')?.value.trim() || '';
   const gearbox  = instrForm.querySelector('[name="gearbox"]:checked')?.value || 'Автомат';
+  const price    = Number(instrForm.querySelector('[name="price"]')?.value) || 0;
+  const lat      = parseFloat(instrForm.querySelector('[name="lat"]')?.value) || null;
+  const lng      = parseFloat(instrForm.querySelector('[name="lng"]')?.value) || null;
 
   let uid = auth.currentUser?.uid || null;
 
@@ -4056,12 +4074,12 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
   try {
     const newRef = await addDoc(collection(db, "instructors"), {
       name, phone, email,
-      area, gearbox,
-      price: 0, car: '', experience: 0,
+      area, gearbox, price, lat, lng,
+      car: '', experience: 0,
       days: [], time_from: '', time_to: '',
       about: '',
       photo: null, carPhoto: null,
-      lat: null, lng: null, tscKnown: [],
+      tscKnown: [],
       certNumber: '', certExpiry: '',
       userId:    uid,
       status:    "pending",
