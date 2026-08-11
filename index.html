@@ -1442,7 +1442,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.360</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.361</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -1580,21 +1580,24 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 
       <div class="form-divider">Де і як працюєте</div>
       <div class="form-group">
-        <label class="form-label">Район</label>
-        <input class="form-input" name="area" type="text" placeholder="Наприклад, Шевченківський">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Точка зустрічі на карті</label>
-        <div class="addr-search-wrap">
-          <i class="ti ti-search addr-search-icon"></i>
-          <input id="instr-addr-search" class="form-input" type="text" placeholder="Знайти адресу або вулицю…" autocomplete="off" style="padding-left:32px">
-          <div id="instr-addr-results" class="addr-results"></div>
+        <label class="form-label">Точка зустрічі на карті *</label>
+        <div style="display:flex;gap:6px">
+          <div class="addr-search-wrap" style="flex:1">
+            <i class="ti ti-search addr-search-icon"></i>
+            <input id="instr-addr-search" class="form-input" type="text" placeholder="Знайти адресу або вулицю…" autocomplete="off" style="padding-left:32px">
+            <div id="instr-addr-results" class="addr-results"></div>
+          </div>
+          <button type="button" class="btn-bk-action" id="btn-instr-mylocation" style="flex-shrink:0;padding:0 14px;display:flex;align-items:center;justify-content:center" title="Моє місце"><i class="ti ti-current-location"></i></button>
         </div>
-        <div id="instr-map-pick" style="height:180px;border-radius:9px;overflow:hidden;border:.5px solid var(--border)"></div>
-        <p style="font-size:11px;color:var(--text-hint);margin-top:5px;display:flex;align-items:center;gap:4px"><i class="ti ti-info-circle"></i> Введіть адресу або перетягніть маркер на місце роботи</p>
+        <div id="instr-map-pick" style="height:180px;border-radius:9px;overflow:hidden;border:.5px solid var(--border);margin-top:6px;cursor:crosshair"></div>
+        <p style="font-size:11px;color:var(--text-hint);margin-top:5px;display:flex;align-items:center;gap:4px"><i class="ti ti-info-circle"></i> Знайдіть адресу, натисніть "Моє місце" або клацніть по карті — учні побачать вас саме тут</p>
       </div>
       <input type="hidden" name="lat">
       <input type="hidden" name="lng">
+      <div class="form-group">
+        <label class="form-label">Район</label>
+        <input class="form-input" name="area" type="text" placeholder="Заповниться автоматично за точкою">
+      </div>
       <div class="form-group">
         <label class="form-label">Тип КПП</label>
         <div class="radio-group">
@@ -1604,7 +1607,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Ціна / год (грн)</label>
+        <label class="form-label">Ціна / год (грн) *</label>
         <input class="form-input" name="price" type="number" placeholder="600" min="0">
       </div>
     </form>
@@ -4037,7 +4040,24 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
     instrForm.querySelector(`[name="${field}"]`).style.borderColor = val ? '' : '#cc3333';
     if (!val) valid = false;
   });
-  if (!alreadyLoggedIn && pass.length < 6) {
+
+  const latEl = instrForm.querySelector('[name="lat"]');
+  const lngEl = instrForm.querySelector('[name="lng"]');
+  const mapPickEl = document.getElementById('instr-map-pick');
+  const hasPoint = !!(latEl?.value && lngEl?.value);
+  if (mapPickEl) mapPickEl.style.border = hasPoint ? '.5px solid var(--border)' : '1.5px solid #cc3333';
+  if (!hasPoint) valid = false;
+
+  const priceInp = instrForm.querySelector('[name="price"]');
+  const hasPrice = Number(priceInp?.value) > 0;
+  if (priceInp) priceInp.style.borderColor = hasPrice ? '' : '#cc3333';
+  if (!hasPrice) valid = false;
+
+  if (!hasPoint) {
+    if (errEl) { errEl.textContent = 'Оберіть точку зустрічі на карті — знайдіть адресу, натисніть "Моє місце" або клацніть по карті.'; errEl.style.display = ''; }
+  } else if (!hasPrice) {
+    if (errEl) { errEl.textContent = 'Вкажіть ціну за годину занять.'; errEl.style.display = ''; }
+  } else if (!alreadyLoggedIn && pass.length < 6) {
     instrForm.querySelector('[name="instr-pass"]').style.borderColor = '#cc3333';
     if (errEl) { errEl.textContent = !pass ? 'Вкажіть пароль для входу в кабінет (мінімум 6 символів).' : 'Пароль занадто короткий — мінімум 6 символів.'; errEl.style.display = ''; }
     valid = false;
@@ -4046,7 +4066,10 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
     if (errEl) { errEl.textContent = 'Паролі не збігаються.'; errEl.style.display = ''; }
     valid = false;
   }
-  if (!valid) return;
+  if (!valid) {
+    if (!hasPoint) mapPickEl?.scrollIntoView?.({behavior:'smooth', block:'center'});
+    return;
+  }
 
   const btn = document.getElementById("btn-submit-instr");
   btn.disabled = true;
@@ -6832,6 +6855,12 @@ window._filterMapMarkers = function(active) {
   _renderClusters();
 };
 
+function _areaFromAddress(address) {
+  if (!address) return '';
+  return address.suburb || address.city_district || address.borough || address.neighbourhood ||
+         address.town || address.city || address.village || '';
+}
+
 window.initInstrMap = function() {
   if (_instrPickMap) { _instrPickMap.invalidateSize(); return; }
   const el = document.getElementById("instr-map-pick");
@@ -6840,29 +6869,74 @@ window.initInstrMap = function() {
   _ensureMainMap().then(() => {
     if (_instrPickMap) { _instrPickMap.invalidateSize(); return; }
     if (typeof L === 'undefined') { console.warn('Leaflet недоступний — карту вибору локації не показано'); return; }
-    _instrPickMap = L.map(el, {zoomControl:true}).setView([50.4501,30.5234],12);
+    _instrPickMap = L.map(el, {zoomControl:true}).setView([50.4501,30.5234],11);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(_instrPickMap);
-    _instrPickMarker = L.marker([50.4501,30.5234], {draggable:true}).addTo(_instrPickMap);
-    function syncLatLng() {
-      const pos = _instrPickMarker.getLatLng();
-      document.querySelector('#instr-form [name="lat"]').value = pos.lat.toFixed(6);
-      document.querySelector('#instr-form [name="lng"]').value = pos.lng.toFixed(6);
-    }
-    _instrPickMarker.on('dragend', syncLatLng);
-    syncLatLng();
+    // Маркер з'являється лише після реального вибору — точка на карті обов'язкова,
+    // тож hidden lat/lng мають лишатись порожніми, поки користувач її не поставив.
+    _instrPickMarker = null;
 
-    // Address autocomplete
     const addrInput = document.getElementById('instr-addr-search');
     const addrBox   = document.getElementById('instr-addr-results');
-    if (!addrInput || !addrBox) return;
-    let _addrTimer;
-    function _closeAddr() { addrBox.innerHTML = ''; addrBox.classList.remove('open'); }
-    function _placePin(lat, lon, label) {
-      _instrPickMarker.setLatLng([lat, lon]);
-      _instrPickMap.setView([lat, lon], 16);
+    const areaInput = document.querySelector('#instr-form [name="area"]');
+
+    function setLatLng(lat, lng) {
       document.querySelector('#instr-form [name="lat"]').value = (+lat).toFixed(6);
-      document.querySelector('#instr-form [name="lng"]').value = (+lon).toFixed(6);
+      document.querySelector('#instr-form [name="lng"]').value = (+lng).toFixed(6);
+      el.style.border = '.5px solid var(--border)';
+    }
+    function placeMarker(lat, lng) {
+      const ll = [lat, lng];
+      if (_instrPickMarker) { _instrPickMarker.setLatLng(ll); }
+      else {
+        _instrPickMarker = L.marker(ll, {draggable:true}).addTo(_instrPickMap);
+        _instrPickMarker.on('dragend', () => {
+          const pos = _instrPickMarker.getLatLng();
+          setLatLng(pos.lat, pos.lng);
+          reverseFill(pos.lat, pos.lng);
+        });
+      }
+      _instrPickMap.setView(ll, 16);
+      setLatLng(lat, lng);
+    }
+    function reverseFill(lat, lng) {
+      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
+        .then(r=>r.json()).then(d => {
+          if (addrInput && d.display_name) addrInput.value = d.display_name.split(',').slice(0,3).join(', ');
+          const area = _areaFromAddress(d.address);
+          if (areaInput && area) areaInput.value = area;
+        }).catch(()=>{});
+    }
+
+    _instrPickMap.on('click', e => {
+      placeMarker(e.latlng.lat, e.latlng.lng);
+      reverseFill(e.latlng.lat, e.latlng.lng);
+    });
+
+    const myLocBtn = document.getElementById('btn-instr-mylocation');
+    myLocBtn?.addEventListener('click', () => {
+      if (!navigator.geolocation) { showToast('Геолокація недоступна', 'Знайдіть адресу вручну або клацніть по карті', 'error'); return; }
+      const orig = myLocBtn.innerHTML;
+      myLocBtn.innerHTML = '<i class="ti ti-loader"></i>'; myLocBtn.disabled = true;
+      navigator.geolocation.getCurrentPosition(pos => {
+        placeMarker(pos.coords.latitude, pos.coords.longitude);
+        reverseFill(pos.coords.latitude, pos.coords.longitude);
+        myLocBtn.innerHTML = orig; myLocBtn.disabled = false;
+      }, err => {
+        myLocBtn.innerHTML = orig; myLocBtn.disabled = false;
+        const msgs = { 1:'Доступ до геолокації заборонено', 2:'Не вдалося визначити місцезнаходження', 3:'Час очікування вичерпано' };
+        showToast(msgs[err.code] || 'Помилка геолокації', 'Знайдіть адресу вручну', 'error');
+      }, { enableHighAccuracy:true, timeout:15000, maximumAge:0 });
+    });
+
+    // Address autocomplete
+    if (!addrInput || !addrBox) return;
+    let _addrTimer, _addrResults = [];
+    function _closeAddr() { addrBox.innerHTML = ''; addrBox.classList.remove('open'); }
+    function _placePin(lat, lon, label, address) {
+      placeMarker(+lat, +lon);
       addrInput.value = label;
+      const area = _areaFromAddress(address);
+      if (areaInput && area) areaInput.value = area;
       _closeAddr();
     }
     addrInput.addEventListener('input', () => {
@@ -6876,18 +6950,20 @@ window.initInstrMap = function() {
             { headers: { 'Accept-Language': 'uk' } }
           );
           const data = await r.json();
+          _addrResults = data;
           if (!data.length) {
             addrBox.innerHTML = '<div class="addr-result-item" style="color:var(--text-muted)">Нічого не знайдено</div>';
             addrBox.classList.add('open');
             return;
           }
-          addrBox.innerHTML = data.map(d =>
-            `<div class="addr-result-item" tabindex="0" data-lat="${d.lat}" data-lon="${d.lon}">${d.display_name}</div>`
+          addrBox.innerHTML = data.map((d,i) =>
+            `<div class="addr-result-item" tabindex="0" data-idx="${i}" data-lat="${d.lat}" data-lon="${d.lon}">${d.display_name}</div>`
           ).join('');
           addrBox.classList.add('open');
           addrBox.querySelectorAll('.addr-result-item[data-lat]').forEach(item => {
-            item.addEventListener('click', () => _placePin(item.dataset.lat, item.dataset.lon, item.textContent));
-            item.addEventListener('keydown', e => { if (e.key === 'Enter') _placePin(item.dataset.lat, item.dataset.lon, item.textContent); });
+            const pick = () => _placePin(item.dataset.lat, item.dataset.lon, item.textContent, _addrResults[+item.dataset.idx]?.address);
+            item.addEventListener('click', pick);
+            item.addEventListener('keydown', e => { if (e.key === 'Enter') pick(); });
           });
         } catch { _closeAddr(); }
       }, 420);
