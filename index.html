@@ -1442,7 +1442,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.361</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.362</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -2682,7 +2682,7 @@ async function renderProfileScreen(user) {
   if (snap?.exists()) ud = snap.data();
   else if (window._clientProfile) ud = window._clientProfile; // fallback to in-memory cache
   const name  = ud.name || user.displayName || '';
-  const phone = ud.phone || '';
+  const phone = ud.phone || instr?.phone || '';
   const ini   = name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || (user.email||'?')[0].toUpperCase();
 
   const photoSrc = ud.photo || user.photoURL || '';
