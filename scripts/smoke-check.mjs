@@ -63,6 +63,10 @@ async function checkPage(browser, file, cfg) {
 
     for (const step of cfg.interactions) {
       try {
+        // Закриваємо будь-яку відкриту панель/оверлей від попереднього кроку —
+        // інакше він перекриває наступну кнопку і клік підвисає на таймауті.
+        await page.evaluate(() => window.closeAll && window.closeAll());
+        await page.waitForTimeout(200);
         await page.locator(step.click).first().click({ timeout: 5000 });
         await page.waitForTimeout(400);
         const ok = await page.locator(step.expect).count();
