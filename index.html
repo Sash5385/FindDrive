@@ -1442,7 +1442,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.359</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.360</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -1612,7 +1612,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <div id="instr-success" class="instr-success" style="display:none">
     <div class="success-icon"><i class="ti ti-check"></i></div>
     <div class="success-title">Анкету надіслано!</div>
-    <div class="success-sub">Ми перевіримо дані та опублікуємо ваш профіль<br>протягом 1 робочого дня.</div>
+    <div class="success-sub" id="instr-success-sub">Ми перевіримо дані та опублікуємо ваш профіль<br>протягом 1 робочого дня.</div>
     <button onclick="closeAll();setTimeout(async()=>{const u=window._auth?.currentUser;if(u){await window._renderProfileScreen?.(u);window.openPanel?.('cabinet');}else{window.openPanel?.('cabinet');}},200)" style="margin-top:18px;background:var(--green);color:#fff;border:none;border-radius:9px;padding:11px 22px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px"><i class="ti ti-user-circle"></i> Відкрити мій кабінет</button>
   </div>
   <div id="instr-foot" class="cab-foot">
@@ -1726,7 +1726,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <div id="school-success" class="instr-success" style="display:none">
     <div class="success-icon"><i class="ti ti-check"></i></div>
     <div class="success-title">Анкету надіслано!</div>
-    <div class="success-sub">Ми перевіримо дані та опублікуємо профіль школи<br>протягом 1 робочого дня.</div>
+    <div class="success-sub" id="school-success-sub">Ми перевіримо дані та опублікуємо профіль школи<br>протягом 1 робочого дня.</div>
     <button onclick="closeAll();setTimeout(async()=>{const u=window._auth?.currentUser;if(u){await window._renderProfileScreen?.(u);window.openPanel?.('cabinet');}else{window.openPanel?.('cabinet');}},200)" style="margin-top:18px;background:var(--green);color:#fff;border:none;border-radius:9px;padding:11px 22px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:7px"><i class="ti ti-user-circle"></i> Відкрити мій кабінет</button>
   </div>
   <div id="school-foot" class="cab-foot">
@@ -2020,6 +2020,7 @@ function showAuthErr(msg) {
     'auth/unauthorized-domain':        'Цей домен не авторизований у Firebase. Зверніться до адміністратора.',
     'auth/network-request-failed':     'Немає з\'єднання з інтернетом. Перевірте мережу.',
     'auth/too-many-requests':          'Забагато спроб. Спробуйте пізніше.',
+    'auth/operation-not-allowed':      'Вхід через email/пароль зараз недоступний. Скористайтесь кнопкою "Google" з тим самим email.',
   };
   const code = msg.match(/auth\/[\w-]+/)?.[0];
   el.textContent = map[code] || `Помилка входу (${code || 'невідома'}). Спробуйте ще раз.`;
@@ -4058,6 +4059,7 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
   const lng      = parseFloat(instrForm.querySelector('[name="lng"]')?.value) || null;
 
   let uid = auth.currentUser?.uid || null;
+  let authProviderDown = false;
 
   // Спроба реєстрації / входу (якщо не залогінений і введено пароль)
   if (!alreadyLoggedIn && email && pass.length >= 6) {
@@ -4081,12 +4083,13 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
           }
           return;
         }
-      } else if (code === 'auth/operation-not-allowed') {
-        // email/password auth вимкнений — продовжуємо без акаунту
-        uid = null;
       } else {
-        // інша auth помилка — продовжуємо без акаунту
+        // Вхід через email/пароль недоступний (auth/operation-not-allowed —
+        // провайдер вимкнений у Firebase Console — або інша auth-помилка).
+        // Не блокуємо подання анкети, але чесно попереджаємо: без акаунту
+        // вхід через email/пароль пізніше не спрацює.
         uid = null;
+        authProviderDown = true;
       }
     }
   }
@@ -4117,6 +4120,11 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
     window._lastOpenedAsInstr = true;
     window._ga('instructor_application_submitted', { area: area || '', gearbox });
 
+    const subEl = document.getElementById('instr-success-sub');
+    if (authProviderDown && subEl) {
+      subEl.innerHTML = 'Ми перевіримо дані та опублікуємо ваш профіль протягом 1 робочого дня.<br><br>' +
+        '<b>Важливо:</b> вхід через email/пароль зараз недоступний. Щоб потрапити в кабінет, увійдіть через кнопку "Google" з email <b>' + esc(email) + '</b> — профіль підтягнеться автоматично.';
+    }
     document.getElementById("instr-form-wrap").style.display = "none";
     document.getElementById("instr-foot").style.display = "none";
     document.getElementById("instr-success").style.display = "flex";
@@ -4682,6 +4690,7 @@ document.getElementById("btn-submit-school")?.addEventListener("click", async ()
   const branches = window._bpGetPoints ? window._bpGetPoints() : [];
 
   let uid = auth.currentUser?.uid || null;
+  let authProviderDown = false;
 
   if (!alreadyLoggedIn && email && pass.length >= 6) {
     try {
@@ -4703,10 +4712,11 @@ document.getElementById("btn-submit-school")?.addEventListener("click", async ()
           }
           return;
         }
-      } else if (code === 'auth/operation-not-allowed') {
-        uid = null;
       } else {
+        // Вхід через email/пароль недоступний (провайдер вимкнений у Firebase
+        // Console або інша auth-помилка) — не блокуємо подання, але попереджаємо.
         uid = null;
+        authProviderDown = true;
       }
     }
   }
@@ -4729,6 +4739,11 @@ document.getElementById("btn-submit-school")?.addEventListener("click", async ()
     window._mySchoolId = newRef.id;
     if (uid) localStorage.setItem(`mySchoolId_${uid}`, newRef.id);
 
+    const subEl = document.getElementById('school-success-sub');
+    if (authProviderDown && subEl) {
+      subEl.innerHTML = 'Ми перевіримо дані та опублікуємо профіль школи протягом 1 робочого дня.<br><br>' +
+        '<b>Важливо:</b> вхід через email/пароль зараз недоступний. Щоб потрапити в кабінет, увійдіть через кнопку "Google" з email <b>' + esc(email) + '</b> — профіль підтягнеться автоматично.';
+    }
     document.getElementById("school-form-wrap").style.display = "none";
     document.getElementById("school-foot").style.display = "none";
     document.getElementById("school-success").style.display = "flex";
