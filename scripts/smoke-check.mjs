@@ -33,6 +33,17 @@ const PAGES = {
     interactions: [
       { name: 'клік "Я інструктор" відкриває instr-welcome', click: 'a.nav-role-btn:has-text("Я інструктор")', expect: '#instr-welcome.open' },
       { name: 'клік "Я автошкола" відкриває school-welcome',  click: 'a.nav-role-btn:has-text("Я автошкола")',  expect: '#school-welcome.open' },
+      { name: 'кнопка "Увійти" відкриває auth-modal', click: '#btn-login', expect: '#auth-modal[style*="flex"]' },
+      { name: 'футер "Знайти інструктора" → інфо-модалка',      click: 'a[onclick*="_openInfoModal(\'find\')"]',        expect: '#info-modal[style*="flex"]' },
+      { name: 'футер "Як це працює" → інфо-модалка',            click: 'a[onclick*="_openInfoModal(\'howto\')"]',       expect: '#info-modal[style*="flex"]' },
+      { name: 'футер "Карта" → інфо-модалка',                   click: 'a[onclick*="_openInfoModal(\'map\')"]',         expect: '#info-modal[style*="flex"]' },
+      { name: 'футер "Про нас" → інфо-модалка',                 click: 'a[onclick*="_openInfoModal(\'about\')"]',       expect: '#info-modal[style*="flex"]' },
+      { name: 'футер "Контакти" → інфо-модалка',                click: 'a[onclick*="_openInfoModal(\'contacts\')"]',    expect: '#info-modal[style*="flex"]' },
+      { name: 'футер "Конфіденційність" → інфо-модалка',        click: 'a[onclick*="_openInfoModal(\'privacy\')"]',     expect: '#info-modal[style*="flex"]' },
+      { name: 'футер "Умови партнерства" → інфо-модалка',       click: 'a[onclick*="_openInfoModal(\'partnership\')"]', expect: '#info-modal[style*="flex"]' },
+      { name: 'футер "Умови" → інфо-модалка',                   click: 'a[onclick*="_openInfoModal(\'terms\')"]',       expect: '#info-modal[style*="flex"]' },
+      { name: 'картка інструктора "Записатись" → instr-profile', click: '.instr-card .btn-book', expect: '#instr-profile.open', optional: true },
+      { name: 'картка школи → school-profile', click: '.school-card', expect: '#school-profile.open', optional: true },
     ],
   },
   'admin.html': {
@@ -63,10 +74,20 @@ async function checkPage(browser, file, cfg) {
 
     for (const step of cfg.interactions) {
       try {
-        // Закриваємо будь-яку відкриту панель/оверлей від попереднього кроку —
-        // інакше він перекриває наступну кнопку і клік підвисає на таймауті.
-        await page.evaluate(() => window.closeAll && window.closeAll());
+        // Закриваємо будь-яку відкриту панель/модалку/оверлей від попереднього
+        // кроку — інакше вона перекриває наступну кнопку і клік підвисає.
+        await page.evaluate(() => {
+          window.closeAll && window.closeAll();
+          window._closeInfoModal && window._closeInfoModal();
+          window._closeAuthModal && window._closeAuthModal();
+        });
         await page.waitForTimeout(200);
+
+        if (step.optional && await page.locator(step.click).count() === 0) {
+          console.log(`  · ${step.name} — пропущено (елемента немає в даних цього прогону)`);
+          continue;
+        }
+
         await page.locator(step.click).first().click({ timeout: 5000 });
         await page.waitForTimeout(400);
         const ok = await page.locator(step.expect).count();
