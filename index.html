@@ -1442,7 +1442,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.364</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.365</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -4180,11 +4180,15 @@ function initials(name) {
 function gearboxLabel(g) {
   return g === 'Обидва' ? 'Автомат/Механіка' : g;
 }
+// Усі короткі коди ТСЦ ("ТСЦ NNNN") з TSC_LIST — по всіх регіонах, не лише Київ.
+const ALL_TSC_TAGS = TSC_LIST.flatMap(([, centers]) => centers.map(full => {
+  const m = full.match(/№(\d+)/); return m ? 'ТСЦ ' + m[1] : null;
+}).filter(Boolean));
 const INSTR_TAGS = [
   'Автомат','Механіка',
   'Інструктор не палить',
   'Кондиціонер',
-  'ТСЦ 8041','ТСЦ 8042','ТСЦ 8049',
+  ...ALL_TSC_TAGS,
   'Паркування','Розвороти','Проїзд маршрутів',
   'Особистий маршрут','Удосконалення навичок','Подача авто на іспит',
   'Ранкові заняття','Денні заняття','Вечірні заняття',
@@ -4219,7 +4223,9 @@ window._updateDistanceBadges = _updateDistanceBadges;
 window.tscTagsForAddress = tscTagsForAddress;
 function tagStyle(tag) {
   const c = TAG_COLORS[tag];
-  return c ? `background:${c.bg};color:${c.tx};border-color:${c.bd}` : 'background:#f0f5f0;color:#4a6a5a;border-color:#dde8dd';
+  if (c) return `background:${c.bg};color:${c.tx};border-color:${c.bd}`;
+  if (tag && tag.startsWith('ТСЦ ')) return 'background:#fdf3e3;color:#7a5200;border-color:#e0c898';
+  return 'background:#f0f5f0;color:#4a6a5a;border-color:#dde8dd';
 }
 
 function _instrHasUpcomingSlots(d) {
@@ -6390,7 +6396,7 @@ function openInstrProfile(id, mpIdx) {
   const col = d.color||'#1a7a4a';
   const MP_COLORS = ['#1a7a4a','#185fa5','#993556','#b07000'];
   const TC = window.TAG_COLORS || {};
-  function _ts(tag){ const c=TC[tag]; return c?`background:${c.bg};color:${c.tx};border-color:${c.bd}`:'background:#f0f5f0;color:#4a6a5a;border-color:#dde8dd'; }
+  function _ts(tag){ const c=TC[tag]; if (c) return `background:${c.bg};color:${c.tx};border-color:${c.bd}`; if (tag && tag.startsWith('ТСЦ ')) return 'background:#fdf3e3;color:#7a5200;border-color:#e0c898'; return 'background:#f0f5f0;color:#4a6a5a;border-color:#dde8dd'; }
   const instrTags = Array.isArray(d.tags) ? d.tags.filter(t=>(window.INSTR_TAGS||[]).includes(t)) : [];
   const mps = (d.meetingPoints||[]).filter(pt=>typeof pt==='object'&&pt.lat);
   const statSegs = [];
@@ -7096,6 +7102,14 @@ window._startPickLocation = function() {
     'ТСЦ 8041':              {bg:'#fdf3e3',bd:'#e0c898',tx:'#7a5200'},
     'ТСЦ 8042':              {bg:'#fdf0e8',bd:'#e0b898',tx:'#7a3e00'},
     'ТСЦ 8049':              {bg:'#f5edfb',bd:'#c8a4e0',tx:'#6a349a'},
+    // Додаткові слоти під регіони з більшою кількістю ТСЦ (макс. 9 — Дніпропетровська обл.);
+    // початково приховані, заповнюються реальними кодами через window._updateCloudTscTags().
+    'ТСЦ #4':                {bg:'#fdf3e3',bd:'#e0c898',tx:'#7a5200'},
+    'ТСЦ #5':                {bg:'#fdf0e8',bd:'#e0b898',tx:'#7a3e00'},
+    'ТСЦ #6':                {bg:'#f5edfb',bd:'#c8a4e0',tx:'#6a349a'},
+    'ТСЦ #7':                {bg:'#fdf3e3',bd:'#e0c898',tx:'#7a5200'},
+    'ТСЦ #8':                {bg:'#fdf0e8',bd:'#e0b898',tx:'#7a3e00'},
+    'ТСЦ #9':                {bg:'#f5edfb',bd:'#c8a4e0',tx:'#6a349a'},
     'Паркування':            {bg:'#fde8e8',bd:'#e0a8a8',tx:'#8a2020'},
     'Розвороти':             {bg:'#e8eaf6',bd:'#b0b4e0',tx:'#383a9a'},
     'Проїзд маршрутів':      {bg:'#e8f7ee',bd:'#a8d4b8',tx:'#1a6a40'},
@@ -7140,6 +7154,7 @@ window._startPickLocation = function() {
       span.style.fontWeight = item.on ? '700' : '500';
       span.style.borderWidth= item.on ? '1.5px' : '';
       window._applyAllFilters?.();
+      window._filterMapMarkers?.([...window._activeTagFilters]);
     };
     el.appendChild(span);
     return item;
@@ -7156,8 +7171,10 @@ window._startPickLocation = function() {
     p.span.style.borderWidth= p.on ? '1.5px' : '';
   };
 
-  // Динамічна заміна ТСЦ-тегів у хмарі під регіон обраної на мапі точки
-  const TSC_SLOT_KEYS = ['ТСЦ 8041','ТСЦ 8042','ТСЦ 8049'];
+  // Динамічна заміна ТСЦ-тегів у хмарі під регіон обраної на мапі точки.
+  // 9 слотів — по максимальній кількості ТСЦ в одному регіоні (Дніпропетровська обл.);
+  // зайві слоти приховуються, якщо в регіоні менше центрів.
+  const TSC_SLOT_KEYS = ['ТСЦ 8041','ТСЦ 8042','ТСЦ 8049','ТСЦ #4','ТСЦ #5','ТСЦ #6','ТСЦ #7','ТСЦ #8','ТСЦ #9'];
   const tscSlotIdx = TSC_SLOT_KEYS.map(k => TAGS.indexOf(k));
   window._updateCloudTscTags = function(newTags) {
     tscSlotIdx.forEach((idx, slot) => {
@@ -7179,7 +7196,10 @@ window._startPickLocation = function() {
       item.span.style.filter = ''; item.span.style.boxShadow = ''; item.span.style.fontWeight = '500'; item.span.style.borderWidth = '';
     });
     window._applyAllFilters?.();
+    window._filterMapMarkers?.([...window._activeTagFilters]);
   };
+  // Стартовий стан — Київ (3 центри), решта слотів прихована до визначення регіону.
+  window._updateCloudTscTags(['ТСЦ 8041','ТСЦ 8042','ТСЦ 8049']);
 
   let rotY = 0;
   function frame(){
