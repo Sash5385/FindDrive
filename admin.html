@@ -111,6 +111,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .admin-btn.reject{background:#fde8e8;color:#8a2020;border:.5px solid #e0a8a8}
 .admin-btn.delete{background:#fde8e8;color:#8a2020;border:.5px solid #e0a8a8;flex:0;white-space:nowrap}
 .admin-tag{display:inline-flex;align-items:center;border-radius:20px;border:.5px solid;font-size:10px;padding:2px 8px;margin:2px 2px 0 0}
+.admin-mp-row{display:flex;align-items:center;gap:6px;margin-top:2px}
+.admin-mp-del{flex-shrink:0;width:16px;height:16px;border-radius:50%;border:.5px solid #e0a8a8;background:#fde8e8;color:#8a2020;font-size:10px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.admin-mp-del:hover{opacity:.75}
 .bk-status{border-radius:20px;padding:2px 9px;font-size:11px;font-weight:500;flex-shrink:0;display:inline-flex;align-items:center;gap:3px}
 .bk-status.pending{background:#fff3cd;color:#856404}
 .bk-status.confirmed{background:var(--green-light);color:var(--green)}
@@ -308,6 +311,7 @@ window._switchTab = function(tab) {
 
 // ===== ІНСТРУКТОРИ =====
 let _instrFirstSnap = true;
+let _instrCache = [];
 function listenInstructors() {
   onSnapshot(
     query(collection(db, 'instructors'), orderBy('createdAt', 'desc')),
@@ -323,6 +327,7 @@ function listenInstructors() {
       _instrFirstSnap = false;
 
       const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      _instrCache = all;
       const pending  = all.filter(i => i.status === 'pending');
       const approved = all.filter(i => i.status === 'approved');
       const rejected = all.filter(i => i.status === 'rejected');
@@ -438,7 +443,7 @@ function renderInstrCard(instr) {
     ? tags.map(t => `<span class="admin-tag" style="background:#f0f5f0;color:#4a6a5a;border-color:#dde8dd">${esc(t)}</span>`).join('')
     : '<span style="color:var(--text-hint);font-size:11px">—</span>';
   const mpsHtml = mps.length
-    ? mps.map((pt,i) => `<div style="font-size:11px;color:var(--text-muted);margin-top:2px"><i class="ti ti-map-pin" style="font-size:10px"></i> ${esc(pt.label||pt.name||`Точка ${i+1}`)} <span style="color:var(--text-hint)">${pt.lat?.toFixed?.(5)||''}, ${pt.lng?.toFixed?.(5)||''}</span></div>`).join('')
+    ? mps.map((pt,i) => `<div class="admin-mp-row" style="font-size:11px;color:var(--text-muted)"><i class="ti ti-map-pin" style="font-size:10px"></i> ${esc(pt.label||pt.name||`Точка ${i+1}`)} <span style="color:var(--text-hint)">${pt.lat?.toFixed?.(5)||''}, ${pt.lng?.toFixed?.(5)||''}</span><button type="button" class="admin-mp-del" title="Видалити цю точку" onclick="event.stopPropagation();window._adminRemoveMeetingPoint('${id}',${i})"><i class="ti ti-x"></i></button></div>`).join('')
     : '<span style="color:var(--text-hint);font-size:11px">—</span>';
   const photoHtml = (instr.photo || instr.carPhoto) ? `
     <div class="admin-photos">
@@ -515,6 +520,15 @@ window._adminToggleVerify = async (id, value) => {
 window._adminDeleteInstr = async (id, name) => {
   if (!confirm(`Видалити інструктора «${name}»? Дію не можна скасувати.`)) return;
   try { await deleteDoc(doc(db, 'instructors', id)); }
+  catch(e) { alert('Помилка: ' + (e.message||e)); }
+};
+window._adminRemoveMeetingPoint = async (id, idx) => {
+  const instr = _instrCache.find(i => i.id === id);
+  const mps = Array.isArray(instr?.meetingPoints) ? instr.meetingPoints : [];
+  const pt = mps[idx];
+  if (!pt) return;
+  if (!confirm(`Видалити точку «${pt.label || pt.name || 'без назви'}» у інструктора «${instr.name||''}»?`)) return;
+  try { await updateDoc(doc(db, 'instructors', id), { meetingPoints: mps.filter((_, i) => i !== idx) }); }
   catch(e) { alert('Помилка: ' + (e.message||e)); }
 };
 
