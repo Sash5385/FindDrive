@@ -1442,7 +1442,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.365</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.366</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -7154,7 +7154,7 @@ window._startPickLocation = function() {
       span.style.fontWeight = item.on ? '700' : '500';
       span.style.borderWidth= item.on ? '1.5px' : '';
       window._applyAllFilters?.();
-      window._filterMapMarkers?.([...window._activeTagFilters]);
+      window._filterMapMarkers?.([...(window._activeTagFilters||[])]);
     };
     el.appendChild(span);
     return item;
@@ -7181,7 +7181,7 @@ window._startPickLocation = function() {
       if (idx < 0) return;
       const item = items[idx];
       const newTag = (newTags||[])[slot] || null;
-      if (item.on) { window._activeTagFilters.delete(item.tag); item.on = false; }
+      if (item.on) { window._activeTagFilters?.delete(item.tag); item.on = false; }
       if (!newTag) {
         item.span.style.display = 'none';
         return;
@@ -7196,10 +7196,14 @@ window._startPickLocation = function() {
       item.span.style.filter = ''; item.span.style.boxShadow = ''; item.span.style.fontWeight = '500'; item.span.style.borderWidth = '';
     });
     window._applyAllFilters?.();
-    window._filterMapMarkers?.([...window._activeTagFilters]);
+    window._filterMapMarkers?.([...(window._activeTagFilters||[])]);
   };
   // Стартовий стан — Київ (3 центри), решта слотів прихована до визначення регіону.
-  window._updateCloudTscTags(['ТСЦ 8041','ТСЦ 8042','ТСЦ 8049']);
+  // Приховуємо слоти напряму (без window._updateCloudTscTags): цей класичний <script>
+  // виконується ДО модульного скрипта, що створює window._activeTagFilters, тож виклик
+  // самої функції тут (яка звертається до window._activeTagFilters) впав би з винятком
+  // і зупинив би решту скрипта (включно з запуском анімації обертання нижче).
+  tscSlotIdx.forEach((idx, slot) => { if (slot >= 3 && idx >= 0) items[idx].span.style.display = 'none'; });
 
   let rotY = 0;
   function frame(){
