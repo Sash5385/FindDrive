@@ -1450,7 +1450,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.371</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.372</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -4186,12 +4186,21 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
-const THEMES = [
-  { blob:'#a8f0c0', bg:'#e0f4ea', color:'#1a6a3a' },
-  { blob:'#f0a8d0', bg:'#fbeaf0', color:'#993556' },
-  { blob:'#a0d8f8', bg:'#e6f1fb', color:'#185fa5' },
-  { blob:'#c0b8f8', bg:'#f0eeff', color:'#5a3a9a' },
-];
+// 100 відтінків замість 4 — щоб шпильки різних інструкторів на мапі відрізнялись кольором
+// (раніше кожен 5-й інструктор отримував той самий колір через THEMES[i % 4])
+function _genThemes(n) {
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const hue = Math.round(i * 360 / n);
+    out.push({
+      blob:  `hsl(${hue},62%,78%)`,
+      bg:    `hsl(${hue},58%,94%)`,
+      color: `hsl(${hue},55%,32%)`,
+    });
+  }
+  return out;
+}
+const THEMES = _genThemes(100);
 function initials(name) {
   return (name||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';
 }
