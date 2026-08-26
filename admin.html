@@ -1396,9 +1396,19 @@ window._adminSaveUser = async (id) => {
     showToast('Збережено', 'Дані учня оновлено');
   } catch (e) { alert('Помилка: ' + (e.message || e)); }
 };
+let _userFirstSnap = true;
 function listenUsers() {
   // без orderBy('createdAt') — Firestore виключає документи без цього поля (напр. вхід через Google)
   onSnapshot(collection(db, 'users'), snap => {
+    if (!_userFirstSnap) {
+      snap.docChanges().forEach(ch => {
+        if (ch.type !== 'added') return;
+        const d = ch.doc.data();
+        if (d.email === ADMIN_EMAIL) return;
+        showToast('Новий учень зареєструвався!', d.name || d.email || '');
+      });
+    }
+    _userFirstSnap = false;
     _userCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     _renderUserList();
   }, err => { document.getElementById('users-list').innerHTML = '<div class="empty">Помилка завантаження</div>'; console.error(err); });

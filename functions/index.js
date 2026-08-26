@@ -162,6 +162,45 @@ exports.onInstructorCreated = onDocumentCreated(
   }
 );
 
+// Адмін отримує push коли подана нова анкета школи
+exports.onSchoolCreated = onDocumentCreated(
+  { document: 'schools/{id}', region: 'europe-west1' },
+  async event => {
+    if (!(await claimEventOnce(event.id))) return;
+    const d = event.data.data();
+    if (d.status !== 'pending') return;
+    const adminUid = await getAdminUid();
+    if (!adminUid) return;
+    await sendPush(
+      adminUid,
+      'Нова анкета школи!',
+      `${d.name || 'Автошкола'} — ${d.phone || d.email || ''}`,
+      { type: 'admin' },
+      'https://finddrive.in.ua/admin.html'
+    );
+  }
+);
+
+// Адмін отримує push коли реєструється новий учень (перший запис у users/{uid} —
+// створюється при першому вході, ще до того, як людина стане інструктором чи школою)
+exports.onUserCreated = onDocumentCreated(
+  { document: 'users/{uid}', region: 'europe-west1' },
+  async event => {
+    if (!(await claimEventOnce(event.id))) return;
+    const d = event.data.data();
+    if (d.email === ADMIN_EMAIL) return; // не сповіщати адміна про його ж власний акаунт
+    const adminUid = await getAdminUid();
+    if (!adminUid || adminUid === event.params.uid) return;
+    await sendPush(
+      adminUid,
+      'Новий учень зареєструвався!',
+      `${d.name || d.email || 'Учень'}`,
+      { type: 'admin' },
+      'https://finddrive.in.ua/admin.html'
+    );
+  }
+);
+
 // Поточний зсув Europe/Kyiv від UTC у хвилинах (враховує літній/зимовий час)
 function kyivOffsetMinutes(date) {
   const utcStr  = date.toLocaleString('en-US', { timeZone: 'UTC' });
