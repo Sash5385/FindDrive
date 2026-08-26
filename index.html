@@ -266,6 +266,10 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .nav-role-btn i{font-size:16px}
 @media(max-width:900px){.nav-role-btn span{display:none}.nav-role-btn{padding:9px;width:36px;height:36px;justify-content:center;border-radius:50%}.nav-role-btn i{font-size:17px}}
 @media(max-width:600px){.nav-role-links{gap:6px}.nav-role-btn{width:32px;height:32px;padding:7px}.nav-role-btn i{font-size:16px}}
+/* На вузьких екранах рядку навбару вже тісно з 3 круглими кнопками ролей + аватаром +
+   гамбургером — кнопка "Адмін" там накладалась би на сусідні елементи. На мобільних
+   вона доступна через гамбургер-меню (#nav-mobile-admin) замість тісного верхнього рядка. */
+@media(max-width:900px){#nav-admin-btn{display:none !important}}
 .nav-link{font-size:14px;color:rgba(255,255,255,.85);text-decoration:none;transition:color .2s}
 .nav-link:hover{color:#fff}
 .nav-right{display:flex;align-items:center;gap:14px}
@@ -1452,7 +1456,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.373</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.374</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
