@@ -436,8 +436,8 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .rv-chip:hover{border-color:var(--green);color:var(--green);background:var(--green-light)}
 .rv-chip-av{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;flex-shrink:0}
 .tag-sel-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-.tag-sel-btn{padding:5px 12px;border-radius:20px;border:.5px solid transparent;font-size:11px;cursor:pointer;font-family:inherit;transition:border-width .1s,box-shadow .15s,opacity .15s}
-.tag-sel-btn.active{border-width:1.5px;font-weight:500;box-shadow:0 1px 5px rgba(0,0,0,.1)}
+.tag-sel-btn{padding:5px 12px;border-radius:20px;border:.5px solid transparent;font-size:11px;cursor:pointer;font-family:inherit;transition:border-width .1s,box-shadow .15s,opacity .15s,filter .15s}
+.tag-sel-btn.active{border-width:2px;font-weight:700;box-shadow:0 0 0 2px rgba(13,42,26,.12),0 2px 6px rgba(0,0,0,.18);filter:saturate(1.8) brightness(.94)}
 .tag-sel-btn:hover:not(.active){opacity:.75}
 .instr-footer{display:flex;align-items:center;justify-content:space-between;border-top:.5px solid #eef3ee;padding-top:10px}
 .price{font-size:15px;font-weight:500;color:var(--text)}
@@ -1442,7 +1442,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.367</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.368</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -2867,7 +2867,10 @@ async function loadInstrSettings(instr, container) {
       if (t.startsWith('ТСЦ ')) { if (!inserted) { out.push(...dynamicTscTags); inserted = true; } }
       else out.push(t);
     });
-    return out.map(tag => `<button class="tag-sel-btn${instrTags.includes(tag)?' active':''}" style="${tagStyle(tag)}" onclick="window._toggleTag('${tag}')">${tag}</button>`).join('');
+    return out.map(tag => {
+      const on = instrTags.includes(tag);
+      return `<button class="tag-sel-btn${on?' active':''}" style="${tagStyle(tag)}" onclick="window._toggleTag('${tag}')">${on?'<i class="ti ti-check" style="font-size:11px;margin-right:3px;vertical-align:-1px"></i>':''}${tag}</button>`;
+    }).join('');
   }
   let pendingFacePhoto = null;
   let pendingCarPhoto  = null;
