@@ -6,6 +6,11 @@ Format: `[YY.MM.NN]` — рік.місяць.порядковий_номер_р�
 
 ---
 
+## [24.06.377] — 2026-08-26
+
+### Added
+- GitHub Actions workflow `firestore-rules-deploy.yml` — автодеплой `firestore.rules` при пуші в main (спрацьовує лише коли змінився сам файл правил) або вручну через "Run workflow". Потребує одноразового секрету `FIREBASE_TOKEN` у налаштуваннях репозиторію (Settings → Secrets and variables → Actions), згенерованого локально командою `npx firebase-tools login:ci`
+
 ## [24.06.376] — 2026-08-26
 
 ### Added

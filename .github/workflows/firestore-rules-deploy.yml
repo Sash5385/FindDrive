@@ -1,0 +1,26 @@
+name: Deploy Firestore rules
+
+# Деплоїть тільки firestore.rules (без functions/hosting) — спрацьовує, коли
+# файл правил змінився в main, або вручну через "Run workflow".
+# Потребує секрет FIREBASE_TOKEN (Settings → Secrets and variables → Actions),
+# згенерований локально командою: npx firebase-tools login:ci
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'firestore.rules'
+  workflow_dispatch:
+
+jobs:
+  deploy-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Deploy Firestore rules
+        run: npx firebase-tools deploy --only firestore:rules --token "${{ secrets.FIREBASE_TOKEN }}"
