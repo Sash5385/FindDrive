@@ -1450,7 +1450,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.370</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.371</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -5174,7 +5174,10 @@ async function openSchoolCabinet(school) {
     const b = document.getElementById('sc-save');
     b.disabled = true; b.innerHTML = '<i class="ti ti-loader"></i> Збереження…';
     try {
-      const branches = window._bpGetPoints ? window._bpGetPoints() : [];
+      // Старі філії, збережені просто текстом району (без координат), пікер мапи не показує
+      // й не редагує — зберігаємо їх окремо, щоб збереження профілю їх не стерло мовчки.
+      const legacyTextBranches = Array.isArray(school.branches) ? school.branches.filter(b => typeof b === 'string') : [];
+      const branches = [...(window._bpGetPoints ? window._bpGetPoints() : []), ...legacyTextBranches];
       const logoUpdate = {};
       if (scLogoData) logoUpdate.logo = scLogoData;
       await updateDoc(doc(db, 'schools', school.id), {

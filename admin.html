@@ -668,6 +668,7 @@ window._adminMpSubmit = async (id) => {
 
 // ===== ШКОЛИ =====
 let _schoolFirstSnap = true;
+let _schoolCache = [];
 function listenSchools() {
   onSnapshot(
     query(collection(db, 'schools'), orderBy('createdAt', 'desc')),
@@ -683,6 +684,7 @@ function listenSchools() {
       _schoolFirstSnap = false;
 
       const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      _schoolCache = all;
       const pending  = all.filter(i => i.status === 'pending');
       const approved = all.filter(i => i.status === 'approved');
       const rejected = all.filter(i => i.status === 'rejected');
@@ -713,8 +715,23 @@ function renderSchoolCard(school) {
   const ini = initials(school.name);
   const statusCls = school.status === 'approved' ? 'approved' : school.status === 'rejected' ? 'rejected' : 'pending';
   const statusLabel = { pending:'На розгляді', approved:'Активна', rejected:'Відхилено' }[school.status] || school.status;
-  const branches = Array.isArray(school.branches) ? school.branches.map(b => typeof b === 'string' ? b : (b.label||'')).filter(Boolean).join(', ') : '—';
+  const branchList = Array.isArray(school.branches) ? school.branches : [];
+  const branches = branchList.map(b => typeof b === 'string' ? b : (b.label||'')).filter(Boolean).join(', ') || '—';
   const created = school.createdAt?.toDate?.() ? school.createdAt.toDate().toLocaleDateString('uk-UA') : '—';
+
+  const needsGeocode = branchList.some(b => typeof b === 'string' || (b && typeof b === 'object' && (!b.lat || !b.lng)));
+  const branchesHtml = branchList.length
+    ? branchList.map((b, i) => {
+        const label = typeof b === 'string' ? b : (b.label || `Філія ${i+1}`);
+        const hasPin = typeof b === 'object' && b.lat && b.lng;
+        return `<div class="admin-mp-row" style="font-size:11px;color:var(--text-muted)">
+          <i class="ti ti-map-pin" style="font-size:10px;color:${hasPin?'var(--green)':'#c88'}"></i> ${esc(label)}
+          ${hasPin
+            ? `<span style="color:var(--text-hint)">${b.lat.toFixed(5)}, ${b.lng.toFixed(5)}</span>`
+            : `<button type="button" class="admin-mp-toggle" style="margin:0" onclick="window._adminGeocodeSchoolBranch('${id}',${i})" id="am-sc-geo-${id}-${i}"><i class="ti ti-map-search"></i> Знайти на мапі</button>`}
+        </div>`;
+      }).join('')
+    : '<span style="color:var(--text-hint);font-size:11px">—</span>';
 
   const deleteBtn = `<button class="admin-btn delete" onclick="window._adminDeleteSchool('${id}','${esc((school.name||'').replace(/'/g,''))}')"><i class="ti ti-trash"></i> Видалити</button>`;
   const actionsHtml = school.status === 'pending' ? `
@@ -746,7 +763,9 @@ function renderSchoolCard(school) {
       <div class="admin-card-body">
         <div class="admin-field"><div class="admin-field-label">Email</div><div class="admin-field-val">${esc(school.email||'—')}</div></div>
         <div class="admin-field"><div class="admin-field-label">Телефон</div><div class="admin-field-val">${esc(school.phone||'—')}</div></div>
-        <div class="admin-field"><div class="admin-field-label">Райони / філії</div><div class="admin-field-val">${esc(branches)}</div></div>
+        <div class="admin-field"><div class="admin-field-label">Райони / філії</div><div class="admin-field-val">${branchesHtml}
+          ${needsGeocode ? `<button type="button" class="admin-mp-toggle" onclick="event.stopPropagation();window._adminGeocodeAllSchoolBranches('${id}')" id="am-sc-geo-all-${id}"><i class="ti ti-map-search"></i> Знайти всі на мапі</button>` : ''}
+        </div></div>
         <div class="admin-field"><div class="admin-field-label">Сайт</div><div class="admin-field-val">${school.website ? `<a href="${esc(school.website)}" target="_blank" style="color:#185fa5">${esc(school.website)}</a>` : '—'}</div></div>
         <div class="admin-field"><div class="admin-field-label">Ціна курсу</div><div class="admin-field-val">${school.price_course ? esc(school.price_course)+' грн' : '—'}</div></div>
         <div class="admin-field"><div class="admin-field-label">Ціна допзаняття</div><div class="admin-field-val">${school.price_extra ? esc(school.price_extra)+' грн/год' : '—'}</div></div>
@@ -770,6 +789,73 @@ window._adminDeleteSchool = async (id, name) => {
   if (!confirm(`Видалити школу «${name}»? Дію не можна скасувати.`)) return;
   try { await deleteDoc(doc(db, 'schools', id)); }
   catch(e) { alert('Помилка: ' + (e.message||e)); }
+};
+
+// Геокодування старих філій без координат (раніше філії зберігались просто текстом
+// району — тепер завжди {label,lat,lng} з мапи). Шукаємо назву через Nominatim і
+// проставляємо шпильку автоматично, не чіпаючи вже коректні філії.
+async function _adminGeocodeBranchText(text) {
+  const r = await fetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(text)}`);
+  const results = await r.json();
+  if (!results.length) return null;
+  const { lat, lon } = results[0];
+  return { lat: +parseFloat(lat).toFixed(6), lng: +parseFloat(lon).toFixed(6) };
+}
+window._adminGeocodeSchoolBranch = async (schoolId, idx) => {
+  const school = _schoolCache.find(s => s.id === schoolId);
+  const branches = Array.isArray(school?.branches) ? [...school.branches] : [];
+  const b = branches[idx];
+  if (!b) return;
+  const label = typeof b === 'string' ? b : (b.label || '');
+  if (!label) return;
+  const btn = document.getElementById(`am-sc-geo-${schoolId}-${idx}`);
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> Пошук…'; }
+  try {
+    const ll = await _adminGeocodeBranchText(label);
+    if (!ll) {
+      showToast('Не знайдено', `«${label}» — спробуйте уточнити назву філії в кабінеті школи`);
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-map-search"></i> Знайти на мапі'; }
+      return;
+    }
+    branches[idx] = { label, lat: ll.lat, lng: ll.lng };
+    await updateDoc(doc(db, 'schools', schoolId), { branches });
+    showToast('Шпильку знайдено', `${label} — ${ll.lat}, ${ll.lng}`);
+  } catch (e) {
+    alert('Помилка: ' + (e.message || e));
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-map-search"></i> Знайти на мапі'; }
+  }
+};
+window._adminGeocodeAllSchoolBranches = async (schoolId) => {
+  const school = _schoolCache.find(s => s.id === schoolId);
+  const branches = Array.isArray(school?.branches) ? [...school.branches] : [];
+  const pendingIdx = branches.map((b, i) => (typeof b === 'string' || (b && typeof b === 'object' && (!b.lat || !b.lng))) ? i : -1).filter(i => i >= 0);
+  if (!pendingIdx.length) return;
+  const allBtn = document.getElementById(`am-sc-geo-all-${schoolId}`);
+  if (allBtn) { allBtn.disabled = true; allBtn.innerHTML = '<i class="ti ti-loader"></i> Пошук…'; }
+  let found = 0, missed = [];
+  for (const idx of pendingIdx) {
+    const b = branches[idx];
+    const label = typeof b === 'string' ? b : (b.label || '');
+    if (!label) continue;
+    const btn = document.getElementById(`am-sc-geo-${schoolId}-${idx}`);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> Пошук…'; }
+    try {
+      const ll = await _adminGeocodeBranchText(label);
+      if (ll) { branches[idx] = { label, lat: ll.lat, lng: ll.lng }; found++; }
+      else { missed.push(label); if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-map-search"></i> Знайти на мапі'; } }
+    } catch (e) { missed.push(label); }
+    // Nominatim (публічний сервер) дозволяє не більше 1 запиту/сек
+    await new Promise(res => setTimeout(res, 1100));
+  }
+  if (found) {
+    try { await updateDoc(doc(db, 'schools', schoolId), { branches }); }
+    catch (e) { alert('Помилка збереження: ' + (e.message || e)); }
+  }
+  showToast(
+    found ? `Знайдено шпильок: ${found}` : 'Нічого не знайдено',
+    missed.length ? `Не вдалось: ${missed.join(', ')}` : ''
+  );
+  if (allBtn) { allBtn.disabled = false; allBtn.innerHTML = '<i class="ti ti-map-search"></i> Знайти всі на мапі'; }
 };
 
 // ===== УЧНІ =====
