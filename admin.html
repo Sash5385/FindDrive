@@ -159,11 +159,49 @@ textarea.admin-edit-input{resize:vertical;min-height:54px}
 .toast-icon{color:var(--green);font-size:16px;flex-shrink:0}
 
 @media(max-width:600px){.admin-field{flex-direction:column;gap:2px}.admin-field-label{width:auto}}
+
+/* Кроп-редактор фото (портовано з index.html _showPhotoCrop, під дизайн-систему адмінки) */
+.am-crop-overlay{position:fixed;inset:0;background:rgba(13,42,26,.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:2000;padding:16px}
+.am-crop-box{background:var(--white);border:1px solid #000;border-radius:18px;max-width:320px;width:100%;overflow:hidden}
+.am-crop-head{background:var(--green);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:14px}
+.am-crop-head button{background:rgba(255,255,255,.18);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.am-crop-body{padding:20px;text-align:center}
+.am-crop-wrap{width:240px;height:240px;border-radius:50%;overflow:hidden;border:2px solid var(--green);margin:0 auto;box-shadow:0 4px 20px rgba(26,122,74,.2)}
+.am-crop-zoom-row{display:flex;align-items:center;gap:10px;margin:14px 0 6px;color:var(--text-muted)}
+.am-crop-zoom-row input{flex:1;accent-color:var(--green)}
+.am-crop-hint{font-size:11px;color:var(--text-hint);margin-bottom:18px}
+.am-crop-actions{display:flex;gap:10px}
+.am-crop-actions button{flex:1;padding:11px;border-radius:9px;font-family:inherit;font-size:14px;cursor:pointer}
+.am-crop-actions button:first-child{border:.5px solid var(--border);background:transparent;color:var(--text)}
+.am-crop-actions button:last-child{border:none;background:var(--green);color:#fff;font-weight:600}
 </style>
 </head>
 <body>
 
 <div id="toast-wrap"></div>
+
+<input type="file" id="am-photo-file-input" accept="image/*" hidden>
+<div id="am-crop-modal" class="am-crop-overlay" style="display:none" onclick="if(event.target===this)document.getElementById('am-crop-modal').style.display='none'">
+  <div class="am-crop-box" id="am-crop-box">
+    <div class="am-crop-head">
+      <span><i class="ti ti-crop"></i> Налаштування фото</span>
+      <button type="button" onclick="document.getElementById('am-crop-modal').style.display='none'" aria-label="Закрити"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="am-crop-body">
+      <div class="am-crop-wrap" id="am-crop-wrap"><canvas id="am-crop-canvas" width="240" height="240" style="cursor:grab;touch-action:none"></canvas></div>
+      <div class="am-crop-zoom-row">
+        <i class="ti ti-zoom-out"></i>
+        <input type="range" id="am-crop-zoom" min="50" max="300" value="100">
+        <i class="ti ti-zoom-in"></i>
+      </div>
+      <p class="am-crop-hint">Перетягніть або масштабуйте фото</p>
+      <div class="am-crop-actions">
+        <button type="button" onclick="document.getElementById('am-crop-modal').style.display='none'">Скасувати</button>
+        <button type="button" id="am-crop-confirm-btn">Зберегти</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <nav class="nav">
   <a class="nav-logo" href="index.html">
@@ -303,12 +341,122 @@ function _collectEditValues(entity, id, fields) {
   });
   return out;
 }
-// entity -> Setของ id, для яких зараз відкрита форма редагування
+// entity -> Set із id, для яких зараз відкрита форма редагування
 const _editingIds = { instr: new Set(), school: new Set(), user: new Set() };
 window._adminToggleEdit = (entity, id) => {
   const set = _editingIds[entity];
   if (set.has(id)) set.delete(id); else set.add(id);
   window._adminRerender?.[entity]?.();
+};
+
+// ===== Редактор фото (аватари/лого) — крoп + завантаження/видалення напряму в Firestore =====
+function _adminCollectionFor(entity) {
+  return entity === 'instr' ? 'instructors' : entity === 'school' ? 'schools' : 'users';
+}
+function _showAdminPhotoCrop(file, onConfirm, opts) {
+  const shape = (opts && opts.shape) || 'circle';
+  const isRect = shape === 'rect';
+  const CW = isRect ? 320 : 240, CH = isRect ? 240 : 240;
+  const cx = CW / 2, cy = CH / 2;
+
+  const modal = document.getElementById('am-crop-modal');
+  const canvas = document.getElementById('am-crop-canvas');
+  const wrap = document.getElementById('am-crop-wrap');
+  const box = document.getElementById('am-crop-box');
+  const previewRadius = shape === 'circle' ? '50%' : shape === 'square' ? '14px' : '9px';
+  canvas.width = CW; canvas.height = CH;
+  canvas.style.borderRadius = previewRadius;
+  canvas.style.width = CW + 'px'; canvas.style.height = CH + 'px';
+  wrap.style.width = CW + 'px'; wrap.style.height = CH + 'px';
+  wrap.style.borderRadius = previewRadius;
+  box.style.maxWidth = isRect ? (CW + 48) + 'px' : '320px';
+
+  const ctx = canvas.getContext('2d');
+  const zoomSlider = document.getElementById('am-crop-zoom');
+  const img = new Image();
+  const url = URL.createObjectURL(file);
+  let scale = 1, ox = 0, oy = 0, dragging = false, lastX = 0, lastY = 0;
+
+  function draw() {
+    ctx.clearRect(0, 0, CW, CH);
+    ctx.drawImage(img, ox, oy, img.width * scale, img.height * scale);
+  }
+
+  img.onload = () => {
+    URL.revokeObjectURL(url);
+    const fitH = CH / img.height;
+    const fitAll = Math.min(CW / img.width, CH / img.height);
+    const minScale = Math.min(fitAll, fitH) * 0.5;
+    scale = fitH;
+    ox = (CW - img.width * scale) / 2;
+    oy = (CH - img.height * scale) / 2;
+    zoomSlider.min = Math.round(minScale * 100);
+    zoomSlider.max = Math.round(fitH * 100 * 4);
+    zoomSlider.value = Math.round(scale * 100);
+    draw();
+    modal.style.display = 'flex';
+  };
+
+  zoomSlider.oninput = (e) => {
+    const newScale = e.target.value / 100;
+    ox = cx - (cx - ox) * newScale / scale;
+    oy = cy - (cy - oy) * newScale / scale;
+    scale = newScale;
+    draw();
+  };
+
+  function startDrag(x, y) { dragging = true; lastX = x; lastY = y; canvas.style.cursor = 'grabbing'; }
+  function moveDrag(x, y) {
+    if (!dragging) return;
+    ox += x - lastX; oy += y - lastY; lastX = x; lastY = y; draw();
+  }
+  function endDrag() { dragging = false; canvas.style.cursor = 'grab'; }
+
+  canvas.onmousedown  = (e) => startDrag(e.clientX, e.clientY);
+  canvas.onmousemove  = (e) => moveDrag(e.clientX, e.clientY);
+  canvas.onmouseup    = endDrag;
+  canvas.onmouseleave = endDrag;
+  canvas.ontouchstart = (e) => { e.preventDefault(); startDrag(e.touches[0].clientX, e.touches[0].clientY); };
+  canvas.ontouchmove  = (e) => { e.preventDefault(); moveDrag(e.touches[0].clientX, e.touches[0].clientY); };
+  canvas.ontouchend   = endDrag;
+
+  document.getElementById('am-crop-confirm-btn').onclick = () => {
+    const outW = isRect ? 400 : 200, outH = isRect ? 300 : 200;
+    const out = document.createElement('canvas');
+    out.width = outW; out.height = outH;
+    const octx = out.getContext('2d');
+    if (shape === 'circle') { octx.beginPath(); octx.arc(100, 100, 100, 0, Math.PI * 2); octx.clip(); }
+    const rw = outW / CW, rh = outH / CH;
+    octx.drawImage(img, ox * rw, oy * rh, img.width * scale * rw, img.height * scale * rh);
+    modal.style.display = 'none';
+    onConfirm(out.toDataURL('image/jpeg', 0.88));
+  };
+
+  img.src = url;
+}
+let _amPhotoTarget = null;
+document.getElementById('am-photo-file-input')?.addEventListener('change', e => {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file || !_amPhotoTarget) return;
+  const { entity, id, field, shape } = _amPhotoTarget;
+  _showAdminPhotoCrop(file, async (dataUrl) => {
+    try {
+      await updateDoc(doc(db, _adminCollectionFor(entity), id), { [field]: dataUrl });
+      showToast('Фото оновлено', '');
+    } catch (e) { alert('Помилка: ' + (e.message || e)); }
+  }, { shape });
+});
+window._adminPickPhoto = (entity, id, field, shape) => {
+  _amPhotoTarget = { entity, id, field, shape };
+  document.getElementById('am-photo-file-input').click();
+};
+window._adminDeletePhoto = async (entity, id, field, label) => {
+  if (!confirm(`Видалити ${label || 'фото'}?`)) return;
+  try {
+    await updateDoc(doc(db, _adminCollectionFor(entity), id), { [field]: null });
+    showToast('Видалено', '');
+  } catch (e) { alert('Помилка: ' + (e.message || e)); }
 };
 
 // ===== Сортування списків (за датою / за алфавітом) =====
@@ -577,11 +725,16 @@ function renderInstrCard(instr) {
   const mpsHtml = mps.length
     ? mps.map((pt,i) => `<div class="admin-mp-row" style="font-size:11px;color:var(--text-muted)"><i class="ti ti-map-pin" style="font-size:10px"></i> ${esc(pt.label||pt.name||`Точка ${i+1}`)} <span style="color:var(--text-hint)">${pt.lat?.toFixed?.(5)||''}, ${pt.lng?.toFixed?.(5)||''}</span><button type="button" class="admin-mp-del" title="Видалити цю точку" onclick="event.stopPropagation();window._adminRemoveMeetingPoint('${id}',${i})"><i class="ti ti-x"></i></button></div>`).join('')
     : '<span style="color:var(--text-hint);font-size:11px">—</span>';
-  const photoHtml = (instr.photo || instr.carPhoto) ? `
-    <div class="admin-photos">
-      ${instr.photo    ? `<div><img class="admin-photo" src="${esc(instr.photo)}" alt=""><div class="admin-photo-label">Інструктор</div></div>` : ''}
-      ${instr.carPhoto ? `<div><img class="admin-photo" src="${esc(instr.carPhoto)}" alt=""><div class="admin-photo-label">Авто</div></div>` : ''}
-    </div>` : '';
+  const _photoCtrl = (label, field, shape, url) => `
+    <div style="text-align:center">
+      ${url ? `<img class="admin-photo" src="${esc(url)}" alt="">` : `<div class="admin-photo" style="display:flex;align-items:center;justify-content:center;color:var(--text-hint)"><i class="ti ti-photo"></i></div>`}
+      <div class="admin-photo-label">${esc(label)}</div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:4px">
+        <button type="button" class="admin-mp-toggle" style="margin:0" onclick="event.stopPropagation();window._adminPickPhoto('instr','${id}','${field}','${shape}')"><i class="ti ti-upload"></i></button>
+        ${url ? `<button type="button" class="admin-mp-toggle" style="margin:0;color:#8a2020" onclick="event.stopPropagation();window._adminDeletePhoto('instr','${id}','${field}','фото ${label.toLowerCase()}')"><i class="ti ti-trash"></i></button>` : ''}
+      </div>
+    </div>`;
+  const photoHtml = `<div class="admin-photos">${_photoCtrl('Інструктор', 'photo', 'circle', instr.photo)}${_photoCtrl('Авто', 'carPhoto', 'rect', instr.carPhoto)}</div>`;
 
   const verifyBtn = instr.status === 'approved' ? `<button class="admin-btn ${instr.verified?'reject':'approve'}" onclick="window._adminToggleVerify('${id}',${!instr.verified})" style="flex:0;white-space:nowrap"><i class="ti ti-${instr.verified?'shield-off':'shield-check'}"></i> ${instr.verified?'Зняти верифікацію':'Верифікувати'}</button>` : '';
   const deleteBtn = `<button class="admin-btn delete" onclick="window._adminDeleteInstr('${id}','${esc((instr.name||'').replace(/'/g,''))}')"><i class="ti ti-trash"></i> Видалити</button>`;
@@ -889,6 +1042,17 @@ function renderSchoolCard(school) {
       }).join('')
     : '<span style="color:var(--text-hint);font-size:11px">—</span>';
 
+  const logoShape = school.logoShape || 'square';
+  const logoHtml = `<div class="admin-photos">
+    <div style="text-align:center">
+      ${school.logo ? `<img class="admin-photo" src="${esc(school.logo)}" alt="">` : `<div class="admin-photo" style="display:flex;align-items:center;justify-content:center;color:var(--text-hint)"><i class="ti ti-building-store"></i></div>`}
+      <div class="admin-photo-label">Лого</div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:4px">
+        <button type="button" class="admin-mp-toggle" style="margin:0" onclick="event.stopPropagation();window._adminPickPhoto('school','${id}','logo','${logoShape}')"><i class="ti ti-upload"></i></button>
+        ${school.logo ? `<button type="button" class="admin-mp-toggle" style="margin:0;color:#8a2020" onclick="event.stopPropagation();window._adminDeletePhoto('school','${id}','logo','лого')"><i class="ti ti-trash"></i></button>` : ''}
+      </div>
+    </div>
+  </div>`;
   const deleteBtn = `<button class="admin-btn delete" onclick="window._adminDeleteSchool('${id}','${esc((school.name||'').replace(/'/g,''))}')"><i class="ti ti-trash"></i> Видалити</button>`;
   const msgBtn = `<div class="admin-actions" style="margin-top:10px"><button class="admin-btn" style="background:var(--blue);color:#fff" onclick="window._adminStartChat('school','${id}','${esc((school.name||'').replace(/'/g,''))}','${esc((school.email||'').replace(/'/g,''))}')"><i class="ti ti-message-circle"></i> Написати</button></div>`;
   const actionsHtml = school.status === 'pending' ? `
@@ -933,6 +1097,7 @@ function renderSchoolCard(school) {
         <i class="ti ti-chevron-down admin-card-arrow"></i>
       </div>
       <div class="admin-card-body">
+        ${logoHtml}
         ${fieldsHtml}
         <div class="admin-field"><div class="admin-field-label">Райони / філії</div><div class="admin-field-val">${branchesHtml}
           ${needsGeocode ? `<button type="button" class="admin-mp-toggle" onclick="event.stopPropagation();window._adminGeocodeAllSchoolBranches('${id}')" id="am-sc-geo-all-${id}"><i class="ti ti-map-search"></i> Знайти всі на мапі</button>` : ''}
@@ -1134,6 +1299,16 @@ const USER_FIELDS = [
 let _userCache = [];
 function _renderUserCard(u) {
   const editing = _editingIds.user.has(u.id);
+  const photoHtml = `<div class="admin-photos">
+    <div style="text-align:center">
+      ${u.photo ? `<img class="admin-photo" src="${esc(u.photo)}" alt="">` : `<div class="admin-photo" style="display:flex;align-items:center;justify-content:center;color:var(--text-hint)"><i class="ti ti-photo"></i></div>`}
+      <div class="admin-photo-label">Фото</div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:4px">
+        <button type="button" class="admin-mp-toggle" style="margin:0" onclick="event.stopPropagation();window._adminPickPhoto('user','${u.id}','photo','circle')"><i class="ti ti-upload"></i></button>
+        ${u.photo ? `<button type="button" class="admin-mp-toggle" style="margin:0;color:#8a2020" onclick="event.stopPropagation();window._adminDeletePhoto('user','${u.id}','photo','фото')"><i class="ti ti-trash"></i></button>` : ''}
+      </div>
+    </div>
+  </div>`;
   const body = editing ? `
     ${USER_FIELDS.map(f => `<div class="admin-field"><div class="admin-field-label">${esc(f.label)}</div><div class="admin-field-val">${_editFieldHtml('user', u.id, f, u[f.key])}</div></div>`).join('')}
     <div class="admin-field"><div class="admin-field-label">UID</div><div class="admin-field-val" style="font-size:10px;color:var(--text-hint);word-break:break-all">${esc(u.id)}</div></div>
@@ -1157,7 +1332,7 @@ function _renderUserCard(u) {
         </div>
         <i class="ti ti-chevron-down admin-card-arrow"></i>
       </div>
-      <div class="admin-card-body">${body}</div>
+      <div class="admin-card-body">${photoHtml}${body}</div>
     </div>`;
 }
 function _renderUserList() {
