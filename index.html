@@ -1450,7 +1450,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.369</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.370</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -4528,7 +4528,7 @@ async function loadInstructors() {
       });
     }
     if (window._mapReady) addMarkers();
-    else window._onMapReady = addMarkers;
+    else (window._onMapReadyQueue = window._onMapReadyQueue || []).push(addMarkers);
   } catch(e) {
     console.warn("Firestore load:", e.message);
   }
@@ -4579,6 +4579,19 @@ async function loadSchools() {
       grid.insertAdjacentHTML("beforeend", buildSchoolCard(d, id));
     });
     setTimeout(_schoolSliderSync, 100);
+
+    function addSchoolMarkers() {
+      snap.docs.forEach(docSnap => {
+        const d = docSnap.data();
+        const id = docSnap.id;
+        const branches = Array.isArray(d.branches) ? d.branches.filter(b => typeof b === 'object' && b.lat) : [];
+        branches.forEach(b => {
+          window._addInstrMarker?.({ lat: b.lat, lng: b.lng, name: d.name, photo: d.logo || null, mpLabel: b.label || null, color: '#185fa5', type: 'school' }, id);
+        });
+      });
+    }
+    if (window._mapReady) addSchoolMarkers();
+    else (window._onMapReadyQueue = window._onMapReadyQueue || []).push(addSchoolMarkers);
   } catch(e) {
     console.warn("Schools load:", e.message);
   }
@@ -6800,7 +6813,8 @@ function initLeafletMap() {
     maxZoom:19,
   }).addTo(_mainMap);
   window._mapReady = true;
-  window._onMapReady?.();
+  (window._onMapReadyQueue || []).forEach(fn => { try { fn(); } catch (e) { console.error('_onMapReady listener failed:', e); } });
+  window._onMapReadyQueue = [];
   _mainMap.on('zoomend', _renderClusters);
   _mainMap.on('click', function(e) {
     if (!_pickingLocation) return;
@@ -6820,10 +6834,15 @@ function initLeafletMap() {
 let _allEntries = [];
 let _clusterMarkers = [];
 let _mapActiveTags = [];
-function _pinIcon(color) {
+function _pinIcon(color, isSchool) {
+  // Шпильки шкіл мають той самий силует, але значок будинку замість відблиску —
+  // щоб на мапі одразу відрізнялись від інструкторів навіть без кольору
+  const glyph = isSchool
+    ? `<path d="M13 6.5 L19 11 L19 18 L7 18 L7 11 Z" fill="white" opacity="0.9"/><rect x="11" y="13.5" width="4" height="4.5" fill="${color}"/>`
+    : `<circle cx="10" cy="10" r="4.5" fill="white" opacity="0.3"/>`;
   return L.divIcon({
     className: '',
-    html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 50" width="26" height="50"><path d="M11.5 24 L13 50 L14.5 24" fill="${color}" stroke="${color}" stroke-width="1" stroke-linejoin="round"/><circle cx="13" cy="13" r="12" fill="${color}" stroke="white" stroke-width="2.5"/><circle cx="10" cy="10" r="4.5" fill="white" opacity="0.3"/></svg>`,
+    html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 50" width="26" height="50"><path d="M11.5 24 L13 50 L14.5 24" fill="${color}" stroke="${color}" stroke-width="1" stroke-linejoin="round"/><circle cx="13" cy="13" r="12" fill="${color}" stroke="white" stroke-width="2.5"/>${glyph}</svg>`,
     iconSize: [26, 50], iconAnchor: [13, 50], popupAnchor: [0, -48],
   });
 }
@@ -6896,23 +6915,55 @@ function _openInstrPopupAt(entry) {
     .openOn(_mainMap);
   _highlightCard(entry.id);
 }
+function _schoolPopupHtml(school, id) {
+  const ini = (school.name||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+  const av = school.photo
+    ? `<img src="${_esc(school.photo)}" style="width:100%;height:100%;object-fit:cover">`
+    : `<div style="width:100%;height:100%;background:#0d3a68;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">${_esc(ini)}</div>`;
+  return `<div style="font-family:Inter,sans-serif;width:240px;overflow:hidden">
+    <div style="background:#185fa5;padding:9px 30px 9px 9px;position:relative;display:flex;align-items:center;gap:9px">
+      <button onclick="_mainMap.closePopup()" aria-label="Закрити" style="position:absolute;top:6px;right:6px;width:20px;height:20px;border:none;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;font-size:12px;line-height:1"><i class="ti ti-x"></i></button>
+      <div style="width:40px;height:40px;border-radius:10px;overflow:hidden;border:2px solid rgba(255,255,255,.5);flex-shrink:0;background:#fff">${av}</div>
+      <div style="min-width:0">
+        <div style="font-weight:600;color:#fff;font-size:12.5px;line-height:1.25;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden">${_esc(school.name)}</div>
+        ${school.mpLabel ? `<div style="color:rgba(255,255,255,.8);font-size:10.5px;margin-top:2px;line-height:1.4"><i class="ti ti-map-pin" style="font-size:9px"></i> ${_esc(school.mpLabel)}</div>` : ''}
+      </div>
+    </div>
+    <div style="padding:8px 9px 9px">
+      <button onclick="openSchoolProfile('${_esc(id||'')}')" style="width:100%;background:#185fa5;color:#fff;border:none;border-radius:7px;padding:8px 2px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">Детальніше про школу</button>
+    </div>
+  </div>`;
+}
+function _openSchoolPopupAt(entry) {
+  L.popup({ closeButton: false, maxWidth: 280, autoPanPadding: [24, 24] })
+    .setLatLng([entry.lat, entry.lng])
+    .setContent(_schoolPopupHtml(entry.inst, entry.id))
+    .openOn(_mainMap);
+}
 function _openChooser(latlng, entries) {
   window._chooserEntries = entries;
   const avatars = entries.map((e, i) => {
-    // ПІБ вводиться «Прізвище Ім'я По-батькові» — під фото показуємо ім'я (2-ге слово), не прізвище
-    const parts = (e.inst.name || '').trim().split(/\s+/).filter(Boolean);
-    const nm = parts[1] || parts[0] || 'Інструктор';
+    const isSchool = e.type === 'school';
+    let nm;
+    if (isSchool) {
+      nm = e.inst.name || 'Школа';
+    } else {
+      // ПІБ вводиться «Прізвище Ім'я По-батькові» — під фото показуємо ім'я (2-ге слово), не прізвище
+      const parts = (e.inst.name || '').trim().split(/\s+/).filter(Boolean);
+      nm = parts[1] || parts[0] || 'Інструктор';
+    }
     const ini = (e.inst.name||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+    const rad = isSchool ? '10px' : '50%';
     const av = e.inst.photo
-      ? `<img src="${_esc(e.inst.photo)}" style="width:54px;height:54px;border-radius:50%;object-fit:cover;border:2px solid ${e.color};box-shadow:0 1px 5px rgba(0,0,0,.18)">`
-      : `<div style="width:54px;height:54px;border-radius:50%;background:${e.color};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;border:2px solid ${e.color};box-shadow:0 1px 5px rgba(0,0,0,.18)">${_esc(ini)}</div>`;
+      ? `<img src="${_esc(e.inst.photo)}" style="width:54px;height:54px;border-radius:${rad};object-fit:cover;border:2px solid ${e.color};box-shadow:0 1px 5px rgba(0,0,0,.18)">`
+      : `<div style="width:54px;height:54px;border-radius:${rad};background:${e.color};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;border:2px solid ${e.color};box-shadow:0 1px 5px rgba(0,0,0,.18)">${isSchool ? '<i class="ti ti-building-store"></i>' : _esc(ini)}</div>`;
     return `<button onclick="window._chooserPick(${i})" style="background:none;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;width:66px;padding:0;font-family:inherit">
       ${av}
       <span style="font-size:11px;color:var(--text);line-height:1.15;text-align:center;max-width:66px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_esc(nm)}</span>
     </button>`;
   }).join('');
   const html = `<div style="font-family:Inter,sans-serif;padding:12px 14px 14px">
-    <div style="font-size:12px;font-weight:600;color:var(--text);text-align:center;margin-bottom:11px">${entries.length} інструктори тут — оберіть</div>
+    <div style="font-size:12px;font-weight:600;color:var(--text);text-align:center;margin-bottom:11px">${entries.length} тут — оберіть</div>
     <div style="display:flex;flex-wrap:wrap;gap:13px;justify-content:center;max-width:246px">${avatars}</div>
   </div>`;
   L.popup({ closeButton: true, maxWidth: 280, autoPanPadding: [24, 24] })
@@ -6922,7 +6973,8 @@ function _openChooser(latlng, entries) {
 }
 window._chooserPick = function(i) {
   const e = window._chooserEntries && window._chooserEntries[i];
-  if (e) _openInstrPopupAt(e);
+  if (!e) return;
+  e.type === 'school' ? _openSchoolPopupAt(e) : _openInstrPopupAt(e);
 };
 
 // Перебудова кластерів: групуємо eligible-шпильки за піксельною відстанню на поточному зумі
@@ -6946,10 +6998,10 @@ function _renderClusters() {
     }
     const rep = members[0];
     const marker = L.marker([rep.lat, rep.lng], {
-      icon: members.length === 1 ? _pinIcon(rep.color) : _groupIcon(members.length),
+      icon: members.length === 1 ? _pinIcon(rep.color, rep.type === 'school') : _groupIcon(members.length),
     });
     marker.on('click', () => {
-      if (members.length === 1) _openInstrPopupAt(members[0]);
+      if (members.length === 1) { rep.type === 'school' ? _openSchoolPopupAt(rep) : _openInstrPopupAt(rep); }
       else _openChooser([rep.lat, rep.lng], members);
     });
     marker.addTo(_mainMap);
@@ -6965,7 +7017,7 @@ function _queueClusterRender() {
 
 window._addInstrMarker = function(inst, id) {
   if (!_mainMap) return;
-  const entry = { inst, id, lat: inst.lat, lng: inst.lng, color: inst.color || '#1a7a4a', tags: inst.tags || [] };
+  const entry = { inst, id, lat: inst.lat, lng: inst.lng, color: inst.color || '#1a7a4a', tags: inst.tags || [], type: inst.type || 'instr' };
   _allEntries.push(entry);
   window._instrMarkers = window._instrMarkers || {};
   (window._instrMarkers[id] = window._instrMarkers[id] || []).push({ entry, tags: entry.tags });
