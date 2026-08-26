@@ -125,6 +125,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .admin-mp-map{width:100%;height:180px;border-radius:8px;overflow:hidden;margin-bottom:6px;border:.5px solid var(--border)}
 .admin-mp-coords{font-size:10px;color:var(--text-hint);margin-bottom:6px}
 .admin-mp-actions{display:flex;gap:8px}
+.admin-edit-input{width:100%;box-sizing:border-box;padding:6px 9px;border-radius:7px;border:.5px solid var(--border);font-size:12px;font-family:inherit;background:var(--white);color:var(--text)}
+textarea.admin-edit-input{resize:vertical;min-height:54px}
+.admin-edit-btn{margin-top:4px;font-size:11px;color:var(--blue);background:none;border:none;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:4px;padding:0;font-family:inherit}
+.admin-edit-btn:hover{text-decoration:underline}
+.admin-sortbar{display:flex;align-items:center;gap:6px;padding:10px 14px 0;font-size:11px;color:var(--text-muted)}
+.admin-sortbar select{padding:5px 8px;border-radius:7px;border:.5px solid var(--border);font-size:11px;font-family:inherit;background:var(--white);color:var(--text)}
 .bk-status{border-radius:20px;padding:2px 9px;font-size:11px;font-weight:500;flex-shrink:0;display:inline-flex;align-items:center;gap:3px}
 .bk-status.pending{background:#fff3cd;color:#856404}
 .bk-status.confirmed{background:var(--green-light);color:var(--green)}
@@ -241,6 +247,62 @@ function esc(s) {
 function initials(name) {
   return (name||'').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'?';
 }
+
+// ===== Універсальне редагування полів (інструктори/школи/учні) =====
+// Кожен тип сутності описує свої поля [{key,label,type}] — з них однаково
+// генерується і форма редагування, і збір значень для updateDoc.
+function _editFieldHtml(entity, id, f, value) {
+  const fid = `edt-${entity}-${id}-${f.key}`;
+  if (f.type === 'textarea') return `<textarea class="admin-edit-input" id="${fid}" rows="3">${esc(value==null?'':value)}</textarea>`;
+  if (f.type === 'select') return `<select class="admin-edit-input" id="${fid}">${f.options.map(o=>`<option value="${esc(o)}"${o===value?' selected':''}>${esc(o)}</option>`).join('')}</select>`;
+  if (f.type === 'tags') return `<input class="admin-edit-input" id="${fid}" type="text" value="${esc(Array.isArray(value)?value.join(', '):'')}" placeholder="через кому">`;
+  return `<input class="admin-edit-input" id="${fid}" type="${f.type}" value="${esc(value==null?'':value)}">`;
+}
+function _collectEditValues(entity, id, fields) {
+  const out = {};
+  fields.forEach(f => {
+    const el = document.getElementById(`edt-${entity}-${id}-${f.key}`);
+    if (!el) return;
+    if (f.type === 'number') out[f.key] = el.value === '' ? null : Number(el.value);
+    else if (f.type === 'tags') out[f.key] = el.value.split(',').map(s => s.trim()).filter(Boolean);
+    else out[f.key] = el.value.trim();
+  });
+  return out;
+}
+// entity -> Setของ id, для яких зараз відкрита форма редагування
+const _editingIds = { instr: new Set(), school: new Set(), user: new Set() };
+window._adminToggleEdit = (entity, id) => {
+  const set = _editingIds[entity];
+  if (set.has(id)) set.delete(id); else set.add(id);
+  window._adminRerender?.[entity]?.();
+};
+
+// ===== Сортування списків (за датою / за алфавітом) =====
+const _sortState = { instr: 'date_desc', school: 'date_desc', user: 'date_desc' };
+function _sortEntities(list, mode, nameKey) {
+  const arr = [...list];
+  if (mode === 'name_asc')  arr.sort((a,b) => (a[nameKey]||'').localeCompare(b[nameKey]||'', 'uk'));
+  else if (mode === 'name_desc') arr.sort((a,b) => (b[nameKey]||'').localeCompare(a[nameKey]||'', 'uk'));
+  else if (mode === 'date_asc')  arr.sort((a,b) => (a.createdAt?.seconds||0) - (b.createdAt?.seconds||0));
+  else arr.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0)); // date_desc (за замовчуванням)
+  return arr;
+}
+function _sortBarHtml(entity) {
+  const mode = _sortState[entity];
+  const opts = [
+    ['date_desc', 'Дата: нові спочатку'], ['date_asc', 'Дата: старі спочатку'],
+    ['name_asc', 'Ім\'я: А → Я'], ['name_desc', 'Ім\'я: Я → А'],
+  ];
+  return `<div class="admin-sortbar">Сортування:
+    <select onchange="window._adminSetSort('${entity}', this.value)">
+      ${opts.map(([v,l]) => `<option value="${v}"${v===mode?' selected':''}>${esc(l)}</option>`).join('')}
+    </select>
+  </div>`;
+}
+window._adminSetSort = (entity, mode) => {
+  _sortState[entity] = mode;
+  window._adminRerender?.[entity]?.();
+};
 function showToast(title, text = '') {
   const wrap = document.getElementById('toast-wrap');
   if (!wrap) return;
@@ -323,6 +385,28 @@ window._switchTab = function(tab) {
 // ===== ІНСТРУКТОРИ =====
 let _instrFirstSnap = true;
 let _instrCache = [];
+window._adminRerender = window._adminRerender || {};
+function _renderInstrList() {
+  const all = _instrCache;
+  const mode = _sortState.instr;
+  const pending  = _sortEntities(all.filter(i => i.status === 'pending'),  mode, 'name');
+  const approved = _sortEntities(all.filter(i => i.status === 'approved'), mode, 'name');
+  const rejected = _sortEntities(all.filter(i => i.status === 'rejected'), mode, 'name');
+
+  const badge = document.getElementById('count-badge-instr');
+  if (pending.length) { badge.textContent = pending.length + ' нових'; badge.style.display = ''; }
+  else badge.style.display = 'none';
+
+  const list = document.getElementById('instr-list');
+  list.innerHTML = _sortBarHtml('instr') + ([
+    renderInstrGroup('На розгляді', pending,  'pending'),
+    renderInstrGroup('Активні',      approved, 'approved'),
+    renderInstrGroup('Відхилені',    rejected, 'rejected'),
+  ].join('') || '<div class="empty">Даних немає</div>');
+
+  renderFunnelTab(all);
+}
+window._adminRerender.instr = _renderInstrList;
 function listenInstructors() {
   onSnapshot(
     query(collection(db, 'instructors'), orderBy('createdAt', 'desc')),
@@ -336,25 +420,8 @@ function listenInstructors() {
         });
       }
       _instrFirstSnap = false;
-
-      const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      _instrCache = all;
-      const pending  = all.filter(i => i.status === 'pending');
-      const approved = all.filter(i => i.status === 'approved');
-      const rejected = all.filter(i => i.status === 'rejected');
-
-      const badge = document.getElementById('count-badge-instr');
-      if (pending.length) { badge.textContent = pending.length + ' нових'; badge.style.display = ''; }
-      else badge.style.display = 'none';
-
-      const list = document.getElementById('instr-list');
-      list.innerHTML = [
-        renderInstrGroup('На розгляді', pending,  'pending'),
-        renderInstrGroup('Активні',      approved, 'approved'),
-        renderInstrGroup('Відхилені',    rejected, 'rejected'),
-      ].join('') || '<div class="empty">Даних немає</div>';
-
-      renderFunnelTab(all);
+      _instrCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      _renderInstrList();
     },
     err => { document.getElementById('instr-list').innerHTML = '<div class="empty">Помилка завантаження</div>'; console.error(err); }
   );
@@ -439,9 +506,28 @@ function renderInstrGroup(label, list, status) {
   return `<div class="admin-header">${label} ${cnt}</div>${list.map(renderInstrCard).join('')}`;
 }
 
+const INSTR_FIELDS = [
+  { key:'name',       label:'ПІБ',                  type:'text' },
+  { key:'email',      label:'Email',                type:'email' },
+  { key:'phone',      label:'Телефон',              type:'text' },
+  { key:'area',       label:'Район',                type:'text' },
+  { key:'car',        label:'Авто',                 type:'text' },
+  { key:'gearbox',    label:'КПП',                  type:'select', options:['Автомат','Механіка','Обидва'] },
+  { key:'price',      label:'Ціна (грн/год)',       type:'number' },
+  { key:'experience', label:'Стаж (років)',         type:'number' },
+  { key:'certNumber', label:'Атестат №',            type:'text' },
+  { key:'certExpiry', label:'Атестат дійсний до',   type:'date' },
+  { key:'time_from',  label:'Час з',                type:'text' },
+  { key:'time_to',    label:'Час до',               type:'text' },
+  { key:'days',       label:'Дні',                  type:'tags' },
+  { key:'tscKnown',   label:'ТСЦ',                  type:'tags' },
+  { key:'tags',       label:'Теги',                 type:'tags' },
+  { key:'about',      label:'Про себе',             type:'textarea' },
+];
 function renderInstrCard(instr) {
   const id = instr.id;
   const ini = initials(instr.name);
+  const editing = _editingIds.instr.has(id);
   const statusCls = instr.status === 'approved' ? 'approved' : instr.status === 'rejected' ? 'rejected' : 'pending';
   const statusLabel = { pending:'На розгляді', approved:'Активний', rejected:'Відхилено' }[instr.status] || instr.status;
   const days = Array.isArray(instr.days) ? instr.days.join(', ') : (instr.days||'—');
@@ -464,6 +550,7 @@ function renderInstrCard(instr) {
 
   const verifyBtn = instr.status === 'approved' ? `<button class="admin-btn ${instr.verified?'reject':'approve'}" onclick="window._adminToggleVerify('${id}',${!instr.verified})" style="flex:0;white-space:nowrap"><i class="ti ti-${instr.verified?'shield-off':'shield-check'}"></i> ${instr.verified?'Зняти верифікацію':'Верифікувати'}</button>` : '';
   const deleteBtn = `<button class="admin-btn delete" onclick="window._adminDeleteInstr('${id}','${esc((instr.name||'').replace(/'/g,''))}')"><i class="ti ti-trash"></i> Видалити</button>`;
+  const editBtn = `<button type="button" class="admin-edit-btn" onclick="event.stopPropagation();window._adminToggleEdit('instr','${id}')"><i class="ti ti-pencil"></i> Редагувати поля</button>`;
   const actionsHtml = instr.status === 'pending' ? `
     <div class="admin-actions">
       <button class="admin-btn approve" onclick="window._adminApprove('${id}')"><i class="ti ti-check"></i> Підтвердити</button>
@@ -480,19 +567,13 @@ function renderInstrCard(instr) {
       ${deleteBtn}
     </div>`;
 
-  return `
-    <div class="admin-card" id="adm-instr-${id}">
-      <div class="admin-card-head" onclick="document.getElementById('adm-instr-${id}').classList.toggle('open')">
-        ${instr.photo ? `<img class="admin-card-avatar" src="${esc(instr.photo)}" alt="">` : `<div class="admin-card-avatar">${esc(ini)}</div>`}
-        <div class="admin-card-main">
-          <div class="admin-card-name">${esc(instr.name||'—')}</div>
-          <div class="admin-card-sub">${esc(instr.phone||'')}${instr.phone&&instr.area?' · ':''}${esc(instr.area||'')}${instr.price?' · '+instr.price+' грн/год':''}</div>
-        </div>
-        <span class="admin-status ${statusCls}">${statusLabel}</span>
-        <i class="ti ti-chevron-down admin-card-arrow"></i>
-      </div>
-      <div class="admin-card-body">
-        ${photoHtml}
+  const fieldsHtml = editing
+    ? INSTR_FIELDS.map(f => `<div class="admin-field"><div class="admin-field-label">${esc(f.label)}</div><div class="admin-field-val">${_editFieldHtml('instr', id, f, instr[f.key])}</div></div>`).join('')
+      + `<div class="admin-actions">
+           <button class="admin-btn approve" onclick="window._adminSaveInstr('${id}')"><i class="ti ti-device-floppy"></i> Зберегти поля</button>
+           <button class="admin-btn reject" onclick="window._adminToggleEdit('instr','${id}')"><i class="ti ti-x"></i> Скасувати</button>
+         </div>`
+    : `
         <div class="admin-field"><div class="admin-field-label">Email</div><div class="admin-field-val">${esc(instr.email||'—')}</div></div>
         <div class="admin-field"><div class="admin-field-label">Телефон</div><div class="admin-field-val">${esc(instr.phone||'—')}</div></div>
         <div class="admin-field"><div class="admin-field-label">Район</div><div class="admin-field-val">${esc(instr.area||'—')}</div></div>
@@ -507,6 +588,22 @@ function renderInstrCard(instr) {
         <div class="admin-field"><div class="admin-field-label">ТСЦ</div><div class="admin-field-val">${esc(tsc)}</div></div>
         <div class="admin-field"><div class="admin-field-label">Теги</div><div class="admin-field-val">${tagsHtml}</div></div>
         <div class="admin-field"><div class="admin-field-label">Про себе</div><div class="admin-field-val" style="white-space:pre-line">${esc(instr.about||'—')}</div></div>
+        ${editBtn}`;
+
+  return `
+    <div class="admin-card${editing?' open':''}" id="adm-instr-${id}">
+      <div class="admin-card-head" onclick="document.getElementById('adm-instr-${id}').classList.toggle('open')">
+        ${instr.photo ? `<img class="admin-card-avatar" src="${esc(instr.photo)}" alt="">` : `<div class="admin-card-avatar">${esc(ini)}</div>`}
+        <div class="admin-card-main">
+          <div class="admin-card-name">${esc(instr.name||'—')}</div>
+          <div class="admin-card-sub">${esc(instr.phone||'')}${instr.phone&&instr.area?' · ':''}${esc(instr.area||'')}${instr.price?' · '+instr.price+' грн/год':''}</div>
+        </div>
+        <span class="admin-status ${statusCls}">${statusLabel}</span>
+        <i class="ti ti-chevron-down admin-card-arrow"></i>
+      </div>
+      <div class="admin-card-body">
+        ${photoHtml}
+        ${fieldsHtml}
         <div class="admin-field"><div class="admin-field-label">Точки</div><div class="admin-field-val">${mpsHtml}
           <button type="button" class="admin-mp-toggle" onclick="event.stopPropagation();window._adminToggleAddPoint('${id}')"><i class="ti ti-plus"></i> Додати точку</button>
           <div id="admin-mp-add-${id}"></div>
@@ -518,6 +615,14 @@ function renderInstrCard(instr) {
       </div>
     </div>`;
 }
+window._adminSaveInstr = async (id) => {
+  const vals = _collectEditValues('instr', id, INSTR_FIELDS);
+  try {
+    await updateDoc(doc(db, 'instructors', id), vals);
+    _editingIds.instr.delete(id);
+    showToast('Збережено', 'Дані інструктора оновлено');
+  } catch (e) { alert('Помилка: ' + (e.message || e)); }
+};
 
 window._adminApprove = async (id) => {
   try { await updateDoc(doc(db, 'instructors', id), { status: 'approved' }); }
@@ -669,6 +774,25 @@ window._adminMpSubmit = async (id) => {
 // ===== ШКОЛИ =====
 let _schoolFirstSnap = true;
 let _schoolCache = [];
+function _renderSchoolList() {
+  const all = _schoolCache;
+  const mode = _sortState.school;
+  const pending  = _sortEntities(all.filter(i => i.status === 'pending'),  mode, 'name');
+  const approved = _sortEntities(all.filter(i => i.status === 'approved'), mode, 'name');
+  const rejected = _sortEntities(all.filter(i => i.status === 'rejected'), mode, 'name');
+
+  const badge = document.getElementById('count-badge-schools');
+  if (pending.length) { badge.textContent = pending.length + ' нових'; badge.style.display = ''; }
+  else badge.style.display = 'none';
+
+  const list = document.getElementById('schools-list');
+  list.innerHTML = _sortBarHtml('school') + ([
+    renderSchoolGroup('На розгляді', pending,  'pending'),
+    renderSchoolGroup('Активні',      approved, 'approved'),
+    renderSchoolGroup('Відхилені',    rejected, 'rejected'),
+  ].join('') || '<div class="empty">Даних немає</div>');
+}
+window._adminRerender.school = _renderSchoolList;
 function listenSchools() {
   onSnapshot(
     query(collection(db, 'schools'), orderBy('createdAt', 'desc')),
@@ -682,23 +806,8 @@ function listenSchools() {
         });
       }
       _schoolFirstSnap = false;
-
-      const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      _schoolCache = all;
-      const pending  = all.filter(i => i.status === 'pending');
-      const approved = all.filter(i => i.status === 'approved');
-      const rejected = all.filter(i => i.status === 'rejected');
-
-      const badge = document.getElementById('count-badge-schools');
-      if (pending.length) { badge.textContent = pending.length + ' нових'; badge.style.display = ''; }
-      else badge.style.display = 'none';
-
-      const list = document.getElementById('schools-list');
-      list.innerHTML = [
-        renderSchoolGroup('На розгляді', pending,  'pending'),
-        renderSchoolGroup('Активні',      approved, 'approved'),
-        renderSchoolGroup('Відхилені',    rejected, 'rejected'),
-      ].join('') || '<div class="empty">Даних немає</div>';
+      _schoolCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      _renderSchoolList();
     },
     err => { document.getElementById('schools-list').innerHTML = '<div class="empty">Помилка завантаження</div>'; console.error(err); }
   );
@@ -710,9 +819,19 @@ function renderSchoolGroup(label, list, status) {
   return `<div class="admin-header">${label} ${cnt}</div>${list.map(renderSchoolCard).join('')}`;
 }
 
+const SCHOOL_FIELDS = [
+  { key:'name',         label:'Назва',              type:'text' },
+  { key:'email',        label:'Email',              type:'email' },
+  { key:'phone',        label:'Телефон',            type:'text' },
+  { key:'website',      label:'Сайт',               type:'text' },
+  { key:'price_course', label:'Ціна курсу',         type:'number' },
+  { key:'price_extra',  label:'Ціна допзаняття',    type:'number' },
+  { key:'about',        label:'Опис',               type:'textarea' },
+];
 function renderSchoolCard(school) {
   const id = school.id;
   const ini = initials(school.name);
+  const editing = _editingIds.school.has(id);
   const statusCls = school.status === 'approved' ? 'approved' : school.status === 'rejected' ? 'rejected' : 'pending';
   const statusLabel = { pending:'На розгляді', approved:'Активна', rejected:'Відхилено' }[school.status] || school.status;
   const branchList = Array.isArray(school.branches) ? school.branches : [];
@@ -749,8 +868,23 @@ function renderSchoolCard(school) {
       ${deleteBtn}
     </div>`;
 
+  const fieldsHtml = editing
+    ? SCHOOL_FIELDS.map(f => `<div class="admin-field"><div class="admin-field-label">${esc(f.label)}</div><div class="admin-field-val">${_editFieldHtml('school', id, f, school[f.key])}</div></div>`).join('')
+      + `<div class="admin-actions">
+           <button class="admin-btn approve" onclick="window._adminSaveSchool('${id}')"><i class="ti ti-device-floppy"></i> Зберегти поля</button>
+           <button class="admin-btn reject" onclick="window._adminToggleEdit('school','${id}')"><i class="ti ti-x"></i> Скасувати</button>
+         </div>`
+    : `
+        <div class="admin-field"><div class="admin-field-label">Email</div><div class="admin-field-val">${esc(school.email||'—')}</div></div>
+        <div class="admin-field"><div class="admin-field-label">Телефон</div><div class="admin-field-val">${esc(school.phone||'—')}</div></div>
+        <div class="admin-field"><div class="admin-field-label">Сайт</div><div class="admin-field-val">${school.website ? `<a href="${esc(school.website)}" target="_blank" style="color:#185fa5">${esc(school.website)}</a>` : '—'}</div></div>
+        <div class="admin-field"><div class="admin-field-label">Ціна курсу</div><div class="admin-field-val">${school.price_course ? esc(school.price_course)+' грн' : '—'}</div></div>
+        <div class="admin-field"><div class="admin-field-label">Ціна допзаняття</div><div class="admin-field-val">${school.price_extra ? esc(school.price_extra)+' грн/год' : '—'}</div></div>
+        <div class="admin-field"><div class="admin-field-label">Опис</div><div class="admin-field-val" style="white-space:pre-line">${esc(school.about||'—')}</div></div>
+        <button type="button" class="admin-edit-btn" onclick="event.stopPropagation();window._adminToggleEdit('school','${id}')"><i class="ti ti-pencil"></i> Редагувати поля</button>`;
+
   return `
-    <div class="admin-card" id="adm-school-${id}">
+    <div class="admin-card${editing?' open':''}" id="adm-school-${id}">
       <div class="admin-card-head" onclick="document.getElementById('adm-school-${id}').classList.toggle('open')">
         ${school.logo ? `<img class="admin-card-avatar" src="${esc(school.logo)}" alt="">` : `<div class="admin-card-avatar">${esc(ini)}</div>`}
         <div class="admin-card-main">
@@ -761,21 +895,24 @@ function renderSchoolCard(school) {
         <i class="ti ti-chevron-down admin-card-arrow"></i>
       </div>
       <div class="admin-card-body">
-        <div class="admin-field"><div class="admin-field-label">Email</div><div class="admin-field-val">${esc(school.email||'—')}</div></div>
-        <div class="admin-field"><div class="admin-field-label">Телефон</div><div class="admin-field-val">${esc(school.phone||'—')}</div></div>
+        ${fieldsHtml}
         <div class="admin-field"><div class="admin-field-label">Райони / філії</div><div class="admin-field-val">${branchesHtml}
           ${needsGeocode ? `<button type="button" class="admin-mp-toggle" onclick="event.stopPropagation();window._adminGeocodeAllSchoolBranches('${id}')" id="am-sc-geo-all-${id}"><i class="ti ti-map-search"></i> Знайти всі на мапі</button>` : ''}
         </div></div>
-        <div class="admin-field"><div class="admin-field-label">Сайт</div><div class="admin-field-val">${school.website ? `<a href="${esc(school.website)}" target="_blank" style="color:#185fa5">${esc(school.website)}</a>` : '—'}</div></div>
-        <div class="admin-field"><div class="admin-field-label">Ціна курсу</div><div class="admin-field-val">${school.price_course ? esc(school.price_course)+' грн' : '—'}</div></div>
-        <div class="admin-field"><div class="admin-field-label">Ціна допзаняття</div><div class="admin-field-val">${school.price_extra ? esc(school.price_extra)+' грн/год' : '—'}</div></div>
-        <div class="admin-field"><div class="admin-field-label">Опис</div><div class="admin-field-val" style="white-space:pre-line">${esc(school.about||'—')}</div></div>
         <div class="admin-field"><div class="admin-field-label">userId</div><div class="admin-field-val" style="font-size:10px;color:var(--text-hint);word-break:break-all">${esc(school.userId||'—')}</div></div>
         <div class="admin-field"><div class="admin-field-label">Дата</div><div class="admin-field-val">${esc(created)}</div></div>
         ${actionsHtml}
       </div>
     </div>`;
 }
+window._adminSaveSchool = async (id) => {
+  const vals = _collectEditValues('school', id, SCHOOL_FIELDS);
+  try {
+    await updateDoc(doc(db, 'schools', id), vals);
+    _editingIds.school.delete(id);
+    showToast('Збережено', 'Дані школи оновлено');
+  } catch (e) { alert('Помилка: ' + (e.message || e)); }
+};
 
 window._adminApproveSchool = async (id) => {
   try { await updateDoc(doc(db, 'schools', id), { status: 'approved' }); }
@@ -859,31 +996,61 @@ window._adminGeocodeAllSchoolBranches = async (schoolId) => {
 };
 
 // ===== УЧНІ =====
+const USER_FIELDS = [
+  { key: 'name',  label: 'Ім\'я',    type: 'text' },
+  { key: 'email', label: 'Email',    type: 'email' },
+  { key: 'phone', label: 'Телефон',  type: 'text' },
+];
+let _userCache = [];
+function _renderUserCard(u) {
+  const editing = _editingIds.user.has(u.id);
+  const body = editing ? `
+    ${USER_FIELDS.map(f => `<div class="admin-field"><div class="admin-field-label">${esc(f.label)}</div><div class="admin-field-val">${_editFieldHtml('user', u.id, f, u[f.key])}</div></div>`).join('')}
+    <div class="admin-field"><div class="admin-field-label">UID</div><div class="admin-field-val" style="font-size:10px;color:var(--text-hint);word-break:break-all">${esc(u.id)}</div></div>
+    <div class="admin-actions">
+      <button class="admin-btn approve" onclick="window._adminSaveUser('${u.id}')"><i class="ti ti-device-floppy"></i> Зберегти</button>
+      <button class="admin-btn reject" onclick="window._adminToggleEdit('user','${u.id}')"><i class="ti ti-x"></i> Скасувати</button>
+    </div>` : `
+    <div class="admin-field"><div class="admin-field-label">Email</div><div class="admin-field-val">${esc(u.email||'—')}</div></div>
+    <div class="admin-field"><div class="admin-field-label">Телефон</div><div class="admin-field-val">${esc(u.phone||'—')}</div></div>
+    <div class="admin-field"><div class="admin-field-label">UID</div><div class="admin-field-val" style="font-size:10px;color:var(--text-hint);word-break:break-all">${esc(u.id)}</div></div>
+    <button type="button" class="admin-edit-btn" onclick="event.stopPropagation();window._adminToggleEdit('user','${u.id}')"><i class="ti ti-pencil"></i> Редагувати</button>
+    <div class="admin-actions" style="margin-top:10px"><button class="admin-btn delete" onclick="window._adminDeleteUser('${u.id}','${esc((u.name||u.email||'').replace(/'/g,''))}')"><i class="ti ti-trash"></i> Видалити учня</button></div>`;
+  return `
+    <div class="admin-card${editing?' open':''}" id="adm-u-${u.id}">
+      <div class="admin-card-head" onclick="document.getElementById('adm-u-${u.id}').classList.toggle('open')">
+        ${u.photo ? `<img class="admin-card-avatar" src="${esc(u.photo)}" alt="">` : `<div class="admin-card-avatar">${esc(((u.name||u.email||'?')[0]).toUpperCase())}</div>`}
+        <div class="admin-card-main">
+          <div class="admin-card-name">${esc(u.name||'Без імені')}</div>
+          <div class="admin-card-sub">${esc(u.email||u.id)}</div>
+        </div>
+        <i class="ti ti-chevron-down admin-card-arrow"></i>
+      </div>
+      <div class="admin-card-body">${body}</div>
+    </div>`;
+}
+function _renderUserList() {
+  const users = _sortEntities(_userCache, _sortState.user, 'name');
+  const list = document.getElementById('users-list');
+  list.innerHTML = users.length ? `
+    ${_sortBarHtml('user')}
+    <div class="admin-header">Учні <span style="font-size:11px;color:var(--text-muted)">${users.length}</span></div>
+    ${users.map(_renderUserCard).join('')}` : '<div class="empty">Учнів ще немає</div>';
+}
+window._adminRerender.user = _renderUserList;
+window._adminSaveUser = async (id) => {
+  const vals = _collectEditValues('user', id, USER_FIELDS);
+  try {
+    await updateDoc(doc(db, 'users', id), vals);
+    _editingIds.user.delete(id);
+    showToast('Збережено', 'Дані учня оновлено');
+  } catch (e) { alert('Помилка: ' + (e.message || e)); }
+};
 function listenUsers() {
   // без orderBy('createdAt') — Firestore виключає документи без цього поля (напр. вхід через Google)
   onSnapshot(collection(db, 'users'), snap => {
-    const users = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-      .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-    const list = document.getElementById('users-list');
-    list.innerHTML = users.length ? `
-      <div class="admin-header">Учні <span style="font-size:11px;color:var(--text-muted)">${users.length}</span></div>
-      ${users.map(u => `
-        <div class="admin-card" id="adm-u-${u.id}">
-          <div class="admin-card-head" onclick="document.getElementById('adm-u-${u.id}').classList.toggle('open')">
-            ${u.photo ? `<img class="admin-card-avatar" src="${esc(u.photo)}" alt="">` : `<div class="admin-card-avatar">${esc(((u.name||u.email||'?')[0]).toUpperCase())}</div>`}
-            <div class="admin-card-main">
-              <div class="admin-card-name">${esc(u.name||'Без імені')}</div>
-              <div class="admin-card-sub">${esc(u.email||u.id)}</div>
-            </div>
-            <i class="ti ti-chevron-down admin-card-arrow"></i>
-          </div>
-          <div class="admin-card-body">
-            <div class="admin-field"><div class="admin-field-label">Email</div><div class="admin-field-val">${esc(u.email||'—')}</div></div>
-            <div class="admin-field"><div class="admin-field-label">Телефон</div><div class="admin-field-val">${esc(u.phone||'—')}</div></div>
-            <div class="admin-field"><div class="admin-field-label">UID</div><div class="admin-field-val" style="font-size:10px;color:var(--text-hint);word-break:break-all">${esc(u.id)}</div></div>
-            <div class="admin-actions"><button class="admin-btn delete" onclick="window._adminDeleteUser('${u.id}','${esc((u.name||u.email||'').replace(/'/g,''))}')"><i class="ti ti-trash"></i> Видалити учня</button></div>
-          </div>
-        </div>`).join('')}` : '<div class="empty">Учнів ще немає</div>';
+    _userCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    _renderUserList();
   }, err => { document.getElementById('users-list').innerHTML = '<div class="empty">Помилка завантаження</div>'; console.error(err); });
 }
 
