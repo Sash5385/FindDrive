@@ -1106,6 +1106,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="nav-right">
+    <a id="nav-admin-btn" class="nav-role-btn" href="admin.html" style="display:none;background:rgba(255,255,255,.22)" title="Адмін-панель"><i class="ti ti-shield-lock"></i> <span>Адмін</span></a>
     <button id="btn-login" class="btn-login"><i class="ti ti-user-circle"></i> <span class="full">Увійти / Реєстрація</span><span class="short">Увійти</span></button>
     <div id="nav-user" class="nav-user" style="display:none" role="button" aria-label="Відкрити кабінет">
       <div class="nav-avatar-wrap">
@@ -1125,6 +1126,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   <a class="nav-mobile-link" href="#" onclick="event.preventDefault();closeMobileMenu();setTimeout(()=>openPanel('instr-welcome'),200)"><i class="ti ti-user-plus"></i> Стати інструктором</a>
   <a class="nav-mobile-link" href="#schools" onclick="closeMobileMenu()"><i class="ti ti-building-store"></i> Автошколи</a>
   <a class="nav-mobile-link" href="#" onclick="event.preventDefault();closeMobileMenu();setTimeout(()=>openPanel('school-welcome'),200)"><i class="ti ti-building-store"></i> Ви власник автошколи?</a>
+  <a id="nav-mobile-admin" class="nav-mobile-link" href="admin.html" style="display:none"><i class="ti ti-shield-lock"></i> Адмін-панель</a>
 </div>
 
 <div id="problem-modal" class="auth-modal-overlay" style="display:none" onclick="if(event.target===this)window._closeProblemModal()">
@@ -1450,7 +1452,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.372</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.373</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -3727,9 +3729,13 @@ function listenClientBookings(uid) {
   }, () => {});
 }
 
+const SITE_ADMIN_EMAIL = 'sash5385@gmail.com';
 onAuthStateChanged(auth, async user => {
   const btnLogin = document.getElementById("btn-login");
   const navUser  = document.getElementById("nav-user");
+  const isAdmin  = !!user && user.email === SITE_ADMIN_EMAIL;
+  document.getElementById("nav-admin-btn").style.display    = isAdmin ? "flex" : "none";
+  document.getElementById("nav-mobile-admin").style.display = isAdmin ? "" : "none";
   if (user) {
     btnLogin.style.display = "none";
     navUser.style.display  = "flex";
