@@ -114,6 +114,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .admin-mp-row{display:flex;align-items:center;gap:6px;margin-top:2px}
 .admin-mp-del{flex-shrink:0;width:16px;height:16px;border-radius:50%;border:.5px solid #e0a8a8;background:#fde8e8;color:#8a2020;font-size:10px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
 .admin-mp-del:hover{opacity:.75}
+.admin-mp-toggle{margin-top:6px;font-size:11px;color:var(--green);background:none;border:none;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:4px;padding:0;font-family:inherit}
+.admin-mp-toggle:hover{text-decoration:underline}
+.admin-mp-add{margin-top:8px;padding:10px;background:var(--green-light);border:.5px solid var(--border);border-radius:10px}
+.admin-mp-add input{width:100%;box-sizing:border-box;padding:7px 10px;border-radius:8px;border:.5px solid var(--border);font-size:12px;font-family:inherit;margin-bottom:6px;background:var(--white)}
+.admin-mp-suggests{list-style:none;margin:-4px 0 6px;padding:0;background:var(--white);border:.5px solid var(--border);border-radius:8px;max-height:140px;overflow-y:auto}
+.admin-mp-suggests li{padding:6px 10px;font-size:11px;cursor:pointer;border-bottom:.5px solid var(--border)}
+.admin-mp-suggests li:last-child{border-bottom:none}
+.admin-mp-suggests li:hover{background:var(--white);color:var(--green)}
+.admin-mp-map{width:100%;height:180px;border-radius:8px;overflow:hidden;margin-bottom:6px;border:.5px solid var(--border)}
+.admin-mp-coords{font-size:10px;color:var(--text-hint);margin-bottom:6px}
+.admin-mp-actions{display:flex;gap:8px}
 .bk-status{border-radius:20px;padding:2px 9px;font-size:11px;font-weight:500;flex-shrink:0;display:inline-flex;align-items:center;gap:3px}
 .bk-status.pending{background:#fff3cd;color:#856404}
 .bk-status.confirmed{background:var(--green-light);color:var(--green)}
@@ -496,7 +507,10 @@ function renderInstrCard(instr) {
         <div class="admin-field"><div class="admin-field-label">ТСЦ</div><div class="admin-field-val">${esc(tsc)}</div></div>
         <div class="admin-field"><div class="admin-field-label">Теги</div><div class="admin-field-val">${tagsHtml}</div></div>
         <div class="admin-field"><div class="admin-field-label">Про себе</div><div class="admin-field-val" style="white-space:pre-line">${esc(instr.about||'—')}</div></div>
-        <div class="admin-field"><div class="admin-field-label">Точки</div><div class="admin-field-val">${mpsHtml}</div></div>
+        <div class="admin-field"><div class="admin-field-label">Точки</div><div class="admin-field-val">${mpsHtml}
+          <button type="button" class="admin-mp-toggle" onclick="event.stopPropagation();window._adminToggleAddPoint('${id}')"><i class="ti ti-plus"></i> Додати точку</button>
+          <div id="admin-mp-add-${id}"></div>
+        </div></div>
         <div class="admin-field"><div class="admin-field-label">Локація</div><div class="admin-field-val">${instr.lat?.toFixed?.(5)||'—'}, ${instr.lng?.toFixed?.(5)||'—'} <a href="https://maps.google.com/?q=${instr.lat},${instr.lng}" target="_blank" style="color:#185fa5;font-size:11px;margin-left:4px"><i class="ti ti-external-link"></i></a></div></div>
         <div class="admin-field"><div class="admin-field-label">userId</div><div class="admin-field-val" style="font-size:10px;color:var(--text-hint);word-break:break-all">${esc(instr.userId||'—')}</div></div>
         <div class="admin-field"><div class="admin-field-label">Дата</div><div class="admin-field-val">${esc(created)}</div></div>
@@ -530,6 +544,126 @@ window._adminRemoveMeetingPoint = async (id, idx) => {
   if (!confirm(`Видалити точку «${pt.label || pt.name || 'без назви'}» у інструктора «${instr.name||''}»?`)) return;
   try { await updateDoc(doc(db, 'instructors', id), { meetingPoints: mps.filter((_, i) => i !== idx) }); }
   catch(e) { alert('Помилка: ' + (e.message||e)); }
+};
+
+// ===== Ручне додавання точки зустрічі (шпильки) інструктору =====
+const NOM_BASE = 'https://nominatim.openstreetmap.org/search?format=json&countrycodes=ua&accept-language=uk&bounded=0&addressdetails=1';
+let _amOpenId = null, _amMap = null, _amMarker = null, _amLatLng = null, _amLeafletPromise = null;
+function _ensureAdminLeaflet() {
+  if (_amLeafletPromise) return _amLeafletPromise;
+  _amLeafletPromise = new Promise(resolve => {
+    if (window.L) { resolve(window.L); return; }
+    const link = document.createElement('link');
+    link.rel = 'stylesheet'; link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(link);
+    const sc = document.createElement('script');
+    sc.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    sc.onload = () => resolve(window.L);
+    sc.onerror = () => { console.warn('Leaflet CDN недоступний'); resolve(null); };
+    document.head.appendChild(sc);
+  });
+  return _amLeafletPromise;
+}
+window._adminToggleAddPoint = (id) => {
+  if (_amOpenId && _amOpenId !== id) {
+    const prevEl = document.getElementById('admin-mp-add-' + _amOpenId);
+    if (prevEl) prevEl.innerHTML = '';
+  }
+  const el = document.getElementById('admin-mp-add-' + id);
+  if (!el) return;
+  if (_amOpenId === id) { el.innerHTML = ''; _amOpenId = null; return; }
+  _amOpenId = id; _amMap = null; _amMarker = null; _amLatLng = null;
+  el.innerHTML = `
+    <div class="admin-mp-add" onclick="event.stopPropagation()">
+      <input type="text" id="am-input-${id}" placeholder="Адреса точки…" maxlength="100" autocomplete="off"
+        oninput="window._adminMpAutoComplete('${id}', this.value)"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();window._adminMpHideSuggest('${id}');window._adminMpSubmit('${id}')}"
+        onblur="setTimeout(()=>window._adminMpHideSuggest('${id}'),200)">
+      <ul id="am-suggests-${id}" class="admin-mp-suggests" style="display:none"></ul>
+      <div id="am-map-${id}" class="admin-mp-map"></div>
+      <div id="am-coords-${id}" class="admin-mp-coords">Натисніть на карту або оберіть адресу вище, щоб вибрати точку</div>
+      <div class="admin-mp-actions">
+        <button type="button" class="admin-btn approve" id="am-add-${id}" onclick="window._adminMpSubmit('${id}')"><i class="ti ti-plus"></i> Додати</button>
+        <button type="button" class="admin-btn reject" onclick="window._adminToggleAddPoint('${id}')"><i class="ti ti-x"></i> Скасувати</button>
+      </div>
+    </div>`;
+  requestAnimationFrame(() => {
+    _ensureAdminLeaflet().then(L => {
+      if (!L || _amOpenId !== id) return;
+      _amMap = L.map('am-map-' + id, { zoomControl: true }).setView([50.4501, 30.5234], 11);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 19 }).addTo(_amMap);
+      _amMap.on('click', e => {
+        const { lat, lng } = e.latlng;
+        _amLatLng = { lat: +lat.toFixed(6), lng: +lng.toFixed(6) };
+        if (_amMarker) _amMarker.setLatLng(e.latlng); else _amMarker = L.marker(e.latlng).addTo(_amMap);
+        const coordEl = document.getElementById('am-coords-' + id);
+        if (coordEl) coordEl.textContent = `${_amLatLng.lat}, ${_amLatLng.lng}`;
+        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
+          .then(r => r.json()).then(d => {
+            const inp = document.getElementById('am-input-' + id);
+            if (inp && d.display_name) inp.value = d.display_name.split(',').slice(0, 3).join(', ');
+          }).catch(() => {});
+      });
+    });
+  });
+};
+let _amAcTimer = null;
+window._adminMpHideSuggest = (id) => { const ul = document.getElementById('am-suggests-' + id); if (ul) ul.style.display = 'none'; };
+window._adminMpAutoComplete = (id, q) => {
+  clearTimeout(_amAcTimer);
+  const ul = document.getElementById('am-suggests-' + id);
+  if (!q || q.length < 2) { if (ul) ul.style.display = 'none'; return; }
+  _amAcTimer = setTimeout(() => {
+    fetch(`${NOM_BASE}&limit=5&q=${encodeURIComponent(q)}`)
+      .then(r => r.json()).then(results => {
+        const ul2 = document.getElementById('am-suggests-' + id);
+        if (!ul2) return;
+        if (!results.length) { ul2.style.display = 'none'; return; }
+        ul2.innerHTML = results.map(r => {
+          const short = r.display_name.split(',').slice(0, 3).join(', ');
+          return `<li data-name="${esc(r.display_name)}" data-lat="${r.lat}" data-lon="${r.lon}" onmousedown="window._adminMpSelectSuggest('${id}', this)">${esc(short)}</li>`;
+        }).join('');
+        ul2.style.display = '';
+      }).catch(e => console.warn('admin_mp_autocomplete failed:', e.message));
+  }, 200);
+};
+window._adminMpSelectSuggest = (id, el) => {
+  const name = el.dataset.name, lat = el.dataset.lat, lon = el.dataset.lon;
+  const inp = document.getElementById('am-input-' + id);
+  if (inp) inp.value = name.split(',').slice(0, 3).join(', ');
+  window._adminMpHideSuggest(id);
+  _amLatLng = { lat: +parseFloat(lat).toFixed(6), lng: +parseFloat(lon).toFixed(6) };
+  const place = () => {
+    const ll = L.latLng(+parseFloat(lat), +parseFloat(lon));
+    _amMap.setView(ll, 16);
+    if (_amMarker) _amMarker.setLatLng(ll); else _amMarker = L.marker(ll).addTo(_amMap);
+    const coordEl = document.getElementById('am-coords-' + id);
+    if (coordEl) coordEl.textContent = `${_amLatLng.lat}, ${_amLatLng.lng}`;
+  };
+  if (_amMap) place(); else _ensureAdminLeaflet().then(() => { if (window.L && _amMap) place(); });
+};
+window._adminMpSubmit = async (id) => {
+  const inp = document.getElementById('am-input-' + id);
+  const label = inp?.value.trim();
+  if (!label) { alert('Вкажіть адресу/назву точки'); return; }
+  const btn = document.getElementById('am-add-' + id);
+  if (!_amLatLng) {
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i>'; }
+    try {
+      const r = await fetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(label)}`);
+      const results = await r.json();
+      if (results.length) { const { lat, lon } = results[0]; _amLatLng = { lat: +parseFloat(lat).toFixed(6), lng: +parseFloat(lon).toFixed(6) }; }
+    } catch (e) { console.warn('geocode failed:', e.message); }
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-plus"></i> Додати'; }
+  }
+  if (!_amLatLng) { alert('Адресу не знайдено — оберіть точку на карті'); return; }
+  const instr = _instrCache.find(i => i.id === id);
+  const mps = Array.isArray(instr?.meetingPoints) ? instr.meetingPoints : [];
+  try {
+    await updateDoc(doc(db, 'instructors', id), { meetingPoints: [...mps, { label, lat: _amLatLng.lat, lng: _amLatLng.lng }] });
+    showToast('Точку додано', label);
+    window._adminToggleAddPoint(id);
+  } catch (e) { alert('Помилка: ' + (e.message || e)); }
 };
 
 // ===== ШКОЛИ =====

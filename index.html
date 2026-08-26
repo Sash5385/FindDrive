@@ -777,6 +777,14 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .photo-preview img{width:100%;height:100%;object-fit:cover}
 .photo-upload:hover .photo-preview{border-color:var(--green);color:var(--green)}
 .photo-label{font-size:12px;color:var(--green);font-weight:500}
+.logo-shape-picker{display:flex;justify-content:center;gap:8px;padding:0 20px 14px}
+.logo-shape-btn{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;border:.5px solid var(--border);background:var(--white);color:var(--text-muted);font-size:11px;font-weight:500;font-family:inherit;cursor:pointer;transition:border-color .15s,color .15s,background .15s}
+.logo-shape-btn:hover{border-color:var(--green);color:var(--green)}
+.logo-shape-btn.active{border-color:var(--green);background:var(--green-light);color:var(--green);font-weight:600}
+.logo-shape-btn .shape-ico{width:12px;height:12px;border:1.5px solid currentColor;display:inline-block;flex-shrink:0}
+.logo-shape-btn[data-shape="circle"] .shape-ico{border-radius:50%}
+.logo-shape-btn[data-shape="square"] .shape-ico{border-radius:3px}
+.logo-shape-btn[data-shape="rect"] .shape-ico{border-radius:2px;width:16px;height:11px}
 .instr-form{padding:0 20px}
 .form-divider{font-size:10px;letter-spacing:2px;color:var(--text-hint);text-transform:uppercase;padding:12px 0 10px;border-top:.5px solid var(--border);margin-top:2px}
 .instr-form .form-divider:first-child{border-top:none;padding-top:2px}
@@ -1442,7 +1450,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.368</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.369</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -1664,9 +1672,14 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   </div>
   <div id="school-form-wrap" class="cab-body">
     <p class="instr-intro">Заповніть анкету — після перевірки профіль школи з'явиться на сайті.</p>
+    <div class="logo-shape-picker" id="school-logo-shape-picker">
+      <button type="button" class="logo-shape-btn" data-shape="circle" onclick="window._setSchoolLogoShape('circle')"><span class="shape-ico"></span> Коло</button>
+      <button type="button" class="logo-shape-btn active" data-shape="square" onclick="window._setSchoolLogoShape('square')"><span class="shape-ico"></span> Квадрат</button>
+      <button type="button" class="logo-shape-btn" data-shape="rect" onclick="window._setSchoolLogoShape('rect')"><span class="shape-ico"></span> Прямокутник</button>
+    </div>
     <div class="photo-uploads">
       <div class="photo-upload" id="school-logo-upload-area" title="Лого школи">
-        <div id="school-logo-preview" class="photo-preview"><i class="ti ti-building-store"></i></div>
+        <div id="school-logo-preview" class="photo-preview" style="border-radius:14px"><i class="ti ti-building-store"></i></div>
         <input type="file" id="school-logo-input" name="logo" accept="image/*" hidden>
         <span class="photo-label">Лого школи</span>
       </div>
@@ -3832,20 +3845,22 @@ window._onStudentPhotoChange = function(input) {
 };
 
 function _showPhotoCrop(file, onConfirm, opts) {
-  const rect = opts && opts.rect;
-  const CW = rect ? 320 : 240, CH = rect ? 240 : 240;
+  const shape = (opts && opts.shape) || (opts && opts.rect ? 'rect' : 'circle');
+  const isRect = shape === 'rect';
+  const CW = isRect ? 320 : 240, CH = isRect ? 240 : 240;
   const cx = CW / 2, cy = CH / 2;
 
   const modal = document.getElementById('crop-modal');
   const canvas = document.getElementById('crop-canvas');
   const wrap = document.getElementById('crop-wrap');
   const box = document.getElementById('crop-modal-box');
+  const previewRadius = shape === 'circle' ? '50%' : shape === 'square' ? '14px' : '9px';
   canvas.width = CW; canvas.height = CH;
-  canvas.style.borderRadius = rect ? '9px' : '50%';
+  canvas.style.borderRadius = previewRadius;
   canvas.style.width = CW + 'px'; canvas.style.height = CH + 'px';
   wrap.style.width = CW + 'px'; wrap.style.height = CH + 'px';
-  wrap.style.borderRadius = rect ? '9px' : '50%';
-  box.style.maxWidth = rect ? (CW + 48) + 'px' : '320px';
+  wrap.style.borderRadius = previewRadius;
+  box.style.maxWidth = isRect ? (CW + 48) + 'px' : '320px';
 
   const ctx = canvas.getContext('2d');
   const zoomSlider = document.getElementById('crop-zoom');
@@ -3897,11 +3912,11 @@ function _showPhotoCrop(file, onConfirm, opts) {
   canvas.ontouchend   = endDrag;
 
   document.getElementById('crop-confirm-btn').onclick = () => {
-    const outW = rect ? 400 : 200, outH = rect ? 300 : 200;
+    const outW = isRect ? 400 : 200, outH = isRect ? 300 : 200;
     const out = document.createElement('canvas');
     out.width = outW; out.height = outH;
     const octx = out.getContext('2d');
-    if (!rect) { octx.beginPath(); octx.arc(100, 100, 100, 0, Math.PI * 2); octx.clip(); }
+    if (shape === 'circle') { octx.beginPath(); octx.arc(100, 100, 100, 0, Math.PI * 2); octx.clip(); }
     const rw = outW / CW, rh = outH / CH;
     octx.drawImage(img, ox * rw, oy * rh, img.width * scale * rw, img.height * scale * rh);
     modal.style.display = 'none';
@@ -4522,11 +4537,18 @@ async function loadInstructors() {
 loadInstructors();
 
 // --- Автошколи ---
+// Форма емблеми школи: 'circle' (коло), 'square' (квадрат), 'rect' (прямокутник 4:3)
+function schoolLogoBoxStyle(shape, size) {
+  size = size || 56;
+  if (shape === 'circle') return `width:${size}px;height:${size}px;border-radius:50%`;
+  if (shape === 'rect')   return `width:${Math.round(size*1.4)}px;height:${size}px;border-radius:10px`;
+  return `width:${size}px;height:${size}px;border-radius:14px`; // square (за замовчуванням)
+}
 function buildSchoolCard(d, id) {
   const branches = Array.isArray(d.branches) ? d.branches : [];
   return `<div class="school-card" data-school-id="${esc(id||'')}" onclick="openSchoolProfile('${esc(id||'')}')">
     <div style="display:flex;align-items:center;gap:12px">
-      <div class="school-logo-wrap">${d.logo ? `<img src="${esc(d.logo)}" alt="">` : `<i class="ti ti-building-store"></i>`}</div>
+      <div class="school-logo-wrap" style="${schoolLogoBoxStyle(d.logoShape)}">${d.logo ? `<img src="${esc(d.logo)}" alt="">` : `<i class="ti ti-building-store"></i>`}</div>
       <div style="min-width:0">
         <div class="instr-name" style="white-space:normal">${esc(d.name||'')}</div>
         <div class="instr-meta"><i class="ti ti-star"></i>${d.rating ? ' '+d.rating+' · '+d.reviews+' відгуків' : ' Нова школа'}</div>
@@ -4590,7 +4612,7 @@ async function openSchoolProfile(id) {
   }
   const branches = Array.isArray(d.branches) ? d.branches : [];
   document.getElementById('school-prof-head').innerHTML = `
-    <div class="school-logo-wrap">${d.logo ? `<img src="${esc(d.logo)}" alt="">` : `<i class="ti ti-building-store"></i>`}</div>
+    <div class="school-logo-wrap" style="${schoolLogoBoxStyle(d.logoShape, 64)}">${d.logo ? `<img src="${esc(d.logo)}" alt="">` : `<i class="ti ti-building-store"></i>`}</div>
     <div style="min-width:0">
       <div class="cab-title" style="white-space:normal">${esc(d.name||'')}</div>
       <div class="instr-meta"><i class="ti ti-star"></i>${d.rating ? ' '+d.rating+' · '+d.reviews+' відгуків' : ' Нова школа'}</div>
@@ -4655,11 +4677,29 @@ async function openSchoolProfile(id) {
 window.openSchoolProfile = openSchoolProfile;
 
 let schoolLogoData = null;
+let schoolLogoDataShape = null;
+let schoolLogoShape = 'square';
+window._setSchoolLogoShape = (shape) => {
+  schoolLogoShape = shape;
+  document.querySelectorAll('#school-logo-shape-picker .logo-shape-btn').forEach(b => b.classList.toggle('active', b.dataset.shape === shape));
+  const prev = document.getElementById('school-logo-preview');
+  if (prev) prev.setAttribute('style', schoolLogoBoxStyle(shape, 84));
+  if (schoolLogoData && schoolLogoDataShape && schoolLogoDataShape !== shape) {
+    schoolLogoData = null; schoolLogoDataShape = null;
+    if (prev) prev.innerHTML = '<i class="ti ti-building-store"></i>';
+    showToast('Форму змінено', 'Завантажте лого ще раз під нову форму', 'info');
+  }
+};
 function _openSchoolPanelDirect() {
   closeAll();
   setTimeout(() => {
     openPanel("school-panel");
     mountBranchPicker(document.getElementById('school-branch-picker'), []);
+    schoolLogoData = null;
+    schoolLogoDataShape = null;
+    window._setSchoolLogoShape('square');
+    const preview = document.getElementById('school-logo-preview');
+    if (preview) preview.innerHTML = '<i class="ti ti-building-store"></i>';
     const passGroup = document.getElementById('school-pass-group');
     if (passGroup) passGroup.style.display = auth.currentUser ? 'none' : '';
     const pass2Group = document.getElementById('school-pass2-group');
@@ -4681,8 +4721,9 @@ schoolLogoInput?.addEventListener("change", e => {
   schoolLogoInput.value = '';
   _showPhotoCrop(file, (data) => {
     schoolLogoData = data;
+    schoolLogoDataShape = schoolLogoShape;
     document.getElementById("school-logo-preview").innerHTML = `<img src="${schoolLogoData}" style="width:100%;height:100%;object-fit:cover">`;
-  });
+  }, { shape: schoolLogoShape });
 });
 
 const schoolForm = document.getElementById("school-form");
@@ -4762,6 +4803,7 @@ document.getElementById("btn-submit-school")?.addEventListener("click", async ()
       price_extra: Number(schoolForm.querySelector('[name="price_extra"]').value) || 0,
       about: schoolForm.querySelector('[name="about"]').value.trim(),
       logo: schoolLogoData || null,
+      logoShape: schoolLogoShape,
       userId: uid,
       status: "pending",
       rating: null,
@@ -5040,6 +5082,23 @@ window._bpAdd = async () => {
 window._bpRemove = (i) => { _bpPoints.splice(i,1); _bpRenderAll(); };
 
 // --- Кабінет школи: профіль + запрошення інструкторів ---
+// scLogoDataShape — форма, під яку РЕАЛЬНО обрізане поточне зображення в прев'ю
+// (нового кропу цієї сесії, або вже збереженого лого школи). Якщо кнопка формату
+// не збігається з нею — старий кроп (напр. з чорними кутами під колом у JPEG)
+// покаже артефакти, тож просимо перезавантажити фото під нову форму.
+let scLogoData = null, scLogoDataShape = null, scLogoShape = 'square';
+window._setScLogoShape = (shape) => {
+  scLogoShape = shape;
+  document.querySelectorAll('#sc-logo-shape-picker .logo-shape-btn').forEach(b => b.classList.toggle('active', b.dataset.shape === shape));
+  const prev = document.getElementById('sc-logo-preview');
+  if (!prev) return;
+  prev.setAttribute('style', schoolLogoBoxStyle(shape, 84));
+  if (scLogoDataShape && scLogoDataShape !== shape) {
+    scLogoData = null; scLogoDataShape = null;
+    prev.innerHTML = '<i class="ti ti-building-store"></i>';
+    showToast('Форму змінено', 'Завантажте лого ще раз під нову форму', 'info');
+  }
+};
 async function openSchoolCabinet(school) {
   closeAll();
   setTimeout(() => openPanel('school-cabinet'), 150);
@@ -5047,6 +5106,18 @@ async function openSchoolCabinet(school) {
   body.innerHTML = `<div class="cab-empty"><i class="ti ti-loader"></i></div>`;
   body.innerHTML = `
     <div class="cab-section-title">Профіль школи</div>
+    <div class="photo-uploads">
+      <div class="photo-upload" id="sc-logo-upload-area" title="Лого школи">
+        <div id="sc-logo-preview" class="photo-preview" style="${schoolLogoBoxStyle(school.logoShape, 84)}">${school.logo ? `<img src="${esc(school.logo)}" style="width:100%;height:100%;object-fit:cover">` : '<i class="ti ti-building-store"></i>'}</div>
+        <input type="file" id="sc-logo-input" accept="image/*" hidden>
+        <span class="photo-label">Лого школи</span>
+      </div>
+    </div>
+    <div class="logo-shape-picker" id="sc-logo-shape-picker">
+      <button type="button" class="logo-shape-btn${school.logoShape==='circle'?' active':''}" data-shape="circle" onclick="window._setScLogoShape('circle')"><span class="shape-ico"></span> Коло</button>
+      <button type="button" class="logo-shape-btn${!school.logoShape||school.logoShape==='square'?' active':''}" data-shape="square" onclick="window._setScLogoShape('square')"><span class="shape-ico"></span> Квадрат</button>
+      <button type="button" class="logo-shape-btn${school.logoShape==='rect'?' active':''}" data-shape="rect" onclick="window._setScLogoShape('rect')"><span class="shape-ico"></span> Прямокутник</button>
+    </div>
     <div class="form-group"><label class="form-label">Назва</label><input class="form-input" id="sc-name" value="${esc(school.name||'')}"></div>
     <div class="form-group"><label class="form-label">Телефон</label><input class="form-input" id="sc-phone" value="${esc(school.phone||'')}"></div>
     <div class="form-group"><label class="form-label">Сайт школи</label><input class="form-input" id="sc-website" type="url" value="${esc(school.website||'')}"></div>
@@ -5070,21 +5141,43 @@ async function openSchoolCabinet(school) {
 
   mountBranchPicker(document.getElementById('sc-branch-picker'), Array.isArray(school.branches) ? school.branches.filter(b => typeof b === 'object' && b.lat) : []);
 
+  scLogoData = null;
+  scLogoShape = school.logoShape || 'square';
+  scLogoDataShape = school.logo ? scLogoShape : null;
+  const scLogoInput = document.getElementById('sc-logo-input');
+  document.getElementById('sc-logo-upload-area')?.addEventListener('click', () => scLogoInput.click());
+  scLogoInput?.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    scLogoInput.value = '';
+    _showPhotoCrop(file, (data) => {
+      scLogoData = data;
+      scLogoDataShape = scLogoShape;
+      document.getElementById('sc-logo-preview').innerHTML = `<img src="${scLogoData}" style="width:100%;height:100%;object-fit:cover">`;
+    }, { shape: scLogoShape });
+  });
+
   document.getElementById('sc-save').addEventListener('click', async () => {
     const b = document.getElementById('sc-save');
     b.disabled = true; b.innerHTML = '<i class="ti ti-loader"></i> Збереження…';
     try {
       const branches = window._bpGetPoints ? window._bpGetPoints() : [];
+      const logoUpdate = {};
+      if (scLogoData) logoUpdate.logo = scLogoData;
       await updateDoc(doc(db, 'schools', school.id), {
         name: document.getElementById('sc-name').value.trim(),
         phone: document.getElementById('sc-phone').value.trim(),
         website: document.getElementById('sc-website').value.trim(),
         branches,
+        logoShape: scLogoShape,
+        ...logoUpdate,
         price_course: Number(document.getElementById('sc-price-course').value) || 0,
         price_extra: Number(document.getElementById('sc-price-extra').value) || 0,
         about: document.getElementById('sc-about').value.trim(),
       });
       school.branches = branches;
+      school.logoShape = scLogoShape;
+      if (scLogoData) school.logo = scLogoData;
       showToast('Збережено', 'Профіль школи оновлено', 'success');
     } catch(e) { showToast('Помилка', e.message||String(e), 'error'); }
     b.disabled = false; b.innerHTML = '<i class="ti ti-device-floppy"></i> Зберегти профіль';
@@ -7128,14 +7221,14 @@ window._startPickLocation = function() {
   const TAGS = Object.keys(TC);
   const N = TAGS.length;
   const phi = Math.PI*(3-Math.sqrt(5));
-  const cosX = Math.cos(0.18), sinX = Math.sin(0.18);
-  let raf = null, W, H, cx, cy, R, focal;
+  // Нахил осі як у Землі (~23°, тут трохи менше для компактності хмари)
+  const cosX = Math.cos(0.28), sinX = Math.sin(0.28);
+  let raf = null, W, H, cx, cy, R;
 
   function resize(){
     W = el.offsetWidth||300; H = el.offsetHeight||300;
     cx = W/2; cy = H/2;
-    R = Math.min(W,H)*0.40;
-    focal = R*4;
+    R = Math.min(W,H)*0.34;
   }
   resize();
 
@@ -7217,12 +7310,16 @@ window._startPickLocation = function() {
       const z1 = p.ox*sY + p.oz*cY;
       const y1 = p.oy*cosX - z1*sinX;
       const z2 = p.oy*sinX + z1*cosX;
-      const sc = focal/(focal-z2*R);
-      const op = p.on ? '1' : Math.max(0.22, (z2*0.38+0.62)).toFixed(2);
+      // Проєкція позиції — азимутальна рівноплоща (Ламберта): площа на сфері зберігається
+      // на диску, тому рівномірний розподіл тегів по сфері виглядає рівномірним і на екрані
+      // (звичайна перспектива збирає видимі здалеку теги ближче до країв, лишаючи центр порожнім)
+      const k = Math.min(Math.sqrt(2/Math.max(1+z2, 0.28)), 1.7);
+      const sc = 0.72 + (z2+1)*0.14; // масштаб — лише глибина картинки, на позицію не впливає
+      const op = p.on ? '1' : Math.max(0.3, (z2*0.32+0.68)).toFixed(2);
       const fs = (z2*2+11).toFixed(1);
       const s = p.span.style;
-      s.left = (cx+x1*R*sc).toFixed(1)+'px';
-      s.top  = (cy+y1*R*sc).toFixed(1)+'px';
+      s.left = (cx+x1*k*R).toFixed(1)+'px';
+      s.top  = (cy+y1*k*R).toFixed(1)+'px';
       s.transform = 'translate(-50%,-50%) scale('+(p.on ? (sc*1.25).toFixed(3) : sc.toFixed(3))+')';
       s.opacity = op;
       s.fontSize = fs+'px';
