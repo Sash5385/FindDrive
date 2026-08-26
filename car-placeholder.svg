@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+  <polygon points="250,55 460,430 40,430" fill="#ffffff" stroke="#ffffff" stroke-width="60" stroke-linejoin="round"/>
+  <polygon points="250,55 460,430 40,430" fill="#ffffff" stroke="#e2231a" stroke-width="34" stroke-linejoin="round"/>
+  <text x="250" y="345" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="185" fill="#1a1a1a">H</text>
+</svg>

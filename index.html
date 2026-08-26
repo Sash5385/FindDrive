@@ -417,7 +417,8 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .card-name-row{padding:11px 40px 10px 14px;border-bottom:.5px solid var(--border)}
 .card-photo-wrap{position:relative;height:148px;background:var(--green-light)}
 .card-car-ph{width:100%;height:100%;object-fit:cover;display:block}
-.card-car-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:52px;opacity:.18;background:linear-gradient(135deg,#ddeef8,#c8daea)}
+.card-car-empty{width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#ddeef8,#c8daea)}
+.card-car-empty img{width:64px;height:64px;opacity:.55}
 .card-face-ov{position:absolute;bottom:-44px;left:14px;width:88px;height:88px;border-radius:50%;overflow:hidden;border:4px solid var(--white);box-shadow:0 2px 8px rgba(0,0,0,.2);z-index:3}
 .card-kpp{position:absolute;top:8px;right:8px;z-index:3;background:rgba(13,42,26,.65);color:#fff;border-radius:12px;padding:3px 9px;font-size:10px;font-weight:500;backdrop-filter:blur(4px)}
 .card-body{padding:50px 14px 12px}
@@ -850,6 +851,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .photo-car-preview img{width:100%;height:100%;object-fit:cover}
 .photo-upload:hover .photo-car-preview{border-color:var(--green);color:var(--green)}
 .prof-car-photo{width:100%;aspect-ratio:4/3;max-height:360px;border-radius:9px;object-fit:cover;margin-bottom:14px;border:.5px solid var(--border)}
+.prof-car-empty{width:100%;aspect-ratio:4/3;max-height:360px;border-radius:9px;margin-bottom:14px;border:.5px solid var(--border);background:linear-gradient(135deg,#ddeef8,#c8daea);display:flex;align-items:center;justify-content:center}
+.prof-car-empty img{width:72px;height:72px;opacity:.5}
 .prof-mini-map{height:180px;border-radius:12px;overflow:hidden;margin-bottom:4px;border:.5px solid var(--border)}
 .prof-rating-row{font-size:12px;color:var(--text-hint);margin-top:3px}
 .prof-price-row{display:flex;align-items:baseline;gap:12px;margin:16px 0 12px}
@@ -1456,7 +1459,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.379</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.380</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -4431,7 +4434,7 @@ function buildCard(d, i, id) {
       <div class="instr-meta"><i class="ti ti-star"></i>${d.rating ? ' '+d.rating+' · '+d.reviews+' відгуків' : ' Новий інструктор'}${d.experience ? ' · '+d.experience+' р.' : ''}</div>
     </div>
     <div class="card-photo-wrap">
-      ${d.carPhoto ? `<img class="card-car-ph" src="${esc(d.carPhoto)}" alt="">` : '<div class="card-car-empty">🚗</div>'}
+      ${d.carPhoto ? `<img class="card-car-ph" src="${esc(d.carPhoto)}" alt="">` : '<div class="card-car-empty"><img src="car-placeholder.svg" alt="Фото авто відсутнє"></div>'}
       ${d.gearbox ? `<div class="card-kpp">${esc(gearboxLabel(d.gearbox))}</div>` : ''}
       ${isNew ? '<span class="badge-new">Новий</span>' : ''}
       <div class="card-face-ov">
@@ -6695,7 +6698,7 @@ function openInstrProfile(id, mpIdx) {
     </div>` : ''}
     ${instrTags.length ? `<div class="prof-tags-row">${instrTags.map(t=>`<span class="tag" style="${_ts(t)}">${_esc(t)}</span>`).join('')}</div>` : ''}
     ${d.about ? `<div class="prof-about-box">"${_esc(d.about)}"</div>` : ''}
-    ${d.carPhoto ? `<img src="${_esc(d.carPhoto)}" class="prof-car-photo" alt="Авто інструктора" loading="lazy">` : ''}
+    ${d.carPhoto ? `<img src="${_esc(d.carPhoto)}" class="prof-car-photo" alt="Авто інструктора" loading="lazy">` : `<div class="prof-car-empty"><img src="car-placeholder.svg" alt="Фото авто відсутнє"></div>`}
     <div class="prof-booking-section">
       <div class="prof-sec"><span><i class="ti ti-calendar-event" style="color:${col}"></i> Записатись на заняття</span></div>
       <div id="prof-booking"><div class="slot-loading"><i class="ti ti-loader"></i></div></div>
@@ -7043,7 +7046,7 @@ function _instrPopupHtml(inst, id) {
     <div style="position:relative;height:170px">
       ${inst.carPhoto
         ? `<img src="${inst.carPhoto}" style="width:100%;height:170px;object-fit:cover;display:block">`
-        : `<div style="width:100%;height:170px;background:linear-gradient(135deg,#ddeef8,#c8daea);display:flex;align-items:center;justify-content:center;font-size:40px;opacity:.25">🚗</div>`}
+        : `<div style="width:100%;height:170px;background:linear-gradient(135deg,#ddeef8,#c8daea);display:flex;align-items:center;justify-content:center"><img src="car-placeholder.svg" alt="" style="width:56px;height:56px;opacity:.5"></div>`}
       ${inst.gearbox ? `<div style="position:absolute;top:6px;right:6px;background:rgba(13,42,26,.68);color:#fff;border-radius:10px;padding:2px 8px;font-size:10px;font-weight:500;backdrop-filter:blur(4px)">${_esc(window.gearboxLabel(inst.gearbox))}</div>` : ''}
       <div style="position:absolute;bottom:-27px;left:10px;width:56px;height:56px;border-radius:50%;overflow:hidden;border:3px solid #1a7a4a;box-shadow:0 2px 8px rgba(0,0,0,.22);z-index:2">
         ${inst.photo
