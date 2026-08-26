@@ -31,6 +31,15 @@ service cloud.firestore {
               || schoolDoc(schoolId).email == request.auth.token.email);
     }
 
+    // adminChats/{role}_{refId}: refId — uid учня, id інструктора або id школи.
+    // Власник тредy — той, чий role+refId у документі відповідає поточному auth.
+    function adminChatOwn(data) {
+      return request.auth != null
+          && ((data.role == 'student'    && data.refId == request.auth.uid)
+              || (data.role == 'instructor' && isInstructor(data.refId))
+              || (data.role == 'school'     && isSchoolOwner(data.refId)));
+    }
+
     match /instructors/{docId} {
       allow get: if isAdmin()
               || resource.data.status == 'approved'
@@ -164,6 +173,19 @@ service cloud.firestore {
     match /chats/{chatId}/messages/{msgId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
+    }
+
+    // Переписка адміна з конкретним учнем/інструктором/школою — окрема від chats,
+    // бо там завжди рівно два учасники: адмін і одна людина (не пара учень-інструктор).
+    match /adminChats/{chatId} {
+      allow get, list: if isAdmin() || adminChatOwn(resource.data);
+      // Створити тред може і адмін (пише першим), і сама людина (пише першою) —
+      // але лише "про себе", тобто role+refId мають збігатись із запитувачем.
+      allow create: if isAdmin() || adminChatOwn(request.resource.data);
+      allow update: if isAdmin() || adminChatOwn(resource.data);
+    }
+    match /adminChats/{chatId}/messages/{msgId} {
+      allow read, create: if isAdmin() || adminChatOwn(get(/databases/$(database)/documents/adminChats/$(chatId)).data);
     }
   }
 }

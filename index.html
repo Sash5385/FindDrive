@@ -1456,7 +1456,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.375</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.376</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -3469,8 +3469,41 @@ let _unsubClient = null;
 let _unsubChatBadge = null;
 let _totalPendingBk = 0;
 let _totalUnreadChats = 0;
+let _adminChatUnread = 0;
+// Один користувач може одночасно бути учнем, інструктором і власником школи —
+// тримаємо лічильник і підписку окремо per chatId, а не одним "останнім переможцем"
+// (та ж проблема, що раніше була в window._onMapReady з одним колбеком).
+const _adminChatUnreadByKey = {};
+const _unsubAdminChatBadges = {};
 
-function _updateNavBadge() { updateNavBadge(_totalPendingBk + _totalUnreadChats); }
+function _updateNavBadge() { updateNavBadge(_totalPendingBk + _totalUnreadChats + _adminChatUnread); }
+
+// Значок непрочитаних повідомлень від адміністрації (окрема колекція adminChats,
+// не змішується зі звичайним чатом учень<->інструктор)
+function listenMyAdminChatBadge(role, refId) {
+  if (!refId) return;
+  const chatId = `${role}_${refId}`;
+  if (_unsubAdminChatBadges[chatId]) return; // вже підписані
+  let _firstSnap = true, _prevUnread = 0;
+  _unsubAdminChatBadges[chatId] = onSnapshot(doc(db, 'adminChats', chatId), snap => {
+    const data  = snap.exists() ? snap.data() : {};
+    const count = data.unreadByUser || 0;
+    if (!_firstSnap && count > _prevUnread) {
+      showToast('Повідомлення від адміністрації', data.lastMessage || '', 'info');
+      showBrowserNotif('Повідомлення від адміністрації', data.lastMessage || '', { type: 'admin_chat' });
+    }
+    _prevUnread = count; _firstSnap = false;
+    _adminChatUnreadByKey[chatId] = count;
+    _adminChatUnread = Object.values(_adminChatUnreadByKey).reduce((s, n) => s + n, 0);
+    _updateNavBadge();
+  }, () => {});
+}
+function _clearAdminChatBadges() {
+  Object.values(_unsubAdminChatBadges).forEach(fn => fn());
+  Object.keys(_unsubAdminChatBadges).forEach(k => delete _unsubAdminChatBadges[k]);
+  Object.keys(_adminChatUnreadByKey).forEach(k => delete _adminChatUnreadByKey[k]);
+  _adminChatUnread = 0;
+}
 
 function listenChatBadge(uid, role) {
   if (_unsubChatBadge) { _unsubChatBadge(); _unsubChatBadge = null; }
@@ -3562,6 +3595,9 @@ function listenInstrBookings(instrDocId) {
 let _unsubChat = null;
 let _unsubStudentChats = null;
 let _unsubInstrChats   = null;
+let _unsubStudentAdminChat = null;
+let _unsubInstrAdminChat   = null;
+let _unsubSchoolAdminChat  = null;
 
 function listenChatMessages(chatId, myUid, role) {
   if (_unsubChat) { _unsubChat(); _unsubChat = null; }
@@ -3604,6 +3640,7 @@ window.openChat = async function(instrId) {
   const chatId = `${instrId}_${user.uid}`;
   window._currentChatId   = chatId;
   window._currentChatRole = 'student';
+  window._currentChatKind = 'peer';
   document.getElementById('chat-panel-title').textContent = instr.name || 'Інструктор';
   window._closeChatPanel = () => closeAll();
   const chatRef = doc(db, 'chats', chatId);
@@ -3623,6 +3660,7 @@ window._openInstrChat = function(chatId, studentName) {
   if (!user) return;
   window._currentChatId   = chatId;
   window._currentChatRole = 'instructor';
+  window._currentChatKind = 'peer';
   document.getElementById('chat-panel-title').textContent = studentName || 'Учень';
   window._closeChatPanel = () => { closeAll(); setTimeout(() => openPanel('cabinet'), 180); };
   updateDoc(doc(db, 'chats', chatId), { unreadByInstr: 0 }).catch(e => window._logErr('clear_unread_instr', e));
@@ -3637,9 +3675,26 @@ window._sendChat = async function() {
   const user = auth.currentUser;
   if (!user) return;
   input.value = '';
+  const chatId = window._currentChatId;
+  if (window._currentChatKind === 'admin') {
+    try {
+      await Promise.all([
+        addDoc(collection(db, 'adminChats', chatId, 'messages'), {
+          text, from: 'user', uid: user.uid,
+          senderName: user.displayName || user.email || '',
+          at: serverTimestamp(),
+        }),
+        setDoc(doc(db, 'adminChats', chatId), { lastMessage: text, lastAt: serverTimestamp(), unreadByAdmin: increment(1) }, { merge: true }),
+      ]);
+    } catch(e) {
+      console.error('sendAdminChat:', e.code, e.message);
+      showToast('Помилка', (e.code || e.message || 'Не вдалось надіслати'), 'error');
+      input.value = text;
+    }
+    return;
+  }
   const role = window._currentChatRole || 'student';
   const otherUnread = role === 'student' ? 'unreadByInstr' : 'unreadByStudent';
-  const chatId  = window._currentChatId;
   const chatRef = doc(db, 'chats', chatId);
   try {
     await Promise.all([
@@ -3658,43 +3713,106 @@ window._sendChat = async function() {
   }
 };
 
+function listenAdminChatMessages(chatId) {
+  if (_unsubChat) { _unsubChat(); _unsubChat = null; }
+  const el = document.getElementById('chat-messages');
+  if (!el) return;
+  el.innerHTML = '<div class="cab-empty"><i class="ti ti-loader"></i></div>';
+  _unsubChat = onSnapshot(
+    query(collection(db, 'adminChats', chatId, 'messages'), orderBy('at', 'asc')),
+    snap => {
+      if (!snap.size) {
+        el.innerHTML = '<div class="cab-empty" style="color:var(--text-muted)"><i class="ti ti-message-circle"></i><br>Напишіть перше повідомлення</div>';
+        return;
+      }
+      el.innerHTML = snap.docs.map(d => {
+        const msg = d.data();
+        const mine = msg.from === 'user';
+        const t = msg.at?.toDate?.();
+        const ts = t ? `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}` : '';
+        return `<div class="chat-msg ${mine?'mine':'theirs'}">${_esc(msg.text)}<div class="chat-msg-time">${ts}</div></div>`;
+      }).join('');
+      el.scrollTop = el.scrollHeight;
+    },
+    e => { el.innerHTML = `<div class="cab-empty" style="color:#cc3333"><i class="ti ti-alert-circle"></i><br>${_esc(e.message)}</div>`; }
+  );
+}
+
+// role: 'student'|'instructor'|'school'; refId: uid учня / id інструктора / id школи
+window._openAdminChat = function(role, refId, name) {
+  const user = auth.currentUser;
+  if (!user || !refId) return;
+  const chatId = `${role}_${refId}`;
+  window._currentChatId   = chatId;
+  window._currentChatKind = 'admin';
+  document.getElementById('chat-panel-title').textContent = 'Адміністрація FindDrive';
+  window._closeChatPanel = () => closeAll();
+  setDoc(doc(db, 'adminChats', chatId), { role, refId, name: name || '', unreadByUser: 0 }, { merge: true })
+    .catch(e => console.warn('openAdminChat setDoc:', e.code, e.message));
+  closeAll();
+  setTimeout(() => { openPanel('chat-panel'); listenAdminChatMessages(chatId); }, 150);
+};
+
+// Пінований рядок "Адміністрація" зверху списку чатів (і учня, і інструктора) —
+// та сама колекція adminChats, що й у admin.html, лише зі свого боку.
+function _adminChatRowHtml(role, refId, name, adminChat) {
+  const unread = adminChat?.unreadByUser || 0;
+  return `<div class="chat-list-item${unread?' has-unread':''}" onclick="window._openAdminChat('${role}','${_esc(refId)}','${_esc(name)}')">
+    <i class="ti ti-shield-lock" style="font-size:22px;color:var(--blue);flex-shrink:0"></i>
+    <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text)">Адміністрація FindDrive</div><div style="font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(adminChat?.lastMessage || 'Напишіть нам, якщо є питання')}</div></div>
+    ${unread?`<div class="chat-unread-dot">${unread>9?'9+':unread}</div>`:''}
+  </div>`;
+}
+
 function loadStudentChats(user, container) {
   if (!container) return;
-  if (_unsubStudentChats) { _unsubStudentChats(); _unsubStudentChats = null; }
+  if (_unsubStudentChats)     { _unsubStudentChats();     _unsubStudentChats     = null; }
+  if (_unsubStudentAdminChat) { _unsubStudentAdminChat(); _unsubStudentAdminChat = null; }
   container.innerHTML = '<div class="cab-empty"><i class="ti ti-loader"></i></div>';
+  let peerChats = [], adminChat = null, peerReady = false, adminReady = false;
+  function render() {
+    if (!peerReady || !adminReady) return;
+    const totalUnread = peerChats.reduce((s,c) => s+(c.unreadByStudent||0), 0) + (adminChat?.unreadByUser||0);
+    const badge = document.getElementById('ctab-chat-badge');
+    if (badge) { badge.textContent = totalUnread>9?'9+':totalUnread; badge.style.display = totalUnread?'':'none'; }
+    const adminRow = _adminChatRowHtml('student', user.uid, user.displayName||user.email||'', adminChat);
+    const peerRows = peerChats.map(c => {
+      const unread = c.unreadByStudent||0;
+      return `<div class="chat-list-item${unread?' has-unread':''}" onclick="window.openChat('${_esc(c.instrId)}')">
+        <i class="ti ti-message-circle" style="font-size:22px;color:var(--green);flex-shrink:0"></i>
+        <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text)">${_esc(c.instrName||'Інструктор')}</div><div style="font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(c.lastMessage||'—')}</div></div>
+        ${unread?`<div class="chat-unread-dot">${unread>9?'9+':unread}</div>`:''}
+      </div>`;
+    }).join('');
+    container.innerHTML = adminRow + peerRows;
+  }
   _unsubStudentChats = onSnapshot(
     query(collection(db, 'chats'), where('studentId', '==', user.uid)),
-    snap => {
-      if (!snap.size) { container.innerHTML = '<div class="cab-empty" style="color:var(--text-muted)"><i class="ti ti-message-circle-off"></i><br>Чатів ще немає</div>'; return; }
-      const chats = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.lastAt?.seconds||0)-(a.lastAt?.seconds||0));
-      const totalUnread = chats.reduce((s,c) => s+(c.unreadByStudent||0), 0);
-      const badge = document.getElementById('ctab-chat-badge');
-      if (badge) { badge.textContent = totalUnread>9?'9+':totalUnread; badge.style.display = totalUnread?'':'none'; }
-      container.innerHTML = chats.map(c => {
-        const unread = c.unreadByStudent||0;
-        return `<div class="chat-list-item${unread?' has-unread':''}" onclick="window.openChat('${_esc(c.instrId)}')">
-          <i class="ti ti-message-circle" style="font-size:22px;color:var(--green);flex-shrink:0"></i>
-          <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--text)">${_esc(c.instrName||'Інструктор')}</div><div style="font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(c.lastMessage||'—')}</div></div>
-          ${unread?`<div class="chat-unread-dot">${unread>9?'9+':unread}</div>`:''}
-        </div>`;
-      }).join('');
-    }, () => { container.innerHTML = '<div class="cab-empty" style="color:var(--text-muted)"><i class="ti ti-message-circle-off"></i><br>Чатів ще немає</div>'; }
+    snap => { peerChats = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.lastAt?.seconds||0)-(a.lastAt?.seconds||0)); peerReady = true; render(); },
+    () => { peerReady = true; render(); }
+  );
+  _unsubStudentAdminChat = onSnapshot(
+    doc(db, 'adminChats', `student_${user.uid}`),
+    snap => { adminChat = snap.exists() ? snap.data() : null; adminReady = true; render(); },
+    () => { adminReady = true; render(); }
   );
 }
 
 function loadInstrChats(instr, container) {
   if (!container) return;
-  if (_unsubInstrChats) { _unsubInstrChats(); _unsubInstrChats = null; }
+  if (_unsubInstrChats)     { _unsubInstrChats();     _unsubInstrChats     = null; }
+  if (_unsubInstrAdminChat) { _unsubInstrAdminChat(); _unsubInstrAdminChat = null; }
   container.innerHTML = '<div class="cab-empty"><i class="ti ti-loader"></i></div>';
   const email = auth.currentUser?.email;
   if (!email) return;
-  function renderChats(snap) {
-    if (!snap.size) { container.innerHTML = '<div class="cab-empty" style="color:var(--text-muted)"><i class="ti ti-message-circle-off"></i><br>Повідомлень ще немає</div>'; return; }
-    const chats = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.lastAt?.seconds||0)-(a.lastAt?.seconds||0));
-    const totalUnread = chats.reduce((s,c) => s+(c.unreadByInstr||0), 0);
+  let peerChats = [], adminChat = null, peerReady = false, adminReady = false;
+  function render() {
+    if (!peerReady || !adminReady) return;
+    const totalUnread = peerChats.reduce((s,c) => s+(c.unreadByInstr||0), 0) + (adminChat?.unreadByUser||0);
     const badge = document.getElementById('itab-chat-badge');
     if (badge) { badge.textContent = totalUnread>9?'9+':totalUnread; badge.style.display = totalUnread?'':'none'; }
-    container.innerHTML = chats.map(c => {
+    const adminRow = _adminChatRowHtml('instructor', instr.id, instr.name||'', adminChat);
+    const peerRows = peerChats.map(c => {
       const unread = c.unreadByInstr||0;
       const sName = c.studentName||'Учень';
       return `<div class="chat-list-item${unread?' has-unread':''}" onclick="window._openInstrChat('${_esc(c.id)}','${_esc(sName)}')">
@@ -3703,12 +3821,18 @@ function loadInstrChats(instr, container) {
         ${unread?`<div class="chat-unread-dot">${unread>9?'9+':unread}</div>`:''}
       </div>`;
     }).join('');
+    container.innerHTML = adminRow + peerRows;
   }
   // query by email — always stored in chat doc, works even if instrUserId is null
   _unsubInstrChats = onSnapshot(
     query(collection(db, 'chats'), where('instrEmail', '==', email)),
-    renderChats,
-    () => { container.innerHTML = '<div class="cab-empty" style="color:var(--text-muted)"><i class="ti ti-message-circle-off"></i><br>Повідомлень ще немає</div>'; }
+    snap => { peerChats = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.lastAt?.seconds||0)-(a.lastAt?.seconds||0)); peerReady = true; render(); },
+    () => { peerReady = true; render(); }
+  );
+  _unsubInstrAdminChat = onSnapshot(
+    doc(db, 'adminChats', `instructor_${instr.id}`),
+    snap => { adminChat = snap.exists() ? snap.data() : null; adminReady = true; render(); },
+    () => { adminReady = true; render(); }
   );
 }
 // ===== END CHAT =====
@@ -3774,12 +3898,17 @@ onAuthStateChanged(auth, async user => {
     // Запустити слухач для клієнта; слухач інструктора — після визначення профілю
     listenClientBookings(user.uid);
     listenChatBadge(user.uid, 'student');
+    listenMyAdminChatBadge('student', user.uid);
     getMyInstrProfile(user).then(instr => {
       if (instr?.id) {
         listenInstrBookings(instr.id);
         listenChatBadge(user.uid, 'instructor');
+        listenMyAdminChatBadge('instructor', instr.id);
       }
     }).catch(e => window._logErr('get_my_instr_profile_on_login', e));
+    getMySchool(user).then(school => {
+      if (school?.id) listenMyAdminChatBadge('school', school.id);
+    }).catch(() => {});
   } else {
     btnLogin.style.display = "";
     navUser.style.display  = "none";
@@ -3787,6 +3916,7 @@ onAuthStateChanged(auth, async user => {
     if (_unsubInstr)      { _unsubInstr();      _unsubInstr      = null; }
     if (_unsubClient)     { _unsubClient();     _unsubClient     = null; }
     if (_unsubChatBadge)  { _unsubChatBadge();  _unsubChatBadge  = null; }
+    _clearAdminChatBadges();
     _totalPendingBk = 0; _totalUnreadChats = 0;
     window._clientProfile = null;
     closeAll();
@@ -5137,6 +5267,8 @@ async function openSchoolCabinet(school) {
   const body = document.getElementById('school-cab-body');
   body.innerHTML = `<div class="cab-empty"><i class="ti ti-loader"></i></div>`;
   body.innerHTML = `
+    <div class="cab-section-title">Повідомлення</div>
+    <div id="sc-admin-chat-row"></div>
     <div class="cab-section-title">Профіль школи</div>
     <div class="photo-uploads">
       <div class="photo-upload" id="sc-logo-upload-area" title="Лого школи">
@@ -5172,6 +5304,12 @@ async function openSchoolCabinet(school) {
     <div id="sc-roster"><div class="cab-empty"><i class="ti ti-loader"></i></div></div>`;
 
   mountBranchPicker(document.getElementById('sc-branch-picker'), Array.isArray(school.branches) ? school.branches.filter(b => typeof b === 'object' && b.lat) : []);
+
+  if (_unsubSchoolAdminChat) { _unsubSchoolAdminChat(); _unsubSchoolAdminChat = null; }
+  _unsubSchoolAdminChat = onSnapshot(doc(db, 'adminChats', `school_${school.id}`), snap => {
+    const row = document.getElementById('sc-admin-chat-row');
+    if (row) row.innerHTML = _adminChatRowHtml('school', school.id, school.name||'', snap.exists() ? snap.data() : null);
+  }, () => {});
 
   scLogoData = null;
   scLogoShape = school.logoShape || 'square';

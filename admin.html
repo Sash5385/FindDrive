@@ -131,6 +131,19 @@ textarea.admin-edit-input{resize:vertical;min-height:54px}
 .admin-edit-btn:hover{text-decoration:underline}
 .admin-sortbar{display:flex;align-items:center;gap:6px;padding:10px 14px 0;font-size:11px;color:var(--text-muted)}
 .admin-sortbar select{padding:5px 8px;border-radius:7px;border:.5px solid var(--border);font-size:11px;font-family:inherit;background:var(--white);color:var(--text)}
+.admin-modal-overlay{position:fixed;inset:0;background:rgba(13,42,26,.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px}
+.admin-modal-box{background:var(--white);border:1px solid #000;border-radius:18px;width:100%;overflow:hidden}
+.admin-msg-thread{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:.5px solid var(--border);cursor:pointer;transition:background .15s}
+.admin-msg-thread:hover{background:var(--green-light)}
+.admin-msg-role{font-size:9px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;border-radius:6px;padding:2px 6px;flex-shrink:0}
+.admin-msg-role.student{background:var(--green-light);color:var(--green)}
+.admin-msg-role.instructor{background:#e6f1fb;color:var(--blue)}
+.admin-msg-role.school{background:#fbeaf0;color:var(--pink)}
+.admin-msg-unread{background:var(--pink);color:#fff;border-radius:20px;font-size:10px;font-weight:700;padding:1px 7px;flex-shrink:0}
+.admin-chat-msg{max-width:78%;padding:8px 12px;border-radius:14px;font-size:13px;line-height:1.4;word-break:break-word}
+.admin-chat-msg.mine{align-self:flex-end;background:var(--green);color:#fff;border-bottom-right-radius:4px}
+.admin-chat-msg.theirs{align-self:flex-start;background:var(--white);color:var(--text);border:.5px solid var(--border);border-bottom-left-radius:4px}
+.admin-chat-msg-time{font-size:9px;opacity:.65;margin-top:3px}
 .bk-status{border-radius:20px;padding:2px 9px;font-size:11px;font-weight:500;flex-shrink:0;display:inline-flex;align-items:center;gap:3px}
 .bk-status.pending{background:#fff3cd;color:#856404}
 .bk-status.confirmed{background:var(--green-light);color:var(--green)}
@@ -179,6 +192,7 @@ textarea.admin-edit-input{resize:vertical;min-height:54px}
       <button class="tab-btn" id="tab-btn-bookings" onclick="window._switchTab('bookings')">Записи</button>
       <button class="tab-btn" id="tab-btn-problems" onclick="window._switchTab('problems')">Проблеми<span id="count-badge-problems" class="count-badge" style="display:none"></span></button>
       <button class="tab-btn" id="tab-btn-schools" onclick="window._switchTab('schools')">Школи<span id="count-badge-schools" class="count-badge" style="display:none"></span></button>
+      <button class="tab-btn" id="tab-btn-messages" onclick="window._switchTab('messages')">Повідомлення<span id="count-badge-messages" class="count-badge" style="display:none"></span></button>
       <button class="tab-btn" id="tab-btn-funnel" onclick="window._switchTab('funnel')">Воронка</button>
     </div>
     <div id="tab-funnel" style="display:none">
@@ -214,6 +228,26 @@ textarea.admin-edit-input{resize:vertical;min-height:54px}
       </div>
       <div id="problems-list"></div>
     </div>
+    <div id="tab-messages" style="display:none">
+      <div class="page-head"><div class="page-title">Повідомлення</div></div>
+      <div id="messages-list"></div>
+    </div>
+  </div>
+</div>
+<div id="admin-chat-modal" class="admin-modal-overlay" style="display:none" onclick="if(event.target===this)window._closeAdminChat()">
+  <div class="admin-modal-box" style="max-width:420px;padding:0;display:flex;flex-direction:column;height:min(600px,80vh)">
+    <div style="background:var(--green);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;border-radius:18px 18px 0 0;flex-shrink:0">
+      <div>
+        <div id="admin-chat-title" style="font-weight:600;font-size:14px"></div>
+        <div id="admin-chat-sub" style="font-size:11px;color:rgba(255,255,255,.75)"></div>
+      </div>
+      <button onclick="window._closeAdminChat()" style="background:rgba(255,255,255,.18);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center"><i class="ti ti-x"></i></button>
+    </div>
+    <div id="admin-chat-messages" style="flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:8px;background:var(--bg)"></div>
+    <div style="display:flex;gap:8px;padding:10px;border-top:.5px solid var(--border);flex-shrink:0;background:var(--white);border-radius:0 0 18px 18px">
+      <input id="admin-chat-input" type="text" placeholder="Повідомлення…" class="admin-edit-input" style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();window._adminSendChat()}">
+      <button onclick="window._adminSendChat()" style="background:var(--green);color:#fff;border:none;border-radius:8px;width:38px;flex-shrink:0;cursor:pointer"><i class="ti ti-send"></i></button>
+    </div>
   </div>
 </div>
 
@@ -221,7 +255,7 @@ textarea.admin-edit-input{resize:vertical;min-height:54px}
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, query, where, orderBy, onSnapshot, updateDoc, deleteDoc, doc, setDoc }
+import { getFirestore, collection, query, where, orderBy, onSnapshot, updateDoc, deleteDoc, doc, setDoc, addDoc, increment, serverTimestamp }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const ADMIN_EMAIL = 'sash5385@gmail.com';
@@ -354,6 +388,7 @@ onAuthStateChanged(auth, user => {
     listenBookings();
     listenProblems();
     listenSchools();
+    listenAdminChats();
   } else if (user) {
     document.getElementById('auth-gate').innerHTML = `
       <img class="gate-logo" src="logo192.png" alt="">
@@ -376,7 +411,7 @@ document.getElementById('btn-google-login').addEventListener('click', () => {
 });
 
 window._switchTab = function(tab) {
-  ['instr','users','bookings','problems','schools','funnel'].forEach(t => {
+  ['instr','users','bookings','problems','schools','messages','funnel'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t === tab ? '' : 'none';
     document.getElementById('tab-btn-'+t).classList.toggle('active', t === tab);
   });
@@ -550,6 +585,7 @@ function renderInstrCard(instr) {
 
   const verifyBtn = instr.status === 'approved' ? `<button class="admin-btn ${instr.verified?'reject':'approve'}" onclick="window._adminToggleVerify('${id}',${!instr.verified})" style="flex:0;white-space:nowrap"><i class="ti ti-${instr.verified?'shield-off':'shield-check'}"></i> ${instr.verified?'Зняти верифікацію':'Верифікувати'}</button>` : '';
   const deleteBtn = `<button class="admin-btn delete" onclick="window._adminDeleteInstr('${id}','${esc((instr.name||'').replace(/'/g,''))}')"><i class="ti ti-trash"></i> Видалити</button>`;
+  const msgBtn = `<div class="admin-actions" style="margin-top:10px"><button class="admin-btn" style="background:var(--blue);color:#fff" onclick="window._adminStartChat('instructor','${id}','${esc((instr.name||'').replace(/'/g,''))}','${esc((instr.email||'').replace(/'/g,''))}')"><i class="ti ti-message-circle"></i> Написати</button></div>`;
   const editBtn = `<button type="button" class="admin-edit-btn" onclick="event.stopPropagation();window._adminToggleEdit('instr','${id}')"><i class="ti ti-pencil"></i> Редагувати поля</button>`;
   const actionsHtml = instr.status === 'pending' ? `
     <div class="admin-actions">
@@ -611,6 +647,7 @@ function renderInstrCard(instr) {
         <div class="admin-field"><div class="admin-field-label">Локація</div><div class="admin-field-val">${instr.lat?.toFixed?.(5)||'—'}, ${instr.lng?.toFixed?.(5)||'—'} <a href="https://maps.google.com/?q=${instr.lat},${instr.lng}" target="_blank" style="color:#185fa5;font-size:11px;margin-left:4px"><i class="ti ti-external-link"></i></a></div></div>
         <div class="admin-field"><div class="admin-field-label">userId</div><div class="admin-field-val" style="font-size:10px;color:var(--text-hint);word-break:break-all">${esc(instr.userId||'—')}</div></div>
         <div class="admin-field"><div class="admin-field-label">Дата</div><div class="admin-field-val">${esc(created)}</div></div>
+        ${msgBtn}
         ${actionsHtml}
       </div>
     </div>`;
@@ -853,6 +890,7 @@ function renderSchoolCard(school) {
     : '<span style="color:var(--text-hint);font-size:11px">—</span>';
 
   const deleteBtn = `<button class="admin-btn delete" onclick="window._adminDeleteSchool('${id}','${esc((school.name||'').replace(/'/g,''))}')"><i class="ti ti-trash"></i> Видалити</button>`;
+  const msgBtn = `<div class="admin-actions" style="margin-top:10px"><button class="admin-btn" style="background:var(--blue);color:#fff" onclick="window._adminStartChat('school','${id}','${esc((school.name||'').replace(/'/g,''))}','${esc((school.email||'').replace(/'/g,''))}')"><i class="ti ti-message-circle"></i> Написати</button></div>`;
   const actionsHtml = school.status === 'pending' ? `
     <div class="admin-actions">
       <button class="admin-btn approve" onclick="window._adminApproveSchool('${id}')"><i class="ti ti-check"></i> Підтвердити</button>
@@ -901,6 +939,7 @@ function renderSchoolCard(school) {
         </div></div>
         <div class="admin-field"><div class="admin-field-label">userId</div><div class="admin-field-val" style="font-size:10px;color:var(--text-hint);word-break:break-all">${esc(school.userId||'—')}</div></div>
         <div class="admin-field"><div class="admin-field-label">Дата</div><div class="admin-field-val">${esc(created)}</div></div>
+        ${msgBtn}
         ${actionsHtml}
       </div>
     </div>`;
@@ -995,6 +1034,97 @@ window._adminGeocodeAllSchoolBranches = async (schoolId) => {
   if (allBtn) { allBtn.disabled = false; allBtn.innerHTML = '<i class="ti ti-map-search"></i> Знайти всі на мапі'; }
 };
 
+// ===== ПОВІДОМЛЕННЯ (admin <-> учень/інструктор/школа) =====
+// Окрема колекція від чату учень<->інструктор — щоб не змішувати схеми
+// (adminChats/{role}_{refId}, refId = uid учня / id інструктора / id школи).
+let _adminChatCache = [];
+let _currentAdminChatId = null;
+let _unsubAdminChatMsgs = null;
+const _ROLE_LABEL = { student: 'Учень', instructor: 'Інструктор', school: 'Школа' };
+
+function listenAdminChats() {
+  onSnapshot(query(collection(db, 'adminChats'), orderBy('lastAt', 'desc')), snap => {
+    _adminChatCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    const totalUnread = _adminChatCache.reduce((s, c) => s + (c.unreadByAdmin || 0), 0);
+    const badge = document.getElementById('count-badge-messages');
+    if (totalUnread) { badge.textContent = totalUnread; badge.style.display = ''; } else { badge.style.display = 'none'; }
+    _renderMessagesList();
+  }, err => { document.getElementById('messages-list').innerHTML = '<div class="empty">Помилка завантаження</div>'; console.error(err); });
+}
+function _renderMessagesList() {
+  const list = document.getElementById('messages-list');
+  if (!_adminChatCache.length) { list.innerHTML = '<div class="empty">Ще немає жодного повідомлення. Напишіть комусь із вкладок "Інструктори", "Учні" чи "Школи" — кнопка "Написати" в картці.</div>'; return; }
+  list.innerHTML = _adminChatCache.map(c => `
+    <div class="admin-msg-thread" onclick="window._openAdminChat('${c.id}')">
+      <span class="admin-msg-role ${c.role}">${esc(_ROLE_LABEL[c.role]||c.role)}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${esc(c.name||'—')}</div>
+        <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.lastMessage||'Немає повідомлень')}</div>
+      </div>
+      ${c.unreadByAdmin ? `<span class="admin-msg-unread">${c.unreadByAdmin}</span>` : ''}
+    </div>`).join('');
+}
+
+// entity: 'instructor'|'school'|'student'; refId: instr.id / school.id / user.uid
+window._adminStartChat = async (role, refId, name, email) => {
+  const chatId = `${role}_${refId}`;
+  try {
+    await setDoc(doc(db, 'adminChats', chatId), {
+      role, refId, name: name || '', email: email || '',
+      unreadByAdmin: 0,
+    }, { merge: true });
+    window._adminSwitchAndOpenChat(chatId);
+  } catch (e) { alert('Помилка: ' + (e.message || e)); }
+};
+window._adminSwitchAndOpenChat = (chatId) => {
+  window._switchTab('messages');
+  window._openAdminChat(chatId);
+};
+window._openAdminChat = (chatId) => {
+  const chat = _adminChatCache.find(c => c.id === chatId) || { id: chatId };
+  _currentAdminChatId = chatId;
+  document.getElementById('admin-chat-title').textContent = chat.name || 'Повідомлення';
+  document.getElementById('admin-chat-sub').textContent = _ROLE_LABEL[chat.role] || '';
+  document.getElementById('admin-chat-modal').style.display = 'flex';
+  if (chat.unreadByAdmin) updateDoc(doc(db, 'adminChats', chatId), { unreadByAdmin: 0 }).catch(() => {});
+  if (_unsubAdminChatMsgs) { _unsubAdminChatMsgs(); _unsubAdminChatMsgs = null; }
+  const el = document.getElementById('admin-chat-messages');
+  el.innerHTML = '<div class="empty"><i class="ti ti-loader"></i></div>';
+  _unsubAdminChatMsgs = onSnapshot(
+    query(collection(db, 'adminChats', chatId, 'messages'), orderBy('at', 'asc')),
+    msnap => {
+      if (!msnap.size) { el.innerHTML = '<div class="empty" style="color:var(--text-muted)">Напишіть перше повідомлення</div>'; return; }
+      el.innerHTML = msnap.docs.map(d => {
+        const m = d.data();
+        const mine = m.from === 'admin';
+        const t = m.at?.toDate?.();
+        const ts = t ? `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}` : '';
+        return `<div class="admin-chat-msg ${mine?'mine':'theirs'}">${esc(m.text)}<div class="admin-chat-msg-time">${ts}</div></div>`;
+      }).join('');
+      el.scrollTop = el.scrollHeight;
+    },
+    () => {}
+  );
+};
+window._closeAdminChat = () => {
+  document.getElementById('admin-chat-modal').style.display = 'none';
+  if (_unsubAdminChatMsgs) { _unsubAdminChatMsgs(); _unsubAdminChatMsgs = null; }
+  _currentAdminChatId = null;
+};
+window._adminSendChat = async () => {
+  const input = document.getElementById('admin-chat-input');
+  const text = (input?.value || '').trim();
+  if (!text || !_currentAdminChatId) return;
+  input.value = '';
+  const chatId = _currentAdminChatId;
+  try {
+    await Promise.all([
+      addDoc(collection(db, 'adminChats', chatId, 'messages'), { text, from: 'admin', senderName: 'Адміністрація', at: serverTimestamp() }),
+      setDoc(doc(db, 'adminChats', chatId), { lastMessage: text, lastAt: serverTimestamp(), unreadByUser: increment(1) }, { merge: true }),
+    ]);
+  } catch (e) { alert('Помилка: ' + (e.message || e)); input.value = text; }
+};
+
 // ===== УЧНІ =====
 const USER_FIELDS = [
   { key: 'name',  label: 'Ім\'я',    type: 'text' },
@@ -1015,7 +1145,8 @@ function _renderUserCard(u) {
     <div class="admin-field"><div class="admin-field-label">Телефон</div><div class="admin-field-val">${esc(u.phone||'—')}</div></div>
     <div class="admin-field"><div class="admin-field-label">UID</div><div class="admin-field-val" style="font-size:10px;color:var(--text-hint);word-break:break-all">${esc(u.id)}</div></div>
     <button type="button" class="admin-edit-btn" onclick="event.stopPropagation();window._adminToggleEdit('user','${u.id}')"><i class="ti ti-pencil"></i> Редагувати</button>
-    <div class="admin-actions" style="margin-top:10px"><button class="admin-btn delete" onclick="window._adminDeleteUser('${u.id}','${esc((u.name||u.email||'').replace(/'/g,''))}')"><i class="ti ti-trash"></i> Видалити учня</button></div>`;
+    <div class="admin-actions" style="margin-top:10px"><button class="admin-btn" style="background:var(--blue);color:#fff" onclick="window._adminStartChat('student','${u.id}','${esc((u.name||u.email||'').replace(/'/g,''))}','${esc((u.email||'').replace(/'/g,''))}')"><i class="ti ti-message-circle"></i> Написати</button></div>
+    <div class="admin-actions" style="margin-top:4px"><button class="admin-btn delete" onclick="window._adminDeleteUser('${u.id}','${esc((u.name||u.email||'').replace(/'/g,''))}')"><i class="ti ti-trash"></i> Видалити учня</button></div>`;
   return `
     <div class="admin-card${editing?' open':''}" id="adm-u-${u.id}">
       <div class="admin-card-head" onclick="document.getElementById('adm-u-${u.id}').classList.toggle('open')">
