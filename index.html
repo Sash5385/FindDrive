@@ -1459,7 +1459,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.382</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.383</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -7019,48 +7019,45 @@ function _groupIcon(count) {
 function _instrPopupHtml(inst, id) {
   const mpParam = inst.mpIdx !== undefined ? inst.mpIdx : 'null';
   const ini = (inst.name||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+  // "Прайс-тег" дизайн: біла картка + рожева бирка з ціною в кутку. Бирка навмисно
+  // НЕ виходить за межі контейнера — .leaflet-popup-content-wrapper має overflow:hidden,
+  // тож будь-що за краєм контенту буде обрізано Leaflet'ом.
   if (window.innerWidth <= 600) {
     const av = inst.photo
       ? `<img src="${inst.photo}" style="width:100%;height:100%;object-fit:cover">`
-      : `<div style="width:100%;height:100%;background:#0d4a2a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700">${_esc(ini)}</div>`;
-    return `<div style="font-family:Inter,sans-serif;width:216px;overflow:hidden">
-      <div style="background:#1a7a4a;padding:9px 30px 9px 9px;position:relative;display:flex;align-items:center;gap:9px">
-        <button onclick="_mainMap.closePopup()" aria-label="Закрити" style="position:absolute;top:6px;right:6px;width:20px;height:20px;border:none;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;font-size:12px;line-height:1"><i class="ti ti-x"></i></button>
-        <div style="width:40px;height:40px;border-radius:50%;overflow:hidden;border:2px solid rgba(255,255,255,.5);flex-shrink:0">${av}</div>
-        <div style="min-width:0">
-          <div style="font-weight:600;color:#fff;font-size:12.5px;line-height:1.25;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden">${_esc(inst.name)}</div>
-          <div style="color:rgba(255,255,255,.8);font-size:11px;margin-top:2px">⭐ ${inst.rating||'—'} · ${inst.price ? inst.price+' грн/год' : '—'}</div>
-        </div>
-      </div>
-      <div style="padding:8px 9px 9px">
-        <button onclick="openInstrProfile('${_esc(id||'')}',${mpParam})" style="width:100%;background:#1a7a4a;color:#fff;border:none;border-radius:7px;padding:8px 2px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">Детальніше</button>
-      </div>
+      : `<div style="width:100%;height:100%;background:#e8f4ee;color:#1a7a4a;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">${_esc(ini)}</div>`;
+    return `<div style="font-family:Inter,sans-serif;width:224px;overflow:hidden;background:#fff;position:relative;padding:16px 14px 14px;text-align:center;box-sizing:border-box">
+      <button onclick="_mainMap.closePopup()" aria-label="Закрити" style="position:absolute;top:8px;left:8px;width:20px;height:20px;border-radius:50%;background:#f0f5f0;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;z-index:2"><i class="ti ti-x" style="font-size:10px;color:#5a7a6a"></i></button>
+      <div style="position:absolute;top:10px;right:10px;background:#993556;color:#fff;padding:6px 11px;border-radius:8px;transform:rotate(6deg);font-size:12px;font-weight:800;white-space:nowrap;box-shadow:0 3px 8px rgba(153,53,86,.35)">${inst.price ? inst.price+'₴' : '—'}</div>
+      <div style="width:52px;height:52px;border-radius:50%;overflow:hidden;margin:28px auto 0;border:2.5px solid #1a7a4a">${av}</div>
+      <div style="font-weight:700;font-size:14px;color:#0d2a1a;margin-top:10px;line-height:1.25;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden">${_esc(inst.name)}</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-top:5px;font-size:11.5px;color:#5a7a6a;font-weight:500"><i class="ti ti-star-filled" style="color:#f0c419;font-size:12px"></i>${inst.rating||'—'} рейтинг</div>
+      <button onclick="openInstrProfile('${_esc(id||'')}',${mpParam})" style="width:100%;background:#1a7a4a;color:#fff;border:none;border-radius:9px;padding:10px 2px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600;margin-top:12px">Детальніше</button>
     </div>`;
   }
-  return `<div style="font-family:Inter,sans-serif;width:300px;overflow:hidden">
-    <div style="background:#1a7a4a;padding:10px 14px;overflow:hidden;position:relative">
-      <button onclick="_mainMap.closePopup()" aria-label="Закрити" style="position:absolute;top:7px;right:7px;width:22px;height:22px;border:none;border-radius:50%;background:rgba(255,255,255,.18);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;font-size:13px;line-height:1"><i class="ti ti-x"></i></button>
-      <div style="font-weight:600;color:#fff;font-size:13px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:26px">${_esc(inst.name)}</div>
-      ${inst.mpLabel ? `<div style="color:rgba(255,255,255,.75);font-size:10px;margin-top:2px;line-height:1.4;padding-right:26px"><i class="ti ti-map-pin" style="font-size:9px"></i> ${_esc(inst.mpLabel)}</div>` : ''}
-    </div>
-    <div style="position:relative;height:170px">
+  return `<div style="font-family:Inter,sans-serif;width:280px;overflow:hidden;background:#fff;position:relative;box-sizing:border-box">
+    <button onclick="_mainMap.closePopup()" aria-label="Закрити" style="position:absolute;top:10px;left:10px;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.85);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;z-index:3;box-shadow:0 1px 4px rgba(0,0,0,.15)"><i class="ti ti-x" style="font-size:11px;color:#5a7a6a"></i></button>
+    <div style="position:absolute;top:12px;right:12px;background:#993556;color:#fff;padding:7px 13px;border-radius:8px;transform:rotate(6deg);font-size:13px;font-weight:800;white-space:nowrap;box-shadow:0 3px 8px rgba(153,53,86,.35);z-index:3">${inst.price ? inst.price+'₴/год' : '—'}</div>
+    <div style="position:relative;height:150px">
       ${inst.carPhoto
-        ? `<img src="${inst.carPhoto}" style="width:100%;height:170px;object-fit:cover;display:block">`
-        : `<div style="width:100%;height:170px;background:linear-gradient(135deg,#ddeef8,#c8daea);display:flex;align-items:center;justify-content:center"><img src="car-placeholder.svg" alt="" style="width:56px;height:56px;opacity:.5"></div>`}
-      ${inst.gearbox ? `<div style="position:absolute;top:6px;right:6px;background:rgba(13,42,26,.68);color:#fff;border-radius:10px;padding:2px 8px;font-size:10px;font-weight:500;backdrop-filter:blur(4px)">${_esc(window.gearboxLabel(inst.gearbox))}</div>` : ''}
-      <div style="position:absolute;bottom:-27px;left:10px;width:56px;height:56px;border-radius:50%;overflow:hidden;border:3px solid #1a7a4a;box-shadow:0 2px 8px rgba(0,0,0,.22);z-index:2">
+        ? `<img src="${inst.carPhoto}" style="width:100%;height:150px;object-fit:cover;display:block">`
+        : `<div style="width:100%;height:150px;background:linear-gradient(135deg,#ddeef8,#c8daea);display:flex;align-items:center;justify-content:center"><img src="car-placeholder.svg" alt="" style="width:48px;height:48px;opacity:.5"></div>`}
+      ${inst.gearbox ? `<div style="position:absolute;bottom:8px;right:8px;background:rgba(13,42,26,.68);color:#fff;border-radius:10px;padding:2px 8px;font-size:10px;font-weight:500;backdrop-filter:blur(4px)">${_esc(window.gearboxLabel(inst.gearbox))}</div>` : ''}
+    </div>
+    <div style="text-align:center;padding:0 14px 14px;margin-top:-30px;position:relative">
+      <div style="width:60px;height:60px;border-radius:50%;overflow:hidden;margin:0 auto;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.22)">
         ${inst.photo
           ? `<img src="${inst.photo}" style="width:100%;height:100%;object-fit:cover">`
-          : `<div style="width:100%;height:100%;background:#0d4a2a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700">${_esc(ini)}</div>`}
+          : `<div style="width:100%;height:100%;background:#e8f4ee;color:#1a7a4a;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700">${_esc(ini)}</div>`}
       </div>
-    </div>
-    <div style="background:#1a7a4a;padding:33px 10px 6px 76px">
-      <div style="color:rgba(255,255,255,.8);font-size:12px">⭐ ${inst.rating||'—'} · ${inst.price ? inst.price+' грн/год' : '—'}</div>
-    </div>
-    <div style="background:#1a7a4a;padding:8px 10px 10px;display:flex;gap:6px">
-      <button onclick="openInstrProfile('${_esc(id||'')}',${mpParam})" style="flex:1;background:#fff;color:#1a7a4a;border:none;border-radius:7px;padding:7px 2px;font-size:11.5px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">Записатись</button>
-      <button onclick="window.openChat('${_esc(id||'')}')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:3px;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:7px;padding:7px 2px;font-size:11.5px;cursor:pointer;font-family:inherit;font-weight:500;white-space:nowrap"><i class="ti ti-message-circle" style="font-size:13px"></i> Чат</button>
-      ${inst.phone ? `<a href="tel:${_esc(inst.phone)}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:3px;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:7px;padding:7px 2px;font-size:11.5px;cursor:pointer;font-family:inherit;font-weight:500;text-decoration:none;white-space:nowrap"><i class="ti ti-phone-call" style="font-size:13px"></i> Подзвонити</a>` : ''}
+      <div style="font-weight:700;font-size:14px;color:#0d2a1a;margin-top:8px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_esc(inst.name)}</div>
+      ${inst.mpLabel ? `<div style="color:#7a9a8a;font-size:10.5px;margin-top:2px"><i class="ti ti-map-pin" style="font-size:9px"></i> ${_esc(inst.mpLabel)}</div>` : ''}
+      <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-top:6px;font-size:11.5px;color:#5a7a6a;font-weight:500"><i class="ti ti-star-filled" style="color:#f0c419;font-size:12px"></i>${inst.rating||'—'} рейтинг</div>
+      <div style="display:flex;gap:6px;margin-top:12px">
+        <button onclick="openInstrProfile('${_esc(id||'')}',${mpParam})" style="flex:1;background:#1a7a4a;color:#fff;border:none;border-radius:7px;padding:8px 2px;font-size:11.5px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">Записатись</button>
+        <button onclick="window.openChat('${_esc(id||'')}')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:3px;background:#e8f4ee;color:#1a7a4a;border:none;border-radius:7px;padding:8px 2px;font-size:11.5px;cursor:pointer;font-family:inherit;font-weight:500;white-space:nowrap"><i class="ti ti-message-circle" style="font-size:13px"></i> Чат</button>
+        ${inst.phone ? `<a href="tel:${_esc(inst.phone)}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:3px;background:#e8f4ee;color:#1a7a4a;border:none;border-radius:7px;padding:8px 2px;font-size:11.5px;cursor:pointer;font-family:inherit;font-weight:500;text-decoration:none;white-space:nowrap"><i class="ti ti-phone-call" style="font-size:13px"></i> Подзвонити</a>` : ''}
+      </div>
     </div>
   </div>`;
 }
