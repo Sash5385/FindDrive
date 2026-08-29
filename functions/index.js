@@ -181,8 +181,9 @@ exports.onSchoolCreated = onDocumentCreated(
   }
 );
 
-// Адмін отримує push коли реєструється новий учень (перший запис у users/{uid} —
-// створюється при першому вході, ще до того, як людина стане інструктором чи школою)
+// Адмін отримує push коли реєструється новий користувач (перший запис у users/{uid} —
+// створюється при першому вході для всіх — і учнів, і майбутніх інструкторів чи шкіл,
+// ще до того, як людина подасть анкету інструктора чи школи)
 exports.onUserCreated = onDocumentCreated(
   { document: 'users/{uid}', region: 'europe-west1' },
   async event => {
@@ -193,8 +194,8 @@ exports.onUserCreated = onDocumentCreated(
     if (!adminUid || adminUid === event.params.uid) return;
     await sendPush(
       adminUid,
-      'Новий учень зареєструвався!',
-      `${d.name || d.email || 'Учень'}`,
+      'Новий користувач зареєструвався!',
+      `${d.name || d.email || 'Користувач'}`,
       { type: 'admin' },
       'https://finddrive.in.ua/admin.html'
     );

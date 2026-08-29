@@ -1405,7 +1405,7 @@ function listenUsers() {
         if (ch.type !== 'added') return;
         const d = ch.doc.data();
         if (d.email === ADMIN_EMAIL) return;
-        showToast('Новий учень зареєструвався!', d.name || d.email || '');
+        showToast('Новий користувач зареєструвався!', d.name || d.email || '');
       });
     }
     _userFirstSnap = false;
