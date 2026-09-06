@@ -146,6 +146,18 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Дошка оголошень: kind 'offer' (інструктор пропонує вільний слот) або
+    // 'request' (учень шукає інструктора). Ліміт у 6 активних постів на автора
+    // забезпечує Cloud Function (onBoardPostCreated), не правила.
+    match /boardPosts/{postId} {
+      allow read: if true;
+      allow create: if request.auth != null
+                    && request.resource.data.authorId == request.auth.uid
+                    && request.resource.data.kind in ['offer', 'request'];
+      allow update, delete: if request.auth != null
+                    && (resource.data.authorId == request.auth.uid || isAdmin());
+    }
+
     match /problems/{problemId} {
       allow create: if request.resource.data.status == 'new'
                     && request.resource.data.text is string

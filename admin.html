@@ -230,6 +230,7 @@ textarea.admin-edit-input{resize:vertical;min-height:54px}
       <button class="tab-btn" id="tab-btn-bookings" onclick="window._switchTab('bookings')">Записи</button>
       <button class="tab-btn" id="tab-btn-problems" onclick="window._switchTab('problems')">Проблеми<span id="count-badge-problems" class="count-badge" style="display:none"></span></button>
       <button class="tab-btn" id="tab-btn-schools" onclick="window._switchTab('schools')">Школи<span id="count-badge-schools" class="count-badge" style="display:none"></span></button>
+      <button class="tab-btn" id="tab-btn-board" onclick="window._switchTab('board')">Дошка<span id="count-badge-board" class="count-badge" style="display:none"></span></button>
       <button class="tab-btn" id="tab-btn-messages" onclick="window._switchTab('messages')">Повідомлення<span id="count-badge-messages" class="count-badge" style="display:none"></span></button>
       <button class="tab-btn" id="tab-btn-funnel" onclick="window._switchTab('funnel')">Воронка</button>
     </div>
@@ -265,6 +266,10 @@ textarea.admin-edit-input{resize:vertical;min-height:54px}
         <div class="page-title">Звернення про проблеми</div>
       </div>
       <div id="problems-list"></div>
+    </div>
+    <div id="tab-board" style="display:none">
+      <div class="page-head"><div class="page-title">Дошка оголошень</div></div>
+      <div id="board-list"></div>
     </div>
     <div id="tab-messages" style="display:none">
       <div class="page-head"><div class="page-title">Повідомлення</div></div>
@@ -536,6 +541,7 @@ onAuthStateChanged(auth, user => {
     listenBookings();
     listenProblems();
     listenSchools();
+    listenBoardPosts();
     listenAdminChats();
   } else if (user) {
     document.getElementById('auth-gate').innerHTML = `
@@ -559,7 +565,7 @@ document.getElementById('btn-google-login').addEventListener('click', () => {
 });
 
 window._switchTab = function(tab) {
-  ['instr','users','bookings','problems','schools','messages','funnel'].forEach(t => {
+  ['instr','users','bookings','problems','schools','board','messages','funnel'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t === tab ? '' : 'none';
     document.getElementById('tab-btn-'+t).classList.toggle('active', t === tab);
   });
@@ -1509,6 +1515,49 @@ window._resolveProblem = async id => { await updateDoc(doc(db, 'problems', id), 
 window._reopenProblem  = async id => { await updateDoc(doc(db, 'problems', id), { status: 'new' }); };
 window._deleteProblem  = async id => {
   if (confirm('Видалити це звернення?')) await deleteDoc(doc(db, 'problems', id));
+};
+
+// ===== ДОШКА ОГОЛОШЕНЬ =====
+function listenBoardPosts() {
+  onSnapshot(
+    query(collection(db, 'boardPosts'), orderBy('createdAt', 'desc')),
+    snap => {
+      const list  = document.getElementById('board-list');
+      const badge = document.getElementById('count-badge-board');
+      if (snap.empty) {
+        list.innerHTML = '<div class="empty">Оголошень немає</div>';
+        badge.style.display = 'none';
+        return;
+      }
+      badge.textContent = snap.size;
+      badge.style.display = '';
+      list.innerHTML = snap.docs.map(renderBoardCard).join('');
+    },
+    err => {
+      document.getElementById('board-list').innerHTML = '<div class="empty">Помилка завантаження</div>';
+      console.error('listenBoardPosts error:', err.message);
+    }
+  );
+}
+
+function renderBoardCard(d) {
+  const b = d.data();
+  const isOffer  = b.kind === 'offer';
+  const dateStr  = b.createdAt?.toDate?.().toLocaleString('uk-UA', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) || '—';
+  const chatRole = isOffer ? 'instructor' : 'student';
+  const chatRef  = isOffer ? (b.instrId || '') : (b.authorId || '');
+  return `<div class="problem-card" id="brd-${d.id}">
+    <div class="problem-text"><b>${isOffer ? 'Пропоную' : 'Шукаю'}</b> — ${esc(b.name || 'Без імені')} · ${esc(b.district || '—')} · ${esc(b.date || '')} ${esc(b.timeFrom || '')}–${esc(b.timeTo || '')}${b.note ? `<br><span style="color:var(--text-muted);font-size:12px">${esc(b.note)}</span>` : ''}</div>
+    <div class="problem-meta"><span>${dateStr}</span></div>
+    <div class="problem-actions">
+      ${chatRef ? `<button class="admin-btn" style="background:var(--blue);color:#fff;flex:0" onclick="window._adminStartChat('${chatRole}','${esc(chatRef)}','${esc((b.name || '').replace(/'/g, ''))}','')"><i class="ti ti-message-circle"></i> Написати</button>` : ''}
+      <button class="admin-btn delete" onclick="window._adminDeleteBoardPost('${d.id}')"><i class="ti ti-trash"></i> Видалити</button>
+    </div>
+  </div>`;
+}
+
+window._adminDeleteBoardPost = async id => {
+  if (confirm('Видалити це оголошення з дошки?')) await deleteDoc(doc(db, 'boardPosts', id));
 };
 </script>
 </body>

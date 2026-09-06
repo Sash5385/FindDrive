@@ -390,3 +390,47 @@ exports.icsFeed = functionsV1.region('europe-west1').https.onRequest(async (req,
     res.status(500).send('Internal error');
   }
 });
+
+// Дошка оголошень: не більше 6 активних постів на одного автора одночасно —
+// найстаріші зайві видаляються автоматично, коли з'являється новий понад ліміт.
+// Без orderBy у запиті навмисно — це збереже перший composite-індекс невимогливим.
+exports.onBoardPostCreated = onDocumentCreated(
+  { document: 'boardPosts/{id}', region: 'europe-west1' },
+  async event => {
+    if (!(await claimEventOnce(event.id))) return;
+    const d = event.data.data();
+    if (!d.authorId) return;
+    const snap = await admin.firestore().collection('boardPosts')
+      .where('authorId', '==', d.authorId)
+      .get();
+    const excess = snap.docs.length - 6;
+    if (excess <= 0) return;
+    const sorted = snap.docs.sort((a, b) => (a.data().createdAt?.toMillis?.() || 0) - (b.data().createdAt?.toMillis?.() || 0));
+    const batch = admin.firestore().batch();
+    sorted.slice(0, excess).forEach(doc => batch.delete(doc.ref));
+    await batch.commit();
+  }
+);
+
+// Прибирає з дошки оголошення, час слоту яких уже минув
+exports.cleanupBoardPosts = onSchedule(
+  { schedule: 'every 30 minutes', region: 'europe-west1' },
+  async () => {
+    const now = new Date();
+    const offsetMin = kyivOffsetMinutes(now);
+    const snap = await admin.firestore().collection('boardPosts').get();
+    let batch = admin.firestore().batch();
+    let opsInBatch = 0, removed = 0;
+    for (const doc of snap.docs) {
+      const d = doc.data();
+      if (!d.date || !d.timeTo) continue;
+      const endsAt = bookingDateTimeUtc(d.date, d.timeTo, offsetMin);
+      if (endsAt > now) continue;
+      batch.delete(doc.ref);
+      opsInBatch++; removed++;
+      if (opsInBatch >= 400) { await batch.commit(); batch = admin.firestore().batch(); opsInBatch = 0; }
+    }
+    if (opsInBatch > 0) await batch.commit();
+    console.log(`cleanupBoardPosts: видалено ${removed} прострочених оголошень`);
+  }
+);

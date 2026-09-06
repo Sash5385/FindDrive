@@ -452,6 +452,26 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .btn-map-pin{background:none;border:.5px solid var(--border);border-radius:9px;padding:7px 10px;font-size:14px;color:var(--text-muted);cursor:pointer;transition:border-color .15s,color .15s,background .15s;line-height:1;display:inline-flex;align-items:center;justify-content:center}
 .btn-map-pin:hover{color:var(--green);border-color:var(--green);background:var(--green-light)}
 
+/* BOARD (Дошка оголошень) */
+.board-grid{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:none;-ms-overflow-style:none}
+.board-grid::-webkit-scrollbar{display:none}
+.board-card{width:255px;flex-shrink:0;scroll-snap-align:start;background:var(--white);border:.5px solid var(--border);border-radius:18px;padding:16px}
+.board-kind{display:inline-flex;align-items:center;gap:4px;border-radius:20px;padding:3px 10px;font-size:10.5px;font-weight:700;margin-bottom:10px}
+.board-kind.offer{background:var(--green-light);color:var(--green)}
+.board-kind.request{background:var(--pink-light);color:var(--pink)}
+.board-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.board-avatar.offer{background:var(--green-light);color:var(--green)}
+.board-avatar.request{background:var(--pink-light);color:var(--pink)}
+.board-time-chip{display:inline-flex;align-items:center;gap:5px;background:var(--bg);border-radius:8px;padding:4px 9px;font-size:11px;color:var(--text);font-weight:600;margin-bottom:8px}
+.board-note{font-size:11.5px;color:var(--text-muted);line-height:1.5;margin-bottom:12px}
+.board-foot{display:flex;align-items:center;justify-content:space-between}
+.board-action{font-size:11.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;background:none;border:none;padding:0;font-family:inherit}
+.board-action.offer{color:var(--green)}
+.board-action.request{color:var(--pink)}
+.board-action.close{color:var(--text-hint)}
+.board-tab{padding:9px 18px;border-radius:9px;border:.5px solid var(--border);background:var(--white);font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;font-family:inherit;transition:all .15s}
+.board-tab.active.offer{background:var(--green);border-color:var(--green);color:#fff}
+.board-tab.active.request{background:var(--pink);border-color:var(--pink);color:#fff}
 
 /* TRUST BAR */
 
@@ -1168,6 +1188,37 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   </div>
 </div>
 
+<div id="board-modal" class="auth-modal-overlay" style="display:none" onclick="if(event.target===this)window._closeBoardModal()">
+  <div class="auth-modal-box" style="max-width:440px">
+    <div class="auth-modal-head">
+      <div class="auth-modal-logo">
+        <div class="auth-modal-logo-icon"><i class="ti ti-clipboard-text"></i></div>
+        <span class="auth-modal-brand">Додати оголошення</span>
+      </div>
+      <button class="auth-modal-close" onclick="window._closeBoardModal()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="auth-modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <button type="button" id="board-tab-offer" class="board-tab offer" onclick="window._boardSetKind('offer')">Пропоную слот</button>
+        <button type="button" id="board-tab-request" class="board-tab request" onclick="window._boardSetKind('request')">Шукаю інструктора</button>
+      </div>
+      <label class="cab-label">Дата</label>
+      <input id="board-date" class="form-input" type="date" style="margin-bottom:12px">
+      <div style="display:flex;gap:10px;margin-bottom:12px">
+        <div style="flex:1"><label class="cab-label">З</label><input id="board-time-from" class="form-input" type="time"></div>
+        <div style="flex:1"><label class="cab-label">До</label><input id="board-time-to" class="form-input" type="time"></div>
+      </div>
+      <label class="cab-label">Район</label>
+      <input id="board-district" class="form-input" type="text" placeholder="Наприклад, Позняки" style="margin-bottom:12px">
+      <label class="cab-label">Коментар (необов'язково)</label>
+      <textarea id="board-note" class="form-input" rows="2" placeholder="Наприклад: знижка 20%, або бюджет 900₴/год" style="resize:none;margin-bottom:6px"></textarea>
+      <div style="font-size:11px;color:var(--text-hint);margin-bottom:10px">Можна тримати відкритими до 6 оголошень одночасно.</div>
+      <div id="board-err" class="field-err" style="display:none;margin-bottom:8px"></div>
+      <button class="auth-role-btn-primary" style="padding:11px" onclick="window._submitBoardPost()">Опублікувати</button>
+    </div>
+  </div>
+</div>
+
 <section class="hero">
   <div class="hero-3col">
     <div class="hero-map-col">
@@ -1261,6 +1312,15 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       </div>
     </div>
   </details>
+</section>
+
+<section class="section" id="board-anchor">
+  <div class="section-top">
+    <span class="section-label">Дошка оголошень — гарячі слоти</span>
+    <a href="#" class="section-link" onclick="event.preventDefault();window._openBoardModal()"><i class="ti ti-plus"></i> Додати оголошення</a>
+  </div>
+  <div id="board-grid" class="board-grid"></div>
+  <div id="board-empty" style="display:none;text-align:center;padding:24px;color:var(--text-muted);font-size:13px"><i class="ti ti-clipboard-text" style="font-size:22px;opacity:.4"></i><br>Поки що жодного оголошення — станьте першим</div>
 </section>
 
 <section class="map-section" id="map-anchor">
@@ -1459,7 +1519,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.384</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.385</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -4749,6 +4809,175 @@ async function loadSchools() {
   }
 }
 loadSchools();
+
+// --- Дошка оголошень ---
+const BOARD_MAX_ACTIVE = 6;
+window._boardCache = [];
+function _boardTodayISO()    { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Kyiv' }).format(new Date()); }
+function _boardTomorrowISO() { const d = new Date(); d.setDate(d.getDate() + 1); return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Kyiv' }).format(d); }
+function _boardInitials(name) { return (name || '').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?'; }
+function _boardTimeAgo(ts) {
+  const d = ts?.toDate?.(); if (!d) return '';
+  const mins = Math.max(0, Math.round((Date.now() - d.getTime()) / 60000));
+  if (mins < 1) return 'щойно';
+  if (mins < 60) return mins + ' хв тому';
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return hrs + ' год тому';
+  return Math.round(hrs / 24) + ' д тому';
+}
+function _boardCardHtml(d, id) {
+  const isOffer = d.kind === 'offer';
+  const kindKey = isOffer ? 'offer' : 'request';
+  const mine = auth.currentUser && auth.currentUser.uid === d.authorId;
+  const timeLabel = d.timeFrom && d.timeTo ? `${d.timeFrom}–${d.timeTo}` : (d.timeFrom || '');
+  const dateLabel = d.date === _boardTodayISO() ? 'Сьогодні' : (d.date === _boardTomorrowISO() ? 'Завтра' : esc(d.date || ''));
+  let actionHtml = '';
+  if (mine) {
+    actionHtml = `<button class="board-action close" onclick="window._boardClose('${esc(id)}')">Закрити</button>`;
+  } else if (isOffer) {
+    actionHtml = `<button class="board-action offer" onclick="window._boardChatOffer('${esc(d.instrId || '')}')"><i class="ti ti-message-circle" style="font-size:13px"></i> Написати</button>`;
+  } else if (window._myInstrId) {
+    actionHtml = `<button class="board-action request" onclick="window._boardChatRequest('${esc(d.authorId)}','${esc((d.name || '').replace(/'/g, ''))}')"><i class="ti ti-message-circle" style="font-size:13px"></i> Написати</button>`;
+  }
+  return `<div class="board-card">
+    <span class="board-kind ${kindKey}">${isOffer ? 'Пропоную' : 'Шукаю'}</span>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div class="board-avatar ${kindKey}">${esc(_boardInitials(d.name))}</div>
+      <div style="min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(d.name || 'Без імені')}</div>
+        <div style="font-size:11px;color:var(--text-hint)">${esc(d.district || '—')}</div>
+      </div>
+    </div>
+    <div class="board-time-chip"><i class="ti ti-clock" style="font-size:11px"></i> ${dateLabel} ${esc(timeLabel)}</div>
+    ${d.note ? `<div class="board-note">${esc(d.note)}</div>` : '<div style="margin-bottom:12px"></div>'}
+    <div class="board-foot">
+      <span style="font-size:10.5px;color:var(--text-hint)">${_boardTimeAgo(d.createdAt)}</span>
+      ${actionHtml}
+    </div>
+  </div>`;
+}
+function listenBoardPosts() {
+  onSnapshot(query(collection(db, 'boardPosts'), orderBy('createdAt', 'desc')), snap => {
+    const grid = document.getElementById('board-grid');
+    const empty = document.getElementById('board-empty');
+    if (!grid) return;
+    window._boardCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!window._boardCache.length) {
+      grid.innerHTML = '';
+      if (empty) empty.style.display = '';
+      return;
+    }
+    if (empty) empty.style.display = 'none';
+    grid.innerHTML = window._boardCache.map(d => _boardCardHtml(d, d.id)).join('');
+  }, e => console.warn('listenBoardPosts:', e.message));
+}
+listenBoardPosts();
+
+window._boardClose = async function(id) {
+  if (!confirm('Закрити це оголошення?')) return;
+  try { await deleteDoc(doc(db, 'boardPosts', id)); } catch (e) { showToast('Помилка', e.message || '', 'error'); }
+};
+
+window._boardChatOffer = function(instrId) {
+  if (!instrId) return;
+  window.openChat(instrId);
+};
+
+// Інструктор пише учню, який лишив заявку на дошці — чат ще не існує,
+// тож ініціюємо його так само, як учень ініціює чат з інструктором (openChat).
+window._boardChatRequest = function(studentUid, studentName) {
+  const user = auth.currentUser;
+  if (!user || !window._myInstrId || !studentUid) return;
+  const instrId = window._myInstrId;
+  const chatId = `${instrId}_${studentUid}`;
+  const instr = (window._instrProfiles || {})[instrId] || {};
+  window._currentChatId   = chatId;
+  window._currentChatRole = 'instructor';
+  window._currentChatKind = 'peer';
+  document.getElementById('chat-panel-title').textContent = studentName || 'Учень';
+  window._closeChatPanel = () => closeAll();
+  setDoc(doc(db, 'chats', chatId), {
+    instrId, instrName: instr.name || '', instrUserId: instr.userId || null, instrEmail: instr.email || '',
+    studentId: studentUid, studentName: studentName || '',
+  }, { merge: true }).catch(e => console.warn('boardChatRequest setDoc:', e.code, e.message));
+  closeAll();
+  setTimeout(() => { openPanel('chat-panel'); listenChatMessages(chatId, user.uid, 'instructor'); }, 150);
+};
+
+window._boardKind = 'request';
+window._openBoardModal = async function() {
+  let user = auth.currentUser;
+  if (!user) {
+    user = await new Promise(resolve => {
+      const t = setTimeout(() => { unsub(); resolve(null); }, 3000);
+      const unsub = onAuthStateChanged(auth, u => { clearTimeout(t); unsub(); resolve(u); });
+    });
+  }
+  if (!user) {
+    showToast('Потрібен вхід', 'Увійдіть щоб додати оголошення', 'info');
+    setTimeout(() => document.getElementById('btn-login')?.click(), 200);
+    return;
+  }
+  const offerTabBtn = document.getElementById('board-tab-offer');
+  if (offerTabBtn) offerTabBtn.style.display = window._myInstrId ? '' : 'none';
+  window._boardSetKind(window._myInstrId ? 'offer' : 'request');
+  document.getElementById('board-date').value = _boardTodayISO();
+  document.getElementById('board-time-from').value = '';
+  document.getElementById('board-time-to').value = '';
+  document.getElementById('board-district').value = '';
+  document.getElementById('board-note').value = '';
+  document.getElementById('board-err').style.display = 'none';
+  document.getElementById('board-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+};
+window._closeBoardModal = function() {
+  const modal = document.getElementById('board-modal');
+  if (!modal) return;
+  modal.style.display = 'none';
+  document.body.style.overflow = '';
+};
+window._boardSetKind = function(k) {
+  window._boardKind = k;
+  document.getElementById('board-tab-offer')?.classList.toggle('active', k === 'offer');
+  document.getElementById('board-tab-request')?.classList.toggle('active', k === 'request');
+};
+window._submitBoardPost = async function() {
+  const user = auth.currentUser;
+  if (!user) return;
+  const errEl = document.getElementById('board-err');
+  errEl.style.display = 'none';
+  const kind      = window._boardKind;
+  const date      = document.getElementById('board-date').value;
+  const timeFrom  = document.getElementById('board-time-from').value;
+  const timeTo    = document.getElementById('board-time-to').value;
+  const district  = document.getElementById('board-district').value.trim();
+  const note      = document.getElementById('board-note').value.trim();
+  if (!date || !timeFrom || !timeTo) { errEl.textContent = 'Вкажіть дату і час.'; errEl.style.display = ''; return; }
+  if (timeFrom >= timeTo) { errEl.textContent = 'Час завершення має бути пізніше початку.'; errEl.style.display = ''; return; }
+  if (!district) { errEl.textContent = 'Вкажіть район.'; errEl.style.display = ''; return; }
+  try {
+    const activeSnap = await getDocs(query(collection(db, 'boardPosts'), where('authorId', '==', user.uid)));
+    if (activeSnap.size >= BOARD_MAX_ACTIVE) {
+      errEl.textContent = `Можна мати не більше ${BOARD_MAX_ACTIVE} активних оголошень одночасно. Закрийте старе, щоб додати нове.`;
+      errEl.style.display = '';
+      return;
+    }
+    const instrId = kind === 'offer' ? window._myInstrId : null;
+    const instr   = instrId ? (window._instrProfiles || {})[instrId] : null;
+    await addDoc(collection(db, 'boardPosts'), {
+      kind, authorId: user.uid, instrId: instrId || null,
+      name: (kind === 'offer' ? (instr?.name || user.displayName || user.email) : (user.displayName || user.email)) || '',
+      district, date, timeFrom, timeTo, note,
+      price: kind === 'offer' ? (instr?.price || null) : null,
+      createdAt: serverTimestamp(),
+    });
+    window._closeBoardModal();
+    showToast('Готово', 'Оголошення додано на дошку', 'success');
+  } catch (e) {
+    errEl.textContent = 'Помилка: ' + (e.message || e);
+    errEl.style.display = '';
+  }
+};
 
 window._schoolSlide = function(dir) {
   const grid = document.getElementById('school-grid');
