@@ -1527,7 +1527,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.388</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.389</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -4954,6 +4954,18 @@ function _boardPinPopupHtml(d) {
   const timeLabel = d.timeFrom && d.timeTo ? `${d.timeFrom}–${d.timeTo}` : (d.timeFrom || '—');
   const dateWord = d.date === _boardTodayISO() ? 'сьогодні' : (d.date === _boardTomorrowISO() ? 'завтра' : esc(d.date || ''));
   const color = isOffer ? '#1a7a4a' : '#993556';
+  const tint  = isOffer ? '#f4f9f6' : '#fdf3f6';
+  const mine  = auth.currentUser && auth.currentUser.uid === d.authorId;
+  const msgIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.35 0-2.6-.32-3.7-.9L4 21l1.9-4.8A8.5 8.5 0 1 1 21 11.5z"/></svg>`;
+  const btnStyle = `width:100%;box-sizing:border-box;border:none;border-top:1px solid #eef1ee;background:${tint};color:${color};padding:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px`;
+  let actionHtml = '';
+  if (mine) {
+    actionHtml = `<button onclick="window._boardClose('${esc(d.id)}')" style="${btnStyle}">Закрити оголошення</button>`;
+  } else if (isOffer && d.instrId) {
+    actionHtml = `<button onclick="window._boardChatOffer('${esc(d.instrId)}')" style="${btnStyle}">${msgIcon} Написати</button>`;
+  } else if (!isOffer && window._myInstrId) {
+    actionHtml = `<button onclick="window._boardChatRequest('${esc(d.authorId)}','${esc((d.name || '').replace(/'/g, ''))}')" style="${btnStyle}">${msgIcon} Написати</button>`;
+  }
   return `<div style="font-family:Inter,sans-serif;min-width:180px;text-align:center">
     <div style="background:${color};padding:6px 10px;font-size:10px;font-weight:700;color:#fff;letter-spacing:.06em;text-transform:uppercase">${isOffer ? 'Пропоную' : 'Шукаю'} ${dateWord}</div>
     <div style="padding:14px 14px 13px">
@@ -4962,6 +4974,7 @@ function _boardPinPopupHtml(d) {
       <div style="font-size:11px;color:#7a9a8a;margin-top:2px">${esc(d.district || '')}</div>
       ${d.note ? `<div style="font-size:11px;color:#5a7a6a;margin-top:6px;line-height:1.4">${esc(d.note)}</div>` : ''}
     </div>
+    ${actionHtml}
   </div>`;
 }
 window._boardFocusMarker = function(id, evt) {
