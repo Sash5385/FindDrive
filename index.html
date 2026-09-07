@@ -272,8 +272,10 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
   63%{transform:translate(82vw,87vh) rotate(270deg)}
   65%{transform:translate(80vw,86vh) rotate(270deg)}
   88%{transform:translate(-8vw,80vh) rotate(270deg)}
-  94%{transform:translate(-10vw,50vh) rotate(0deg)}
-  100%{transform:translate(-10vw,22vh) rotate(90deg)}
+  90%{transform:translate(-10vw,68vh) rotate(360deg)}
+  96%{transform:translate(-10vw,26vh) rotate(360deg)}
+  99%{transform:translate(-10vw,22vh) rotate(360deg)}
+  100%{transform:translate(-10vw,22vh) rotate(450deg)}
 }
 /* Машинка B: так само розворот у 3 руки, але по нижньому і лівому краях. */
 @keyframes fdCarB{
@@ -291,8 +293,10 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
   68%{transform:translate(7vw,14vh) rotate(450deg)}
   70%{transform:translate(9vw,16vh) rotate(450deg)}
   92%{transform:translate(105vw,25vh) rotate(450deg)}
-  96%{transform:translate(108vw,78vh) rotate(270deg)}
-  100%{transform:translate(105vw,78vh) rotate(270deg)}
+  94%{transform:translate(106vw,30vh) rotate(540deg)}
+  97%{transform:translate(106vw,70vh) rotate(540deg)}
+  99%{transform:translate(105vw,78vh) rotate(540deg)}
+  100%{transform:translate(105vw,78vh) rotate(630deg)}
 }
 /* Машинка C: доїжджає до "місця" посередині екрана і паркується (заїзд у 3 рухи +
    довга пауза), потім виїжджає і продовжує маршрут. */
@@ -312,9 +316,10 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
   80%{transform:translate(98vw,65vh) rotate(160deg)}
   83%{transform:translate(96vw,67vh) rotate(200deg)}
   85%{transform:translate(97vw,66vh) rotate(180deg)}
-  92%{transform:translate(60vw,95vh) rotate(180deg)}
-  96%{transform:translate(-8vw,80vh) rotate(90deg)}
-  100%{transform:translate(-8vw,55vh) rotate(90deg)}
+  92%{transform:translate(60vw,95vh) rotate(232deg)}
+  96%{transform:translate(-8vw,80vh) rotate(285deg)}
+  99%{transform:translate(-9vw,56vh) rotate(360deg)}
+  100%{transform:translate(-8vw,55vh) rotate(450deg)}
 }
 /* Машинка D: просто хаотично петляє по центру, без формальних маневрів — для
    різноманітності руху. */
@@ -326,11 +331,45 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
   44%{transform:translate(9vw,80vh) rotate(260deg)}
   46%{transform:translate(11vw,82vh) rotate(310deg)}
   48%{transform:translate(10vw,80vh) rotate(340deg)}
-  70%{transform:translate(60vw,30vh) rotate(20deg)}
-  90%{transform:translate(103vw,15vh) rotate(60deg)}
-  92%{transform:translate(105vw,14vh) rotate(60deg)}
-  95%{transform:translate(105vw,18vh) rotate(255deg)}
-  100%{transform:translate(104vw,20vh) rotate(255deg)}
+  70%{transform:translate(60vw,30vh) rotate(380deg)}
+  90%{transform:translate(103vw,15vh) rotate(420deg)}
+  92%{transform:translate(105vw,14vh) rotate(420deg)}
+  95%{transform:translate(105vw,18vh) rotate(615deg)}
+  100%{transform:translate(104vw,20vh) rotate(615deg)}
+}
+/* Світло машинок: поворотники (жовті), стопи (червоні), ближнє світло (жовтувате) —
+   вмикаються періодично, з різним таймінгом для кожної машинки, для "живості" сцени.
+   Машинка D їздить хаотично і без сигналів — це навмисно, частина її "характеру". */
+.fd-turn{opacity:0}
+.fd-brake{opacity:.25}
+.fd-headlamp{opacity:.55}
+.fd-car-a .fd-turn{animation:fdTurnBlink 9s linear infinite}
+.fd-car-a .fd-brake{animation:fdBrakeGlow 11s linear infinite 3s}
+.fd-car-a .fd-headlamp{animation:fdHeadPulse 14s ease-in-out infinite 1s}
+.fd-car-b .fd-turn{animation:fdTurnBlink 10s linear infinite 4s}
+.fd-car-b .fd-brake{animation:fdBrakeGlow 12.5s linear infinite}
+.fd-car-b .fd-headlamp{animation:fdHeadPulse 16s ease-in-out infinite 5s}
+.fd-car-c .fd-turn{animation:fdTurnBlink 8.5s linear infinite 2s}
+.fd-car-c .fd-brake{animation:fdBrakeGlow 13s linear infinite 6s}
+.fd-car-c .fd-headlamp{animation:fdHeadPulse 15s ease-in-out infinite 2.5s}
+@keyframes fdTurnBlink{
+  0%,60%{opacity:0}
+  60.1%,64%{opacity:1}
+  64.1%,68%{opacity:0}
+  68.1%,72%{opacity:1}
+  72.1%,76%{opacity:0}
+  76.1%,80%{opacity:1}
+  80.1%,100%{opacity:0}
+}
+@keyframes fdBrakeGlow{
+  0%,70%{opacity:.25}
+  71%,86%{opacity:1}
+  87%,100%{opacity:.25}
+}
+@keyframes fdHeadPulse{
+  0%,40%{opacity:.35}
+  50%,85%{opacity:1}
+  95%,100%{opacity:.35}
 }
 @media (prefers-reduced-motion:reduce){#fd-cars-layer{display:none}}
 
@@ -1221,8 +1260,14 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       <rect x="36" y="12" width="4" height="11" rx="2" fill="#26261f"/>
       <rect x="0" y="41" width="4" height="11" rx="2" fill="#26261f"/>
       <rect x="36" y="41" width="4" height="11" rx="2" fill="#26261f"/>
-      <circle cx="12" cy="9" r="1.7" fill="#fff3b0"/>
-      <circle cx="28" cy="9" r="1.7" fill="#fff3b0"/>
+      <circle class="fd-headlamp" cx="12" cy="9" r="1.7" fill="#fff3b0"/>
+      <circle class="fd-headlamp" cx="28" cy="9" r="1.7" fill="#fff3b0"/>
+      <circle class="fd-turn" cx="4" cy="10" r="1.5" fill="#ffb020"/>
+      <circle class="fd-turn" cx="36" cy="10" r="1.5" fill="#ffb020"/>
+      <circle class="fd-turn" cx="4" cy="47" r="1.5" fill="#ffb020"/>
+      <circle class="fd-turn" cx="36" cy="47" r="1.5" fill="#ffb020"/>
+      <rect class="fd-brake" x="8" y="55" width="9" height="4" rx="2" fill="#e63946"/>
+      <rect class="fd-brake" x="23" y="55" width="9" height="4" rx="2" fill="#e63946"/>
       <rect x="14" y="26" width="12" height="12" rx="4" fill="#fff"/>
       <path d="M20 29a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0 1.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6z" fill="currentColor"/>
     </svg>
@@ -1236,8 +1281,14 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       <rect x="36" y="12" width="4" height="11" rx="2" fill="#26261f"/>
       <rect x="0" y="41" width="4" height="11" rx="2" fill="#26261f"/>
       <rect x="36" y="41" width="4" height="11" rx="2" fill="#26261f"/>
-      <circle cx="12" cy="9" r="1.7" fill="#fff3b0"/>
-      <circle cx="28" cy="9" r="1.7" fill="#fff3b0"/>
+      <circle class="fd-headlamp" cx="12" cy="9" r="1.7" fill="#fff3b0"/>
+      <circle class="fd-headlamp" cx="28" cy="9" r="1.7" fill="#fff3b0"/>
+      <circle class="fd-turn" cx="4" cy="10" r="1.5" fill="#ffb020"/>
+      <circle class="fd-turn" cx="36" cy="10" r="1.5" fill="#ffb020"/>
+      <circle class="fd-turn" cx="4" cy="47" r="1.5" fill="#ffb020"/>
+      <circle class="fd-turn" cx="36" cy="47" r="1.5" fill="#ffb020"/>
+      <rect class="fd-brake" x="8" y="55" width="9" height="4" rx="2" fill="#e63946"/>
+      <rect class="fd-brake" x="23" y="55" width="9" height="4" rx="2" fill="#e63946"/>
       <rect x="14" y="26" width="12" height="12" rx="4" fill="#fff"/>
       <path d="M20 29a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0 1.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6z" fill="currentColor"/>
     </svg>
@@ -1251,8 +1302,14 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       <rect x="36" y="12" width="4" height="11" rx="2" fill="#26261f"/>
       <rect x="0" y="41" width="4" height="11" rx="2" fill="#26261f"/>
       <rect x="36" y="41" width="4" height="11" rx="2" fill="#26261f"/>
-      <circle cx="12" cy="9" r="1.7" fill="#fff3b0"/>
-      <circle cx="28" cy="9" r="1.7" fill="#fff3b0"/>
+      <circle class="fd-headlamp" cx="12" cy="9" r="1.7" fill="#fff3b0"/>
+      <circle class="fd-headlamp" cx="28" cy="9" r="1.7" fill="#fff3b0"/>
+      <circle class="fd-turn" cx="4" cy="10" r="1.5" fill="#ffb020"/>
+      <circle class="fd-turn" cx="36" cy="10" r="1.5" fill="#ffb020"/>
+      <circle class="fd-turn" cx="4" cy="47" r="1.5" fill="#ffb020"/>
+      <circle class="fd-turn" cx="36" cy="47" r="1.5" fill="#ffb020"/>
+      <rect class="fd-brake" x="8" y="55" width="9" height="4" rx="2" fill="#e63946"/>
+      <rect class="fd-brake" x="23" y="55" width="9" height="4" rx="2" fill="#e63946"/>
       <rect x="14" y="26" width="12" height="12" rx="4" fill="#fff"/>
       <path d="M20 29a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0 1.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6z" fill="currentColor"/>
     </svg>
@@ -1679,7 +1736,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.390</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.391</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
