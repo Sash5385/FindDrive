@@ -469,7 +469,7 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .board-action.offer{color:var(--green)}
 .board-action.request{color:var(--pink)}
 .board-action.close{color:var(--text-hint)}
-.board-tab{padding:9px 18px;border-radius:9px;border:.5px solid var(--border);background:var(--white);font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;font-family:inherit;transition:all .15s}
+.board-tab{flex:1;text-align:center;padding:9px 12px;border-radius:9px;border:.5px solid var(--border);background:var(--white);font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;font-family:inherit;transition:all .15s}
 .board-tab.active.offer{background:var(--green);border-color:var(--green);color:#fff}
 .board-tab.active.request{background:var(--pink);border-color:var(--pink);color:#fff}
 @keyframes boardPinPulse{0%{opacity:.9;transform:scale(1)}70%{opacity:0;transform:scale(1.9)}100%{opacity:0;transform:scale(1.9)}}
@@ -1199,28 +1199,26 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       </div>
       <button class="auth-modal-close" onclick="window._closeBoardModal()"><i class="ti ti-x"></i></button>
     </div>
-    <div class="auth-modal-body">
+    <div class="auth-modal-body" style="max-height:80vh;overflow-y:auto">
       <div style="display:flex;gap:8px;margin-bottom:16px">
         <button type="button" id="board-tab-offer" class="board-tab offer" onclick="window._boardSetKind('offer')">Пропоную слот</button>
         <button type="button" id="board-tab-request" class="board-tab request" onclick="window._boardSetKind('request')">Шукаю інструктора</button>
       </div>
-      <label class="cab-label">Дата</label>
-      <input id="board-date" class="form-input" type="date" style="margin-bottom:12px">
+      <div style="display:flex;gap:10px;margin-bottom:12px">
+        <div style="flex:1"><label class="cab-label">Дата</label><input id="board-date" class="form-input" type="date"></div>
+        <div style="flex:1"><label class="cab-label">Район</label><input id="board-district" class="form-input" type="text" placeholder="Напр. Позняки"></div>
+      </div>
       <div style="display:flex;gap:10px;margin-bottom:12px">
         <div style="flex:1"><label class="cab-label">З</label><input id="board-time-from" class="form-input" type="time"></div>
         <div style="flex:1"><label class="cab-label">До</label><input id="board-time-to" class="form-input" type="time"></div>
       </div>
-      <label class="cab-label">Район</label>
-      <input id="board-district" class="form-input" type="text" placeholder="Наприклад, Позняки" style="margin-bottom:8px">
-      <div class="mp-map-search">
-        <button type="button" class="btn-bk-action" style="font-size:11px;padding:6px 10px;flex-shrink:0" title="Моє місце" onclick="window._boardUseMyLocation()"><i class="ti ti-current-location"></i></button>
-        <button type="button" class="btn-bk-action" style="font-size:11px;padding:6px 12px;flex-shrink:0;white-space:nowrap" onclick="window._boardOpenMap()"><i class="ti ti-map-pin-plus"></i> Точна точка на мапі</button>
-      </div>
-      <div class="mp-map-wrap" id="board-map-wrap">
+      <label class="cab-label">Точна точка на мапі</label>
+      <div class="mp-map-wrap open" id="board-map-wrap">
         <div id="board-map-el" class="mp-map-el"></div>
         <div class="mp-map-coords" id="board-map-coords">Натисніть на карту, щоб вибрати точку</div>
       </div>
-      <label class="cab-label" style="margin-top:8px">Коментар (необов'язково)</label>
+      <button type="button" class="btn-bk-action" style="width:100%;box-sizing:border-box;justify-content:center;display:flex;align-items:center;gap:6px;margin:8px 0 12px" onclick="window._boardUseMyLocation()"><i class="ti ti-current-location"></i> Використати моє місце</button>
+      <label class="cab-label">Коментар (необов'язково)</label>
       <textarea id="board-note" class="form-input" rows="2" placeholder="Наприклад: знижка 20%, або бюджет 900₴/год" style="resize:none;margin-bottom:6px"></textarea>
       <div style="font-size:11px;color:var(--text-hint);margin-bottom:10px">Можна тримати відкритими до 6 оголошень одночасно.</div>
       <div id="board-err" class="field-err" style="display:none;margin-bottom:8px"></div>
@@ -1529,7 +1527,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.386</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.387</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -4913,16 +4911,16 @@ function _boardInitMapNow() {
       }).catch(e => window._logErr?.('reverse_geocode_board_click', e));
   });
 }
-window._boardOpenMap = () => {
+// Мапа в модалці відкрита одразу (без згортання) — просто ініціалізуємо
+// або оновлюємо розмір, якщо вона вже була створена раніше в цій сесії.
+function _boardEnsureMapOpen() {
   const wrap = document.getElementById('board-map-wrap');
-  if (!wrap) return;
-  const isOpen = wrap.classList.toggle('open');
-  if (!isOpen) return;
+  if (wrap) wrap.classList.add('open');
   requestAnimationFrame(() => {
     if (_boardMapObj) { _boardMapObj.invalidateSize(); return; }
     _boardLoadLeaflet(_boardInitMapNow);
   });
-};
+}
 window._boardUseMyLocation = () => {
   if (!navigator.geolocation) { showToast('Геолокація недоступна', 'Оберіть точку на мапі вручну', 'error'); return; }
   navigator.geolocation.getCurrentPosition(pos => {
@@ -4935,8 +4933,6 @@ window._boardUseMyLocation = () => {
       const coordEl = document.getElementById('board-map-coords');
       if (coordEl) coordEl.textContent = `${_boardLatLng.lat}, ${_boardLatLng.lng}`;
     };
-    const wrap = document.getElementById('board-map-wrap');
-    if (wrap && !wrap.classList.contains('open')) wrap.classList.add('open');
     requestAnimationFrame(() => {
       if (_boardMapObj) { _boardMapObj.invalidateSize(); applyPoint(); }
       else _boardLoadLeaflet(() => { _boardInitMapNow(); applyPoint(); });
@@ -5062,11 +5058,11 @@ window._openBoardModal = async function() {
   document.getElementById('board-err').style.display = 'none';
   _boardLatLng = null;
   if (_boardMarker) { _boardMarker.remove(); _boardMarker = null; }
-  document.getElementById('board-map-wrap')?.classList.remove('open');
   const coordEl = document.getElementById('board-map-coords');
   if (coordEl) coordEl.textContent = 'Натисніть на карту, щоб вибрати точку';
   document.getElementById('board-modal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
+  _boardEnsureMapOpen();
 };
 window._closeBoardModal = function() {
   const modal = document.getElementById('board-modal');
