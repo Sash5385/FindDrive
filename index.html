@@ -1527,7 +1527,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.387</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.388</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -4946,14 +4946,22 @@ window._boardUseMyLocation = () => {
 // Гарячі шпильки постів дошки на головній мапі (окремий шар, без кластеризації —
 // їх завжди небагато й вони тимчасові, на відміну від постійних міток інструкторів)
 window._boardMapMarkers = {};
+// "Time Hero" — час слоту як головний елемент попапа (обрано з 10 варіацій).
+// Кольорова шапка навмисно прямокутна: верхні кути обріже сам wrapper Leaflet-попапа
+// (overflow:hidden + border-radius:14px), той самий трюк, що й у фото-шапці _instrPopupHtml.
 function _boardPinPopupHtml(d) {
   const isOffer = d.kind === 'offer';
-  const timeLabel = d.timeFrom && d.timeTo ? `${d.timeFrom}–${d.timeTo}` : '';
-  return `<div style="font-family:Inter,sans-serif;padding:2px 2px 4px;min-width:160px">
-    <span style="display:inline-flex;align-items:center;gap:4px;background:${isOffer ? '#e8f4ee' : '#fbeaf0'};color:${isOffer ? '#1a7a4a' : '#993556'};border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;margin-bottom:6px">${isOffer ? 'Пропоную' : 'Шукаю'}</span>
-    <div style="font-size:12.5px;font-weight:600;color:#0d2a1a">${esc(d.name || 'Без імені')}</div>
-    <div style="font-size:11px;color:#5a7a6a;margin-top:2px">${esc(d.district || '')}${timeLabel ? ' · ' + esc(timeLabel) : ''}</div>
-    ${d.note ? `<div style="font-size:11px;color:#5a7a6a;margin-top:4px;line-height:1.4">${esc(d.note)}</div>` : ''}
+  const timeLabel = d.timeFrom && d.timeTo ? `${d.timeFrom}–${d.timeTo}` : (d.timeFrom || '—');
+  const dateWord = d.date === _boardTodayISO() ? 'сьогодні' : (d.date === _boardTomorrowISO() ? 'завтра' : esc(d.date || ''));
+  const color = isOffer ? '#1a7a4a' : '#993556';
+  return `<div style="font-family:Inter,sans-serif;min-width:180px;text-align:center">
+    <div style="background:${color};padding:6px 10px;font-size:10px;font-weight:700;color:#fff;letter-spacing:.06em;text-transform:uppercase">${isOffer ? 'Пропоную' : 'Шукаю'} ${dateWord}</div>
+    <div style="padding:14px 14px 13px">
+      <div style="font-size:24px;font-weight:800;color:#0d2a1a;letter-spacing:-.02em;line-height:1">${esc(timeLabel)}</div>
+      <div style="font-size:12.5px;font-weight:600;color:#0d2a1a;margin-top:9px">${esc(d.name || 'Без імені')}</div>
+      <div style="font-size:11px;color:#7a9a8a;margin-top:2px">${esc(d.district || '')}</div>
+      ${d.note ? `<div style="font-size:11px;color:#5a7a6a;margin-top:6px;line-height:1.4">${esc(d.note)}</div>` : ''}
+    </div>
   </div>`;
 }
 window._boardFocusMarker = function(id, evt) {
