@@ -245,6 +245,95 @@
 html{overflow-x:hidden}
 body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg);background-image:radial-gradient(circle 580px at 8% 7%, rgba(168,240,192,.42), transparent 70%),radial-gradient(circle 500px at 88% 12%, rgba(240,224,96,.36), transparent 70%),radial-gradient(circle 520px at 6% 50%, rgba(240,168,208,.34), transparent 70%),radial-gradient(circle 560px at 94% 58%, rgba(160,216,248,.38), transparent 70%),radial-gradient(circle 540px at 48% 90%, rgba(192,184,248,.32), transparent 70%),radial-gradient(circle 420px at 65% 30%, rgba(168,240,192,.20), transparent 70%);background-attachment:fixed;overflow-x:hidden}
 
+/* НАВЧАЛЬНІ МАШИНКИ НА ФОНІ — суто декоративний шар з негативним z-index за всім
+   контентом; жодна секція, картка, мапа чи модалка не має z-index нижче нуля, тож
+   машинки автоматично ховаються під будь-яким реальним UI і "їдуть" лише по порожньому
+   фону сторінки. */
+#fd-cars-layer{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden}
+.fd-car{position:absolute;top:0;left:0;opacity:.6;filter:drop-shadow(0 2px 3px rgba(13,42,26,.18));will-change:transform}
+.fd-car-a{color:#2fae6e;animation:fdCarA 48s linear infinite}
+.fd-car-b{color:#e0577a;animation:fdCarB 55s linear infinite}
+.fd-car-c{color:#3a8fd1;animation:fdCarC 60s linear infinite}
+.fd-car-d{color:#e8b93a;animation:fdCarD 38s linear infinite}
+/* Машинка A: два розвороти "в 3 руки" (гальмо → підкрутити вперед → здати назад
+   з поворотом → доїхати вперед по новому курсу) на верхньому і правому краях. */
+@keyframes fdCarA{
+  0%{transform:translate(-10vw,22vh) rotate(90deg)}
+  18%{transform:translate(88vw,16vh) rotate(90deg)}
+  20%{transform:translate(93vw,17vh) rotate(90deg)}
+  22%{transform:translate(94vw,19vh) rotate(130deg)}
+  24%{transform:translate(91vw,22vh) rotate(175deg)}
+  26%{transform:translate(93vw,20vh) rotate(180deg)}
+  28%{transform:translate(92vw,23vh) rotate(180deg)}
+  55%{transform:translate(84vw,82vh) rotate(180deg)}
+  57%{transform:translate(83vw,86vh) rotate(180deg)}
+  59%{transform:translate(82vw,87vh) rotate(225deg)}
+  61%{transform:translate(84vw,89vh) rotate(265deg)}
+  63%{transform:translate(82vw,87vh) rotate(270deg)}
+  65%{transform:translate(80vw,86vh) rotate(270deg)}
+  88%{transform:translate(-8vw,80vh) rotate(270deg)}
+  94%{transform:translate(-10vw,50vh) rotate(0deg)}
+  100%{transform:translate(-10vw,22vh) rotate(90deg)}
+}
+/* Машинка B: так само розворот у 3 руки, але по нижньому і лівому краях. */
+@keyframes fdCarB{
+  0%{transform:translate(105vw,78vh) rotate(270deg)}
+  20%{transform:translate(15vw,84vh) rotate(270deg)}
+  22%{transform:translate(10vw,85vh) rotate(270deg)}
+  24%{transform:translate(9vw,87vh) rotate(300deg)}
+  26%{transform:translate(12vw,89vh) rotate(335deg)}
+  28%{transform:translate(10vw,87vh) rotate(360deg)}
+  30%{transform:translate(9vw,84vh) rotate(360deg)}
+  60%{transform:translate(6vw,20vh) rotate(360deg)}
+  62%{transform:translate(5vw,16vh) rotate(360deg)}
+  64%{transform:translate(6vw,14vh) rotate(400deg)}
+  66%{transform:translate(9vw,12vh) rotate(440deg)}
+  68%{transform:translate(7vw,14vh) rotate(450deg)}
+  70%{transform:translate(9vw,16vh) rotate(450deg)}
+  92%{transform:translate(105vw,25vh) rotate(450deg)}
+  96%{transform:translate(108vw,78vh) rotate(270deg)}
+  100%{transform:translate(105vw,78vh) rotate(270deg)}
+}
+/* Машинка C: доїжджає до "місця" посередині екрана і паркується (заїзд у 3 рухи +
+   довга пауза), потім виїжджає і продовжує маршрут. */
+@keyframes fdCarC{
+  0%{transform:translate(-8vw,55vh) rotate(90deg)}
+  20%{transform:translate(48vw,52vh) rotate(90deg)}
+  22%{transform:translate(52vw,53vh) rotate(90deg)}
+  24%{transform:translate(50vw,55vh) rotate(60deg)}
+  26%{transform:translate(47vw,57vh) rotate(20deg)}
+  28%{transform:translate(49vw,56vh) rotate(0deg)}
+  45%{transform:translate(49vw,56vh) rotate(0deg)}
+  47%{transform:translate(48vw,58vh) rotate(30deg)}
+  49%{transform:translate(50vw,60vh) rotate(70deg)}
+  51%{transform:translate(49vw,59vh) rotate(90deg)}
+  75%{transform:translate(95vw,62vh) rotate(90deg)}
+  78%{transform:translate(97vw,63vh) rotate(90deg)}
+  80%{transform:translate(98vw,65vh) rotate(160deg)}
+  83%{transform:translate(96vw,67vh) rotate(200deg)}
+  85%{transform:translate(97vw,66vh) rotate(180deg)}
+  92%{transform:translate(60vw,95vh) rotate(180deg)}
+  96%{transform:translate(-8vw,80vh) rotate(90deg)}
+  100%{transform:translate(-8vw,55vh) rotate(90deg)}
+}
+/* Машинка D: просто хаотично петляє по центру, без формальних маневрів — для
+   різноманітності руху. */
+@keyframes fdCarD{
+  0%{transform:translate(104vw,20vh) rotate(255deg)}
+  20%{transform:translate(55vw,45vh) rotate(230deg)}
+  40%{transform:translate(15vw,75vh) rotate(210deg)}
+  42%{transform:translate(10vw,78vh) rotate(210deg)}
+  44%{transform:translate(9vw,80vh) rotate(260deg)}
+  46%{transform:translate(11vw,82vh) rotate(310deg)}
+  48%{transform:translate(10vw,80vh) rotate(340deg)}
+  70%{transform:translate(60vw,30vh) rotate(20deg)}
+  90%{transform:translate(103vw,15vh) rotate(60deg)}
+  92%{transform:translate(105vw,14vh) rotate(60deg)}
+  95%{transform:translate(105vw,18vh) rotate(255deg)}
+  100%{transform:translate(104vw,20vh) rotate(255deg)}
+}
+@media (prefers-reduced-motion:reduce){#fd-cars-layer{display:none}}
+
 /* NAV */
 .nav{background:var(--green);border-bottom:.5px solid var(--green-dark);padding:0 48px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
 .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
@@ -595,7 +684,7 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 
 /* MAP */
 .map-section{padding:24px 48px 24px;position:relative;z-index:1}
-#map{height:360px;border-radius:18px;border:.5px solid var(--border);overflow:hidden}
+#map{height:360px;border-radius:18px;border:.5px solid var(--border);overflow:hidden;background:var(--border)}
 @media(min-width:900px){#map{height:560px}}
 @media(min-width:1280px){#map{height:640px}}
 .btn-locate{background:var(--green);color:#fff;border:none;border-radius:9px;padding:8px 16px;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:background .2s;font-family:inherit}
@@ -1122,6 +1211,69 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 <script>if(location.hash)history.replaceState(null,'',location.pathname+location.search);</script>
 <div id="toast-wrap"></div>
 
+<div id="fd-cars-layer" aria-hidden="true">
+  <div class="fd-car fd-car-a">
+    <svg viewBox="0 0 40 64" width="30" height="48">
+      <rect x="3" y="3" width="34" height="58" rx="13" fill="currentColor"/>
+      <rect x="9" y="8" width="22" height="13" rx="4" fill="#dceefa" opacity=".92"/>
+      <rect x="9" y="43" width="22" height="11" rx="4" fill="#dceefa" opacity=".92"/>
+      <rect x="0" y="12" width="4" height="11" rx="2" fill="#26261f"/>
+      <rect x="36" y="12" width="4" height="11" rx="2" fill="#26261f"/>
+      <rect x="0" y="41" width="4" height="11" rx="2" fill="#26261f"/>
+      <rect x="36" y="41" width="4" height="11" rx="2" fill="#26261f"/>
+      <circle cx="12" cy="9" r="1.7" fill="#fff3b0"/>
+      <circle cx="28" cy="9" r="1.7" fill="#fff3b0"/>
+      <rect x="14" y="26" width="12" height="12" rx="4" fill="#fff"/>
+      <path d="M20 29a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0 1.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6z" fill="currentColor"/>
+    </svg>
+  </div>
+  <div class="fd-car fd-car-b">
+    <svg viewBox="0 0 40 64" width="30" height="48">
+      <rect x="3" y="3" width="34" height="58" rx="13" fill="currentColor"/>
+      <rect x="9" y="8" width="22" height="13" rx="4" fill="#dceefa" opacity=".92"/>
+      <rect x="9" y="43" width="22" height="11" rx="4" fill="#dceefa" opacity=".92"/>
+      <rect x="0" y="12" width="4" height="11" rx="2" fill="#26261f"/>
+      <rect x="36" y="12" width="4" height="11" rx="2" fill="#26261f"/>
+      <rect x="0" y="41" width="4" height="11" rx="2" fill="#26261f"/>
+      <rect x="36" y="41" width="4" height="11" rx="2" fill="#26261f"/>
+      <circle cx="12" cy="9" r="1.7" fill="#fff3b0"/>
+      <circle cx="28" cy="9" r="1.7" fill="#fff3b0"/>
+      <rect x="14" y="26" width="12" height="12" rx="4" fill="#fff"/>
+      <path d="M20 29a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0 1.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6z" fill="currentColor"/>
+    </svg>
+  </div>
+  <div class="fd-car fd-car-c">
+    <svg viewBox="0 0 40 64" width="30" height="48">
+      <rect x="3" y="3" width="34" height="58" rx="13" fill="currentColor"/>
+      <rect x="9" y="8" width="22" height="13" rx="4" fill="#dceefa" opacity=".92"/>
+      <rect x="9" y="43" width="22" height="11" rx="4" fill="#dceefa" opacity=".92"/>
+      <rect x="0" y="12" width="4" height="11" rx="2" fill="#26261f"/>
+      <rect x="36" y="12" width="4" height="11" rx="2" fill="#26261f"/>
+      <rect x="0" y="41" width="4" height="11" rx="2" fill="#26261f"/>
+      <rect x="36" y="41" width="4" height="11" rx="2" fill="#26261f"/>
+      <circle cx="12" cy="9" r="1.7" fill="#fff3b0"/>
+      <circle cx="28" cy="9" r="1.7" fill="#fff3b0"/>
+      <rect x="14" y="26" width="12" height="12" rx="4" fill="#fff"/>
+      <path d="M20 29a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0 1.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6z" fill="currentColor"/>
+    </svg>
+  </div>
+  <div class="fd-car fd-car-d">
+    <svg viewBox="0 0 40 64" width="30" height="48">
+      <rect x="3" y="3" width="34" height="58" rx="13" fill="currentColor"/>
+      <rect x="9" y="8" width="22" height="13" rx="4" fill="#dceefa" opacity=".92"/>
+      <rect x="9" y="43" width="22" height="11" rx="4" fill="#dceefa" opacity=".92"/>
+      <rect x="0" y="12" width="4" height="11" rx="2" fill="#26261f"/>
+      <rect x="36" y="12" width="4" height="11" rx="2" fill="#26261f"/>
+      <rect x="0" y="41" width="4" height="11" rx="2" fill="#26261f"/>
+      <rect x="36" y="41" width="4" height="11" rx="2" fill="#26261f"/>
+      <circle cx="12" cy="9" r="1.7" fill="#fff3b0"/>
+      <circle cx="28" cy="9" r="1.7" fill="#fff3b0"/>
+      <rect x="14" y="26" width="12" height="12" rx="4" fill="#fff"/>
+      <path d="M20 29a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm0 1.2a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6z" fill="currentColor"/>
+    </svg>
+  </div>
+</div>
+
 <nav class="nav">
   <a class="nav-logo" href="#">
     <img src="logo192.png" alt="FindDrive" style="width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0">
@@ -1527,7 +1679,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.389</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.390</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
