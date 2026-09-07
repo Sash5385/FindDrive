@@ -472,6 +472,8 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .board-tab{padding:9px 18px;border-radius:9px;border:.5px solid var(--border);background:var(--white);font-size:13px;font-weight:600;color:var(--text-muted);cursor:pointer;font-family:inherit;transition:all .15s}
 .board-tab.active.offer{background:var(--green);border-color:var(--green);color:#fff}
 .board-tab.active.request{background:var(--pink);border-color:var(--pink);color:#fff}
+@keyframes boardPinPulse{0%{opacity:.9;transform:scale(1)}70%{opacity:0;transform:scale(1.9)}100%{opacity:0;transform:scale(1.9)}}
+.board-pin-pulse{transform-origin:13px 13px;animation:boardPinPulse 1.8s ease-out infinite}
 
 /* TRUST BAR */
 
@@ -1209,8 +1211,16 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
         <div style="flex:1"><label class="cab-label">До</label><input id="board-time-to" class="form-input" type="time"></div>
       </div>
       <label class="cab-label">Район</label>
-      <input id="board-district" class="form-input" type="text" placeholder="Наприклад, Позняки" style="margin-bottom:12px">
-      <label class="cab-label">Коментар (необов'язково)</label>
+      <input id="board-district" class="form-input" type="text" placeholder="Наприклад, Позняки" style="margin-bottom:8px">
+      <div class="mp-map-search">
+        <button type="button" class="btn-bk-action" style="font-size:11px;padding:6px 10px;flex-shrink:0" title="Моє місце" onclick="window._boardUseMyLocation()"><i class="ti ti-current-location"></i></button>
+        <button type="button" class="btn-bk-action" style="font-size:11px;padding:6px 12px;flex-shrink:0;white-space:nowrap" onclick="window._boardOpenMap()"><i class="ti ti-map-pin-plus"></i> Точна точка на мапі</button>
+      </div>
+      <div class="mp-map-wrap" id="board-map-wrap">
+        <div id="board-map-el" class="mp-map-el"></div>
+        <div class="mp-map-coords" id="board-map-coords">Натисніть на карту, щоб вибрати точку</div>
+      </div>
+      <label class="cab-label" style="margin-top:8px">Коментар (необов'язково)</label>
       <textarea id="board-note" class="form-input" rows="2" placeholder="Наприклад: знижка 20%, або бюджет 900₴/год" style="resize:none;margin-bottom:6px"></textarea>
       <div style="font-size:11px;color:var(--text-hint);margin-bottom:10px">Можна тримати відкритими до 6 оголошень одночасно.</div>
       <div id="board-err" class="field-err" style="display:none;margin-bottom:8px"></div>
@@ -1519,7 +1529,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.385</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.386</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -4845,7 +4855,7 @@ function _boardCardHtml(d, id) {
       <div class="board-avatar ${kindKey}">${esc(_boardInitials(d.name))}</div>
       <div style="min-width:0">
         <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(d.name || 'Без імені')}</div>
-        <div style="font-size:11px;color:var(--text-hint)">${esc(d.district || '—')}</div>
+        <div style="font-size:11px;color:var(--text-hint)">${esc(d.district || '—')}${typeof d.lat === 'number' && typeof d.lng === 'number' ? ` <i class="ti ti-map-pin" style="color:var(--green);cursor:pointer" onclick="window._boardFocusMarker('${esc(id)}',event)" title="Показати на карті"></i>` : ''}</div>
       </div>
     </div>
     <div class="board-time-chip"><i class="ti ti-clock" style="font-size:11px"></i> ${dateLabel} ${esc(timeLabel)}</div>
@@ -4856,6 +4866,128 @@ function _boardCardHtml(d, id) {
     </div>
   </div>`;
 }
+// "Гаряча" шпилька дошки — той самий силует-крапля, що й у _pinIcon, але з язичком
+// полум'я замість відблиску/будинку і пульсуючим кільцем, що сигналізує "терміново".
+// Колір слідує типу поста: зелений — пропозиція, рожевий — заявка (як і бейджі карток).
+function _boardHotIcon(kind) {
+  const color = kind === 'offer' ? '#1a7a4a' : '#993556';
+  return L.divIcon({
+    className: '',
+    html: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 26 50" width="26" height="50" style="overflow:visible">
+      <circle class="board-pin-pulse" cx="13" cy="13" r="12" fill="none" stroke="${color}" stroke-width="2"/>
+      <path d="M11.5 24 L13 50 L14.5 24" fill="${color}" stroke="${color}" stroke-width="1" stroke-linejoin="round"/>
+      <circle cx="13" cy="13" r="12" fill="${color}" stroke="white" stroke-width="2.5"/>
+      <path d="M13 6.3c-.35 1.7-2.55 2.85-2.55 5.15a2.55 2.55 0 0 0 5.1 0c0-1.05-.5-1.7-.95-2.3.65.2 1.6 1.05 1.6 2.75a3.2 3.2 0 0 1-6.4 0c0-3.05 2.35-4.05 3.2-5.6z" fill="#fff"/>
+    </svg>`,
+    iconSize: [26, 50], iconAnchor: [13, 50], popupAnchor: [0, -48],
+  });
+}
+function _boardLoadLeaflet(cb) {
+  if (window.L) { cb(); return; }
+  if (!document.getElementById('leaflet-css')) {
+    const lk = document.createElement('link');
+    lk.id = 'leaflet-css'; lk.rel = 'stylesheet';
+    lk.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(lk);
+  }
+  const sc = document.createElement('script');
+  sc.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  sc.onload = cb;
+  sc.onerror = () => console.warn('Leaflet failed to load');
+  document.head.appendChild(sc);
+}
+let _boardMapObj = null, _boardMarker = null, _boardLatLng = null;
+function _boardInitMapNow() {
+  _boardMapObj = L.map('board-map-el', { zoomControl: true }).setView([50.4501, 30.5234], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 19 }).addTo(_boardMapObj);
+  _boardMapObj.on('click', e => {
+    const { lat, lng } = e.latlng;
+    _boardLatLng = { lat: +lat.toFixed(6), lng: +lng.toFixed(6) };
+    if (_boardMarker) _boardMarker.setLatLng(e.latlng); else _boardMarker = L.marker(e.latlng, { icon: _boardHotIcon(window._boardKind) }).addTo(_boardMapObj);
+    const coordEl = document.getElementById('board-map-coords');
+    if (coordEl) coordEl.textContent = `${_boardLatLng.lat}, ${_boardLatLng.lng}`;
+    const districtEl = document.getElementById('board-district');
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
+      .then(r => r.json()).then(d => {
+        if (districtEl && !districtEl.value.trim() && d.display_name) districtEl.value = d.display_name.split(',').slice(0, 2).join(', ');
+      }).catch(e => window._logErr?.('reverse_geocode_board_click', e));
+  });
+}
+window._boardOpenMap = () => {
+  const wrap = document.getElementById('board-map-wrap');
+  if (!wrap) return;
+  const isOpen = wrap.classList.toggle('open');
+  if (!isOpen) return;
+  requestAnimationFrame(() => {
+    if (_boardMapObj) { _boardMapObj.invalidateSize(); return; }
+    _boardLoadLeaflet(_boardInitMapNow);
+  });
+};
+window._boardUseMyLocation = () => {
+  if (!navigator.geolocation) { showToast('Геолокація недоступна', 'Оберіть точку на мапі вручну', 'error'); return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    const lat = pos.coords.latitude, lng = pos.coords.longitude;
+    const applyPoint = () => {
+      const ll = L.latLng(lat, lng);
+      _boardMapObj.setView(ll, 16);
+      _boardLatLng = { lat: +lat.toFixed(6), lng: +lng.toFixed(6) };
+      if (_boardMarker) _boardMarker.setLatLng(ll); else _boardMarker = L.marker(ll, { icon: _boardHotIcon(window._boardKind) }).addTo(_boardMapObj);
+      const coordEl = document.getElementById('board-map-coords');
+      if (coordEl) coordEl.textContent = `${_boardLatLng.lat}, ${_boardLatLng.lng}`;
+    };
+    const wrap = document.getElementById('board-map-wrap');
+    if (wrap && !wrap.classList.contains('open')) wrap.classList.add('open');
+    requestAnimationFrame(() => {
+      if (_boardMapObj) { _boardMapObj.invalidateSize(); applyPoint(); }
+      else _boardLoadLeaflet(() => { _boardInitMapNow(); applyPoint(); });
+    });
+  }, err => {
+    const msgs = { 1: 'Доступ до геолокації заборонено', 2: 'Не вдалося визначити місцезнаходження', 3: 'Час очікування вичерпано' };
+    showToast(msgs[err.code] || 'Помилка геолокації', 'Оберіть точку на мапі вручну', 'error');
+  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+};
+
+// Гарячі шпильки постів дошки на головній мапі (окремий шар, без кластеризації —
+// їх завжди небагато й вони тимчасові, на відміну від постійних міток інструкторів)
+window._boardMapMarkers = {};
+function _boardPinPopupHtml(d) {
+  const isOffer = d.kind === 'offer';
+  const timeLabel = d.timeFrom && d.timeTo ? `${d.timeFrom}–${d.timeTo}` : '';
+  return `<div style="font-family:Inter,sans-serif;padding:2px 2px 4px;min-width:160px">
+    <span style="display:inline-flex;align-items:center;gap:4px;background:${isOffer ? '#e8f4ee' : '#fbeaf0'};color:${isOffer ? '#1a7a4a' : '#993556'};border-radius:20px;padding:2px 9px;font-size:10px;font-weight:700;margin-bottom:6px">${isOffer ? 'Пропоную' : 'Шукаю'}</span>
+    <div style="font-size:12.5px;font-weight:600;color:#0d2a1a">${esc(d.name || 'Без імені')}</div>
+    <div style="font-size:11px;color:#5a7a6a;margin-top:2px">${esc(d.district || '')}${timeLabel ? ' · ' + esc(timeLabel) : ''}</div>
+    ${d.note ? `<div style="font-size:11px;color:#5a7a6a;margin-top:4px;line-height:1.4">${esc(d.note)}</div>` : ''}
+  </div>`;
+}
+window._boardFocusMarker = function(id, evt) {
+  if (evt) evt.stopPropagation();
+  const m = window._boardMapMarkers?.[id];
+  if (!m || !_mainMap) { scrollToMap(); return; }
+  _mainMap.setView(m.getLatLng(), 16);
+  m.openPopup();
+  scrollToMap();
+};
+function _syncBoardMapPins() {
+  if (!window._mapReady) { (window._onMapReadyQueue = window._onMapReadyQueue || []).push(_syncBoardMapPins); return; }
+  const live = new Set();
+  window._boardCache.forEach(d => {
+    if (typeof d.lat !== 'number' || typeof d.lng !== 'number') return;
+    live.add(d.id);
+    if (window._boardMapMarkers[d.id]) {
+      window._boardMapMarkers[d.id].setLatLng([d.lat, d.lng]);
+      window._boardMapMarkers[d.id].setPopupContent(_boardPinPopupHtml(d));
+    } else {
+      const m = L.marker([d.lat, d.lng], { icon: _boardHotIcon(d.kind) }).addTo(_mainMap);
+      m.bindPopup(_boardPinPopupHtml(d), { maxWidth: 240 });
+      window._boardMapMarkers[d.id] = m;
+    }
+  });
+  Object.keys(window._boardMapMarkers).forEach(id => {
+    if (!live.has(id)) { window._boardMapMarkers[id].remove(); delete window._boardMapMarkers[id]; }
+  });
+}
+
 function listenBoardPosts() {
   onSnapshot(query(collection(db, 'boardPosts'), orderBy('createdAt', 'desc')), snap => {
     const grid = document.getElementById('board-grid');
@@ -4865,10 +4997,11 @@ function listenBoardPosts() {
     if (!window._boardCache.length) {
       grid.innerHTML = '';
       if (empty) empty.style.display = '';
-      return;
+    } else {
+      empty.style.display = 'none';
+      grid.innerHTML = window._boardCache.map(d => _boardCardHtml(d, d.id)).join('');
     }
-    if (empty) empty.style.display = 'none';
-    grid.innerHTML = window._boardCache.map(d => _boardCardHtml(d, d.id)).join('');
+    _syncBoardMapPins();
   }, e => console.warn('listenBoardPosts:', e.message));
 }
 listenBoardPosts();
@@ -4927,6 +5060,11 @@ window._openBoardModal = async function() {
   document.getElementById('board-district').value = '';
   document.getElementById('board-note').value = '';
   document.getElementById('board-err').style.display = 'none';
+  _boardLatLng = null;
+  if (_boardMarker) { _boardMarker.remove(); _boardMarker = null; }
+  document.getElementById('board-map-wrap')?.classList.remove('open');
+  const coordEl = document.getElementById('board-map-coords');
+  if (coordEl) coordEl.textContent = 'Натисніть на карту, щоб вибрати точку';
   document.getElementById('board-modal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
 };
@@ -4940,6 +5078,7 @@ window._boardSetKind = function(k) {
   window._boardKind = k;
   document.getElementById('board-tab-offer')?.classList.toggle('active', k === 'offer');
   document.getElementById('board-tab-request')?.classList.toggle('active', k === 'request');
+  if (_boardMarker) _boardMarker.setIcon(_boardHotIcon(k));
 };
 window._submitBoardPost = async function() {
   const user = auth.currentUser;
@@ -4968,6 +5107,7 @@ window._submitBoardPost = async function() {
       kind, authorId: user.uid, instrId: instrId || null,
       name: (kind === 'offer' ? (instr?.name || user.displayName || user.email) : (user.displayName || user.email)) || '',
       district, date, timeFrom, timeTo, note,
+      lat: _boardLatLng?.lat ?? null, lng: _boardLatLng?.lng ?? null,
       price: kind === 'offer' ? (instr?.price || null) : null,
       createdAt: serverTimestamp(),
     });
