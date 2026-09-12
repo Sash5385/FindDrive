@@ -583,17 +583,19 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 /* BOARD (Дошка оголошень) */
 .board-grid{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:none;-ms-overflow-style:none}
 .board-grid::-webkit-scrollbar{display:none}
-.board-card{width:255px;flex-shrink:0;scroll-snap-align:start;background:var(--white);border:.5px solid var(--border);border-radius:18px;padding:16px;transition:border-color .2s,transform .2s,box-shadow .2s}
+.board-card{width:255px;flex-shrink:0;scroll-snap-align:start;background:var(--white);border:.5px solid var(--border);border-radius:18px;padding:0;overflow:hidden;transition:border-color .2s,transform .2s,box-shadow .2s}
 .board-card.tappable{cursor:pointer}
 .board-card.tappable:hover{border-color:#aad0aa;transform:translateY(-2px);box-shadow:0 4px 16px rgba(26,122,74,.1)}
-.board-kind{display:inline-flex;align-items:center;gap:4px;border-radius:20px;padding:3px 10px;font-size:10.5px;font-weight:700;margin-bottom:10px}
-.board-kind.offer{background:var(--green-light);color:var(--green)}
-.board-kind.request{background:var(--pink-light);color:var(--pink)}
-.board-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.board-card-head{padding:7px 16px;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#fff}
+.board-card-head.offer{background:var(--green)}
+.board-card-head.request{background:var(--pink)}
+.board-card-body{padding:14px 16px 16px}
+.board-hero-time{font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.02em;line-height:1;margin-bottom:11px}
+.board-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;flex-shrink:0}
 .board-avatar.offer{background:var(--green-light);color:var(--green)}
 .board-avatar.request{background:var(--pink-light);color:var(--pink)}
-.board-time-chip{display:inline-flex;align-items:center;gap:5px;background:var(--bg);border-radius:8px;padding:4px 9px;font-size:11px;color:var(--text);font-weight:600;margin-bottom:8px}
-.board-note{font-size:11.5px;color:var(--text-muted);line-height:1.5;margin-bottom:12px}
+.board-avatar-photo{width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;border:.5px solid var(--border)}
+.board-note{font-size:11.5px;color:var(--text-muted);line-height:1.5;margin:10px 0 12px}
 .board-foot{display:flex;align-items:center;justify-content:space-between}
 .board-action{font-size:11.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;background:none;border:none;padding:0;font-family:inherit}
 .board-action.offer{color:var(--green)}
@@ -1738,7 +1740,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.392</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.393</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -5059,20 +5061,26 @@ function _boardCardHtml(d, id) {
   } else if (window._myInstrId) {
     actionHtml = `<button class="board-action request" onclick="event.stopPropagation();window._boardChatRequest('${esc(d.authorId)}','${esc((d.name || '').replace(/'/g, ''))}')"><i class="ti ti-message-circle" style="font-size:13px"></i> Написати</button>`;
   }
+  const photo = isOffer && d.instrId ? ((window._instrProfiles || {})[d.instrId]?.photo || null) : null;
+  const avatarHtml = photo
+    ? `<img class="board-avatar-photo" src="${esc(photo)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="board-avatar ${kindKey}" style="display:none">${esc(_boardInitials(d.name))}</div>`
+    : `<div class="board-avatar ${kindKey}">${esc(_boardInitials(d.name))}</div>`;
   return `<div class="board-card${tappable ? ' tappable' : ''}"${tappable ? ` onclick="window._boardCardTap('${esc(id)}')" title="Переглянути профіль інструктора"` : ''}>
-    <span class="board-kind ${kindKey}">${isOffer ? 'Пропоную' : 'Шукаю'}</span>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-      <div class="board-avatar ${kindKey}">${esc(_boardInitials(d.name))}</div>
-      <div style="min-width:0">
-        <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(d.name || 'Без імені')}</div>
-        <div style="font-size:11px;color:var(--text-hint)">${esc(d.district || '—')}${typeof d.lat === 'number' && typeof d.lng === 'number' ? ` <i class="ti ti-map-pin" style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();window._boardFocusMarker('${esc(id)}',event)" title="Показати на карті"></i>` : ''}</div>
+    <div class="board-card-head ${kindKey}">${isOffer ? 'Пропоную' : 'Шукаю'} · ${dateLabel}</div>
+    <div class="board-card-body">
+      <div class="board-hero-time">${esc(timeLabel) || '—'}</div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        ${avatarHtml}
+        <div style="min-width:0">
+          <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(d.name || 'Без імені')}</div>
+          <div style="font-size:11px;color:var(--text-hint)">${esc(d.district || '—')}${typeof d.lat === 'number' && typeof d.lng === 'number' ? ` <i class="ti ti-map-pin" style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();window._boardFocusMarker('${esc(id)}',event)" title="Показати на карті"></i>` : ''}</div>
+        </div>
       </div>
-    </div>
-    <div class="board-time-chip"><i class="ti ti-clock" style="font-size:11px"></i> ${dateLabel} ${esc(timeLabel)}</div>
-    ${d.note ? `<div class="board-note">${esc(d.note)}</div>` : '<div style="margin-bottom:12px"></div>'}
-    <div class="board-foot">
-      <span style="font-size:10.5px;color:var(--text-hint)">${_boardTimeAgo(d.createdAt)}</span>
-      ${actionHtml}
+      ${d.note ? `<div class="board-note">${esc(d.note)}</div>` : ''}
+      <div class="board-foot">
+        <span style="font-size:10.5px;color:var(--text-hint)">${_boardTimeAgo(d.createdAt)}</span>
+        ${actionHtml}
+      </div>
     </div>
   </div>`;
 }
@@ -5184,9 +5192,14 @@ function _boardPinPopupHtml(d) {
   } else if (!isOffer && window._myInstrId) {
     actionHtml = `<button onclick="event.stopPropagation();window._boardChatRequest('${esc(d.authorId)}','${esc((d.name || '').replace(/'/g, ''))}')" style="${btnStyle}">${msgIcon} Написати</button>`;
   }
+  const photo = isOffer && d.instrId ? ((window._instrProfiles || {})[d.instrId]?.photo || null) : null;
+  const avatarHtml = photo
+    ? `<img src="${esc(photo)}" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.18);display:block" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="board-avatar ${isOffer ? 'offer' : 'request'}" style="display:none;margin:0 auto">${esc(_boardInitials(d.name))}</div>`
+    : `<div class="board-avatar ${isOffer ? 'offer' : 'request'}" style="margin:0 auto">${esc(_boardInitials(d.name))}</div>`;
   return `<div style="font-family:Inter,sans-serif;min-width:180px;text-align:center"${tappable ? ` onclick="window._boardCardTap('${esc(d.id)}')"` : ''}>
     <div style="background:${color};padding:6px 10px;font-size:10px;font-weight:700;color:#fff;letter-spacing:.06em;text-transform:uppercase${tappable ? ';cursor:pointer' : ''}">${isOffer ? 'Пропоную' : 'Шукаю'} ${dateWord}</div>
     <div style="padding:14px 14px 13px${tappable ? ';cursor:pointer' : ''}">
+      <div style="display:flex;justify-content:center;margin-bottom:8px">${avatarHtml}</div>
       <div style="font-size:24px;font-weight:800;color:#0d2a1a;letter-spacing:-.02em;line-height:1">${esc(timeLabel)}</div>
       <div style="font-size:12.5px;font-weight:600;color:#0d2a1a;margin-top:9px">${esc(d.name || 'Без імені')}</div>
       <div style="font-size:11px;color:#7a9a8a;margin-top:2px">${esc(d.district || '')}</div>
