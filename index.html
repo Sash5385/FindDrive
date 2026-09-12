@@ -583,7 +583,9 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 /* BOARD (Дошка оголошень) */
 .board-grid{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:8px;scrollbar-width:none;-ms-overflow-style:none}
 .board-grid::-webkit-scrollbar{display:none}
-.board-card{width:255px;flex-shrink:0;scroll-snap-align:start;background:var(--white);border:.5px solid var(--border);border-radius:18px;padding:16px}
+.board-card{width:255px;flex-shrink:0;scroll-snap-align:start;background:var(--white);border:.5px solid var(--border);border-radius:18px;padding:16px;transition:border-color .2s,transform .2s,box-shadow .2s}
+.board-card.tappable{cursor:pointer}
+.board-card.tappable:hover{border-color:#aad0aa;transform:translateY(-2px);box-shadow:0 4px 16px rgba(26,122,74,.1)}
 .board-kind{display:inline-flex;align-items:center;gap:4px;border-radius:20px;padding:3px 10px;font-size:10.5px;font-weight:700;margin-bottom:10px}
 .board-kind.offer{background:var(--green-light);color:var(--green)}
 .board-kind.request{background:var(--pink-light);color:var(--pink)}
@@ -1736,7 +1738,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.391</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.392</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -5046,23 +5048,24 @@ function _boardCardHtml(d, id) {
   const isOffer = d.kind === 'offer';
   const kindKey = isOffer ? 'offer' : 'request';
   const mine = auth.currentUser && auth.currentUser.uid === d.authorId;
+  const tappable = isOffer && !!d.instrId;
   const timeLabel = d.timeFrom && d.timeTo ? `${d.timeFrom}–${d.timeTo}` : (d.timeFrom || '');
   const dateLabel = d.date === _boardTodayISO() ? 'Сьогодні' : (d.date === _boardTomorrowISO() ? 'Завтра' : esc(d.date || ''));
   let actionHtml = '';
   if (mine) {
-    actionHtml = `<button class="board-action close" onclick="window._boardClose('${esc(id)}')">Закрити</button>`;
+    actionHtml = `<button class="board-action close" onclick="event.stopPropagation();window._boardClose('${esc(id)}')">Закрити</button>`;
   } else if (isOffer) {
-    actionHtml = `<button class="board-action offer" onclick="window._boardChatOffer('${esc(d.instrId || '')}')"><i class="ti ti-message-circle" style="font-size:13px"></i> Написати</button>`;
+    actionHtml = `<button class="board-action offer" onclick="event.stopPropagation();window._boardChatOffer('${esc(d.instrId || '')}')"><i class="ti ti-message-circle" style="font-size:13px"></i> Написати</button>`;
   } else if (window._myInstrId) {
-    actionHtml = `<button class="board-action request" onclick="window._boardChatRequest('${esc(d.authorId)}','${esc((d.name || '').replace(/'/g, ''))}')"><i class="ti ti-message-circle" style="font-size:13px"></i> Написати</button>`;
+    actionHtml = `<button class="board-action request" onclick="event.stopPropagation();window._boardChatRequest('${esc(d.authorId)}','${esc((d.name || '').replace(/'/g, ''))}')"><i class="ti ti-message-circle" style="font-size:13px"></i> Написати</button>`;
   }
-  return `<div class="board-card">
+  return `<div class="board-card${tappable ? ' tappable' : ''}"${tappable ? ` onclick="window._boardCardTap('${esc(id)}')" title="Переглянути профіль інструктора"` : ''}>
     <span class="board-kind ${kindKey}">${isOffer ? 'Пропоную' : 'Шукаю'}</span>
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
       <div class="board-avatar ${kindKey}">${esc(_boardInitials(d.name))}</div>
       <div style="min-width:0">
         <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(d.name || 'Без імені')}</div>
-        <div style="font-size:11px;color:var(--text-hint)">${esc(d.district || '—')}${typeof d.lat === 'number' && typeof d.lng === 'number' ? ` <i class="ti ti-map-pin" style="color:var(--green);cursor:pointer" onclick="window._boardFocusMarker('${esc(id)}',event)" title="Показати на карті"></i>` : ''}</div>
+        <div style="font-size:11px;color:var(--text-hint)">${esc(d.district || '—')}${typeof d.lat === 'number' && typeof d.lng === 'number' ? ` <i class="ti ti-map-pin" style="color:var(--green);cursor:pointer" onclick="event.stopPropagation();window._boardFocusMarker('${esc(id)}',event)" title="Показати на карті"></i>` : ''}</div>
       </div>
     </div>
     <div class="board-time-chip"><i class="ti ti-clock" style="font-size:11px"></i> ${dateLabel} ${esc(timeLabel)}</div>
@@ -5073,6 +5076,11 @@ function _boardCardHtml(d, id) {
     </div>
   </div>`;
 }
+window._boardCardTap = function(id) {
+  const d = (window._boardCache || []).find(p => p.id === id);
+  if (!d || d.kind !== 'offer' || !d.instrId) return;
+  if (typeof openInstrProfile === 'function') openInstrProfile(d.instrId);
+};
 // "Гаряча" шпилька дошки — той самий силует-крапля, що й у _pinIcon, але з язичком
 // полум'я замість відблиску/будинку і пульсуючим кільцем, що сигналізує "терміново".
 // Колір слідує типу поста: зелений — пропозиція, рожевий — заявка (як і бейджі карток).
@@ -5165,19 +5173,20 @@ function _boardPinPopupHtml(d) {
   const color = isOffer ? '#1a7a4a' : '#993556';
   const tint  = isOffer ? '#f4f9f6' : '#fdf3f6';
   const mine  = auth.currentUser && auth.currentUser.uid === d.authorId;
+  const tappable = isOffer && !!d.instrId;
   const msgIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5c-1.35 0-2.6-.32-3.7-.9L4 21l1.9-4.8A8.5 8.5 0 1 1 21 11.5z"/></svg>`;
   const btnStyle = `width:100%;box-sizing:border-box;border:none;border-top:1px solid #eef1ee;background:${tint};color:${color};padding:9px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px`;
   let actionHtml = '';
   if (mine) {
-    actionHtml = `<button onclick="window._boardClose('${esc(d.id)}')" style="${btnStyle}">Закрити оголошення</button>`;
+    actionHtml = `<button onclick="event.stopPropagation();window._boardClose('${esc(d.id)}')" style="${btnStyle}">Закрити оголошення</button>`;
   } else if (isOffer && d.instrId) {
-    actionHtml = `<button onclick="window._boardChatOffer('${esc(d.instrId)}')" style="${btnStyle}">${msgIcon} Написати</button>`;
+    actionHtml = `<button onclick="event.stopPropagation();window._boardChatOffer('${esc(d.instrId)}')" style="${btnStyle}">${msgIcon} Написати</button>`;
   } else if (!isOffer && window._myInstrId) {
-    actionHtml = `<button onclick="window._boardChatRequest('${esc(d.authorId)}','${esc((d.name || '').replace(/'/g, ''))}')" style="${btnStyle}">${msgIcon} Написати</button>`;
+    actionHtml = `<button onclick="event.stopPropagation();window._boardChatRequest('${esc(d.authorId)}','${esc((d.name || '').replace(/'/g, ''))}')" style="${btnStyle}">${msgIcon} Написати</button>`;
   }
-  return `<div style="font-family:Inter,sans-serif;min-width:180px;text-align:center">
-    <div style="background:${color};padding:6px 10px;font-size:10px;font-weight:700;color:#fff;letter-spacing:.06em;text-transform:uppercase">${isOffer ? 'Пропоную' : 'Шукаю'} ${dateWord}</div>
-    <div style="padding:14px 14px 13px">
+  return `<div style="font-family:Inter,sans-serif;min-width:180px;text-align:center"${tappable ? ` onclick="window._boardCardTap('${esc(d.id)}')"` : ''}>
+    <div style="background:${color};padding:6px 10px;font-size:10px;font-weight:700;color:#fff;letter-spacing:.06em;text-transform:uppercase${tappable ? ';cursor:pointer' : ''}">${isOffer ? 'Пропоную' : 'Шукаю'} ${dateWord}</div>
+    <div style="padding:14px 14px 13px${tappable ? ';cursor:pointer' : ''}">
       <div style="font-size:24px;font-weight:800;color:#0d2a1a;letter-spacing:-.02em;line-height:1">${esc(timeLabel)}</div>
       <div style="font-size:12.5px;font-weight:600;color:#0d2a1a;margin-top:9px">${esc(d.name || 'Без імені')}</div>
       <div style="font-size:11px;color:#7a9a8a;margin-top:2px">${esc(d.district || '')}</div>
