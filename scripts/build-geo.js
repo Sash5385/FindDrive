@@ -81,8 +81,6 @@ function page(c, all) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/geo.css">
-<link rel="stylesheet" href="/fog.css?v=24.06.394">
-<script src="/fog.js"></script>
 <script type="application/ld+json">
 ${JSON.stringify(ld, null, 2)}
 </script>
