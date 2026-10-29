@@ -6,6 +6,14 @@ Format: `[YY.MM.NN]` — рік.місяць.порядковий_номер_р�
 
 ---
 
+## [24.06.394] — 2026-10-29
+
+### Added
+- Підготовка до публікації в Google Play як Trusted Web Activity (повноекранний Android-додаток без адресного рядка): `android/twa-manifest.json` (пакет `ua.in.finddrive.app`, геолокація делегується в додаток, сповіщення), workflow `android-build.yml` (збірка підписаного AAB у GitHub Actions), `.well-known/assetlinks.json` (потребує SHA-256 з Play Console), `.nojekyll` (щоб GitHub Pages віддавав `.well-known`)
+
+### Changed
+- `manifest.json`: додано `id`, `categories`, `orientation: portrait`
+
 ## [24.06.393] — 2026-09-12
 
 ### Changed
