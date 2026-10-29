@@ -1,1 +1,8 @@
 node_modules/
+android/upload.keystore
+*.keystore
+*.jks
+android/app/
+android/build/
+android/*.aab
+android/*.apk
