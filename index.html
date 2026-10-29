@@ -207,6 +207,34 @@
 }
 </script>
 <!-- Google Analytics GA4 -->
+<script>
+// Nominatim: політика використання OSM — не частіше 1 запиту/с. Черга + кеш + дедуплікація.
+// Координати reverse-запитів округлюються до 4 знаків (~11 м): достатньо для адреси/ТСЦ і менше передається третій стороні.
+(function(){
+  const cache = new Map(), inflight = new Map();
+  let chain = Promise.resolve(), last = 0;
+  window._nomFetch = function(url, opts) {
+    url = String(url).replace(/([?&](?:lat|lon)=)(-?\d+\.\d+)/g, (m, p, v) => p + (+v).toFixed(4));
+    if (cache.has(url)) return Promise.resolve(new Response(cache.get(url), { status: 200 }));
+    if (inflight.has(url)) return inflight.get(url).then(t => new Response(t, { status: 200 }));
+    const p = chain.then(async () => {
+      const wait = last + 1100 - Date.now();
+      if (wait > 0) await new Promise(r => setTimeout(r, wait));
+      last = Date.now();
+      const r = await fetch(url, opts);
+      if (!r.ok) throw new Error('nominatim ' + r.status);
+      const t = await r.text();
+      cache.set(url, t);
+      if (cache.size > 300) cache.delete(cache.keys().next().value);
+      return t;
+    });
+    chain = p.catch(() => {});
+    inflight.set(url, p);
+    p.catch(() => {}).finally(() => inflight.delete(url));
+    return p.then(t => new Response(t, { status: 200 }));
+  };
+})();
+</script>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-1QDLW9TCGZ"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -1740,7 +1768,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.397</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.398</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -2506,7 +2534,7 @@ window._infoContent = {
 
       <h4>2. Які дані ми збираємо</h4>
       <ul>
-        <li><b>Геолокація.</b> Використовується для показу інструкторів поряд, у момент пошуку; ми не зберігаємо ваші координати пошуку. Щоб визначити адресу/район і ТСЦ, координати надсилаються в сервіс OpenStreetMap Nominatim. Якщо ви самі вказуєте точку (точка зустрічі інструктора, оголошення на дошці), ця точка зберігається в профілі/оголошенні й видима іншим користувачам.</li>
+        <li><b>Геолокація.</b> Використовується для показу інструкторів поряд, у момент пошуку; ми не зберігаємо ваші координати пошуку. Щоб визначити адресу/район і ТСЦ, координати (округлені до ~10 м) надсилаються в сервіс OpenStreetMap Nominatim. Якщо ви самі вказуєте точку (точка зустрічі інструктора, оголошення на дошці), ця точка зберігається в профілі/оголошенні й видима іншим користувачам.</li>
         <li><b>Дані інструктора</b> (при реєстрації анкети): ПІБ, телефон, email, район роботи, тип КПП, ТСЦ, опис, фото обличчя та авто, орієнтовна точка на карті.</li>
         <li><b>Дані учня</b> (при записі чи зверненні): ім'я, телефон або email, які ви залишаєте для зв'язку з інструктором чи підтримкою.</li>
         <li><b>Технічні дані:</b> знеособлена статистика відвідувань (Google Analytics), тип пристрою й браузера, cookies.</li>
@@ -3382,7 +3410,7 @@ async function loadInstrSettings(instr, container) {
       if (_mpMarker) _mpMarker.setLatLng(e.latlng); else _mpMarker = L.marker(e.latlng).addTo(_mpMapObj);
       const coordEl = document.getElementById('mp-map-coords');
       if (coordEl) coordEl.textContent = `${_mpLatLng.lat}, ${_mpLatLng.lng}`;
-      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
+      _nomFetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
         .then(r=>r.json()).then(d=>{
           if (inp && d.display_name) inp.value = d.display_name.split(',').slice(0,3).join(', ');
           _mpApplyTscTags(d.address);
@@ -3438,7 +3466,7 @@ async function loadInstrSettings(instr, container) {
         if (_mpMarker) _mpMarker.setLatLng(ll); else _mpMarker = L.marker(ll).addTo(_mpMapObj);
         const coordEl = document.getElementById('mp-map-coords');
         if (coordEl) coordEl.textContent = `${_mpLatLng.lat}, ${_mpLatLng.lng}`;
-        fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
+        _nomFetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
           .then(r=>r.json()).then(d=>{
             const inp = document.getElementById('mp-new-input');
             if (inp && d.display_name) inp.value = d.display_name.split(',').slice(0,3).join(', ');
@@ -3461,7 +3489,7 @@ async function loadInstrSettings(instr, container) {
   };
   window._mpGeoSearch = (q) => {
     if (!_mpMapObj || !q) return;
-    fetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(q)}`)
+    _nomFetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(q)}`)
       .then(r=>r.json()).then(results=>{
         if (!results.length) return;
         const {lat,lon,display_name,address} = results[0];
@@ -3483,7 +3511,7 @@ async function loadInstrSettings(instr, container) {
     const ul = document.getElementById('mp-suggests');
     if (!q || q.length < 2) { if(ul) ul.style.display='none'; return; }
     _mpAcTimer = setTimeout(() => {
-      fetch(`${NOM_BASE}&limit=5&q=${encodeURIComponent(q)}`)
+      _nomFetch(`${NOM_BASE}&limit=5&q=${encodeURIComponent(q)}`)
         .then(r=>r.json()).then(results => {
           const ul2 = document.getElementById('mp-suggests');
           if (!ul2) return;
@@ -3521,7 +3549,7 @@ async function loadInstrSettings(instr, container) {
     if (!_mpLatLng) {
       if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i>'; }
       try {
-        const r = await fetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(val)}`);
+        const r = await _nomFetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(val)}`);
         const results = await r.json();
         if (results.length) {
           const {lat,lon} = results[0];
@@ -5131,7 +5159,7 @@ function _boardInitMapNow() {
     const coordEl = document.getElementById('board-map-coords');
     if (coordEl) coordEl.textContent = `${_boardLatLng.lat}, ${_boardLatLng.lng}`;
     const districtEl = document.getElementById('board-district');
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
+    _nomFetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
       .then(r => r.json()).then(d => {
         if (districtEl && !districtEl.value.trim() && d.display_name) districtEl.value = d.display_name.split(',').slice(0, 2).join(', ');
       }).catch(e => window._logErr?.('reverse_geocode_board_click', e));
@@ -5756,7 +5784,7 @@ function _bpInitMapNow() {
     if (_bpMarker) _bpMarker.setLatLng(e.latlng); else _bpMarker = L.marker(e.latlng).addTo(_bpMapObj);
     const coordEl = document.getElementById('bp-map-coords');
     if (coordEl) coordEl.textContent = `${_bpLatLng.lat}, ${_bpLatLng.lng}`;
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
+    _nomFetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
       .then(r=>r.json()).then(d=>{ if (inp && d.display_name) inp.value = d.display_name.split(',').slice(0,3).join(', '); }).catch(()=>{});
   });
 }
@@ -5785,7 +5813,7 @@ window._bpUseMyLocation = () => {
       if (_bpMarker) _bpMarker.setLatLng(ll); else _bpMarker = L.marker(ll).addTo(_bpMapObj);
       const coordEl = document.getElementById('bp-map-coords');
       if (coordEl) coordEl.textContent = `${_bpLatLng.lat}, ${_bpLatLng.lng}`;
-      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
+      _nomFetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
         .then(r=>r.json()).then(d=>{ const inp=document.getElementById('bp-new-input'); if (inp && d.display_name) inp.value = d.display_name.split(',').slice(0,3).join(', '); }).catch(()=>{});
     };
     const wrap = document.getElementById('bp-map-wrap');
@@ -5808,7 +5836,7 @@ window._bpAutoComplete = (q) => {
   const ul = document.getElementById('bp-suggests');
   if (!q || q.length < 2) { if(ul) ul.style.display='none'; return; }
   _bpAcTimer = setTimeout(() => {
-    fetch(`${NOM_BASE}&limit=5&q=${encodeURIComponent(q)}`)
+    _nomFetch(`${NOM_BASE}&limit=5&q=${encodeURIComponent(q)}`)
       .then(r=>r.json()).then(results => {
         const ul2 = document.getElementById('bp-suggests');
         if (!ul2) return;
@@ -5848,7 +5876,7 @@ window._bpAdd = async () => {
   if (!_bpLatLng) {
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i>'; }
     try {
-      const r = await fetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(val)}`);
+      const r = await _nomFetch(`${NOM_BASE}&limit=1&q=${encodeURIComponent(val)}`);
       const results = await r.json();
       if (results.length) { const {lat,lon} = results[0]; _bpLatLng = {lat:+parseFloat(lat).toFixed(6), lng:+parseFloat(lon).toFixed(6)}; }
     } catch(e) { window._logErr?.('geocode_branch_point', e); }
@@ -7503,14 +7531,14 @@ function doSearch() {
   if (!query) return;
   window._ga('search', { search_term: query });
   scrollToMap();
-  fetch(geoSearchUrl(query, 1))
+  _nomFetch(geoSearchUrl(query, 1))
     .then(r=>r.json()).then(data => { if (data.length) focusMap({lat:+data[0].lat, lng:+data[0].lon}); }).catch(e => window._logErr('geo_search_do_search', e));
 }
 
 function searchQuery(query) {
   document.getElementById("search-input").value = query;
   scrollToMap();
-  fetch(geoSearchUrl(query, 1))
+  _nomFetch(geoSearchUrl(query, 1))
     .then(r=>r.json()).then(data => { if (data.length) focusMap({lat:+data[0].lat, lng:+data[0].lon}); }).catch(e => window._logErr('geo_search_query', e));
 }
 
@@ -7554,7 +7582,7 @@ function _showSearchSuggest(q) {
   }).join('');
 
   _searchAcTimer = setTimeout(() => {
-    fetch(geoSearchUrl(q, 5))
+    _nomFetch(geoSearchUrl(q, 5))
       .then(r => r.json()).then(results => {
         const ul2 = document.getElementById('search-suggest');
         if (!ul2) return;
@@ -7852,7 +7880,7 @@ window.initInstrMap = function() {
       setLatLng(lat, lng);
     }
     function reverseFill(lat, lng) {
-      fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
+      _nomFetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
         .then(r=>r.json()).then(d => {
           if (addrInput && d.display_name) addrInput.value = d.display_name.split(',').slice(0,3).join(', ');
           const area = _areaFromAddress(d.address);
@@ -7898,7 +7926,7 @@ window.initInstrMap = function() {
       if (q.length < 3) { _closeAddr(); return; }
       _addrTimer = setTimeout(async () => {
         try {
-          const r = await fetch(
+          const r = await _nomFetch(
             `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=7&addressdetails=1&accept-language=uk&countrycodes=ua`,
             { headers: { 'Accept-Language': 'uk' } }
           );
@@ -7955,7 +7983,7 @@ function _setUserLocation(lat, lng, accuracy) {
     }
   });
   window._updateDistanceBadges?.();
-  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
+  _nomFetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=uk`)
     .then(r=>r.json()).then(d=>{
       const tags = tscTagsForAddress(d.address);
       if (tags && tags.length) {
