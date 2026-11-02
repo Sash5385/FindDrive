@@ -6,6 +6,11 @@ Format: `[YY.MM.NN]` — рік.місяць.порядковий_номер_р�
 
 ---
 
+## [24.06.401] — 2026-11-02
+
+### Fixed
+- Workflow `android-build.yml`: Bubblewrap не приймав SDK раннера («androidSdk isn't correct») — додано каталог із симлінками з класичною структурою (`tools/`, `build-tools`, `platforms`, …)
+
 ## [24.06.400] — 2026-11-02
 
 ### Fixed

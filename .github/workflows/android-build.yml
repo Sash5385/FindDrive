@@ -24,7 +24,12 @@ jobs:
           echo "SDK=$SDK"; ls "$SDK" "$SDK/cmdline-tools" || true
           yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
           mkdir -p ~/.bubblewrap
-          printf '{"jdkPath":"%s","androidSdkPath":"%s"}' "$JAVA_HOME" "$SDK" > ~/.bubblewrap/config.json
+          # Bubblewrap очікує класичну структуру SDK з каталогом tools/ — збираємо її симлінками на SDK раннера
+          BW_SDK="$HOME/bw-android-sdk"; mkdir -p "$BW_SDK"
+          for d in build-tools platforms platform-tools licenses cmdline-tools; do [ -e "$SDK/$d" ] && ln -sfn "$SDK/$d" "$BW_SDK/$d"; done
+          ln -sfn "$SDK/cmdline-tools/latest" "$BW_SDK/tools"
+          export ANDROID_HOME="$BW_SDK" ANDROID_SDK_ROOT="$BW_SDK"
+          printf '{"jdkPath":"%s","androidSdkPath":"%s"}' "$JAVA_HOME" "$BW_SDK" > ~/.bubblewrap/config.json
           cat ~/.bubblewrap/config.json
       - name: Build AAB
         working-directory: android
