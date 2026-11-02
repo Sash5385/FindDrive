@@ -20,10 +20,12 @@ jobs:
       - name: Bubblewrap
         run: |
           npm i -g @bubblewrap/cli
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          echo "SDK=$SDK"; ls "$SDK" "$SDK/cmdline-tools" || true
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
           mkdir -p ~/.bubblewrap
-          cat > ~/.bubblewrap/config.json <<EOF
-          {"jdkPath":"$JAVA_HOME","androidSdkPath":"$ANDROID_SDK_ROOT"}
-          EOF
+          printf '{"jdkPath":"%s","androidSdkPath":"%s"}' "$JAVA_HOME" "$SDK" > ~/.bubblewrap/config.json
+          cat ~/.bubblewrap/config.json
       - name: Build AAB
         working-directory: android
         env:

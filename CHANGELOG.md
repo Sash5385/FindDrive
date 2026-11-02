@@ -6,6 +6,11 @@ Format: `[YY.MM.NN]` — рік.місяць.порядковий_номер_р�
 
 ---
 
+## [24.06.400] — 2026-11-02
+
+### Fixed
+- Workflow `android-build.yml`: шлях до Android SDK для Bubblewrap береться з `ANDROID_HOME`/`ANDROID_SDK_ROOT` з fallback, ліцензії SDK приймаються автоматично, у лог виводиться діагностика (перший запуск падав з «androidSdk isn't correct»)
+
 ## [24.06.399] — 2026-10-29
 
 ### Changed
