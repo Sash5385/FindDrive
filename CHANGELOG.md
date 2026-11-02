@@ -6,6 +6,11 @@ Format: `[YY.MM.NN]` — рік.місяць.порядковий_номер_р�
 
 ---
 
+## [24.06.402] — 2026-11-02
+
+### Fixed
+- Workflow `android-build.yml`: Gradle падав через різні `ANDROID_HOME` і `ANDROID_SDK_ROOT` — змінну раннера `ANDROID_SDK_ROOT` скидаємо перед збіркою
+
 ## [24.06.401] — 2026-11-02
 
 ### Fixed

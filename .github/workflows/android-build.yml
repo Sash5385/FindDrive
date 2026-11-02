@@ -40,6 +40,7 @@ jobs:
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > upload.keystore
           VC=${{ inputs.version_code }}
           sed -i "s/\"appVersionCode\": [0-9]*/\"appVersionCode\": $VC/; s/\"appVersion\": \"[^\"]*\"/\"appVersion\": \"$VC\"/" twa-manifest.json
+          unset ANDROID_SDK_ROOT  # Gradle не терпить двох різних шляхів до SDK
           bubblewrap update --skipVersionUpgrade --manifest=twa-manifest.json
           bubblewrap build --skipPwaValidation --manifest=twa-manifest.json
       - uses: actions/upload-artifact@v4
