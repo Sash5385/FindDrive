@@ -29,6 +29,6 @@
   "enableSiteSettingsShortcut": true,
   "webManifestUrl": "https://finddrive.in.ua/manifest.json",
   "fullScopeUrl": "https://finddrive.in.ua/",
-  "minSdkVersion": 21,
+  "minSdkVersion": 24,
   "shortcuts": []
 }

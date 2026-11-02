@@ -6,6 +6,11 @@ Format: `[YY.MM.NN]` — рік.місяць.порядковий_номер_р�
 
 ---
 
+## [24.06.403] — 2026-11-02
+
+### Fixed
+- `android/twa-manifest.json`: `minSdkVersion` 21 → 24 — бібліотека `androidbrowserhelper` 2.7.4 вимагає API 24 (Android 7.0+), збірка падала на злитті маніфестів
+
 ## [24.06.402] — 2026-11-02
 
 ### Fixed
