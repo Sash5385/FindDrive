@@ -502,8 +502,8 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
   .hero-map-col{display:none}
   .hero-cloud-wrap{width:min(92vw,442px);height:312px;margin:0 auto}
 }
-.tc-tag{position:absolute;white-space:nowrap;cursor:pointer;border-radius:20px;padding:4px 11px;font-weight:500;font-family:inherit;user-select:none;will-change:opacity,transform;pointer-events:auto;transition:filter .15s;border:.5px solid transparent}
-.tc-tag:hover{filter:brightness(.88)}
+.tc-tag{position:absolute;white-space:nowrap;cursor:pointer;border-radius:20px;padding:4px 11px;font-weight:500;font-family:inherit;user-select:none;will-change:opacity,transform;pointer-events:auto;transition:filter .15s;border:.5px solid transparent;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;touch-action:manipulation;outline:none}
+@media(hover:hover){.tc-tag:hover{filter:brightness(.88)}}
 .hero-badge{display:inline-flex;align-items:center;gap:6px;background:var(--green-mid);border-radius:20px;padding:5px 14px;font-size:12px;color:#1a6a3a;margin-bottom:22px}
 .hero-h1{font-size:42px;font-weight:600;color:var(--text);line-height:1.12;margin-bottom:16px}
 .hero-h1 span{color:var(--green)}
@@ -1816,7 +1816,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.412</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.413</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
