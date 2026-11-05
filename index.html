@@ -812,6 +812,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .instr-welcome-note{text-align:center;margin-top:14px;font-size:13px;color:var(--text-muted)}
 .cab-profile{display:flex;align-items:center;gap:14px;padding:20px 20px 16px}
 .cab-photo{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid var(--border)}
+.cab-photo-ini{background:var(--green-light);color:var(--green);display:flex!important;align-items:center;justify-content:center;font-size:16px;font-weight:600;box-sizing:border-box}
 .cab-photo-edit{position:relative;cursor:pointer;flex-shrink:0;display:inline-block}
 .cab-photo-edit .cab-photo{display:block}
 .cab-photo-badge{position:absolute;bottom:0;right:-1px;width:18px;height:18px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;border:1.5px solid #fff;pointer-events:none}
@@ -863,6 +864,13 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .nav-avatar.no-photo{display:none}
 .nav-initial{display:none;width:30px;height:30px;border-radius:50%;background:var(--green-light);color:var(--green-dark);border:1.5px solid rgba(255,255,255,.7);font-size:13px;font-weight:600;align-items:center;justify-content:center;text-transform:uppercase;box-sizing:border-box}
 .nav-avatar.no-photo+.nav-initial{display:flex}
+.nav-mobile-user{display:none;align-items:center;gap:12px;padding:14px 20px;background:var(--green-light);border-bottom:.5px solid var(--border);text-decoration:none;color:var(--text)}
+.nav-mobile-user.show{display:flex}
+.nav-mobile-user .nmu-av{width:38px;height:38px;border-radius:50%;background:var(--green);color:#fff;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;text-transform:uppercase;flex-shrink:0;overflow:hidden}
+.nav-mobile-user .nmu-av img{width:100%;height:100%;object-fit:cover}
+.nav-mobile-user .nmu-txt{min-width:0}
+.nav-mobile-user .nmu-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-mobile-user .nmu-sub{font-size:12px;color:var(--text-muted)}
 @media(max-width:900px){.nav-name{display:none}}
 #chat-panel{width:min(100vw,440px)}
 @media(min-width:900px){#chat-panel{width:440px;box-shadow:-4px 0 32px rgba(0,0,0,.14);transform-origin:right center}}
@@ -1396,6 +1404,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
   </div>
 </nav>
 <div id="nav-mobile" class="nav-mobile" role="dialog" aria-modal="false" aria-label="Навігаційне меню">
+  <a id="nav-mobile-user" class="nav-mobile-user" href="#"><span id="nmu-av" class="nmu-av"></span><span class="nmu-txt"><div id="nmu-name" class="nmu-name"></div><div class="nmu-sub">Мій кабінет</div></span></a>
   <a class="nav-mobile-link" href="#instructors" onclick="closeMobileMenu()"><i class="ti ti-search"></i> Знайти інструктора</a>
   <a class="nav-mobile-link" href="#" onclick="event.preventDefault();closeMobileMenu();document.getElementById('map-anchor').scrollIntoView({behavior:'smooth'})"><i class="ti ti-map"></i> Карта</a>
   <a class="nav-mobile-link" href="#how-it-works" onclick="event.preventDefault();closeMobileMenu();var d=document.getElementById('how-it-works-spoiler');if(d){d.open=true;d.dispatchEvent(new Event('toggle'));d.scrollIntoView({behavior:'smooth',block:'start'})}"><i class="ti ti-list-check"></i> Як це працює</a>
@@ -1775,7 +1784,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.410</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.411</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -2997,7 +3006,7 @@ async function renderProfileScreen(user) {
   const ini0  = name0.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || (user.email||'?')[0].toUpperCase();
   document.getElementById('cab-body').innerHTML = `
     <div class="cab-profile">
-      ${user.photoURL ? `<img class="cab-photo" src="${esc(user.photoURL)}" alt="">` : `<div class="cab-photo" style="background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600">${esc(ini0)}</div>`}
+      ${user.photoURL ? `<img class="cab-photo" src="${esc(user.photoURL)}" alt="" onerror="window._photoFallback(this,'${esc(ini0)}')">` : `<div class="cab-photo cab-photo-ini">${esc(ini0)}</div>`}
       <div>
         <div class="cab-fullname">${esc(name0 || 'Користувач')}</div>
         <div class="cab-email">${esc(user.email || '')}</div>
@@ -3029,8 +3038,8 @@ async function renderProfileScreen(user) {
     <div class="cab-profile">
       <div class="cab-photo-edit" onclick="document.getElementById('s-photo-input').click()" title="Змінити фото">
         ${photoSrc
-          ? `<img class="cab-photo" id="student-photo-img" src="${esc(photoSrc)}" alt="" style="display:block">`
-          : `<div class="cab-photo" id="student-photo-img" style="background:var(--green-light);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600">${esc(ini)}</div>`}
+          ? `<img class="cab-photo" id="student-photo-img" src="${esc(photoSrc)}" alt="" style="display:block" onerror="window._photoFallback(this,'${esc(ini)}')">`
+          : `<div class="cab-photo cab-photo-ini" id="student-photo-img">${esc(ini)}</div>`}
         <div class="cab-photo-badge"><i class="ti ti-camera"></i></div>
       </div>
       <input type="file" id="s-photo-input" accept="image/*" hidden onchange="window._onStudentPhotoChange(this)">
@@ -3649,6 +3658,8 @@ document.getElementById("btn-login").addEventListener("click", async () => {
   if (auth.currentUser) { await renderProfileScreen(auth.currentUser); openPanel('cabinet'); }
   else { window._openAuthModal(); }
 });
+window._photoFallback = (img, t) => { const d = document.createElement('div'); d.className = 'cab-photo cab-photo-ini'; if (img.id) d.id = img.id; d.textContent = t; img.replaceWith(d); };
+document.getElementById("nav-mobile-user").addEventListener("click", e => { e.preventDefault(); closeMobileMenu(); document.getElementById("nav-user").click(); });
 document.getElementById("nav-user").addEventListener("click", async () => {
   if (auth.currentUser) await renderProfileScreen(auth.currentUser);
   else renderAuthScreen();
@@ -4189,11 +4200,22 @@ onAuthStateChanged(auth, async user => {
     navUser.style.display  = "flex";
     window._applyHowItWorksSpoiler?.(user);
     const navAv = document.getElementById("nav-avatar");
-    navAv.onerror = () => navAv.classList.add("no-photo");
-    window._setNavInitial = n => { document.getElementById("nav-initial").textContent = ([...(n||"").trim()][0] || "?"); };
+    navAv.onerror = () => { navAv.classList.add("no-photo"); document.getElementById("nmu-av").textContent = window._navIni || "?"; };
+    window._setNavInitial = n => {
+      const t = (n||"").trim();
+      const ini = (t.includes("@") ? t[0] : t.split(/\s+/).slice(0,2).map(w => [...w][0] || "").join("")).toUpperCase() || "?";
+      document.getElementById("nav-initial").textContent = ini;
+      window._navIni = ini;
+      const av = document.getElementById("nmu-av");
+      if (!av.querySelector("img")) av.textContent = ini;
+    };
     window._setNavInitial(user.displayName || user.email);
     navAv.classList.toggle("no-photo", !user.photoURL);
     if (user.photoURL) navAv.src = user.photoURL; else navAv.removeAttribute("src");
+    const mu = document.getElementById("nav-mobile-user"), mav = document.getElementById("nmu-av");
+    mu.classList.add("show");
+    document.getElementById("nmu-name").textContent = user.displayName || user.email || "";
+    if (user.photoURL) { mav.innerHTML = ""; const im = document.createElement("img"); im.alt = ""; im.onerror = () => { im.remove(); mav.textContent = window._navIni || "?"; }; im.src = user.photoURL; mav.appendChild(im); }
     document.getElementById("nav-name").textContent = (user.displayName || user.email || "").split(" ")[0];
     if (user.providerData[0]?.providerId === 'google.com') {
       // Only store email; do NOT overwrite name — user may have set a custom name in contacts
@@ -4237,6 +4259,7 @@ onAuthStateChanged(auth, async user => {
   } else {
     btnLogin.style.display = "";
     navUser.style.display  = "none";
+    document.getElementById("nav-mobile-user")?.classList.remove("show");
     authMode = 'login';
     if (_unsubInstr)      { _unsubInstr();      _unsubInstr      = null; }
     if (_unsubClient)     { _unsubClient();     _unsubClient     = null; }
