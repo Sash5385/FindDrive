@@ -38,7 +38,7 @@ test('verify: протермінований ts (>5 хв) і ts з майбут�
   assert.equal(r2.reason, 'expired');
   const r3 = verify(fakeReq({ ts: Date.now() - 4 * 60 * 1000 }), SECRET);
   assert.equal(r3.ok, true);
-  assert.equal(verify(fakeReq({ a: 1 }), SECRET).reason, 'expired'); // немає ts
+  assert.equal(verify(fakeReq({ a: 1 }), SECRET).reason, 'bad_ts'); // немає ts
 });
 
 test('verify: не POST -> 405; підпис рахується по сирому тілу', () => {
