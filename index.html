@@ -244,10 +244,42 @@
   window._ga = function(event, params) { if (typeof gtag === 'function') gtag('event', event, params || {}); };
   // Легка видимість помилок, які раніше просто гасились у catch(e){} —
   // видно в консолі одразу, і трапляється в GA4 як подія (без деталей, що містять PII)
+  window._errQueue = [];
+  window._errSeen = {};
+  window._errCount = 0;
+  // Шум, який не є багом сайту: мережа/офлайн, скасовані попапи, розширення браузера
+  var _ERR_IGNORE = /Failed to fetch|NetworkError|Load failed|network-request-failed|ResizeObserver|AbortError|popup-closed-by-user|cancelled-popup-request|Script error|extension:\/\/|nominatim/i;
+  // Відправка в суперадмінку (колекція errorLogs): код + контекст + стек, з дедупом і лімітом
+  window._reportError = function(context, e, code) {
+    try {
+      var msg = String((e && e.message) || e || '').slice(0, 500);
+      if (_ERR_IGNORE.test(msg) || _ERR_IGNORE.test(String(code || (e && e.code) || ''))) return;
+      code = String(code || (e && e.code) || (e && e.name) || 'ERR').slice(0, 80);
+      var fp = (context + '|' + code + '|' + msg.slice(0, 80)).slice(0, 250);
+      if (window._errSeen[fp] || window._errCount >= 10) return;
+      window._errSeen[fp] = 1; window._errCount++;
+      try { var n = +(sessionStorage.getItem('fd_err_n') || 0); if (n >= 30) return; sessionStorage.setItem('fd_err_n', n + 1); } catch (_) {}
+      var vb = document.getElementById('version-badge');
+      var rec = { code: code, context: String(context).slice(0, 120), message: msg,
+                  stack: String((e && e.stack) || '').slice(0, 1500), url: location.href.slice(0, 300),
+                  ua: navigator.userAgent.slice(0, 200), version: vb ? vb.textContent.slice(0, 20) : '', fp: fp };
+      if (window._errSink) window._errSink(rec); else window._errQueue.push(rec);
+    } catch (_) {}
+  };
   window._logErr = function(context, e) {
     console.error('[' + context + ']', e);
     window._ga('js_error', { context: context, message: String((e && e.message) || e || '').slice(0, 150) });
+    window._reportError(context, e);
   };
+  window.addEventListener('error', function(ev) {
+    if (!ev.error && !ev.filename) return;
+    if (ev.filename && ev.filename.indexOf(location.origin) !== 0 && ev.filename.indexOf('gstatic.com/firebasejs') < 0) return;
+    window._reportError('window.onerror ' + (ev.filename || '').split('/').pop() + ':' + ev.lineno, ev.error || ev.message, (ev.error && ev.error.name) || 'JS_ERROR');
+  });
+  window.addEventListener('unhandledrejection', function(ev) {
+    var r = ev.reason;
+    window._reportError('unhandledrejection', r, (r && (r.code || r.name)) || 'PROMISE_REJECTION');
+  });
 </script>
 <meta name="theme-color" content="#1a7a4a">
 <meta name="mobile-web-app-capable" content="yes">
@@ -1784,7 +1816,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.411</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.412</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -2140,6 +2172,13 @@ const app      = initializeApp(firebaseConfig);
 const auth     = getAuth(app);
 const db       = getFirestore(app);
 const provider = new GoogleAuthProvider();
+
+// Приймач помилок для _reportError (див. верхній скрипт) → errorLogs у Firestore
+window._errSink = rec => {
+  const u = auth.currentUser;
+  addDoc(collection(db, 'errorLogs'), { ...rec, uid: u?.uid || null, email: u?.email || null, status: 'new', createdAt: serverTimestamp() }).catch(() => {});
+};
+(window._errQueue || []).splice(0).forEach(window._errSink);
 
 // Обробка редіректу після Google Sign-In
 getRedirectResult(auth).catch(e => {

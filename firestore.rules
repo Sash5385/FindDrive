@@ -158,6 +158,26 @@ service cloud.firestore {
                     && (resource.data.authorId == request.auth.uid || isAdmin());
     }
 
+    // Автоматичні звіти про помилки з клієнта (window.onerror, unhandledrejection, _logErr).
+    // Створити може будь-хто (лише з обмеженим набором полів і розмірів), читає/керує адмін.
+    function optStr(v, n) { return v == null || (v is string && v.size() <= n); }
+    match /errorLogs/{logId} {
+      allow create: if request.resource.data.keys().hasOnly(['code','context','message','stack','url','ua','version','fp','uid','email','status','createdAt'])
+                    && request.resource.data.status == 'new'
+                    && request.resource.data.createdAt == request.time
+                    && request.resource.data.code is string && request.resource.data.code.size() <= 80
+                    && request.resource.data.context is string && request.resource.data.context.size() <= 120
+                    && request.resource.data.message is string && request.resource.data.message.size() <= 500
+                    && optStr(request.resource.data.get('stack', null), 1500)
+                    && optStr(request.resource.data.get('url', null), 300)
+                    && optStr(request.resource.data.get('ua', null), 200)
+                    && optStr(request.resource.data.get('version', null), 20)
+                    && optStr(request.resource.data.get('fp', null), 250)
+                    && optStr(request.resource.data.get('uid', null), 128)
+                    && optStr(request.resource.data.get('email', null), 200);
+      allow read, update, delete: if isAdmin();
+    }
+
     match /problems/{problemId} {
       allow create: if request.resource.data.status == 'new'
                     && request.resource.data.text is string

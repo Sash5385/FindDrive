@@ -69,6 +69,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .funnel-day-count{width:22px;text-align:right;font-size:11px;font-weight:600;color:var(--text);flex-shrink:0}
 
 /* PROBLEM CARDS */
+.err-code{display:inline-block;background:#fdecec;color:#b42318;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600;font-family:ui-monospace,monospace}
+.err-stack{font:11px/1.45 ui-monospace,monospace;background:var(--bg);border-radius:8px;padding:8px 10px;margin:8px 0;white-space:pre-wrap;word-break:break-all;max-height:140px;overflow:auto;display:none}
 .problem-card{background:var(--white);border-radius:16px;border:.5px solid var(--border);padding:18px 20px;margin-bottom:12px}
 .problem-card.resolved{opacity:.55}
 .problem-text{font-size:14px;color:var(--text);line-height:1.55;margin-bottom:8px;white-space:pre-wrap}
@@ -229,6 +231,7 @@ textarea.admin-edit-input{resize:vertical;min-height:54px}
       <button class="tab-btn" id="tab-btn-users" onclick="window._switchTab('users')">Учні</button>
       <button class="tab-btn" id="tab-btn-bookings" onclick="window._switchTab('bookings')">Записи</button>
       <button class="tab-btn" id="tab-btn-problems" onclick="window._switchTab('problems')">Проблеми<span id="count-badge-problems" class="count-badge" style="display:none"></span></button>
+      <button class="tab-btn" id="tab-btn-errors" onclick="window._switchTab('errors')">Помилки<span id="count-badge-errors" class="count-badge" style="display:none"></span></button>
       <button class="tab-btn" id="tab-btn-schools" onclick="window._switchTab('schools')">Школи<span id="count-badge-schools" class="count-badge" style="display:none"></span></button>
       <button class="tab-btn" id="tab-btn-board" onclick="window._switchTab('board')">Дошка<span id="count-badge-board" class="count-badge" style="display:none"></span></button>
       <button class="tab-btn" id="tab-btn-messages" onclick="window._switchTab('messages')">Повідомлення<span id="count-badge-messages" class="count-badge" style="display:none"></span></button>
@@ -267,6 +270,13 @@ textarea.admin-edit-input{resize:vertical;min-height:54px}
       </div>
       <div id="problems-list"></div>
     </div>
+    <div id="tab-errors" style="display:none">
+      <div class="page-head">
+        <div class="page-title">Помилки сайту (авто)</div>
+        <button class="btn-reject" onclick="window._clearResolvedErrors()">Очистити вирішені</button>
+      </div>
+      <div id="errors-list"></div>
+    </div>
     <div id="tab-board" style="display:none">
       <div class="page-head"><div class="page-title">Дошка оголошень</div></div>
       <div id="board-list"></div>
@@ -298,7 +308,7 @@ textarea.admin-edit-input{resize:vertical;min-height:54px}
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-import { getFirestore, collection, query, where, orderBy, onSnapshot, updateDoc, deleteDoc, doc, setDoc, addDoc, increment, serverTimestamp }
+import { getFirestore, collection, query, where, orderBy, limit, onSnapshot, updateDoc, deleteDoc, doc, setDoc, addDoc, increment, serverTimestamp }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 const ADMIN_EMAIL = 'sash5385@gmail.com';
@@ -540,6 +550,7 @@ onAuthStateChanged(auth, user => {
     listenUsers();
     listenBookings();
     listenProblems();
+    listenErrors();
     listenSchools();
     listenBoardPosts();
     listenAdminChats();
@@ -565,7 +576,7 @@ document.getElementById('btn-google-login').addEventListener('click', () => {
 });
 
 window._switchTab = function(tab) {
-  ['instr','users','bookings','problems','schools','board','messages','funnel'].forEach(t => {
+  ['instr','users','bookings','problems','errors','schools','board','messages','funnel'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t === tab ? '' : 'none';
     document.getElementById('tab-btn-'+t).classList.toggle('active', t === tab);
   });
@@ -1515,6 +1526,57 @@ window._resolveProblem = async id => { await updateDoc(doc(db, 'problems', id), 
 window._reopenProblem  = async id => { await updateDoc(doc(db, 'problems', id), { status: 'new' }); };
 window._deleteProblem  = async id => {
   if (confirm('Видалити це звернення?')) await deleteDoc(doc(db, 'problems', id));
+};
+
+// ===== ПОМИЛКИ САЙТУ (errorLogs) =====
+function listenErrors() {
+  onSnapshot(
+    query(collection(db, 'errorLogs'), orderBy('createdAt', 'desc'), limit(200)),
+    snap => {
+      const list = document.getElementById('errors-list');
+      const badge = document.getElementById('count-badge-errors');
+      const newCount = snap.docs.filter(d => d.data().status !== 'resolved').length;
+      if (snap.empty) { list.innerHTML = '<div class="empty">🎉 Помилок немає</div>'; badge.style.display = 'none'; return; }
+      if (newCount > 0) { badge.textContent = newCount + ' нових'; badge.style.display = ''; } else badge.style.display = 'none';
+      list.innerHTML = snap.docs.map(renderErrorCard).join('');
+    },
+    err => {
+      document.getElementById('errors-list').innerHTML = '<div class="empty">Не вдалось завантажити помилки</div>';
+      console.error('listenErrors error:', err.message);
+    }
+  );
+}
+function renderErrorCard(d) {
+  const p = d.data();
+  const resolved = p.status === 'resolved';
+  const dateStr = p.createdAt?.toDate?.().toLocaleString('uk-UA', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' }) || '—';
+  return `<div class="problem-card${resolved ? ' resolved' : ''}">
+    <div class="problem-text"><span class="err-code">${esc(p.code)}</span> ${esc(p.context)}<br>${esc(p.message)}</div>
+    <div class="problem-meta">
+      <span>${dateStr}</span>
+      ${p.version ? `<span>${esc(p.version)}</span>` : ''}
+      ${p.email ? `<span>✉️ ${esc(p.email)}</span>` : '<span>гість</span>'}
+      <span>${esc((p.url||'').replace(/^https?:\/\/[^/]+/,'')||'/')}</span>
+      <span title="${esc(p.ua)}">${/Android|iPhone|iPad|Mobile/i.test(p.ua||'') ? '📱' : '💻'}</span>
+    </div>
+    ${p.stack ? `<div class="err-stack" id="st-${d.id}">${esc(p.stack)}</div>` : ''}
+    <div class="problem-actions">
+      ${p.stack ? `<button class="btn-reject" onclick="var e=document.getElementById('st-${d.id}');e.style.display=e.style.display?'':'block'">Стек</button>` : ''}
+      <button class="btn-reject" onclick="navigator.clipboard?.writeText(${esc(JSON.stringify(JSON.stringify({code:p.code,context:p.context,message:p.message,stack:p.stack,url:p.url,version:p.version})))})">Копіювати</button>
+      ${resolved
+        ? `<button class="btn-reject" onclick="window._setErrStatus('${d.id}','new')">↺ Повернути</button>`
+        : `<button class="btn-approve" onclick="window._setErrStatus('${d.id}','resolved')">✓ Вирішено</button>`}
+      <button class="btn-reject" onclick="window._deleteErr('${d.id}')">✗</button>
+    </div>
+  </div>`;
+}
+window._setErrStatus = (id, status) => updateDoc(doc(db, 'errorLogs', id), { status });
+window._deleteErr = id => deleteDoc(doc(db, 'errorLogs', id));
+window._clearResolvedErrors = async () => {
+  if (!confirm('Видалити всі вирішені помилки?')) return;
+  const { getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+  const snap = await getDocs(query(collection(db, 'errorLogs'), where('status', '==', 'resolved')));
+  await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
 };
 
 // ===== ДОШКА ОГОЛОШЕНЬ =====
