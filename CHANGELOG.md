@@ -6,6 +6,11 @@ Format: `[YY.MM.NN]` — рік.місяць.порядковий_номер_р�
 
 ---
 
+## [24.06.404] — 2026-11-05
+
+### Added
+- Workflow `android-build.yml`: завантаження AAB у Google Play (`r0adkll/upload-google-play`). Нові входи `track` (none/internal/alpha/beta/production, за замовчуванням none) і `release_status` (draft/completed, за замовчуванням draft). Потрібен секрет `PLAY_SERVICE_ACCOUNT_JSON`. Перший AAB нового застосунку завантажується вручну в Play Console — API не приймає першу збірку
+
 ## [24.06.403] — 2026-11-02
 
 ### Fixed

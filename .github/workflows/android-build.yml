@@ -7,6 +7,16 @@ on:
         description: "appVersionCode (збільшувати з кожним завантаженням у Play)"
         required: true
         default: "1"
+      track:
+        description: "Куди завантажити в Google Play (none — лише зібрати артефакт)"
+        type: choice
+        default: none
+        options: [none, internal, alpha, beta, production]
+      release_status:
+        description: "Статус релізу в Play (draft — розгортання підтверджує власник у Console)"
+        type: choice
+        default: draft
+        options: [draft, completed]
 
 jobs:
   build:
@@ -49,3 +59,12 @@ jobs:
           path: |
             android/app-release-bundle.aab
             android/app-release-signed.apk
+      - name: Upload to Google Play
+        if: ${{ inputs.track != 'none' }}
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: ua.in.finddrive.app
+          releaseFiles: android/app-release-bundle.aab
+          track: ${{ inputs.track }}
+          status: ${{ inputs.release_status }}
