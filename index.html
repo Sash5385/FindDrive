@@ -861,6 +861,8 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .nav-notif-badge{position:absolute;top:-3px;right:-5px;min-width:16px;height:16px;border-radius:8px;background:#cc3333;color:#fff;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 3px;border:1.5px solid var(--white);line-height:1;pointer-events:none}
 .nav-name{font-size:13px;color:#fff;font-weight:500;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nav-avatar.no-photo{display:none}
+.nav-initial{display:none;width:30px;height:30px;border-radius:50%;background:var(--green-light);color:var(--green-dark);border:1.5px solid rgba(255,255,255,.7);font-size:13px;font-weight:600;align-items:center;justify-content:center;text-transform:uppercase;box-sizing:border-box}
+.nav-avatar.no-photo+.nav-initial{display:flex}
 @media(max-width:900px){.nav-name{display:none}}
 #chat-panel{width:min(100vw,440px)}
 @media(min-width:900px){#chat-panel{width:440px;box-shadow:-4px 0 32px rgba(0,0,0,.14);transform-origin:right center}}
@@ -1385,7 +1387,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     <button id="btn-login" class="btn-login"><i class="ti ti-user-circle"></i> <span class="full">Увійти / Реєстрація</span><span class="short">Увійти</span></button>
     <div id="nav-user" class="nav-user" style="display:none" role="button" aria-label="Відкрити кабінет">
       <div class="nav-avatar-wrap">
-        <img id="nav-avatar" class="nav-avatar" src="" alt="">
+        <img id="nav-avatar" class="nav-avatar no-photo" alt=""><span id="nav-initial" class="nav-initial"></span>
         <span id="nav-notif-badge" class="nav-notif-badge"></span>
       </div>
       <span id="nav-name" class="nav-name"></span>
@@ -1773,7 +1775,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.409</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.410</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -4188,6 +4190,8 @@ onAuthStateChanged(auth, async user => {
     window._applyHowItWorksSpoiler?.(user);
     const navAv = document.getElementById("nav-avatar");
     navAv.onerror = () => navAv.classList.add("no-photo");
+    window._setNavInitial = n => { document.getElementById("nav-initial").textContent = ([...(n||"").trim()][0] || "?"); };
+    window._setNavInitial(user.displayName || user.email);
     navAv.classList.toggle("no-photo", !user.photoURL);
     if (user.photoURL) navAv.src = user.photoURL; else navAv.removeAttribute("src");
     document.getElementById("nav-name").textContent = (user.displayName || user.email || "").split(" ")[0];
@@ -4409,6 +4413,7 @@ window._saveContacts = async function() {
     if (btn) { btn.disabled = false; btn.style.display = 'none'; btn.innerHTML = '<i class="ti ti-device-floppy"></i> Зберегти контакти'; }
     const navName = document.getElementById('nav-name');
     if (navName && newName) navName.textContent = newName.split(' ')[0];
+    if (newName) window._setNavInitial?.(newName);
   } catch(e) {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i class="ti ti-device-floppy"></i> Зберегти контакти'; }
     showToast('Помилка', e.message || String(e), 'error');
