@@ -420,6 +420,9 @@ body{font-family:'Inter',sans-serif;color:var(--text);background-color:var(--bg)
 .nav-role-btn{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:20px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;text-decoration:none;transition:background .15s,transform .15s}
 .nav-role-btn:hover{background:rgba(255,255,255,.26);transform:translateY(-1px)}
 .nav-role-btn i{font-size:16px}
+.nav-role-btn{flex-shrink:0}
+.nav-links{min-width:max-content}
+@media(min-width:901px){.nav-links{min-width:0}}
 @media(max-width:900px){.nav-role-btn span{display:none}.nav-role-btn{padding:9px;width:36px;height:36px;justify-content:center;border-radius:50%}.nav-role-btn i{font-size:17px}}
 @media(max-width:600px){.nav-role-links{gap:6px}.nav-role-btn{width:32px;height:32px;padding:7px}.nav-role-btn i{font-size:16px}}
 /* На вузьких екранах рядку навбару вже тісно з 3 круглими кнопками ролей + аватаром +
@@ -856,7 +859,9 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .nav-avatar-wrap{position:relative;flex-shrink:0}
 .nav-avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;border:1.5px solid rgba(255,255,255,.5);display:block}
 .nav-notif-badge{position:absolute;top:-3px;right:-5px;min-width:16px;height:16px;border-radius:8px;background:#cc3333;color:#fff;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 3px;border:1.5px solid var(--white);line-height:1;pointer-events:none}
-.nav-name{font-size:13px;color:#fff;font-weight:500}
+.nav-name{font-size:13px;color:#fff;font-weight:500;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nav-avatar.no-photo{display:none}
+@media(max-width:900px){.nav-name{display:none}}
 #chat-panel{width:min(100vw,440px)}
 @media(min-width:900px){#chat-panel{width:440px;box-shadow:-4px 0 32px rgba(0,0,0,.14);transform-origin:right center}}
 @media(min-width:1280px){#chat-panel{width:480px}}
@@ -1768,7 +1773,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.408</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.409</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -4181,7 +4186,10 @@ onAuthStateChanged(auth, async user => {
     btnLogin.style.display = "none";
     navUser.style.display  = "flex";
     window._applyHowItWorksSpoiler?.(user);
-    document.getElementById("nav-avatar").src       = user.photoURL || "";
+    const navAv = document.getElementById("nav-avatar");
+    navAv.onerror = () => navAv.classList.add("no-photo");
+    navAv.classList.toggle("no-photo", !user.photoURL);
+    if (user.photoURL) navAv.src = user.photoURL; else navAv.removeAttribute("src");
     document.getElementById("nav-name").textContent = (user.displayName || user.email || "").split(" ")[0];
     if (user.providerData[0]?.providerId === 'google.com') {
       // Only store email; do NOT overwrite name — user may have set a custom name in contacts
