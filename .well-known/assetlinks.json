@@ -3,6 +3,6 @@
   "target": {
     "namespace": "android_app",
     "package_name": "ua.in.finddrive.app",
-    "sha256_cert_fingerprints": ["REPLACE_WITH_PLAY_APP_SIGNING_SHA256"]
+    "sha256_cert_fingerprints": ["F9:5A:A0:60:95:07:61:DA:84:11:3C:7D:57:A2:38:40:18:8D:19:DF:3C:CD:84:6C:9A:11:20:5E:CF:98:7C:F8"]
   }
 }]

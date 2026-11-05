@@ -6,6 +6,11 @@ Format: `[YY.MM.NN]` — рік.місяць.порядковий_номер_р�
 
 ---
 
+## [24.06.405] — 2026-11-05
+
+### Fixed
+- `.well-known/assetlinks.json`: вписано SHA-256 ключа Play App Signing — TWA в Google Play відкривається без адресного рядка
+
 ## [24.06.404] — 2026-11-05
 
 ### Added
