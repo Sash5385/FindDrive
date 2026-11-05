@@ -19,6 +19,14 @@ service cloud.firestore {
               || instrDoc(instrId).email == request.auth.token.email);
     }
 
+    // Інструктор, зв'язаний з ID4Drive (id4Linked ставить лише адмін)
+    function isLinkedInstr(instrId) {
+      return instrId != null
+          && instrId != ''
+          && exists(/databases/$(database)/documents/instructors/$(instrId))
+          && instrDoc(instrId).get('id4Linked', false) == true;
+    }
+
     function schoolDoc(schoolId) {
       return get(/databases/$(database)/documents/schools/$(schoolId)).data;
     }
@@ -49,14 +57,15 @@ service cloud.firestore {
                || resource.data.status == 'approved'
                || (request.auth != null && resource.data.userId == request.auth.uid)
                || (request.auth != null && resource.data.email == request.auth.token.email);
-      allow create: if request.resource.data.status == 'pending';
+      allow create: if request.resource.data.status == 'pending'
+                    && request.resource.data.get('id4Linked', false) != true;
       allow update: if isAdmin()
                  || (request.auth != null
                      && resource.data.userId == request.auth.uid
-                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']))
+                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'id4Linked']))
                  || (request.auth != null
                      && resource.data.email == request.auth.token.email
-                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']))
+                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'id4Linked']))
                  || (request.auth != null
                      && resource.data.userId == null
                      && resource.data.email == request.auth.token.email
@@ -119,12 +128,20 @@ service cloud.firestore {
                     && request.resource.data.clientId == request.auth.uid
                     && request.resource.data.status == 'pending';
       allow update: if isAdmin();
+      // Для інструктора, зв'язаного з ID4Drive, пряме скасування клієнтом заборонене —
+      // лише через callable cancelBooking (вікно 24 год + синхронізація з ID4).
       allow update: if request.auth != null
                     && resource.data.clientId == request.auth.uid
                     && request.resource.data.status == 'cancelled'
+                    && !isLinkedInstr(resource.data.instructorId)
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'cancelledBy']);
       allow update: if isInstructor(resource.data.instructorId)
+                    && !isLinkedInstr(resource.data.instructorId)
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'date', 'time', 'proposedDate', 'proposedTime']);
+      // Для зв'язаного з ID4Drive інструктора — лише статус; перенесення (date/time) тільки в ID4Drive
+      allow update: if isInstructor(resource.data.instructorId)
+                    && isLinkedInstr(resource.data.instructorId)
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
       allow update: if request.auth != null
                     && resource.data.clientId == request.auth.uid
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reviewed']);

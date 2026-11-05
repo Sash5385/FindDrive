@@ -5,8 +5,15 @@ const { onSchedule } = require('firebase-functions/v2/scheduler');
 // з хешем, який неможливо зашити в код клієнта заздалегідь.
 const functionsV1 = require('firebase-functions/v1');
 const admin = require('firebase-admin');
+// Міст FindDrive ⇄ ID4Drive (синхронізація слотів і броней)
+const id4Bridge = require('./id4Bridge');
 
 admin.initializeApp();
+
+exports.id4SlotsSync    = id4Bridge.id4SlotsSync;
+exports.id4BookingEvent = id4Bridge.id4BookingEvent;
+exports.id4BridgeSweep  = id4Bridge.id4BridgeSweep;
+exports.cancelBooking   = id4Bridge.cancelBooking;
 
 // data — об'єкт, який SW передає в notificationclick → відкриває потрібну панель
 // link — куди веде клік по сповіщенню (за замовчуванням головна, для адмін-пушів — admin.html)
@@ -89,10 +96,14 @@ exports.mirrorBookingSlot = onDocumentWritten(
 
 // Інструктор отримує push коли клієнт бронює
 exports.onBookingCreated = onDocumentCreated(
-  { document: 'bookings/{id}', region: 'europe-west1' },
+  { document: 'bookings/{id}', region: 'europe-west1', secrets: [id4Bridge.FD_ID4_SECRET] },
   async event => {
     if (!(await claimEventOnce(event.id))) return;
     const d = event.data.data();
+    // Інструктор, зв'язаний з ID4: спершу ліміт і заявка слоту в ID4Drive;
+    // якщо запис одразу скасовано (ліміт / слот зайнято) — інструктору push не потрібен
+    const linked = await id4Bridge.handleBookingCreated(event.params.id, d);
+    if (linked.cancelled) return;
     const uid = d.instructorUserId || await getInstrUserId(d.instructorId);
     if (!uid) return;
     await sendPush(
@@ -106,12 +117,19 @@ exports.onBookingCreated = onDocumentCreated(
 
 // Клієнт отримує push коли інструктор підтверджує / скасовує
 exports.onBookingUpdated = onDocumentUpdated(
-  { document: 'bookings/{id}', region: 'europe-west1' },
+  { document: 'bookings/{id}', region: 'europe-west1', secrets: [id4Bridge.FD_ID4_SECRET] },
   async event => {
     if (!(await claimEventOnce(event.id))) return;
     const before = event.data.before.data();
     const after  = event.data.after.data();
+    // Перенос з ID4Drive (id4BookingEvent змінив дату/час при незмінному статусі) — повідомляємо клієнта
+    if (before.status === after.status && after.syncOrigin === 'id4' && after.syncOriginAt !== before.syncOriginAt
+        && after.clientId && after.status !== 'cancelled' && (before.date !== after.date || before.time !== after.time)) {
+      await sendPush(after.clientId, 'Час запису змінено', `${after.date} о ${after.time}`, { type: 'booking' });
+    }
     if (before.status === after.status) return;
+    // Зміну статусу не з ID4 пересилаємо в ID4Drive (для зв'язаного інструктора); помилки не блокують push
+    const fwd = id4Bridge.handleBookingUpdated(event.params.id, before, after); // не кидає винятків
     if (after.status === 'cancelled' && after.cancelledBy === 'client') {
       // Клієнт скасував — сповістити інструктора
       const instrUid = after.instructorUserId || await getInstrUserId(after.instructorId);
@@ -124,7 +142,7 @@ exports.onBookingUpdated = onDocumentUpdated(
         );
       }
     }
-    if (!after.clientId) return;
+    if (!after.clientId) { await fwd; return; }
     if (after.status === 'confirmed') {
       await sendPush(
         after.clientId,
@@ -140,6 +158,7 @@ exports.onBookingUpdated = onDocumentUpdated(
         { type: 'booking' }
       );
     }
+    await fwd;
   }
 );
 
