@@ -1817,7 +1817,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.414</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.415</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -2158,6 +2158,8 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRe
 import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp,
          setDoc, getDoc, doc, updateDoc, onSnapshot, deleteField, orderBy, limit, deleteDoc, increment }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+import { getFunctions, httpsCallable }
+  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAr-Q8ojscCoMLXNAKNjqbGrqw0JN6_mbo",
@@ -2172,6 +2174,7 @@ const firebaseConfig = {
 const app      = initializeApp(firebaseConfig);
 const auth     = getAuth(app);
 const db       = getFirestore(app);
+const functions = getFunctions(app, 'europe-west1');
 const provider = new GoogleAuthProvider();
 
 // Приймач помилок для _reportError (див. верхній скрипт) → errorLogs у Firestore
@@ -6299,12 +6302,12 @@ function getDateAvail(instr, dateStr) {
       if (!ov.openSlots.length) return null;
       return { openSlots: ov.openSlots, breakFrom: ov.breakFrom||'', breakTo: ov.breakTo||'', location: ov.location||'', locationLat: ov.locationLat||null, locationLng: ov.locationLng||null, durations: ov.durations||null };
     }
-    if (ov.from || ov.to) {
+    if ((ov.from || ov.to) && !instr.id4Linked) { // для ID4-інструктора слоти лише з синхронізації (openSlots)
       return { from: ov.from||instr.time_from, to: ov.to||instr.time_to, location: ov.location||'', durations: ov.durations||null };
     }
     return null;
   }
-  if (!instr.scheduleActive) return null;
+  if (!instr.scheduleActive || instr.id4Linked) return null;
   const dt = new Date(dateStr + 'T00:00:00');
   const dayName = DAY_UA_FULL[dt.getDay()];
   if (!(instr.days||[]).includes(dayName)) return null;
@@ -6808,10 +6811,22 @@ window._addToCalendar = function(date, time, duration, instrName, location) {
 window._cancelBooking = async function(bookingId) {
   if (!(await window._appConfirm('Скасувати цей запис?'))) return;
   try {
-    await updateDoc(doc(db,'bookings',bookingId), { status:'cancelled', cancelledBy:'client' });
+    // Скасування через Cloud Function: для інструктора, зв'язаного з ID4Drive, діє вікно 24 год
+    try {
+      await httpsCallable(functions, 'cancelBooking')({ bookingId });
+    } catch(e) {
+      // Функція ще не розгорнута / недоступна — для звичайних інструкторів лишається пряме скасування (як раніше)
+      if (e?.code === 'functions/not-found' || e?.code === 'functions/unavailable') {
+        await updateDoc(doc(db,'bookings',bookingId), { status:'cancelled', cancelledBy:'client' });
+      } else { throw e; }
+    }
     window._ga('booking_cancelled', { by: 'client' });
     window._reloadClientBk?.();
-  } catch(e) { showToast('Не вдалось скасувати', '', 'error'); }
+  } catch(e) {
+    if (e?.code === 'functions/failed-precondition' || e?.details?.reason === 'cancel_window') {
+      showToast('Скасування недоступне', 'Скасування можливе не пізніше ніж за 24 год до заняття, зателефонуйте інструктору', 'error');
+    } else { showToast('Не вдалось скасувати', '', 'error'); }
+  }
 };
 
 async function getMyInstrProfile(user) {
@@ -7031,7 +7046,7 @@ async function loadInstrCombined(instr, container) {
           <label style="display:flex;align-items:center;gap:5px;margin-bottom:5px"><i class="ti ti-map-pin" style="color:#185fa5;font-size:12px"></i> Точка зустрічі на цей день</label>
           ${mpSectionHtml}
         </div>
-        ${!hasLoc?`<p style="font-size:11px;color:#c07000;margin:0 0 8px;display:flex;align-items:center;gap:5px"><i class="ti ti-lock"></i> Оберіть точку зустрічі вище, щоб відкрити слоти на цей день</p>`:''}
+        ${(!hasLoc && !instr.id4Linked)?`<p style="font-size:11px;color:#c07000;margin:0 0 8px;display:flex;align-items:center;gap:5px"><i class="ti ti-lock"></i> Оберіть точку зустрічі вище, щоб відкрити слоти на цей день</p>`:''}
         <div class="slot-hr-grid">${hourBtns}</div>
         ${detPanel}
         <div class="avail-loc-row" style="margin-top:10px">
@@ -7049,9 +7064,11 @@ async function loadInstrCombined(instr, container) {
           <span><i class="ti ti-calendar-event" style="color:var(--green)"></i> ${d}.${m}.${y} (${dowLabel})</span>
           <button class="av-cal-nav" onclick="window._combPickDate(null)" title="Закрити"><i class="ti ti-x"></i></button>
         </div>
-        <div style="margin:4px 0 8px">
+        ${instr.id4Linked
+          ? `<div style="margin:4px 0 8px;padding:8px 11px;background:var(--green-light);border:.5px solid #b8ddc8;border-radius:9px;font-size:12px;font-weight:500;color:var(--green);display:flex;align-items:center;gap:6px"><i class="ti ti-refresh"></i> Слоти синхронізуються з ID4Drive</div>`
+          : `<div style="margin:4px 0 8px">
           <button class="slot-dayoff-btn${isDayOff?' active':''}" onclick="window._combToggleDayOff('${instr.id}','${editDate}')"><i class="ti ti-${isDayOff?'calendar-check':'moon'}"></i> ${isDayOff?'Відкрити день':'Вихідний'}</button>
-        </div>
+        </div>`}
         ${mainContent}
       </div>`;
     }
@@ -7086,9 +7103,9 @@ async function loadInstrCombined(instr, container) {
           <button class="bk-tab${isT('archive')?' active':''}" onclick="switchBkTab(this,'archive')">Архів</button>
           <button class="bk-tab${isT('students')?' active':''}" onclick="switchBkTab(this,'students')">Учні</button>
         </div>
-        <div data-bk-panel="new"${!isT('new')?' style="display:none"':''}>${renderInstrCards(pending,true)}</div>
-        <div data-bk-panel="upcoming"${!isT('upcoming')?' style="display:none"':''}>${renderInstrCards(upcoming,false)}</div>
-        <div data-bk-panel="archive"${!isT('archive')?' style="display:none"':''}>${renderInstrCards(archive,false)}</div>
+        <div data-bk-panel="new"${!isT('new')?' style="display:none"':''}>${renderInstrCards(pending,true,!!instr.id4Linked)}</div>
+        <div data-bk-panel="upcoming"${!isT('upcoming')?' style="display:none"':''}>${renderInstrCards(upcoming,false,!!instr.id4Linked)}</div>
+        <div data-bk-panel="archive"${!isT('archive')?' style="display:none"':''}>${renderInstrCards(archive,false,!!instr.id4Linked)}</div>
         <div data-bk-panel="students"${!isT('students')?' style="display:none"':''}>${studentsHtml}</div>
       </div>`;
     }
@@ -7169,6 +7186,7 @@ async function loadInstrCombined(instr, container) {
     window._combPickDate  = (date) => { editDate=date; selectedBkId=null; renderAll(); };
     window._combStatClick = (tab)  => { editDate=null; _activeStatFilter=tab; renderAll(); };
     window._combToggleSlot = async (instrId, date, slot) => {
+      if (instr.id4Linked) { showToast('Слоти синхронізуються з ID4Drive', 'Змінюйте їх в ID4Drive', 'error'); return; }
       const curr = localAvail[date] || {};
       const slots = [...(curr.openSlots||[])];
       const idx = slots.indexOf(slot);
@@ -7186,6 +7204,7 @@ async function loadInstrCombined(instr, container) {
       } catch(e) { showToast('Помилка збереження', '', 'error'); }
     };
     window._combToggleDayOff = async (instrId, date) => {
+      if (instr.id4Linked) { showToast('Слоти синхронізуються з ID4Drive', 'Змінюйте їх в ID4Drive', 'error'); return; }
       const curr = localAvail[date]||{};
       const closing = curr.open !== false;
       const data = closing ? {open:false} : null;
@@ -7233,7 +7252,7 @@ async function loadInstrCombined(instr, container) {
     window._combClearLoc = async (instrId, date) => {
       const curr = {...(localAvail[date]||{})};
       delete curr.location; delete curr.locationLat; delete curr.locationLng;
-      if (curr.openSlots?.length) curr.openSlots = []; // без точки зустрічі слоти не можуть лишатись відкритими
+      if (curr.openSlots?.length && !instr.id4Linked) curr.openSlots = []; // без точки зустрічі слоти не можуть лишатись відкритими (для ID4-інструктора слоти веде синхронізація)
       try {
         await updateDoc(doc(db,'instructors',instrId),{[`availability.${date}`]:curr});
         localAvail[date]=curr;
@@ -7286,7 +7305,7 @@ async function loadInstrCombined(instr, container) {
   }
 }
 
-function renderInstrCards(docs, showActions) {
+function renderInstrCards(docs, showActions, linked) {
   if (!docs.length) return '<div class="bk-empty-tab"><i class="ti ti-calendar-off"></i><br>Порожньо</div>';
   const today = new Date().toISOString().slice(0,10);
   return docs.map(b => `<div class="bk-card" id="bk-${b.id}">
@@ -7298,16 +7317,17 @@ function renderInstrCards(docs, showActions) {
     ${b.meetingPoint?.label?`<div class="bk-meta" style="margin-top:2px"><i class="ti ti-map-pin" style="font-size:11px;color:var(--green)"></i>${esc(b.meetingPoint.label)}</div>`:''}
     ${b.clientEmail?`<div class="bk-meta"><i class="ti ti-mail" style="font-size:11px;color:var(--text-hint)"></i>${esc(b.clientEmail)}</div>`:''}
     ${b.status==='reschedule_requested'&&b.proposedDate?`
-      <div class="bk-reschedule-hint"><i class="ti ti-calendar-time"></i> Учень просить перенести на <b>${esc(b.proposedDate.split('-').reverse().join('.'))} о ${esc(b.proposedTime||'')}</b></div>
-      <div class="btn-row">
+      <div class="bk-reschedule-hint"><i class="ti ti-calendar-time"></i> Учень просить перенести на <b>${esc(b.proposedDate.split('-').reverse().join('.'))} о ${esc(b.proposedTime||'')}</b>${linked?'<br>Перенесення — в ID4Drive':''}</div>
+      ${linked?'':`<div class="btn-row">
         <button class="btn-bk-action" style="font-size:11px;padding:5px 12px" onclick="window._acceptReschedule('${b.id}')"><i class="ti ti-check"></i> Прийняти</button>
         <button class="btn-bk-reject" style="font-size:11px;padding:5px 12px" onclick="window._rejectReschedule('${b.id}')">Залишити дату</button>
-      </div>` : ''}
+      </div>`}` : ''}
     ${showActions&&b.status==='pending'?`<div class="btn-row">
       <button class="btn-bk-action" onclick="window._confirmBk('${b.id}')"><i class="ti ti-check"></i> Підтвердити</button>
       <button class="btn-bk-reject" onclick="window._rejectBk('${b.id}')">Відхилити</button>
     </div>`:''}
     ${b.status==='confirmed'&&b.date>=today?`<div class="btn-row"><button class="btn-bk-cancel" style="font-size:11px;padding:5px 10px" onclick="window._instrCancelBk('${b.id}')"><i class="ti ti-x"></i> Скасувати заняття</button></div>`:''}
+    ${linked&&(b.status==='pending'||b.status==='confirmed')&&b.date>=today?'<div class="bk-reschedule-hint"><i class="ti ti-calendar-time"></i> Перенесення — в ID4Drive</div>':''}
   </div>`).join('');
 }
 
@@ -7336,6 +7356,8 @@ window._acceptReschedule = async function(bookingId) {
     const s = await getDoc(doc(db,'bookings',bookingId));
     const d = s.data();
     if (!d?.proposedDate) return;
+    // Для ID4-інструктора перенесення лише в ID4Drive (правила теж забороняють змінювати date/time)
+    if ((await getDoc(doc(db,'instructors',d.instructorId))).data()?.id4Linked) { showToast('Перенесення — в ID4Drive', '', 'error'); return; }
     await updateDoc(doc(db,'bookings',bookingId), {
       date:d.proposedDate, time:d.proposedTime,
       status:'confirmed', proposedDate:null, proposedTime:null
@@ -7347,6 +7369,8 @@ window._acceptReschedule = async function(bookingId) {
 window._rejectReschedule = async function(bookingId) {
   if (!(await window._appConfirm('Відхилити перенос і залишити оригінальну дату?'))) return;
   try {
+    const bk = (await getDoc(doc(db,'bookings',bookingId))).data();
+    if ((await getDoc(doc(db,'instructors',bk?.instructorId||'_'))).data()?.id4Linked) { showToast('Перенесення — в ID4Drive', '', 'error'); return; }
     await updateDoc(doc(db,'bookings',bookingId),{status:'confirmed',proposedDate:null,proposedTime:null});
     window._reloadInstrBk?.();
   } catch(e) { showToast('Помилка', 'Спробуйте ще раз', 'error'); }
