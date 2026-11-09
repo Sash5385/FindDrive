@@ -91,3 +91,11 @@ test('Відгук: оцінка 6', () => assertFails(setDoc(doc(student(), 're
 test('Відгук: непідтверджена бронь', () => assertFails(setDoc(doc(student(), 'reviews', 'bk2'), review({ bookingId: 'bk2' }))));
 test('Відгук: без броні', () => assertFails(setDoc(doc(stranger(), 'reviews', 'bk1'), review({ clientId: 'evil' }))));
 test('Відгук: на іншого інструктора', () => assertFails(setDoc(doc(student(), 'reviews', 'bk1'), review({ instrId: 'instrB' }))));
+
+// ── F4: дошка оголошень ──
+const post = (over = {}) => ({ kind: 'request', authorId: STUDENT, instrId: null, name: 'S', district: 'Позняки', date: '2026-11-10', timeFrom: '10:00', timeTo: '12:00', note: '', lat: null, lng: null, price: null, createdAt: serverTimestamp(), ...over });
+test('F4: валідний запит на дошці', () => assertSucceeds(addDoc(collection(student(), 'boardPosts'), post())));
+test('F4: задовга примітка', () => assertFails(addDoc(collection(student(), 'boardPosts'), post({ note: 'x'.repeat(501) }))));
+test('F4: зайве поле', () => assertFails(addDoc(collection(student(), 'boardPosts'), post({ pinned: true }))));
+test('F4: offer від не-інструктора', () => assertFails(addDoc(collection(student(), 'boardPosts'), post({ kind: 'offer', instrId: 'instrB' }))));
+test('F4: offer від інструктора', () => assertSucceeds(addDoc(collection(as('uidB'), 'boardPosts'), post({ kind: 'offer', authorId: 'uidB', instrId: 'instrB' }))));

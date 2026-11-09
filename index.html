@@ -1496,7 +1496,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       </div>
       <div style="display:flex;gap:10px;margin-bottom:12px">
         <div style="flex:1"><label class="cab-label">Дата</label><input id="board-date" class="form-input" type="date"></div>
-        <div style="flex:1"><label class="cab-label">Район</label><input id="board-district" class="form-input" type="text" placeholder="Напр. Позняки"></div>
+        <div style="flex:1"><label class="cab-label">Район</label><input id="board-district" class="form-input" type="text" maxlength="120" placeholder="Напр. Позняки"></div>
       </div>
       <div style="display:flex;gap:10px;margin-bottom:12px">
         <div style="flex:1"><label class="cab-label">З</label><input id="board-time-from" class="form-input" type="time"></div>
@@ -1509,7 +1509,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       </div>
       <button type="button" class="btn-bk-action" style="width:100%;box-sizing:border-box;justify-content:center;display:flex;align-items:center;gap:6px;margin:8px 0 12px" onclick="window._boardUseMyLocation()"><i class="ti ti-current-location"></i> Використати моє місце</button>
       <label class="cab-label">Коментар (необов'язково)</label>
-      <textarea id="board-note" class="form-input" rows="2" placeholder="Наприклад: знижка 20%, або бюджет 900₴/год" style="resize:none;margin-bottom:6px"></textarea>
+      <textarea id="board-note" class="form-input" rows="2" maxlength="500" placeholder="Наприклад: знижка 20%, або бюджет 900₴/год" style="resize:none;margin-bottom:6px"></textarea>
       <div style="font-size:11px;color:var(--text-hint);margin-bottom:10px">Можна тримати відкритими до 6 оголошень одночасно.</div>
       <div id="board-err" class="field-err" style="display:none;margin-bottom:8px"></div>
       <button class="auth-role-btn-primary" style="padding:11px" onclick="window._submitBoardPost()">Опублікувати</button>

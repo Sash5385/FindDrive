@@ -210,8 +210,17 @@ service cloud.firestore {
     match /boardPosts/{postId} {
       allow read: if true;
       allow create: if request.auth != null
+                    && request.resource.data.keys().hasOnly(['kind','authorId','instrId','name','district','date','timeFrom','timeTo','note','lat','lng','price','createdAt'])
                     && request.resource.data.authorId == request.auth.uid
-                    && request.resource.data.kind in ['offer', 'request'];
+                    && request.resource.data.kind in ['offer', 'request']
+                    && (request.resource.data.kind == 'request' || isInstructor(request.resource.data.instrId))
+                    && optStr(request.resource.data.get('name', null), 120)
+                    && optStr(request.resource.data.get('district', null), 120)
+                    && optStr(request.resource.data.get('date', null), 10)
+                    && optStr(request.resource.data.get('timeFrom', null), 5)
+                    && optStr(request.resource.data.get('timeTo', null), 5)
+                    && optStr(request.resource.data.get('note', null), 500)
+                    && request.resource.data.createdAt == request.time;
       allow update, delete: if request.auth != null
                     && (resource.data.authorId == request.auth.uid || isAdmin());
     }

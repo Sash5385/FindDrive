@@ -243,8 +243,13 @@ exports.sendLessonReminders = onSchedule(
     const windowStart = new Date(now.getTime() + 105 * 60 * 1000); // +1год45хв
     const windowEnd   = new Date(now.getTime() + 135 * 60 * 1000); // +2год15хв
 
+    // Лише дати, у які може потрапити вікно (+2 год може перейти через північ) —
+    // раніше читались УСІ підтверджені бронювання за всю історію.
+    const kyivDay = d => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Kyiv' }).format(d);
+    const dates = [...new Set([kyivDay(windowStart), kyivDay(windowEnd)])];
     const snap = await admin.firestore().collection('bookings')
       .where('status', '==', 'confirmed')
+      .where('date', 'in', dates)
       .get();
 
     for (const doc of snap.docs) {
