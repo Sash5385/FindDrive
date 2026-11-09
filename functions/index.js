@@ -301,6 +301,34 @@ exports.cleanupOldAvailability = onSchedule(
   }
 );
 
+// Рейтинг інструктора рахується лише тут (правила забороняють клієнту писати rating/reviews).
+// onDocumentWritten — щоб і видалення відгуку адміном перераховувало середнє.
+async function recomputeInstrRating(instrId) {
+  if (!instrId || typeof instrId !== 'string') return;
+  const db = admin.firestore();
+  const instrRef = db.collection('instructors').doc(instrId);
+  const agg = await db.collection('reviews').where('instrId', '==', instrId)
+    .aggregate({ n: admin.firestore.AggregateField.count(), sum: admin.firestore.AggregateField.sum('rating') })
+    .get();
+  const { n, sum } = agg.data();
+  const rating = n ? Math.round((sum / n) * 10) / 10 : null;
+  try {
+    await instrRef.update({ rating, reviews: n });
+  } catch (e) {
+    if (e.code !== 5) throw e; // NOT_FOUND — інструктора видалено
+  }
+}
+
+exports.onReviewWritten = onDocumentWritten(
+  { document: 'reviews/{reviewId}', region: 'europe-west1' },
+  async event => {
+    const before = event.data.before.exists ? event.data.before.data() : null;
+    const after  = event.data.after.exists  ? event.data.after.data()  : null;
+    const ids = new Set([before?.instrId, after?.instrId].filter(Boolean));
+    for (const id of ids) await recomputeInstrRating(id);
+  }
+);
+
 // Push при новому повідомленні в чаті
 exports.onChatMessage = onDocumentCreated(
   { document: 'chats/{chatId}/messages/{msgId}', region: 'europe-west1' },

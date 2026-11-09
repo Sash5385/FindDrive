@@ -1817,7 +1817,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.416</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.417</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -2153,7 +2153,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
          signOut, onAuthStateChanged, getAdditionalUserInfo,
-         createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile }
+         createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendEmailVerification }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp,
          setDoc, getDoc, doc, updateDoc, onSnapshot, deleteField, orderBy, limit, deleteDoc, increment }
@@ -2433,6 +2433,7 @@ async function handleAuthSubmit() {
       const phone = document.getElementById('auth-phone')?.value.trim() || '';
       _isNewClientReg = _authModalRole === 'client';
       const cred  = await createUserWithEmailAndPassword(auth, email, pass);
+      sendEmailVerification(cred.user).catch(e => console.warn('verify mail:', e.code));
       if (name) await updateProfile(cred.user, { displayName: name });
       await setDoc(doc(db, 'users', cred.user.uid), { name, phone, email, createdAt: serverTimestamp() });
     } else {
@@ -4542,24 +4543,15 @@ window._submitReview = async function(bkId, instrId, clientName, clientPhoto) {
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> …'; }
   try {
     const user = auth.currentUser;
-    await addDoc(collection(db, 'reviews'), {
+    // ID = bookingId (один відгук на бронь); rating/reviews інструктора рахує Cloud Function
+    await setDoc(doc(db, 'reviews', bkId), {
       instrId, clientId: user.uid,
-      clientName: clientName || 'Учень',
+      clientName: (clientName || 'Учень').slice(0, 100),
       clientPhoto: clientPhoto || null,
-      rating, text, bookingId: bkId,
+      rating, text: text.slice(0, 2000), bookingId: bkId,
       createdAt: serverTimestamp(),
     });
     await updateDoc(doc(db, 'bookings', bkId), { reviewed: true });
-    const revSnap = await getDocs(query(collection(db, 'reviews'), where('instrId', '==', instrId)));
-    const ratings = revSnap.docs.map(d => d.data().rating || 0).filter(r => r > 0);
-    if (ratings.length) {
-      const avg = Math.round((ratings.reduce((s, r) => s + r, 0) / ratings.length) * 10) / 10;
-      await updateDoc(doc(db, 'instructors', instrId), { rating: avg, reviews: ratings.length });
-      if (window._instrProfiles?.[instrId]) {
-        window._instrProfiles[instrId].rating = avg;
-        window._instrProfiles[instrId].reviews = ratings.length;
-      }
-    }
     const rf = document.getElementById('rev-form-' + bkId);
     const revOpenBtn = document.getElementById('rev-open-' + bkId);
     if (rf) rf.remove();
@@ -4638,6 +4630,7 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
   if (!alreadyLoggedIn && email && pass.length >= 6) {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      sendEmailVerification(cred.user).catch(e => console.warn('verify mail:', e.code));
       await updateProfile(cred.user, { displayName: name });
       uid = cred.user.uid;
     } catch(authErr) {
@@ -5658,6 +5651,7 @@ document.getElementById("btn-submit-school")?.addEventListener("click", async ()
   if (!alreadyLoggedIn && email && pass.length >= 6) {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      sendEmailVerification(cred.user).catch(e => console.warn('verify mail:', e.code));
       await updateProfile(cred.user, { displayName: name });
       uid = cred.user.uid;
     } catch(authErr) {

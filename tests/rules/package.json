@@ -1,0 +1,13 @@
+{
+  "name": "finddrive-rules-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "cd ../.. && tests/rules/node_modules/.bin/firebase emulators:exec --only firestore --project demo-finddrive \"node --test tests/rules/rules.test.js\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "firebase": "^11.0.0",
+    "firebase-tools": "^14.0.0"
+  }
+}
