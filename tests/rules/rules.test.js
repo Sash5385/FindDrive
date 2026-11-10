@@ -99,3 +99,7 @@ test('F4: задовга примітка', () => assertFails(addDoc(collection(
 test('F4: зайве поле', () => assertFails(addDoc(collection(student(), 'boardPosts'), post({ pinned: true }))));
 test('F4: offer від не-інструктора', () => assertFails(addDoc(collection(student(), 'boardPosts'), post({ kind: 'offer', instrId: 'instrB' }))));
 test('F4: offer від інструктора', () => assertSucceeds(addDoc(collection(as('uidB'), 'boardPosts'), post({ kind: 'offer', authorId: 'uidB', instrId: 'instrB' }))));
+
+// ── XSS-ліміт: clientName у броні ──
+test('Бронь: clientName до 100', () => assertSucceeds(addDoc(collection(student(), 'bookings'), { clientId: STUDENT, status: 'pending', clientName: 'Іван' })));
+test('Бронь: clientName довше 100', () => assertFails(addDoc(collection(student(), 'bookings'), { clientId: STUDENT, status: 'pending', clientName: 'x'.repeat(101) })));

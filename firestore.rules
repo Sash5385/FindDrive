@@ -146,7 +146,8 @@ service cloud.firestore {
                || isInstructor(resource.data.instructorId);
       allow create: if request.auth != null
                     && request.resource.data.clientId == request.auth.uid
-                    && request.resource.data.status == 'pending';
+                    && request.resource.data.status == 'pending'
+                    && optStr(request.resource.data.get('clientName', null), 100);
       allow update: if isAdmin();
       // Для інструктора, зв'язаного з ID4Drive, пряме скасування клієнтом заборонене —
       // лише через callable cancelBooking (вікно 24 год + синхронізація з ID4).
