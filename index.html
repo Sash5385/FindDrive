@@ -1496,7 +1496,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       </div>
       <div style="display:flex;gap:10px;margin-bottom:12px">
         <div style="flex:1"><label class="cab-label">Дата</label><input id="board-date" class="form-input" type="date"></div>
-        <div style="flex:1"><label class="cab-label">Район</label><input id="board-district" class="form-input" type="text" placeholder="Напр. Позняки"></div>
+        <div style="flex:1"><label class="cab-label">Район</label><input id="board-district" class="form-input" type="text" maxlength="120" placeholder="Напр. Позняки"></div>
       </div>
       <div style="display:flex;gap:10px;margin-bottom:12px">
         <div style="flex:1"><label class="cab-label">З</label><input id="board-time-from" class="form-input" type="time"></div>
@@ -1509,7 +1509,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
       </div>
       <button type="button" class="btn-bk-action" style="width:100%;box-sizing:border-box;justify-content:center;display:flex;align-items:center;gap:6px;margin:8px 0 12px" onclick="window._boardUseMyLocation()"><i class="ti ti-current-location"></i> Використати моє місце</button>
       <label class="cab-label">Коментар (необов'язково)</label>
-      <textarea id="board-note" class="form-input" rows="2" placeholder="Наприклад: знижка 20%, або бюджет 900₴/год" style="resize:none;margin-bottom:6px"></textarea>
+      <textarea id="board-note" class="form-input" rows="2" maxlength="500" placeholder="Наприклад: знижка 20%, або бюджет 900₴/год" style="resize:none;margin-bottom:6px"></textarea>
       <div style="font-size:11px;color:var(--text-hint);margin-bottom:10px">Можна тримати відкритими до 6 оголошень одночасно.</div>
       <div id="board-err" class="field-err" style="display:none;margin-bottom:8px"></div>
       <button class="auth-role-btn-primary" style="padding:11px" onclick="window._submitBoardPost()">Опублікувати</button>
@@ -1817,7 +1817,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.416</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.418</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -2153,7 +2153,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
          signOut, onAuthStateChanged, getAdditionalUserInfo,
-         createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile }
+         createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendEmailVerification }
   from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp,
          setDoc, getDoc, doc, updateDoc, onSnapshot, deleteField, orderBy, limit, deleteDoc, increment }
@@ -2433,6 +2433,7 @@ async function handleAuthSubmit() {
       const phone = document.getElementById('auth-phone')?.value.trim() || '';
       _isNewClientReg = _authModalRole === 'client';
       const cred  = await createUserWithEmailAndPassword(auth, email, pass);
+      sendEmailVerification(cred.user).catch(e => console.warn('verify mail:', e.code));
       if (name) await updateProfile(cred.user, { displayName: name });
       await setDoc(doc(db, 'users', cred.user.uid), { name, phone, email, createdAt: serverTimestamp() });
     } else {
@@ -3749,8 +3750,10 @@ function showToast(title, text = '', type = 'info') {
   if (!wrap) return;
   const el = document.createElement('div');
   el.className = `toast is-${type}`;
+  // Екрануємо: у тексти потрапляють дані з БД (ім'я клієнта тощо) — інакше збережений XSS
+  const h = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   el.innerHTML = `<div class="toast-icon"><i class="ti ${icons[type]||icons.info}"></i></div>
-    <div class="toast-body"><div class="toast-title">${title}</div>${text ? `<div class="toast-text">${text}</div>` : ''}</div>`;
+    <div class="toast-body"><div class="toast-title">${h(title)}</div>${text ? `<div class="toast-text">${h(text)}</div>` : ''}</div>`;
   wrap.appendChild(el);
   setTimeout(() => el.remove(), 5000);
 }
@@ -4542,24 +4545,15 @@ window._submitReview = async function(bkId, instrId, clientName, clientPhoto) {
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ti ti-loader"></i> …'; }
   try {
     const user = auth.currentUser;
-    await addDoc(collection(db, 'reviews'), {
+    // ID = bookingId (один відгук на бронь); rating/reviews інструктора рахує Cloud Function
+    await setDoc(doc(db, 'reviews', bkId), {
       instrId, clientId: user.uid,
-      clientName: clientName || 'Учень',
+      clientName: (clientName || 'Учень').slice(0, 100),
       clientPhoto: clientPhoto || null,
-      rating, text, bookingId: bkId,
+      rating, text: text.slice(0, 2000), bookingId: bkId,
       createdAt: serverTimestamp(),
     });
     await updateDoc(doc(db, 'bookings', bkId), { reviewed: true });
-    const revSnap = await getDocs(query(collection(db, 'reviews'), where('instrId', '==', instrId)));
-    const ratings = revSnap.docs.map(d => d.data().rating || 0).filter(r => r > 0);
-    if (ratings.length) {
-      const avg = Math.round((ratings.reduce((s, r) => s + r, 0) / ratings.length) * 10) / 10;
-      await updateDoc(doc(db, 'instructors', instrId), { rating: avg, reviews: ratings.length });
-      if (window._instrProfiles?.[instrId]) {
-        window._instrProfiles[instrId].rating = avg;
-        window._instrProfiles[instrId].reviews = ratings.length;
-      }
-    }
     const rf = document.getElementById('rev-form-' + bkId);
     const revOpenBtn = document.getElementById('rev-open-' + bkId);
     if (rf) rf.remove();
@@ -4638,6 +4632,7 @@ document.getElementById("btn-submit-instr").addEventListener("click", async () =
   if (!alreadyLoggedIn && email && pass.length >= 6) {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      sendEmailVerification(cred.user).catch(e => console.warn('verify mail:', e.code));
       await updateProfile(cred.user, { displayName: name });
       uid = cred.user.uid;
     } catch(authErr) {
@@ -5511,7 +5506,7 @@ async function openSchoolProfile(id) {
   document.getElementById('school-prof-body').innerHTML = `
     <div class="school-branches" style="margin:14px 0">${branches.map(b=>`<span class="tag"><i class="ti ti-map-pin"></i> ${esc(typeof b==='string'?b:(b.label||''))}</span>`).join('')}</div>
     ${d.phone ? `<div style="font-size:13px;color:var(--text);margin-bottom:8px"><i class="ti ti-phone" style="color:var(--green)"></i> ${esc(d.phone)}</div>` : ''}
-    ${d.website ? `<div style="font-size:13px;margin-bottom:10px"><i class="ti ti-world" style="color:var(--green)"></i> <a href="${esc(d.website)}" target="_blank" rel="noopener" style="color:var(--blue)">${esc(d.website.replace(/^https?:\/\//,''))}</a></div>` : ''}
+    ${/^https?:\/\//i.test(d.website || '') ? `<div style="font-size:13px;margin-bottom:10px"><i class="ti ti-world" style="color:var(--green)"></i> <a href="${esc(d.website)}" target="_blank" rel="noopener" style="color:var(--blue)">${esc(d.website.replace(/^https?:\/\//,''))}</a></div>` : ''}
     <div style="display:flex;gap:20px;margin-bottom:14px;flex-wrap:wrap">
       ${d.price_course ? `<div class="price">${d.price_course} грн<span> / курс навчання</span></div>` : ''}
       ${d.price_extra ? `<div class="price">${d.price_extra} грн<span> / год додаткове заняття</span></div>` : ''}
@@ -5658,6 +5653,7 @@ document.getElementById("btn-submit-school")?.addEventListener("click", async ()
   if (!alreadyLoggedIn && email && pass.length >= 6) {
     try {
       const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      sendEmailVerification(cred.user).catch(e => console.warn('verify mail:', e.code));
       await updateProfile(cred.user, { displayName: name });
       uid = cred.user.uid;
     } catch(authErr) {
@@ -6550,7 +6546,7 @@ window._bookSlot = async function(instrId, dateStr, time) {
       instructorEmail:  d?.email || '',
       instructorPhone:  d?.phone || '',
       clientId:         user.uid,
-      clientName:       window._clientProfile?.name || user.displayName || '',
+      clientName:       (window._clientProfile?.name || user.displayName || '').slice(0, 100),
       clientPhone:      window._clientProfile?.phone || '',
       clientEmail:      user.email || '',
       date:             dateStr,

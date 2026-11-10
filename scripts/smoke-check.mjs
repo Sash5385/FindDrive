@@ -28,6 +28,7 @@ const PAGES = {
     elements: [
       '.nav', '#instr-grid', '#schools', '#school-grid',
       '#instr-panel', '#instr-welcome', '#school-panel', '#school-welcome',
+      'a.footer-link[href="/privacy.html"]', 'a.footer-link[href="/terms.html"]',
       '#cabinet', '#instr-profile', '#school-profile', '.nav-role-btn',
     ],
     interactions: [
@@ -39,13 +40,14 @@ const PAGES = {
       { name: 'футер "Карта" → інфо-модалка',                   click: 'a[onclick*="_openInfoModal(\'map\')"]',         expect: '#info-modal[style*="flex"]' },
       { name: 'футер "Про нас" → інфо-модалка',                 click: 'a[onclick*="_openInfoModal(\'about\')"]',       expect: '#info-modal[style*="flex"]' },
       { name: 'футер "Контакти" → інфо-модалка',                click: 'a[onclick*="_openInfoModal(\'contacts\')"]',    expect: '#info-modal[style*="flex"]' },
-      { name: 'футер "Конфіденційність" → інфо-модалка',        click: 'a[onclick*="_openInfoModal(\'privacy\')"]',     expect: '#info-modal[style*="flex"]' },
       { name: 'футер "Умови партнерства" → інфо-модалка',       click: 'a[onclick*="_openInfoModal(\'partnership\')"]', expect: '#info-modal[style*="flex"]' },
-      { name: 'футер "Умови" → інфо-модалка',                   click: 'a[onclick*="_openInfoModal(\'terms\')"]',       expect: '#info-modal[style*="flex"]' },
       { name: 'картка інструктора "Записатись" → instr-profile', click: '.instr-card .btn-book', expect: '#instr-profile.open', optional: true },
       { name: 'картка школи → school-profile', click: '.school-card', expect: '#school-profile.open', optional: true },
     ],
   },
+  // Конфіденційність і Умови — окремі сторінки (посилання у футері), не інфо-модалка
+  'privacy.html': { elements: ['h1'], interactions: [] },
+  'terms.html':   { elements: ['h1'], interactions: [] },
   'admin.html': {
     elements: ['#auth-gate', '#btn-google-login'],
     interactions: [],

@@ -243,8 +243,13 @@ exports.sendLessonReminders = onSchedule(
     const windowStart = new Date(now.getTime() + 105 * 60 * 1000); // +1год45хв
     const windowEnd   = new Date(now.getTime() + 135 * 60 * 1000); // +2год15хв
 
+    // Лише дати, у які може потрапити вікно (+2 год може перейти через північ) —
+    // раніше читались УСІ підтверджені бронювання за всю історію.
+    const kyivDay = d => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Kyiv' }).format(d);
+    const dates = [...new Set([kyivDay(windowStart), kyivDay(windowEnd)])];
     const snap = await admin.firestore().collection('bookings')
       .where('status', '==', 'confirmed')
+      .where('date', 'in', dates)
       .get();
 
     for (const doc of snap.docs) {
@@ -298,6 +303,34 @@ exports.cleanupOldAvailability = onSchedule(
     }
     if (opsInBatch > 0) await batch.commit();
     console.log(`cleanupOldAvailability: очищено ${touchedDocs} документ(ів) інструкторів`);
+  }
+);
+
+// Рейтинг інструктора рахується лише тут (правила забороняють клієнту писати rating/reviews).
+// onDocumentWritten — щоб і видалення відгуку адміном перераховувало середнє.
+async function recomputeInstrRating(instrId) {
+  if (!instrId || typeof instrId !== 'string') return;
+  const db = admin.firestore();
+  const instrRef = db.collection('instructors').doc(instrId);
+  const agg = await db.collection('reviews').where('instrId', '==', instrId)
+    .aggregate({ n: admin.firestore.AggregateField.count(), sum: admin.firestore.AggregateField.sum('rating') })
+    .get();
+  const { n, sum } = agg.data();
+  const rating = n ? Math.round((sum / n) * 10) / 10 : null;
+  try {
+    await instrRef.update({ rating, reviews: n });
+  } catch (e) {
+    if (e.code !== 5) throw e; // NOT_FOUND — інструктора видалено
+  }
+}
+
+exports.onReviewWritten = onDocumentWritten(
+  { document: 'reviews/{reviewId}', region: 'europe-west1' },
+  async event => {
+    const before = event.data.before.exists ? event.data.before.data() : null;
+    const after  = event.data.after.exists  ? event.data.after.data()  : null;
+    const ids = new Set([before?.instrId, after?.instrId].filter(Boolean));
+    for (const id of ids) await recomputeInstrRating(id);
   }
 );
 

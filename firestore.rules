@@ -2,9 +2,18 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isAdmin() {
+    // Email у токені можна "присвоїти" неверифікованим акаунтом (email/пароль),
+    // тож доступ за email — лише при email_verified == true.
+    function emailIs(e) {
       return request.auth != null
-          && request.auth.token.email == 'sash5385@gmail.com';
+          && request.auth.token.email_verified == true
+          && e != null
+          && e != ''
+          && request.auth.token.email == e;
+    }
+
+    function isAdmin() {
+      return emailIs('sash5385@gmail.com');
     }
 
     function instrDoc(instrId) {
@@ -16,7 +25,7 @@ service cloud.firestore {
           && instrId != null
           && instrId != ''
           && (instrDoc(instrId).userId == request.auth.uid
-              || instrDoc(instrId).email == request.auth.token.email);
+              || emailIs(instrDoc(instrId).get('email', null)));
     }
 
     // Інструктор, зв'язаний з ID4Drive (id4Linked ставить лише адмін)
@@ -36,7 +45,7 @@ service cloud.firestore {
           && schoolId != null
           && schoolId != ''
           && (schoolDoc(schoolId).userId == request.auth.uid
-              || schoolDoc(schoolId).email == request.auth.token.email);
+              || emailIs(schoolDoc(schoolId).get('email', null)));
     }
 
     // adminChats/{role}_{refId}: refId — uid учня, id інструктора або id школи.
@@ -48,30 +57,42 @@ service cloud.firestore {
               || (data.role == 'school'     && isSchoolOwner(data.refId)));
     }
 
+    // rating/reviews рахує лише Cloud Function onReviewCreated.
+    function freshRating() {
+      return request.resource.data.get('rating', null) == null
+          && request.resource.data.get('reviews', 0) == 0;
+    }
+
+    function ownOrNoUserId() {
+      return request.resource.data.get('userId', null) == null
+          || (request.auth != null && request.resource.data.userId == request.auth.uid);
+    }
+
     match /instructors/{docId} {
       allow get: if isAdmin()
               || resource.data.status == 'approved'
               || (request.auth != null && resource.data.userId == request.auth.uid)
-              || (request.auth != null && resource.data.email == request.auth.token.email);
+              || emailIs(resource.data.get('email', null));
       allow list: if isAdmin()
                || resource.data.status == 'approved'
                || (request.auth != null && resource.data.userId == request.auth.uid)
-               || (request.auth != null && resource.data.email == request.auth.token.email);
+               || emailIs(resource.data.get('email', null));
+      // Без авторизації дозволено свідомо (фолбек, коли email-провайдер недоступний).
       allow create: if request.resource.data.status == 'pending'
-                    && request.resource.data.get('id4Linked', false) != true;
+                    && request.resource.data.get('id4Linked', false) != true
+                    && request.resource.data.get('verified', false) != true
+                    && freshRating()
+                    && ownOrNoUserId();
       allow update: if isAdmin()
                  || (request.auth != null
                      && resource.data.userId == request.auth.uid
-                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'id4Linked']))
-                 || (request.auth != null
-                     && resource.data.email == request.auth.token.email
-                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'id4Linked']))
-                 || (request.auth != null
-                     && resource.data.userId == null
-                     && resource.data.email == request.auth.token.email
+                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'id4Linked', 'verified', 'rating', 'reviews', 'userId']))
+                 || (emailIs(resource.data.get('email', null))
+                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'id4Linked', 'verified', 'rating', 'reviews', 'userId']))
+                 || (resource.data.get('userId', null) == null
+                     && emailIs(resource.data.get('email', null))
+                     && request.resource.data.userId == request.auth.uid
                      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['userId']))
-                 || (request.auth != null
-                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'reviews']))
                  // Школа надсилає запрошення інструктору — може змінити лише поле schoolInvite,
                  // і лише якщо сама володіє школою, на яку запрошує.
                  || (request.auth != null
@@ -89,25 +110,24 @@ service cloud.firestore {
       allow get: if isAdmin()
               || resource.data.status == 'approved'
               || (request.auth != null && resource.data.userId == request.auth.uid)
-              || (request.auth != null && resource.data.email == request.auth.token.email);
+              || emailIs(resource.data.get('email', null));
       allow list: if isAdmin()
                || resource.data.status == 'approved'
                || (request.auth != null && resource.data.userId == request.auth.uid)
-               || (request.auth != null && resource.data.email == request.auth.token.email);
-      allow create: if request.resource.data.status == 'pending';
+               || emailIs(resource.data.get('email', null));
+      allow create: if request.resource.data.status == 'pending'
+                    && freshRating()
+                    && ownOrNoUserId();
       allow update: if isAdmin()
                  || (request.auth != null
                      && resource.data.userId == request.auth.uid
-                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']))
-                 || (request.auth != null
-                     && resource.data.email == request.auth.token.email
-                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status']))
-                 || (request.auth != null
-                     && resource.data.userId == null
-                     && resource.data.email == request.auth.token.email
-                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['userId']))
-                 || (request.auth != null
-                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'reviews']));
+                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'rating', 'reviews', 'userId']))
+                 || (emailIs(resource.data.get('email', null))
+                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'rating', 'reviews', 'userId']))
+                 || (resource.data.get('userId', null) == null
+                     && emailIs(resource.data.get('email', null))
+                     && request.resource.data.userId == request.auth.uid
+                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['userId']));
       allow delete: if isAdmin();
     }
 
@@ -126,7 +146,8 @@ service cloud.firestore {
                || isInstructor(resource.data.instructorId);
       allow create: if request.auth != null
                     && request.resource.data.clientId == request.auth.uid
-                    && request.resource.data.status == 'pending';
+                    && request.resource.data.status == 'pending'
+                    && optStr(request.resource.data.get('clientName', null), 100);
       allow update: if isAdmin();
       // Для інструктора, зв'язаного з ID4Drive, пряме скасування клієнтом заборонене —
       // лише через callable cancelBooking (вікно 24 год + синхронізація з ID4).
@@ -156,10 +177,31 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    function reviewableBooking(bookingId, instrId) {
+      let b = get(/databases/$(database)/documents/bookings/$(bookingId)).data;
+      return b.clientId == request.auth.uid
+          && b.instructorId == instrId
+          && b.status == 'confirmed';
+    }
+
     match /reviews/{reviewId} {
       allow read: if true;
+      // ID відгуку = ID бронювання → один відгук на бронь. Лише клієнт цієї броні,
+      // лише по підтвердженому уроку, оцінка 1..5, текст до 2000.
       allow create: if request.auth != null
-                    && request.resource.data.clientId == request.auth.uid;
+                    && request.resource.data.keys().hasOnly(['instrId','clientId','clientName','clientPhoto','rating','text','bookingId','createdAt'])
+                    && request.resource.data.clientId == request.auth.uid
+                    && request.resource.data.bookingId == reviewId
+                    && request.resource.data.rating is int
+                    && request.resource.data.rating >= 1
+                    && request.resource.data.rating <= 5
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() <= 2000
+                    && request.resource.data.clientName is string
+                    && request.resource.data.clientName.size() <= 100
+                    && optStr(request.resource.data.get('clientPhoto', null), 300000)
+                    && request.resource.data.createdAt == request.time
+                    && reviewableBooking(reviewId, request.resource.data.instrId);
       allow update, delete: if isAdmin();
     }
 
@@ -169,8 +211,17 @@ service cloud.firestore {
     match /boardPosts/{postId} {
       allow read: if true;
       allow create: if request.auth != null
+                    && request.resource.data.keys().hasOnly(['kind','authorId','instrId','name','district','date','timeFrom','timeTo','note','lat','lng','price','createdAt'])
                     && request.resource.data.authorId == request.auth.uid
-                    && request.resource.data.kind in ['offer', 'request'];
+                    && request.resource.data.kind in ['offer', 'request']
+                    && (request.resource.data.kind == 'request' || isInstructor(request.resource.data.instrId))
+                    && optStr(request.resource.data.get('name', null), 120)
+                    && optStr(request.resource.data.get('district', null), 120)
+                    && optStr(request.resource.data.get('date', null), 10)
+                    && optStr(request.resource.data.get('timeFrom', null), 5)
+                    && optStr(request.resource.data.get('timeTo', null), 5)
+                    && optStr(request.resource.data.get('note', null), 500)
+                    && request.resource.data.createdAt == request.time;
       allow update, delete: if request.auth != null
                     && (resource.data.authorId == request.auth.uid || isAdmin());
     }
@@ -203,25 +254,51 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    // Учасник чату: учень за uid, інструктор за uid або верифікованим email.
+    function chatMember(c) {
+      return request.auth != null
+          && (c.studentId == request.auth.uid
+              || (c.get('instrUserId', null) != null && c.instrUserId == request.auth.uid)
+              || emailIs(c.get('instrEmail', null)));
+    }
+
+    function chatData(chatId) {
+      return get(/databases/$(database)/documents/chats/$(chatId)).data;
+    }
+
+    // chatId = <instrId>_<studentId>; поля інструктора мають збігатися з його профілем.
+    function validNewChat(chatId, d) {
+      let instr = instrDoc(d.instrId);
+      return d.instrId is string
+          && d.studentId is string
+          && chatId == d.instrId + '_' + d.studentId
+          && d.get('instrUserId', null) == instr.get('userId', null)
+          && d.get('instrEmail', '') == instr.get('email', '')
+          && (d.studentId == request.auth.uid || isInstructor(d.instrId));
+    }
+
     match /chats/{chatId} {
-      allow get: if request.auth != null
-                 && (resource.data.studentId == request.auth.uid
-                     || resource.data.instrUserId == request.auth.uid
-                     || resource.data.instrEmail == request.auth.token.email);
-      allow list: if request.auth != null
-                  && (resource.data.studentId == request.auth.uid
-                      || resource.data.instrUserId == request.auth.uid
-                      || resource.data.instrEmail == request.auth.token.email);
-      allow create: if request.auth != null;
-      allow update: if request.auth != null
-                    && (resource.data.studentId == request.auth.uid
-                        || resource.data.instrUserId == request.auth.uid
-                        || resource.data.instrEmail == request.auth.token.email);
+      allow get, list: if chatMember(resource.data);
+      allow create: if request.auth != null && validNewChat(chatId, request.resource.data);
+      // Учасники/прив'язку не можна переписати; поля інструктора — лише на актуальні з профілю.
+      allow update: if chatMember(resource.data)
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['instrId', 'studentId'])
+                    && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['instrUserId', 'instrEmail'])
+                        || (request.resource.data.get('instrUserId', null) == instrDoc(resource.data.instrId).get('userId', null)
+                            && request.resource.data.get('instrEmail', '') == instrDoc(resource.data.instrId).get('email', '')));
     }
 
     match /chats/{chatId}/messages/{msgId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
+      allow read: if chatMember(chatData(chatId));
+      allow create: if chatMember(chatData(chatId))
+                    && request.resource.data.keys().hasOnly(['text', 'from', 'uid', 'senderName', 'at'])
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.from in ['student', 'instructor']
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() > 0
+                    && request.resource.data.text.size() <= 2000
+                    && optStr(request.resource.data.get('senderName', null), 200)
+                    && request.resource.data.at == request.time;
     }
 
     // Переписка адміна з конкретним учнем/інструктором/школою — окрема від chats,
