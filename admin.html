@@ -68,6 +68,24 @@ body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
 .funnel-day-bar{height:100%;background:var(--green);border-radius:5px;min-width:2px}
 .funnel-day-count{width:22px;text-align:right;font-size:11px;font-weight:600;color:var(--text);flex-shrink:0}
 
+/* MARKET (OLX) */
+.mk-meta{font-size:12.5px;color:var(--text-muted);margin-bottom:16px}
+.mk-meta a{color:var(--green)}
+.mk-city{background:var(--white);border:.5px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px}
+.mk-city-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.mk-city-name{font-size:16px;font-weight:600}
+.mk-city-sub{font-size:12px;color:var(--text-muted)}
+.mk-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.mk-table th{text-align:left;font-weight:500;color:var(--text-muted);padding:6px 8px;border-bottom:.5px solid var(--border);white-space:nowrap}
+.mk-table td{padding:6px 8px;border-bottom:.5px solid var(--border);white-space:nowrap}
+.mk-table tr:last-child td{border-bottom:none}
+.mk-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.mk-fd{background:var(--green-light)}
+.mk-delta-up{color:#b42318}
+.mk-delta-down{color:var(--green)}
+.mk-scroll{overflow-x:auto}
+.mk-sub{font-size:12px;font-weight:600;color:var(--text-muted);margin:12px 0 4px}
+
 /* PROBLEM CARDS */
 .err-code{display:inline-block;background:#fdecec;color:#b42318;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600;font-family:ui-monospace,monospace}
 .err-stack{font:11px/1.45 ui-monospace,monospace;background:var(--bg);border-radius:8px;padding:8px 10px;margin:8px 0;white-space:pre-wrap;word-break:break-all;max-height:140px;overflow:auto;display:none}
@@ -236,6 +254,14 @@ textarea.admin-edit-input{resize:vertical;min-height:54px}
       <button class="tab-btn" id="tab-btn-board" onclick="window._switchTab('board')">Дошка<span id="count-badge-board" class="count-badge" style="display:none"></span></button>
       <button class="tab-btn" id="tab-btn-messages" onclick="window._switchTab('messages')">Повідомлення<span id="count-badge-messages" class="count-badge" style="display:none"></span></button>
       <button class="tab-btn" id="tab-btn-funnel" onclick="window._switchTab('funnel')">Воронка</button>
+      <button class="tab-btn" id="tab-btn-market" onclick="window._switchTab('market')">Ринок</button>
+    </div>
+    <div id="tab-market" style="display:none">
+      <div class="page-head">
+        <div class="page-title">Ринкові ціни (OLX)</div>
+        <button class="funnel-range-btn" onclick="window._loadMarketTab(true)"><i class="ti ti-refresh"></i> Оновити</button>
+      </div>
+      <div id="market-body"></div>
     </div>
     <div id="tab-funnel" style="display:none">
       <div class="page-head"><div class="page-title">Воронка інструкторів</div></div>
@@ -576,10 +602,91 @@ document.getElementById('btn-google-login').addEventListener('click', () => {
 });
 
 window._switchTab = function(tab) {
-  ['instr','users','bookings','problems','errors','schools','board','messages','funnel'].forEach(t => {
+  ['instr','users','bookings','problems','errors','schools','board','messages','funnel','market'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t === tab ? '' : 'none';
     document.getElementById('tab-btn-'+t).classList.toggle('active', t === tab);
   });
+  if (tab === 'market') window._loadMarketTab();
+};
+
+// ===== РИНОК (агрегати OLX з marketPrices + порівняння з цінами інструкторів FindDrive) =====
+let _marketLoaded = false;
+function _mkKm(aLat, aLng, bLat, bLng) {
+  const r = Math.PI / 180, dLat = (bLat - aLat) * r, dLng = (bLng - aLng) * r;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(aLat * r) * Math.cos(bLat * r) * Math.sin(dLng / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(h));
+}
+function _mkMedian(arr) {
+  const v = arr.filter(Number.isFinite).sort((a, b) => a - b);
+  if (!v.length) return null;
+  const m = Math.floor(v.length / 2);
+  return Math.round(v.length % 2 ? v[m] : (v[m - 1] + v[m]) / 2);
+}
+function _mkRow(label, s, cls) {
+  if (!s) return `<tr class="${cls||''}"><td>${esc(label)}</td><td class="num">0</td><td class="num" colspan="4" style="color:var(--text-hint)">немає даних</td></tr>`;
+  return `<tr class="${cls||''}"><td>${esc(label)}</td><td class="num">${s.n}</td><td class="num">${s.min ?? '—'}</td>`
+    + `<td class="num">${s.p25 != null ? s.p25 + '–' + s.p75 : '—'}</td><td class="num"><b>${s.median}</b></td><td class="num">${s.max ?? '—'}</td></tr>`;
+}
+window._loadMarketTab = async function (force) {
+  const box = document.getElementById('market-body');
+  if (_marketLoaded && !force) return;
+  box.innerHTML = '<div class="mk-meta">Завантаження…</div>';
+  try {
+    const { getDocs } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const [snap, hist] = await Promise.all([
+      getDocs(collection(db, 'marketPrices')),
+      getDocs(query(collection(db, 'marketPricesHistory'), orderBy('date', 'desc'), limit(300))).catch(() => null)
+    ]);
+    const cities = [];
+    let meta = null;
+    snap.forEach(d => { if (d.id === '_meta') meta = d.data(); else cities.push(d.data()); });
+    if (!cities.length) {
+      box.innerHTML = '<div class="mk-meta">Даних ще немає. Запустіть GitHub Actions → «OLX market prices» (спершу з dry_run, потім без нього).</div>';
+      return;
+    }
+    // Медіана міста 4+ тижні тому — для дельти
+    const histBy = {};
+    hist?.forEach(d => { const h = d.data(); (histBy[h.slug] ||= []).push(h); });
+    const approved = _instrCache.filter(i => i.status === 'approved' && +i.price > 0 && i.lat && i.lng);
+    const fmtDate = ts => ts?.toDate ? ts.toDate().toLocaleDateString('uk-UA') : '—';
+    let html = `<div class="mk-meta">Оновлено ${fmtDate(meta?.updatedAt)} · ${meta?.totalAds ?? '—'} оголошень з ціною`
+      + (meta?.failed?.length ? ` · без даних: ${esc(meta.failed.join(', '))}` : '')
+      + (meta?.runUrl ? ` · <a href="${esc(meta.runUrl)}" target="_blank" rel="noopener">лог запуску</a>` : '')
+      + `<br>Ціна за заняття (зазвичай 60 хв), грн. Діапазон — 25–75% оголошень. Лише агрегати, без даних про оголошення.</div>`;
+    cities.sort((a, b) => (b.sample || 0) - (a.sample || 0));
+    for (const c of cities) {
+      const fd = approved.filter(i => c.lat != null && _mkKm(+i.lat, +i.lng, c.lat, c.lng) <= 60).map(i => +i.price);
+      const fdMed = _mkMedian(fd);
+      const past = (histBy[c.slug] || []).find(h => (Date.now() - new Date(h.date).getTime()) >= 27 * 864e5);
+      let delta = '';
+      if (past?.all?.median && c.all?.median) {
+        const dv = c.all.median - past.all.median;
+        delta = dv ? ` · <span class="${dv > 0 ? 'mk-delta-up' : 'mk-delta-down'}">${dv > 0 ? '+' : ''}${dv} грн з ${esc(past.date)}</span>` : ` · без змін з ${esc(past.date)}`;
+      }
+      const dists = Object.entries(c.districts || {}).sort((a, b) => (b[1].all?.n || 0) - (a[1].all?.n || 0));
+      html += `<div class="mk-city">
+        <div class="mk-city-head"><div class="mk-city-name">${esc(c.city)}</div>
+          <div class="mk-city-sub">${c.sample} огол.${delta}</div></div>
+        <div class="mk-scroll"><table class="mk-table">
+          <tr><th></th><th>N</th><th>Мін</th><th>Діапазон</th><th>Медіана</th><th>Макс</th></tr>
+          ${_mkRow('Усі', c.all)}${_mkRow('АКПП', c.automatic)}${_mkRow('МКПП', c.manual)}
+          <tr class="mk-fd"><td>FindDrive</td><td class="num">${fd.length}</td><td class="num">${fd.length ? Math.min(...fd) : '—'}</td><td class="num"></td><td class="num"><b>${fdMed ?? '—'}</b></td><td class="num">${fd.length ? Math.max(...fd) : '—'}</td></tr>
+        </table></div>
+        ${dists.length ? `<div class="mk-sub">По районах</div><div class="mk-scroll"><table class="mk-table">
+          <tr><th>Район</th><th>N</th><th>Діапазон</th><th>Медіана</th><th>АКПП</th><th>МКПП</th></tr>
+          ${dists.map(([name, s]) => `<tr><td>${esc(name)}</td><td class="num">${s.all?.n || 0}</td>`
+            + `<td class="num">${s.all ? s.all.p25 + '–' + s.all.p75 : '—'}</td><td class="num"><b>${s.all?.median ?? '—'}</b></td>`
+            + `<td class="num">${s.automatic ? s.automatic.median + ' (' + s.automatic.n + ')' : '—'}</td>`
+            + `<td class="num">${s.manual ? s.manual.median + ' (' + s.manual.n + ')' : '—'}</td></tr>`).join('')}
+        </table></div>` : ''}
+      </div>`;
+    }
+    box.innerHTML = html;
+    _marketLoaded = true;
+  } catch (e) {
+    console.error(e);
+    box.innerHTML = `<div class="mk-meta">Помилка завантаження: ${esc(e.message || String(e))}</div>`;
+  }
 };
 
 // ===== ІНСТРУКТОРИ =====

@@ -1,0 +1,19 @@
+{
+  "name": "finddrive-olx-prices",
+  "private": true,
+  "type": "module",
+  "description": "Щотижневий збір агрегованих цін автоінструкторів з публічних сторінок OLX → Firestore marketPrices",
+  "scripts": {
+    "collect": "node collect.mjs",
+    "dry": "node collect.mjs --dry-run",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "firebase-admin": "^13.0.0",
+    "robots-parser": "^3.0.1"
+  }
+}

@@ -1099,6 +1099,13 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
 .prof-cert-rule em{font-style:normal;font-size:11.5px;color:var(--text-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .prof-hero-price{text-align:center;margin:16px 0 12px}
 .prof-hero-price .prof-price-big{font-size:30px;font-weight:800;letter-spacing:-.5px}
+.mp-hint{display:flex;align-items:center;flex-wrap:wrap;gap:6px;background:var(--green-light);border:.5px solid #cfe6d8;border-radius:12px;padding:8px 12px;font-size:12px;color:var(--text-muted);line-height:1.4;margin:6px 0 12px}
+.mp-hint b{color:var(--text);font-weight:600}
+.mp-hint .ti{color:var(--green);font-size:15px}
+.mp-badge{font-size:11px;font-weight:600;border-radius:20px;padding:2px 9px;background:var(--white);border:.5px solid var(--border);color:var(--text)}
+.mp-badge.low{color:var(--green);border-color:var(--green)}
+.mp-badge.high{color:var(--pink);border-color:var(--pink)}
+.prof-hero-price + .mp-hint{justify-content:center;text-align:center}
 .prof-stat-strip{display:flex;background:var(--green-light);border:.5px solid #cfe6d8;border-radius:14px;overflow:hidden;margin-bottom:12px}
 .prof-stat-seg{flex:1;padding:11px 8px;text-align:center;display:flex;flex-direction:column;gap:3px;min-width:0}
 .prof-stat-seg+.prof-stat-seg{border-left:.5px solid #cfe6d8}
@@ -1817,7 +1824,7 @@ footer{background:var(--white);border-top:.5px solid var(--border);padding:52px 
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.416</span></div>
+    <div class="footer-copy">© 2025 FindDrive. Всі права захищено. <span class="footer-version" id="version-badge" title="Натисніть для оновлення сторінки">v24.06.417</span></div>
     <button class="problem-banner-btn" style="margin-right:60px" onclick="window._openProblemModal()">Виникли проблеми?</button>
   </div>
 </footer>
@@ -2176,6 +2183,119 @@ const auth     = getAuth(app);
 const db       = getFirestore(app);
 const functions = getFunctions(app, 'europe-west1');
 const provider = new GoogleAuthProvider();
+
+// ===== РИНКОВІ ЦІНИ (агрегати OLX, оновлює GitHub Actions olx-prices.yml) =====
+// marketPrices/{citySlug}: { city, lat, lng, aliases, all, automatic, manual, districts:{ name:{all,automatic,manual} } }
+// stats = { n, min, p25, median, p75, max, avg }. Показуємо лише вибірки з n ≥ 3.
+const MP_MIN_SAMPLE = 3;
+let _mpData = null, _mpPromise = null;
+function _mpLoad() {
+  if (_mpData) return Promise.resolve(_mpData);
+  if (!_mpPromise) {
+    _mpPromise = getDocs(collection(db, 'marketPrices')).then(snap => {
+      const m = {};
+      snap.forEach(d => { if (d.id !== '_meta') m[d.id] = d.data(); });
+      return (_mpData = m);
+    }).catch(e => { console.warn('[marketPrices]', e); _mpPromise = null; return {}; });
+  }
+  return _mpPromise;
+}
+const _mpNorm = s => String(s || '').toLowerCase().replace(/[ʼ’`´]/g, "'").replace(/\s+/g, ' ').trim();
+function _mpKm(aLat, aLng, bLat, bLng) {
+  const r = Math.PI / 180, dLat = (bLat - aLat) * r, dLng = (bLng - aLng) * r;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(aLat * r) * Math.cos(bLat * r) * Math.sin(dLng / 2) ** 2;
+  return 12742 * Math.asin(Math.sqrt(h));
+}
+function _mpCity(m, lat, lng, area) {
+  let best = null, bestKm = Infinity;
+  if (lat && lng) for (const c of Object.values(m)) {
+    if (c.lat == null || c.lng == null) continue;
+    const km = _mpKm(+lat, +lng, c.lat, c.lng);
+    if (km < bestKm) { bestKm = km; best = c; }
+  }
+  if (best && bestKm <= 60) return best;
+  const a = _mpNorm(area);
+  if (a) for (const c of Object.values(m)) if (a.includes(_mpNorm(c.city))) return c;
+  return null;
+}
+function _mpDistrict(c, area) {
+  const a = _mpNorm(area);
+  if (!a) return null;
+  for (const [k, v] of Object.entries(c.aliases || {})) if (a.includes(_mpNorm(k))) return v;
+  for (const name of Object.keys(c.districts || {})) {
+    const stem = _mpNorm(name).slice(0, 5);
+    if (stem.length >= 4 && a.includes(stem)) return name;
+  }
+  return null;
+}
+function _mpGear(g) {
+  g = _mpNorm(g);
+  if (g.startsWith('авто') || g === 'auto' || g === 'automatic') return 'automatic';
+  if (g.startsWith('мех') || g === 'manual') return 'manual';
+  return null; // 'Обидва' / невідомо — без розрізу за КПП
+}
+// Найточніша вибірка з n ≥ 3: район+КПП → район → місто+КПП → місто
+function _mpPick(m, { lat, lng, area, gearbox } = {}) {
+  const c = _mpCity(m, lat, lng, area);
+  if (!c) return null;
+  const dist = _mpDistrict(c, area), gk = _mpGear(gearbox);
+  const gl = gk === 'automatic' ? 'АКПП' : gk === 'manual' ? 'МКПП' : '';
+  const tries = [];
+  if (dist && gk) tries.push([c.districts?.[dist]?.[gk], `${dist} р-н, ${gl}`]);
+  if (dist) tries.push([c.districts?.[dist]?.all, `${dist} р-н`]);
+  if (gk) tries.push([c[gk], `${c.city}, ${gl}`]);
+  tries.push([c.all, c.city]);
+  for (const [s, label] of tries) if (s && s.n >= MP_MIN_SAMPLE) return { ...s, label, city: c.city };
+  return null;
+}
+function _mpHtml(s, price, who) {
+  const esc = v => String(v).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  let badge = '';
+  const p = Number(price) || 0;
+  if (p) {
+    if (p < s.p25) badge = `<span class="mp-badge low">${who === 'instr' ? 'нижче ринку' : 'вигідна ціна'}</span>`;
+    else if (p > s.p75) badge = `<span class="mp-badge high">вище ринку</span>`;
+    else badge = `<span class="mp-badge">в межах ринку</span>`;
+  }
+  const range = s.p25 === s.p75 ? `${s.median} грн` : `${s.p25}–${s.p75} грн`;
+  return `<i class="ti ti-chart-bar"></i><span>Ринок (${esc(s.label)}): <b>${range}</b>, медіана ${s.median} грн · ${s.n} огол. OLX</span>${badge}`;
+}
+// Заповнити блок: el — елемент, q — {lat,lng,area,gearbox}, price — ціна для порівняння
+window._mpFill = async function (el, q, price, who) {
+  if (!el) return;
+  const m = await _mpLoad();
+  const s = _mpPick(m, q);
+  if (!s) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.innerHTML = _mpHtml(s, price, who);
+  el.style.display = '';
+};
+// Підказка для інструктора під полем ціни (кабінет і анкета). Оновлюється при зміні ціни/району/КПП.
+window._mpBindHint = function ({ priceEl, areaEl, gearName, root, getLatLng, anchor, lazy }) {
+  if (!priceEl || !anchor) return;
+  let el = anchor.nextElementSibling;
+  if (!el || !el.classList.contains('mp-hint')) {
+    el = document.createElement('div');
+    el.className = 'mp-hint';
+    el.style.display = 'none';
+    anchor.after(el);
+  }
+  const update = () => {
+    const ll = getLatLng?.() || {};
+    window._mpFill(el, {
+      lat: ll.lat, lng: ll.lng,
+      area: areaEl?.value || ll.area || '',
+      gearbox: (root || document).querySelector(`[name="${gearName}"]:checked`)?.value || ''
+    }, priceEl.value, 'instr');
+  };
+  if (!priceEl.dataset.mpBound) {
+    priceEl.dataset.mpBound = '1';
+    priceEl.addEventListener('input', update);
+    priceEl.addEventListener('focus', update);
+    areaEl?.addEventListener('change', update);
+    (root || document).querySelectorAll(`[name="${gearName}"]`).forEach(r => r.addEventListener('change', update));
+  }
+  if (!lazy) update(); // lazy: не читати Firestore, доки інструктор не дійде до поля ціни
+};
 
 // Приймач помилок для _reportError (див. верхній скрипт) → errorLogs у Firestore
 window._errSink = rec => {
@@ -3439,6 +3559,11 @@ async function loadInstrSettings(instr, container) {
     // Restore text fields — use draft (what user typed) if it exists, else fall back to saved value
     const priceEl = container.querySelector('#set-price');
     if (priceEl) priceEl.value = draftPrice !== undefined ? draftPrice : String(instr.price || '');
+    window._mpBindHint?.({
+      priceEl, areaEl: container.querySelector('#set-area'), gearName: 'set-gearbox', root: container,
+      getLatLng: () => ({ lat: instr.lat, lng: instr.lng, area: instr.area }),
+      anchor: priceEl?.closest('.cab-form-row')
+    });
     const phoneEl = container.querySelector('#set-phone');
     if (phoneEl) phoneEl.value = draftPhone !== undefined ? draftPhone : (instr.phone || '');
     const areaEl = container.querySelector('#set-area');
@@ -4573,6 +4698,15 @@ window._submitReview = async function(bkId, instrId, clientName, clientPhoto) {
 // Form submit → Firestore
 const instrForm = document.getElementById("instr-form");
 instrForm.addEventListener("input", e => { e.target.style.borderColor = ""; });
+{
+  // Ринкова підказка під ціною в анкеті; район/точка заповнюються з карти, тож оновлюємо і на фокусі
+  const priceInp = instrForm.querySelector('[name="price"]');
+  window._mpBindHint({
+    priceEl: priceInp, areaEl: instrForm.querySelector('[name="area"]'), gearName: 'gearbox', root: instrForm,
+    getLatLng: () => ({ lat: instrForm.querySelector('[name="lat"]')?.value, lng: instrForm.querySelector('[name="lng"]')?.value }),
+    anchor: priceInp?.closest('.form-group'), lazy: true
+  });
+}
 
 document.getElementById("btn-submit-instr").addEventListener("click", async () => {
   const name  = instrForm.querySelector('[name="name"]').value.trim();
@@ -7434,6 +7568,7 @@ function openInstrProfile(id, mpIdx) {
 
   document.getElementById('prof-body').innerHTML = `
     ${d.price ? `<div class="prof-hero-price"><span class="prof-price-big">${_esc(String(d.price))} грн<span class="prof-price-per"> / год</span></span></div>` : ''}
+    <div id="prof-market" class="mp-hint" style="display:none"></div>
     ${statSegs.length ? `<div class="prof-stat-strip">${statSegs.join('')}</div>` : ''}
     ${d.area ? `<div class="prof-area-c"><i class="ti ti-map-pin" style="color:${col}"></i> ${_esc(d.area)}</div>` : ''}
     ${(d.certNumber || d.certExpiry) ? `<div class="prof-cert">
@@ -7474,6 +7609,7 @@ function openInstrProfile(id, mpIdx) {
       </button>
     </div>`;
 
+  window._mpFill?.(document.getElementById('prof-market'), { lat: d.lat, lng: d.lng, area: d.area, gearbox: d.gearbox }, d.price, 'student');
   if (window.openPanel) window.openPanel('instr-profile');
   history.pushState({ instrId: id }, '', location.pathname + '?instr=' + encodeURIComponent(id));
   window._addToRV?.(id);

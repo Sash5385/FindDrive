@@ -1,0 +1,60 @@
+name: OLX market prices
+
+# Щотижня збирає агреговані ціни автоінструкторів з публічних сторінок OLX
+# і пише їх у Firestore (marketPrices/{місто} + marketPricesHistory).
+# Потребує секрет FIREBASE_SERVICE_ACCOUNT — JSON ключа сервісного акаунта
+# (Firebase Console → Project settings → Service accounts → Generate new private key).
+# Перший запуск краще зробити вручну з dry_run = true і подивитися артефакт.
+on:
+  schedule:
+    - cron: '17 3 * * 1'   # щопонеділка 03:17 UTC (05:17 за Києвом)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Без запису у Firestore (лише артефакт з результатом)'
+        type: boolean
+        default: true
+      cities:
+        description: 'Міста через кому: kyiv,lviv,odesa,dnipro,kharkiv,zaporizhzhia (порожньо = всі)'
+        type: string
+        default: ''
+
+concurrency:
+  group: olx-prices
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: scripts/olx-prices
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install
+        run: npm install --no-audit --no-fund
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Collect
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
+          CITIES: ${{ inputs.cities }}
+        run: node collect.mjs
+
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: olx-prices-${{ github.run_id }}
+          path: scripts/olx-prices/out/
+          retention-days: 14
+          if-no-files-found: ignore

@@ -236,5 +236,16 @@ service cloud.firestore {
     match /adminChats/{chatId}/messages/{msgId} {
       allow read, create: if isAdmin() || adminChatOwn(get(/databases/$(database)/documents/adminChats/$(chatId)).data);
     }
+
+    // Ринкові ціни з OLX (лише агрегати). Пише тільки GitHub Actions через
+    // service account (Admin SDK оминає правила) — з клієнта запис заборонено.
+    match /marketPrices/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /marketPricesHistory/{docId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
   }
 }
