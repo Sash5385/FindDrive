@@ -1,0 +1,40 @@
+name: Leads crawl
+
+# Краулер лідів (інструктори/автошколи) з Google Places API.
+# Ключ: Settings → Secrets → Actions → GOOGLE_PLACES_KEY.
+# Результат (CSV + JSON) — в артефакті запуску "leads".
+on:
+  workflow_dispatch:
+    inputs:
+      city:
+        description: 'slug міста (kyiv, lviv, odesa, dnipro, kharkiv, zaporizhzhia) або порожньо = всі'
+        required: false
+        default: 'kyiv'
+      districts:
+        description: 'Шукати також по районах'
+        type: boolean
+        default: true
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Crawl
+        env:
+          GOOGLE_PLACES_KEY: ${{ secrets.GOOGLE_PLACES_KEY }}
+          CITY: ${{ inputs.city }}
+          DISTRICTS: ${{ inputs.districts }}
+        run: |
+          ARGS=""
+          [ -n "$CITY" ] && ARGS="$ARGS --city $CITY"
+          [ "$DISTRICTS" = "false" ] && ARGS="$ARGS --no-districts"
+          node scripts/leads/crawl-places.mjs $ARGS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: leads
+          path: scripts/leads/out/
+          retention-days: 30

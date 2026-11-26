@@ -6,6 +6,12 @@ Format: `[YY.MM.NN]` — рік.місяць.порядковий_номер_р�
 
 ---
 
+## [24.06.417] — 2026-11-26
+
+### Added
+- Краулер лідів `scripts/leads/crawl-places.mjs`: інструктори та автошколи з Google Places API (New) по містах і районах з `cities.json`, дедуплікація, скоринг, готовий текст оффера (FindDrive безкоштовно + DrivePad місяць безкоштовно), посилання Viber/WhatsApp/Telegram, CSV + JSON
+- GitHub Action `leads-crawl.yml` (ручний запуск, результат — артефакт)
+
 ## [24.06.416] — 2026-11-07
 
 ### Fixed
